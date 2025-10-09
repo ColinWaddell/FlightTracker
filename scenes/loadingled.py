@@ -1,7 +1,7 @@
+from gpiozero import LED
 from utilities.animator import Animator
 from setup import frames
 from time import sleep
-import RPi.GPIO as GPIO
 import sys
 
 # Attempt to load config data
@@ -22,10 +22,8 @@ class LoadingLEDScene(object):
 
     def gpio_setup(self):
         try:
-            GPIO.setwarnings(False)
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setup(LOADING_LED_GPIO_PIN, GPIO.OUT)
-            GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH)
+            self.led = LED(LOADING_LED_GPIO_PIN)
+            self.led.on()
             self.gpio_setup_complete = True
         except:
             print("Error initializing GPIO", file=sys.stderr)
@@ -40,12 +38,11 @@ class LoadingLEDScene(object):
 
         if self.overhead.processing:
             if self.gpio_setup_complete:
-                GPIO.output(
-                    LOADING_LED_GPIO_PIN,
-                    GPIO.HIGH if count % 2 else GPIO.LOW
-                )
-
+                if count % 2:
+                    self.led.on()
+                else:
+                    self.led.off()
         else:
             # Not processing, leave LED on
             if self.gpio_setup_complete:
-                GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH)
+                self.led.on()
