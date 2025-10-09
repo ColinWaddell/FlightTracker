@@ -18,7 +18,7 @@ class DayScene(object):
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def day(self, count):
-        if len(self._data):
+        if len(self._data) or self._reset_scene:
             # Ensure redraw when there's new data
             self._last_day = None
 

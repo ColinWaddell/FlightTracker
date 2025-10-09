@@ -204,6 +204,19 @@ RAINFALL_ENABLED = True
 
 [![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
 
+### On/off switch
+A toggle switch can be wired to a GPIO on the Raspberry Pi which can then turn the display on or off, as well as pause or resume API calls.
+
+Connect your switch to pull the GPIO pin to ground when flipped on, since the pin will
+be configured with the pullup resistor enabled.
+
+To enable this, add the following to your `config.py`. Adjust `ON_OFF_SWITCH_GPIO_PIN`
+to match your setup, and make sure it is not the same GPIO pin as the loading LED.
+
+```
+ON_OFF_SWITCH_GPIO_PIN = 19
+```
+
 # License Update:
 As of April 2025, Flight Tracker is released under the GNU General Public License v3.0
 

@@ -295,7 +295,7 @@ class WeatherScene(object):
         if not RAINFALL_ENABLED:
             return
 
-        if len(self._data):
+        if len(self._data) or self._reset_scene:
             # Don't draw if there's plane data
             # and force a redraw when this is visible
             # again by clearing the previous drawn data

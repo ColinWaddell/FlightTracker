@@ -18,6 +18,7 @@ class Animator(object):
         self.frame = 0
         self._delay = DELAY_DEFAULT
         self._reset_scene = True
+        self._enabled = True
 
         self._register_keyframes()
 
@@ -37,29 +38,43 @@ class Animator(object):
 
     def play(self):
         while True:
+            while self._enabled:
+                for keyframe in self.keyframes:
+                    # If divisor == 0 then only run once on first loop
+                    if self.frame == 0:
+                        if keyframe.properties["divisor"] == 0:
+                            keyframe()
+
+                    # Otherwise perform normal operation
+                    if (
+                        self.frame > 0
+                        and keyframe.properties["divisor"]
+                        and not (
+                            (self.frame - keyframe.properties["offset"])
+                            % keyframe.properties["divisor"]
+                        )
+                    ):
+                        if keyframe(keyframe.properties["count"]):
+                            keyframe.properties["count"] = 0
+                        else:
+                            keyframe.properties["count"] += 1
+
+                self._reset_scene = False
+                self.frame += 1
+                sleep(self._delay)
+
+            # Animator became disabled, wait until it is enabled again
+            while not self._enabled:
+                sleep(self._delay)
+
+            # Animator enabled again, start over
+            self.frame = 0
+            self._reset_scene = True
             for keyframe in self.keyframes:
-                # If divisor == 0 then only run once on first loop
-                if self.frame == 0:
-                    if keyframe.properties["divisor"] == 0:
-                        keyframe()
-
-                # Otherwise perform normal operation
-                if (
-                    self.frame > 0
-                    and keyframe.properties["divisor"]
-                    and not (
-                        (self.frame - keyframe.properties["offset"])
-                        % keyframe.properties["divisor"]
-                    )
-                ):
-                    if keyframe(keyframe.properties["count"]):
-                        keyframe.properties["count"] = 0
-                    else:
-                        keyframe.properties["count"] += 1
-
-            self._reset_scene = False
-            self.frame += 1
-            sleep(self._delay)
+                if keyframe.properties["divisor"]:
+                    # Force an update for each scene - otherwise it could
+                    # take minutes for some scenes to return
+                    keyframe(0)
 
     @property
     def delay(self):
@@ -69,6 +84,13 @@ class Animator(object):
     def delay(self, value):
         self._delay = value
 
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        self._enabled = value
 
 if __name__ == "__main__":
 

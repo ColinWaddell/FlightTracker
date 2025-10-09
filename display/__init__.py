@@ -1,5 +1,7 @@
+import os
 import sys
 
+from gpiozero import Button
 from setup import frames
 from utilities.animator import Animator
 from utilities.overhead import Overhead
@@ -16,7 +18,6 @@ from scenes.date import DateScene
 
 from rgbmatrix import graphics
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
-
 
 def callsigns_match(flights_a, flights_b):
     get_callsigns = lambda flights: [f["callsign"] for f in flights]
@@ -48,6 +49,11 @@ except (ModuleNotFoundError, NameError, ImportError):
     # If there's no experimental config data
     LOADING_LED_ENABLED = False
 
+try:
+    # Attempt to load on/off switch config
+    from config import ON_OFF_SWITCH_GPIO_PIN
+except (ModuleNotFoundError, NameError, ImportError):
+    ON_OFF_SWITCH_GPIO_PIN = 0
 
 class Display(
     WeatherScene,
@@ -61,6 +67,12 @@ class Display(
     Animator,
 ):
     def __init__(self):
+        # Setup on/off switch, if configured
+        if ON_OFF_SWITCH_GPIO_PIN:
+            self.on_off_switch = Button(ON_OFF_SWITCH_GPIO_PIN, bounce_time=0.1)
+            self.on_off_switch.when_pressed = self.enable_display
+            self.on_off_switch.when_released = self.disable_display
+
         # Setup Display
         options = RGBMatrixOptions()
         options.hardware_mapping = "adafruit-hat-pwm" if HAT_PWM_ENABLED else "adafruit-hat"
@@ -77,7 +89,8 @@ class Display(
         options.pixel_mapper_config = ""
         options.show_refresh_rate = 0
         options.gpio_slowdown = GPIO_SLOWDOWN
-        options.disable_hardware_pulsing = True
+        # Only disable hardware pulsing if we are not root
+        options.disable_hardware_pulsing = (os.getuid() != 0)
         options.drop_privileges = True
         self.matrix = RGBMatrix(options=options)
 
@@ -159,8 +172,27 @@ class Display(
         ):
             self.overhead.grab_data()
 
+    def enable_display(self):
+        if not self.enabled:
+            # only enable if currently off
+            print("Switch on")
+            self.enabled = True
+
+    def disable_display(self):
+        if self.enabled:
+            # only disable if currently on
+            print("Switch off")
+            self.enabled = False
+            # blank the display as well
+            self.canvas.Clear()
+
     def run(self):
         try:
+            # If enabled, read the initial state of the on/off switch
+            # so that the state doesn't get inverted when it's off during poweron
+            if ON_OFF_SWITCH_GPIO_PIN and not self.on_off_switch.is_pressed:
+                self.disable_display()
+
             # Start loop
             print("Press CTRL-C to stop")
             self.play()
