@@ -1,6 +1,12 @@
+# FLIGHT TRACKING NOT WORKING 🚨🚁
+
+FlightRader24 have restricted usage of their API which has affected this project's ability to pull in overhead flight data. I expect that the simplest solution would be for people to apply for an API key and I'll add somewhere in the config to set it. I'm unlikely to have time to look into this soon so if anyone else wants to tackle it then just send me a pull-request.
+
 # RBG Matrix Flight Tracker
 
-[Blog article about this project](https://blog.colinwaddell.com/flight-tracker/)
+- 📖 [Blog post about this project](https://blog.colinwaddell.com/flight-tracker/)
+- ☢️ [Why you should **avoid** buying this pre-built from Flight Tracker LED](https://colinwaddell.com/articles/flight-tracker-led-ripoff-part-2-its-so-much-worse)
+  - They are being sold with a hidden backdoor allowing remote access to your home network
 
 [![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
 
