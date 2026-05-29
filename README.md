@@ -1,6 +1,6 @@
 # Flight Tracking Update
 
-The recent breakage affecting overhead flight data has now been resolved. If you installed or updated during that period and flight tracking is still not working, see [Fixing recent flight tracking breakage](#fixing-recent-flight-tracking-breakage) at the bottom of this README.
+The recent breakage affecting overhead flight data has now been resolved. If your flight tracker is not working, see [Fixing recent flight tracking breakage](#fixing-recent-flight-tracking-breakage) at the bottom of this README.
 
 # RBG Matrix Flight Tracker
 
