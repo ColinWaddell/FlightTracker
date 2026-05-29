@@ -1,6 +1,6 @@
-# FLIGHT TRACKING NOT WORKING 🚨🚁
+# Flight Tracking Update
 
-FlightRader24 have restricted usage of their API which has affected this project's ability to pull in overhead flight data. I expect that the simplest solution would be for people to apply for an API key and I'll add somewhere in the config to set it. I'm unlikely to have time to look into this soon so if anyone else wants to tackle it then just send me a pull-request.
+The recent breakage affecting overhead flight data has now been resolved. If you installed or updated during that period and flight tracking is still not working, see [Fixing recent flight tracking breakage](#fixing-recent-flight-tracking-breakage) at the bottom of this README.
 
 # RBG Matrix Flight Tracker
 
@@ -207,6 +207,39 @@ RAINFALL_ENABLED = True
 ```
 
 [![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
+
+## Fixing recent flight tracking breakage
+
+If flight tracking stopped working during the recent `FlightRadarAPI` breakage, try either of the following fixes. The `Fix #1` is to update everything, but if you don't want to do that attempt `Fix #2` instead which only targets the broken package:
+
+### Fix 1: Pull the latest changes and reinstall requirements
+
+This is the recommended fix because it updates both the code and the pinned dependencies from this repo.
+
+```
+cd /home/pi/FlightTracker
+git pull
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+### Fix 2: Upgrade `FlightRadarAPI` in the existing virtual environment
+
+If your checkout is already up to date and you only need the package fix, this is the quickest option.
+
+```
+cd /home/pi/FlightTracker
+source env/bin/activate
+pip install FlightRadarAPI -U
+```
+
+### Last step
+
+After applying any of the fixes above, restart the service if you run Flight Tracker on boot:
+
+```
+sudo systemctl restart FlightTracker.service
+```
 
 # License Update:
 As of April 2025, Flight Tracker is released under the GNU General Public License v3.0
