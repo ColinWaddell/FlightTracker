@@ -1,6 +1,7 @@
 from FlightRadar24.api import FlightRadar24API
+from pyadsbdb import Client as AdsbdbClient
 from threading import Thread, Lock
-from time import sleep
+from time import sleep, time
 import math
 
 from requests.exceptions import ConnectionError
@@ -17,6 +18,7 @@ except (ModuleNotFoundError, NameError, ImportError):
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
+ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
 MAX_ALTITUDE = 10000  # feet
 EARTH_RADIUS_KM = 6371
@@ -69,10 +71,38 @@ def distance_from_flight_to_home(flight, home=LOCATION_DEFAULT):
 class Overhead:
     def __init__(self):
         self._api = FlightRadar24API()
+        self._adsbdb = AdsbdbClient()
+        self._route_cache = {}    # callsign -> (origin, dest, timestamp)
+        self._aircraft_cache = {} # mode_s -> plane type string
         self._lock = Lock()
         self._data = []
         self._new_data = False
         self._processing = False
+
+    def _get_route(self, callsign):
+        if callsign in self._route_cache:
+            origin, dest, ts = self._route_cache[callsign]
+            if time() - ts < ROUTE_CACHE_TTL:
+                return origin, dest
+        route_data = self._adsbdb.get_flight_route(callsign)
+        if "error" not in route_data:
+            flightroute = route_data.get("response", {}).get("flightroute", {})
+            origin = flightroute.get("origin", {}).get("iata_code", "") or ""
+            dest = flightroute.get("destination", {}).get("iata_code", "") or ""
+            self._route_cache[callsign] = (origin, dest, time())
+            return origin, dest
+        return "", ""
+
+    def _get_aircraft_type(self, mode_s):
+        if mode_s in self._aircraft_cache:
+            return self._aircraft_cache[mode_s]
+        aircraft_data = self._adsbdb.get_aircraft_data(mode_s)
+        if not isinstance(aircraft_data, dict):
+            plane = aircraft_data.type or ""
+            plane = plane if not (plane.upper() in BLANK_FIELDS) else ""
+            self._aircraft_cache[mode_s] = plane
+            return plane
+        return ""
 
     def grab_data(self):
         Thread(target=self._grab_data).start()
@@ -99,57 +129,47 @@ class Overhead:
             flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f))
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
-                retries = RETRIES
+                # Rate limit protection
+                sleep(RATE_LIMIT_DELAY)
 
-                while retries:
-                    # Rate limit protection
-                    sleep(RATE_LIMIT_DELAY)
+                try:
+                    callsign = (
+                        flight.callsign
+                        if not (flight.callsign.upper() in BLANK_FIELDS)
+                        else ""
+                    )
 
-                    # Grab and store details
-                    try:
-                        details = self._api.get_flight_details(flight)
-
-                        # Get plane type
-                        try:
-                            plane = details["aircraft"]["model"]["text"]
-                        except (KeyError, TypeError):
-                            plane = ""
-
-                        # Tidy up what we pass along
-                        plane = plane if not (plane.upper() in BLANK_FIELDS) else ""
-
+                    # Look up route (origin/destination) via adsbdb, fall back to FR24
+                    origin, destination = self._get_route(callsign) if callsign else ("", "")
+                    if not origin:
                         origin = (
                             flight.origin_airport_iata
                             if not (flight.origin_airport_iata.upper() in BLANK_FIELDS)
                             else ""
                         )
-
+                    if not destination:
                         destination = (
                             flight.destination_airport_iata
                             if not (flight.destination_airport_iata.upper() in BLANK_FIELDS)
                             else ""
                         )
 
-                        callsign = (
-                            flight.callsign
-                            if not (flight.callsign.upper() in BLANK_FIELDS)
-                            else ""
-                        )
+                    # Look up aircraft type via adsbdb (flight.id is the Mode-S hex)
+                    plane = self._get_aircraft_type(flight.id) if flight.id else ""
 
-                        data.append(
-                            {
-                                "plane": plane,
-                                "origin": origin,
-                                "destination": destination,
-                                "vertical_speed": flight.vertical_speed,
-                                "altitude": flight.altitude,
-                                "callsign": callsign,
-                            }
-                        )
-                        break
+                    data.append(
+                        {
+                            "plane": plane,
+                            "origin": origin,
+                            "destination": destination,
+                            "vertical_speed": flight.vertical_speed,
+                            "altitude": flight.altitude,
+                            "callsign": callsign,
+                        }
+                    )
 
-                    except (KeyError, AttributeError):
-                        retries -= 1
+                except (KeyError, AttributeError):
+                    pass
 
             with self._lock:
                 self._new_data = True

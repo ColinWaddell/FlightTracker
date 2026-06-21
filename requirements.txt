@@ -5,6 +5,7 @@ cffi==2.0.0
 charset-normalizer==3.4.2
 curl_cffi==0.15.0
 FlightRadarAPI==1.5.1
+pyadsbdb==0.1.2
 idna==3.10
 markdown-it-py==4.2.0
 mdurl==0.1.2
