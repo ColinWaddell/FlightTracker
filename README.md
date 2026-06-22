@@ -209,6 +209,8 @@ display a chart of rainfall by adding the following to your `config.py`:
 RAINFALL_ENABLED = True
 ```
 
+[![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
+
 ### Using a local ADS-B receiver (tar1090)
 
 **EXPERIMENTAL 🧪**
@@ -250,8 +252,6 @@ That’s all. The tracker will automatically use your local receiver when `TAR10
 - Origin and destination airport codes are looked up via [adsbdb.com](https://api.adsbdb.com) by callsign, with an 8-hour local cache
 - All position and altitude data comes from your receiver in real time
 - No rate limiting or API key required
-
-[![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
 
 ## Fixing recent flight tracking breakage
 
