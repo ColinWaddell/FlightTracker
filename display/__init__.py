@@ -2,7 +2,11 @@ import sys
 
 from setup import frames
 from utilities.animator import Animator
-from utilities.overhead import Overhead
+try:
+    from config import TAR1090_URL
+    from utilities.overhead_tar1090 import Overhead
+except (ModuleNotFoundError, NameError, ImportError):
+    from utilities.overhead_fr24 import Overhead
 
 from scenes.weather import WeatherScene
 from scenes.flightdetails import FlightDetailsScene

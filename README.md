@@ -144,6 +144,47 @@ In reality you'll want to customise `config.py` for your own purposes.
 | `JOURNEY_CODE_SELECTED`  | Three-letter airport code of a local airport to display in **bold**. *(Optional)* |
 | `JOURNEY_BLANK_FILLER`   | Three-letter text used in place of an unknown airport. Defaults to `" ? "`. |
 | `HAT_PWM_ENABLED`        | Enables PWM via Pi’s soundcard. Requires [solder bridge modification](https://learn.adafruit.com/assets/57727). Defaults to `True`. |
+| `TAR1090_URL`            | URL of your local tar1090 `aircraft.json` endpoint. When set, flight data is pulled from your own ADS-B receiver instead of FlightRadar24. *(Optional — see below)* |
+
+## Using a local ADS-B receiver (tar1090)
+
+By default the tracker pulls flight data from FlightRadar24. If you run your own ADS-B receiver with [tar1090](https://github.com/wiedehopf/tar1090) or a compatible [PiAware](https://www.flightaware.com/adsb/piaware/) / [dump1090-fa](https://github.com/flightaware/dump1090) setup, you can use that as your data source instead — no FlightRadar24 account or API access required.
+
+### What you need
+
+- A Raspberry Pi (or other device) running dump1090-fa, readsb, or similar, with tar1090 installed
+- The device must be reachable on your local network from the Flight Tracker Pi
+- tar1090-db enrichment should be active (this is the default in most installations) — it provides the aircraft type descriptions used by this software
+
+### Finding your aircraft.json URL
+
+The URL varies depending on your setup. Try each of the following in your browser, replacing `your-receiver` with your device’s hostname or IP address, until you get a response containing a list of aircraft:
+
+```
+http://your-receiver/tar1090/data/aircraft.json
+http://your-receiver:8080/data/aircraft.json
+http://your-receiver/dump1090-fa/data/aircraft.json
+http://your-receiver/skyaware/data/aircraft.json
+```
+
+The response should be a JSON object with an `"aircraft"` array. If you see that, you have the right URL.
+
+### Enabling tar1090 as your data source
+
+Add a single line to your `config.py`, using the URL you found above:
+
+```python
+TAR1090_URL = "http://your-receiver:8080/data/aircraft.json"
+```
+
+That’s all. The tracker will automatically use your local receiver when `TAR1090_URL` is present, and fall back to FlightRadar24 if it is not set. Existing `config.py` files require no changes.
+
+### Differences from FlightRadar24 mode
+
+- Aircraft type (e.g. "Airbus A-320") is sourced directly from the tar1090 aircraft database — no external lookup needed
+- Origin and destination airport codes are looked up via [adsbdb.com](https://api.adsbdb.com) by callsign, with an 8-hour local cache
+- All position and altitude data comes from your receiver in real time
+- No rate limiting or API key required
 
 
 ### Configuring permissions to avoid running as root
