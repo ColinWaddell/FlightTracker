@@ -23,7 +23,7 @@ except (ModuleNotFoundError, NameError, ImportError):
 try:
     from config import TAR1090_URL
 except (ModuleNotFoundError, NameError, ImportError):
-    TAR1090_URL = "http://garagepi.local:8080//data/aircraft.json"
+    TAR1090_URL = "http://localhost:8080//data/aircraft.json"
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
