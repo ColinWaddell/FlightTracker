@@ -211,6 +211,8 @@ RAINFALL_ENABLED = True
 
 ### Using a local ADS-B receiver (tar1090)
 
+**EXPERIMENTAL 🧪**
+
 By default the tracker pulls flight data from FlightRadar24. If you run your own ADS-B receiver with [tar1090](https://github.com/wiedehopf/tar1090) or a compatible [PiAware](https://www.flightaware.com/adsb/piaware/) / [dump1090-fa](https://github.com/flightaware/dump1090) setup, you can use that as your data source instead — no FlightRadar24 account or API access required.
 
 #### What you need
