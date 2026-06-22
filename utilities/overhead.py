@@ -1,4 +1,4 @@
-from FlightRadar24.api import FlightRadar24API
+from FlightRadarAPI import FlightRadar24API
 from pyadsbdb import Client as AdsbdbClient
 from threading import Thread, Lock
 from time import sleep, time
@@ -97,11 +97,18 @@ class Overhead:
         if mode_s in self._aircraft_cache:
             return self._aircraft_cache[mode_s]
         aircraft_data = self._adsbdb.get_aircraft_data(mode_s)
-        if not isinstance(aircraft_data, dict):
-            plane = aircraft_data.type or ""
-            plane = plane if not (plane.upper() in BLANK_FIELDS) else ""
+        if isinstance(aircraft_data, dict) and "error" not in aircraft_data:
+            aircraft = aircraft_data.get("response", {}).get("aircraft", {})
+            manufacturer = aircraft.get("manufacturer", "") or ""
+            plane_type = aircraft.get("type", "") or ""
+            if manufacturer.upper() in BLANK_FIELDS:
+                manufacturer = ""
+            if plane_type.upper() in BLANK_FIELDS:
+                plane_type = ""
+            plane = f"{manufacturer} {plane_type}".strip()
             self._aircraft_cache[mode_s] = plane
             return plane
+        self._aircraft_cache[mode_s] = ""
         return ""
 
     def grab_data(self):
@@ -154,8 +161,7 @@ class Overhead:
                             else ""
                         )
 
-                    # Look up aircraft type via adsbdb (flight.id is the Mode-S hex)
-                    plane = self._get_aircraft_type(flight.id) if flight.id else ""
+                    plane = self._get_aircraft_type(flight.registration) if flight.registration else ""
 
                     data.append(
                         {
