@@ -1,10 +1,10 @@
 import math
 import requests
-from threading import Thread, Lock
-from time import sleep, time
 
-from requests.exceptions import ConnectionError
-from urllib3.exceptions import NewConnectionError, MaxRetryError
+from threading import Thread, Lock, Event
+from time import time
+
+from requests.exceptions import RequestException
 
 try:
     from config import MIN_ALTITUDE
@@ -23,7 +23,8 @@ except (ModuleNotFoundError, NameError, ImportError):
 try:
     from config import TAR1090_URL
 except (ModuleNotFoundError, NameError, ImportError):
-    TAR1090_URL = "http://localhost:8080//data/aircraft.json"
+    TAR1090_URL = "http://garagepi.local:8080/data/aircraft.json"
+
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
@@ -35,9 +36,12 @@ BLANK_FIELDS = ["", "N/A", "NONE"]
 def get_route(callsign):
     """
     Look up origin and destination IATA codes for a given callsign.
-    Returns a tuple (origin, destination), each an IATA code string or "".
+
+    Returns:
+        (origin, destination)
     """
     ADSBDB_BASE_URL = "https://api.adsbdb.com/v0"
+
     if not callsign or callsign.upper() in BLANK_FIELDS:
         return "", ""
 
@@ -46,9 +50,11 @@ def get_route(callsign):
             f"{ADSBDB_BASE_URL}/callsign/{callsign}",
             timeout=5,
         )
-        data = response.json()
+        response.raise_for_status()
 
+        data = response.json()
         flightroute = data.get("response", {}).get("flightroute", {})
+
         if not flightroute:
             return "", ""
 
@@ -57,12 +63,13 @@ def get_route(callsign):
 
         if origin.upper() in BLANK_FIELDS:
             origin = ""
+
         if destination.upper() in BLANK_FIELDS:
             destination = ""
 
         return origin, destination
 
-    except (ConnectionError, NewConnectionError, MaxRetryError, ValueError, KeyError):
+    except (RequestException, ValueError, KeyError, AttributeError):
         return "", ""
 
 
@@ -72,53 +79,105 @@ def _in_zone(lat, lon, zone):
 
 def _distance_from_home(lat, lon, alt_ft, home=LOCATION_DEFAULT):
     def polar_to_cartesian(lat, lon, alt):
-        DEG2RAD = math.pi / 180
+        deg2rad = math.pi / 180
+
         return [
-            alt * math.cos(DEG2RAD * lat) * math.sin(DEG2RAD * lon),
-            alt * math.sin(DEG2RAD * lat),
-            alt * math.cos(DEG2RAD * lat) * math.cos(DEG2RAD * lon),
+            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
+            alt * math.sin(deg2rad * lat),
+            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
         ]
 
     altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
+
     x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
     x1, y1, z1 = polar_to_cartesian(*home)
+
     return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
 
 
 class Overhead:
     def __init__(self):
-        self._route_cache = {}  # callsign -> (origin, dest, timestamp)
+        self._route_cache = {}
         self._lock = Lock()
+        self._done = Event()
+
+        self._thread = None
         self._data = []
         self._new_data = False
         self._processing = False
+        self._error = None
+
+    def grab_data(self):
+        """
+        Start a background data grab.
+
+        Returns:
+            True if a new worker was started.
+            False if one was already running.
+        """
+        with self._lock:
+            if self._processing:
+                return False
+
+            self._processing = True
+            self._new_data = False
+            self._error = None
+            self._done.clear()
+
+            self._thread = Thread(
+                target=self._grab_data,
+                name="overhead-data-grabber",
+            )
+
+        self._thread.start()
+        return True
+
+    def wait(self, timeout=None):
+        """
+        Wait for the background task to finish.
+
+        Returns:
+            True if the worker finished.
+            False if timeout expired.
+        """
+        finished = self._done.wait(timeout)
+
+        if finished:
+            thread = self._thread
+            if thread is not None:
+                thread.join()
+
+        return finished
 
     def _get_route(self, callsign):
-        if callsign in self._route_cache:
-            origin, dest, ts = self._route_cache[callsign]
-            if time() - ts < ROUTE_CACHE_TTL:
+        now = time()
+
+        with self._lock:
+            cached = self._route_cache.get(callsign)
+
+        if cached is not None:
+            origin, dest, ts = cached
+            if now - ts < ROUTE_CACHE_TTL:
                 return origin, dest
 
         origin, dest = get_route(callsign)
-        self._route_cache[callsign] = (origin, dest, time())
+
+        with self._lock:
+            self._route_cache[callsign] = (origin, dest, time())
+
         return origin, dest
 
-    def grab_data(self):
-        Thread(target=self._grab_data).start()
-
     def _grab_data(self):
-        with self._lock:
-            self._new_data = False
-            self._processing = True
-
         data = []
 
         try:
             response = requests.get(TAR1090_URL, timeout=10)
+            response.raise_for_status()
+
             aircraft_list = response.json().get("aircraft", [])
 
-            # Filter to aircraft with a current position, numeric altitude, within bounds
             candidates = []
+
             for ac in aircraft_list:
                 lat = ac.get("lat")
                 lon = ac.get("lon")
@@ -126,18 +185,24 @@ class Overhead:
 
                 if lat is None or lon is None:
                     continue
+
                 if not isinstance(alt, (int, float)):
                     continue
+
                 if not (MIN_ALTITUDE < alt < MAX_ALTITUDE):
                     continue
+
                 if not _in_zone(lat, lon, ZONE_DEFAULT):
                     continue
 
                 candidates.append(ac)
 
-            # Sort by distance from home
             candidates.sort(
-                key=lambda ac: _distance_from_home(ac["lat"], ac["lon"], ac["alt_baro"])
+                key=lambda ac: _distance_from_home(
+                    ac["lat"],
+                    ac["lon"],
+                    ac["alt_baro"],
+                )
             )
 
             for ac in candidates[:MAX_FLIGHT_LOOKUP]:
@@ -150,9 +215,10 @@ class Overhead:
                     if plane.upper() in BLANK_FIELDS:
                         plane = ""
 
-                    origin, destination = (
-                        self._get_route(callsign) if callsign else ("", "")
-                    )
+                    if callsign:
+                        origin, destination = self._get_route(callsign)
+                    else:
+                        origin, destination = "", ""
 
                     data.append(
                         {
@@ -164,17 +230,41 @@ class Overhead:
                             "callsign": callsign,
                         }
                     )
-                except (KeyError, AttributeError):
-                    pass
+
+                except (KeyError, AttributeError, TypeError):
+                    continue
 
             with self._lock:
-                self._new_data = True
-                self._processing = False
                 self._data = data
+                self._new_data = True
+                self._error = None
 
-        except (ConnectionError, NewConnectionError, MaxRetryError):
+        except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
+            with self._lock:
+                self._new_data = False
+                self._error = e
+
+        finally:
+            with self._lock:
+                self._processing = False
+
+            self._done.set()
+
+    def refresh(self):
+        """
+        Run the data grab synchronously.
+        """
+        with self._lock:
+            if self._processing:
+                return False
+
+            self._processing = True
             self._new_data = False
-            self._processing = False
+            self._error = None
+            self._done.clear()
+
+        self._grab_data()
+        return True
 
     @property
     def new_data(self):
@@ -187,22 +277,27 @@ class Overhead:
             return self._processing
 
     @property
+    def error(self):
+        with self._lock:
+            return self._error
+
+    @property
     def data(self):
         with self._lock:
             self._new_data = False
-            return self._data
+            return list(self._data)
 
     @property
     def data_is_empty(self):
-        return len(self._data) == 0
+        with self._lock:
+            return len(self._data) == 0
 
 
-# Main function
 if __name__ == "__main__":
     o = Overhead()
-    o.grab_data()
-    while not o.new_data:
-        print("processing...")
-        sleep(1)
+    o.refresh()
 
-    print(o.data)
+    if o.error is not None:
+        print(f"failed: {o.error}")
+    else:
+        print(o.data)

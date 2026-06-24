@@ -1,19 +1,17 @@
 from FlightRadar24.api import FlightRadar24API
-from threading import Thread, Lock
+
+from threading import Thread, Lock, Event
 from time import sleep
 import math
 
-from requests.exceptions import ConnectionError
-from urllib3.exceptions import NewConnectionError
-from urllib3.exceptions import MaxRetryError
+from requests.exceptions import RequestException, ConnectionError
+from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 try:
-    # Attempt to load config data
     from config import MIN_ALTITUDE
-
 except (ModuleNotFoundError, NameError, ImportError):
-    # If there's no config data
     MIN_ALTITUDE = 0  # feet
+
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
@@ -22,47 +20,58 @@ MAX_ALTITUDE = 10000  # feet
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
+
 try:
-    # Attempt to load config data
     from config import ZONE_HOME, LOCATION_HOME
 
     ZONE_DEFAULT = ZONE_HOME
     LOCATION_DEFAULT = LOCATION_HOME
-
 except (ModuleNotFoundError, NameError, ImportError):
-    # If there's no config data
     ZONE_DEFAULT = {"tl_y": 62.61, "tl_x": -13.07, "br_y": 49.71, "br_x": 3.46}
     LOCATION_DEFAULT = [51.509865, -0.118092, EARTH_RADIUS_KM]
 
 
+def _clean_field(value):
+    if value is None:
+        return ""
+
+    try:
+        value = value.strip()
+    except AttributeError:
+        value = str(value).strip()
+
+    if value.upper() in BLANK_FIELDS:
+        return ""
+
+    return value
+
+
 def distance_from_flight_to_home(flight, home=LOCATION_DEFAULT):
-    def polar_to_cartesian(lat, long, alt):
-        DEG2RAD = math.pi / 180
+    def polar_to_cartesian(lat, lon, alt):
+        deg2rad = math.pi / 180
+
         return [
-            alt * math.cos(DEG2RAD * lat) * math.sin(DEG2RAD * long),
-            alt * math.sin(DEG2RAD * lat),
-            alt * math.cos(DEG2RAD * lat) * math.cos(DEG2RAD * long),
+            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
+            alt * math.sin(deg2rad * lat),
+            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
         ]
 
-    def feet_to_meters_plus_earth(altitude_ft):
+    def feet_to_km_plus_earth(altitude_ft):
         altitude_km = 0.0003048 * altitude_ft
         return altitude_km + EARTH_RADIUS_KM
 
     try:
-        (x0, y0, z0) = polar_to_cartesian(
+        x0, y0, z0 = polar_to_cartesian(
             flight.latitude,
             flight.longitude,
-            feet_to_meters_plus_earth(flight.altitude),
+            feet_to_km_plus_earth(flight.altitude),
         )
 
-        (x1, y1, z1) = polar_to_cartesian(*home)
+        x1, y1, z1 = polar_to_cartesian(*home)
 
-        dist = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
+        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
 
-        return dist
-
-    except AttributeError:
-        # on error say it's far away
+    except (AttributeError, TypeError, ValueError):
         return 1e6
 
 
@@ -70,71 +79,110 @@ class Overhead:
     def __init__(self):
         self._api = FlightRadar24API()
         self._lock = Lock()
+        self._done = Event()
+
+        self._thread = None
         self._data = []
         self._new_data = False
         self._processing = False
+        self._error = None
 
     def grab_data(self):
-        Thread(target=self._grab_data).start()
+        """
+        Start a background data grab.
+
+        Returns:
+            True if a new worker was started.
+            False if one was already running.
+        """
+        with self._lock:
+            if self._processing:
+                return False
+
+            self._processing = True
+            self._new_data = False
+            self._error = None
+            self._done.clear()
+
+            self._thread = Thread(
+                target=self._grab_data,
+                name="overhead-flightradar24-grabber",
+            )
+
+        self._thread.start()
+        return True
+
+    def refresh(self):
+        """
+        Run the data grab synchronously.
+
+        Returns:
+            True if the refresh was started.
+            False if one was already running.
+        """
+        with self._lock:
+            if self._processing:
+                return False
+
+            self._processing = True
+            self._new_data = False
+            self._error = None
+            self._done.clear()
+
+        self._grab_data()
+        return True
+
+    def wait(self, timeout=None):
+        """
+        Wait for the background task to finish.
+
+        Returns:
+            True if the worker finished.
+            False if timeout expired.
+        """
+        finished = self._done.wait(timeout)
+
+        if finished:
+            thread = self._thread
+            if thread is not None:
+                thread.join()
+
+        return finished
 
     def _grab_data(self):
-        # Mark data as old
-        with self._lock:
-            self._new_data = False
-            self._processing = True
-
         data = []
 
-        # Grab flight details
         try:
             bounds = self._api.get_bounds(ZONE_DEFAULT)
             flights = self._api.get_flights(bounds=bounds)
 
-            # Sort flights by closest first
             flights = [
-                f
-                for f in flights
-                if f.altitude < MAX_ALTITUDE and f.altitude > MIN_ALTITUDE
+                flight
+                for flight in flights
+                if isinstance(flight.altitude, (int, float))
+                and MIN_ALTITUDE < flight.altitude < MAX_ALTITUDE
             ]
-            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f))
+
+            flights = sorted(flights, key=distance_from_flight_to_home)
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
                 retries = RETRIES
 
                 while retries:
-                    # Rate limit protection
                     sleep(RATE_LIMIT_DELAY)
 
-                    # Grab and store details
                     try:
                         details = self._api.get_flight_details(flight)
 
-                        # Get plane type
                         try:
                             plane = details["aircraft"]["model"]["text"]
                         except (KeyError, TypeError):
                             plane = ""
 
-                        # Tidy up what we pass along
-                        plane = plane if not (plane.upper() in BLANK_FIELDS) else ""
-
-                        origin = (
-                            flight.origin_airport_iata
-                            if not (flight.origin_airport_iata.upper() in BLANK_FIELDS)
-                            else ""
-                        )
-
-                        destination = (
-                            flight.destination_airport_iata
-                            if not (flight.destination_airport_iata.upper() in BLANK_FIELDS)
-                            else ""
-                        )
-
-                        callsign = (
-                            flight.callsign
-                            if not (flight.callsign.upper() in BLANK_FIELDS)
-                            else ""
-                        )
+                        plane = _clean_field(plane)
+                        origin = _clean_field(flight.origin_airport_iata)
+                        destination = _clean_field(flight.destination_airport_iata)
+                        callsign = _clean_field(flight.callsign)
 
                         data.append(
                             {
@@ -146,19 +194,36 @@ class Overhead:
                                 "callsign": callsign,
                             }
                         )
+
                         break
 
-                    except (KeyError, AttributeError):
+                    except (KeyError, AttributeError, TypeError):
                         retries -= 1
 
             with self._lock:
-                self._new_data = True
-                self._processing = False
                 self._data = data
+                self._new_data = True
+                self._error = None
 
-        except (ConnectionError, NewConnectionError, MaxRetryError):
-            self._new_data = False
-            self._processing = False
+        except (
+            RequestException,
+            ConnectionError,
+            NewConnectionError,
+            MaxRetryError,
+            KeyError,
+            AttributeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            with self._lock:
+                self._new_data = False
+                self._error = e
+
+        finally:
+            with self._lock:
+                self._processing = False
+
+            self._done.set()
 
     @property
     def new_data(self):
@@ -171,23 +236,27 @@ class Overhead:
             return self._processing
 
     @property
+    def error(self):
+        with self._lock:
+            return self._error
+
+    @property
     def data(self):
         with self._lock:
             self._new_data = False
-            return self._data
+            return list(self._data)
 
     @property
     def data_is_empty(self):
-        return len(self._data) == 0
+        with self._lock:
+            return len(self._data) == 0
 
 
-# Main function
 if __name__ == "__main__":
-
     o = Overhead()
-    o.grab_data()
-    while not o.new_data:
-        print("processing...")
-        sleep(1)
+    o.refresh()
 
-    print(o.data)
+    if o.error is not None:
+        print(f"failed: {o.error}")
+    else:
+        print(o.data)
