@@ -294,10 +294,51 @@ class Overhead:
 
 
 if __name__ == "__main__":
-    o = Overhead()
-    o.refresh()
+    from time import sleep, strftime
 
-    if o.error is not None:
-        print(f"failed: {o.error}")
-    else:
-        print(o.data)
+    REFRESH_DELAY = 3
+
+    def print_flights(flights):
+        if not flights:
+            print("  No aircraft currently visible.")
+            return
+
+        for index, flight in enumerate(flights, start=1):
+            callsign = flight.get("callsign") or "unknown"
+            plane = flight.get("plane") or "unknown aircraft"
+            origin = flight.get("origin") or "?"
+            destination = flight.get("destination") or "?"
+            altitude = flight.get("altitude", 0)
+            vertical_speed = flight.get("vertical_speed", 0)
+
+            route = f"{origin} -> {destination}"
+
+            print(f"  {index}. {callsign}")
+            print(f"     Aircraft : {plane}")
+            print(f"     Route    : {route}")
+            print(f"     Altitude : {altitude} ft")
+            print(f"     V/S      : {vertical_speed} ft/min")
+
+    o = Overhead()
+
+    print("Overhead aircraft test")
+    print("Press Ctrl-C to quit.")
+    print()
+
+    try:
+        while True:
+            print(f"[{strftime('%H:%M:%S')}] Refreshing...")
+
+            o.refresh()
+
+            if o.error is not None:
+                print(f"  Failed: {o.error}")
+            else:
+                print_flights(o.data)
+
+            print()
+            sleep(REFRESH_DELAY)
+
+    except KeyboardInterrupt:
+        print()
+        print("Exiting.")
