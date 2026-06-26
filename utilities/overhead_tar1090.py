@@ -33,44 +33,30 @@ EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
 
-def get_route(callsign):
+def lookup_route(callsign: str, lat: float | None = None, lng: float | None = None) -> dict | None:
     """
-    Look up origin and destination IATA codes for a given callsign.
+    Look up flight route info from the adsb.im route API.
+
+    Args:
+        callsign: Aircraft callsign (e.g. "BAW123").
+        lat:      Current latitude  (optional, improves disambiguation).
+        lng:      Current longitude (optional, improves disambiguation).
 
     Returns:
-        (origin, destination)
+        Dict with route data (callsign, _airports, plausible, ...) or None on failure.
     """
-    ADSBDB_BASE_URL = "https://api.adsbdb.com/v0"
-
-    if not callsign or callsign.upper() in BLANK_FIELDS:
-        return "", ""
-
-    try:
-        response = requests.get(
-            f"{ADSBDB_BASE_URL}/callsign/{callsign}",
-            timeout=5,
-        )
-        response.raise_for_status()
-
-        data = response.json()
-        flightroute = data.get("response", {}).get("flightroute", {})
-
-        if not flightroute:
-            return "", ""
-
-        origin = flightroute.get("origin", {}).get("iata_code", "") or ""
-        destination = flightroute.get("destination", {}).get("iata_code", "") or ""
-
-        if origin.upper() in BLANK_FIELDS:
-            origin = ""
-
-        if destination.upper() in BLANK_FIELDS:
-            destination = ""
-
-        return origin, destination
-
-    except (RequestException, ValueError, KeyError, AttributeError):
-        return "", ""
+    payload = {"planes": [{"callsign": callsign, "lat": lat, "lng": lng}]}
+    resp = requests.post(
+        "https://adsb.im/api/0/routeset",
+        json=payload,
+        headers={"Content-Type": "application/json; charset=utf-8"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    routes = resp.json()
+    if not routes:
+        return None
+    return routes[0]
 
 
 def _in_zone(lat, lon, zone):
@@ -149,7 +135,7 @@ class Overhead:
 
         return finished
 
-    def _get_route(self, callsign):
+    def _get_route(self, callsign, lat=None, lng=None):
         now = time()
 
         with self._lock:
@@ -160,7 +146,22 @@ class Overhead:
             if now - ts < ROUTE_CACHE_TTL:
                 return origin, dest
 
-        origin, dest = get_route(callsign)
+        origin, dest = "", ""
+
+        try:
+            route = lookup_route(callsign, lat, lng)
+            if route and route.get("_airports"):
+                airports = route["_airports"]
+                origin = airports[0].get("iata", "") or ""
+                dest = airports[-1].get("iata", "") or ""
+
+                if origin.upper() in BLANK_FIELDS:
+                    origin = ""
+
+                if dest.upper() in BLANK_FIELDS:
+                    dest = ""
+        except (RequestException, ValueError, KeyError, AttributeError, TypeError):
+            pass
 
         with self._lock:
             self._route_cache[callsign] = (origin, dest, time())
@@ -216,7 +217,9 @@ class Overhead:
                         plane = ""
 
                     if callsign:
-                        origin, destination = self._get_route(callsign)
+                        origin, destination = self._get_route(
+                            callsign, ac.get("lat"), ac.get("lon")
+                        )
                     else:
                         origin, destination = "", ""
 
