@@ -50,6 +50,8 @@ DEFAULTS: dict[str, Any] = {
     "clock_24hr": True,
     "timezone": "Europe/London",
     "date_format": 0,       # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+    # Web interface
+    "web_interface_enabled": True,
     # Hardware
     "gpio_slowdown": 1,
     "hat_pwm_enabled": True,
@@ -311,6 +313,10 @@ class Config:
     @property
     def date_format(self) -> int:
         return int(self._data.get("date_format", 0))
+
+    @property
+    def web_interface_enabled(self) -> bool:
+        return bool(self._data.get("web_interface_enabled", True))
 
     @property
     def gpio_slowdown(self) -> int:

@@ -255,6 +255,15 @@
       <p class="section-heading">Hardware</p>
 
       <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="web_interface_enabled" id="web_interface_enabled"
+               {% if cfg.web_interface_enabled %}checked{% endif %} />
+        <label class="form-check-label" for="web_interface_enabled">Enable web interface on next boot</label>
+        <div class="form-text text-muted small">If disabled, the config UI will not start and no QR code will be shown. Re-enable by editing <code>config.json</code> directly.</div>
+      </div>
+
+      <hr class="my-3" />
+
+      <div class="mb-2 form-check">
         <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
                {% if cfg.hat_pwm_enabled %}checked{% endif %} />
         <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>

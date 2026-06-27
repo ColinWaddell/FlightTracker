@@ -101,6 +101,8 @@ def settings():
             "clock_24hr":  _bool(form.get("clock_24hr")),
             "timezone":    _str(form.get("timezone"),    cfg.timezone),
             "date_format": _int(form.get("date_format"), 0),
+            # Web interface
+            "web_interface_enabled": _bool(form.get("web_interface_enabled")),
             # Hardware
             "gpio_slowdown":        max(1, min(4, _int(form.get("gpio_slowdown"), 1))),
             "hat_pwm_enabled":      _bool(form.get("hat_pwm_enabled")),
