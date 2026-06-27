@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FlightTracker – Settings</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { background: #f8f9fa; }
+    #map { height: 320px; border-radius: .375rem; }
+    .section-heading { font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid #dee2e6; padding-bottom: .4rem; margin-bottom: 1rem; }
+    .form-check-label { cursor: pointer; }
+    .card { border: none; box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+  </style>
+</head>
+<body>
+<div class="container py-4" style="max-width:680px">
+  <div class="d-flex align-items-center mb-3">
+    <span class="fs-4 fw-semibold me-2">✈</span>
+    <h1 class="fs-4 fw-semibold mb-0">FlightTracker Settings</h1>
+  </div>
+
+  <form method="post" action="/settings" id="settings-form">
+
+    <!-- ─── Flight Monitoring ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Flight Monitoring</p>
+
+      <div class="mb-3">
+        <label class="form-label">Location <small class="text-muted">(click map to set)</small></label>
+        <div id="map" class="mb-2"></div>
+        <input type="hidden" name="flight_lat" id="flight_lat" value="{{ cfg.flight_lat }}" />
+        <input type="hidden" name="flight_lng" id="flight_lng" value="{{ cfg.flight_lng }}" />
+        <div class="row g-2 mt-1">
+          <div class="col">
+            <label class="form-label small">Latitude</label>
+            <input type="number" step="0.0001" class="form-control form-control-sm" id="lat_display" value="{{ cfg.flight_lat }}" />
+          </div>
+          <div class="col">
+            <label class="form-label small">Longitude</label>
+            <input type="number" step="0.0001" class="form-control form-control-sm" id="lng_display" value="{{ cfg.flight_lng }}" />
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Search Radius: <span id="radius_display">{{ cfg.flight_radius }}</span> km</label>
+        <input type="range" class="form-range" name="flight_radius" id="flight_radius"
+               min="1" max="100" step="0.5" value="{{ cfg.flight_radius }}" />
+      </div>
+
+      <div class="row g-3">
+        <div class="col">
+          <label class="form-label small">Min Altitude (m)</label>
+          <input type="number" step="10" min="10" max="20000" class="form-control form-control-sm"
+                 name="flight_min_altitude" value="{{ cfg.flight_min_altitude }}" />
+        </div>
+        <div class="col">
+          <label class="form-label small">Max Altitude (m)</label>
+          <input type="number" step="100" min="100" max="40000" class="form-control form-control-sm"
+                 name="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Airport Display ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Airport Display</p>
+
+      <div class="mb-3">
+        <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR)</small></label>
+        <input type="text" maxlength="4" class="form-control form-control-sm"
+               name="home_airport_code" id="home_airport_code"
+               value="{{ cfg.home_airport_code }}"
+               placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
+        <div id="airport_name_hint" class="form-text text-muted small"></div>
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="full_airport_name" id="full_airport_name"
+               {% if cfg.full_airport_name %}checked{% endif %} />
+        <label class="form-check-label" for="full_airport_name">Show full airport name (scrolling)</label>
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="abbreviate_name" id="abbreviate_name"
+               {% if cfg.abbreviate_name %}checked{% endif %} />
+        <label class="form-check-label" for="abbreviate_name">Abbreviate long names (e.g. "Intl" for "International")</label>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label small">Unknown airport placeholder</label>
+        <input type="text" maxlength="10" class="form-control form-control-sm"
+               name="journey_blank_filler" value="{{ cfg.journey_blank_filler }}"
+               style="max-width:120px" />
+      </div>
+    </div>
+
+    <!-- ─── Plane Info ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Plane Info Row</p>
+      <div class="mb-2">
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="details" id="details_model" value="0"
+                 {% if cfg.details == 0 %}checked{% endif %} />
+          <label class="form-check-label" for="details_model">Aircraft make &amp; model</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="details" id="details_tlm" value="1"
+                 {% if cfg.details == 1 %}checked{% endif %} />
+          <label class="form-check-label" for="details_tlm">Telemetry (altitude / speed / heading)</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Weather ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Weather</p>
+
+      <div class="mb-3">
+        <label class="form-label small">Location <small class="text-muted">(city name for taps-aff / OWM)</small></label>
+        <input type="text" class="form-control form-control-sm"
+               name="weather_location" value="{{ cfg.weather_location }}" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">OpenWeatherMap API Key <small class="text-muted">(optional)</small></label>
+        <input type="text" class="form-control form-control-sm"
+               name="openweather_api_key" value="{{ cfg.openweather_api_key }}"
+               placeholder="Leave blank to use taps-aff" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">Units</label>
+        <select class="form-select form-select-sm" name="units" style="max-width:180px">
+          <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
+          <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
+        </select>
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="weather_graph" id="weather_graph"
+               {% if cfg.weather_graph %}checked{% endif %} />
+        <label class="form-check-label" for="weather_graph">Show rainfall graph</label>
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="rainfall_enabled" id="rainfall_enabled"
+               {% if cfg.rainfall_enabled %}checked{% endif %} />
+        <label class="form-check-label" for="rainfall_enabled">Enable rainfall data</label>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label small">Rainfall sensitivity</label>
+        <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:180px">
+          <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Low</option>
+          <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Medium</option>
+          <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>High</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ─── Display ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Display</p>
+
+      <div class="mb-3">
+        <label class="form-label small">Theme</label>
+        <select class="form-select form-select-sm" name="theme" style="max-width:200px">
+          <option value="0" {% if cfg.theme == 0 %}selected{% endif %}>Default</option>
+          <option value="1" {% if cfg.theme == 1 %}selected{% endif %}>Monochrome</option>
+          <option value="2" {% if cfg.theme == 2 %}selected{% endif %}>Pastel</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">Brightness: <span id="brightness_display">{{ cfg.screen_brightness }}</span>/5</label>
+        <input type="range" class="form-range" name="screen_brightness" id="screen_brightness"
+               min="1" max="5" step="1" value="{{ cfg.screen_brightness }}" style="max-width:240px" />
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
+               {% if cfg.screen_rotate %}checked{% endif %} />
+        <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
+      </div>
+
+      <hr class="my-3" />
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
+               id="screen_schedule_enabled"
+               {% if cfg.screen_schedule_enabled %}checked{% endif %}
+               onchange="document.getElementById('schedule_fields').style.display=this.checked?'block':'none'" />
+        <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
+      </div>
+
+      <div id="schedule_fields" style="display:{% if cfg.screen_schedule_enabled %}block{% else %}none{% endif %}">
+        <div class="row g-2 mt-1">
+          <div class="col-auto">
+            <label class="form-label small">Dim at</label>
+            <input type="time" class="form-control form-control-sm"
+                   name="screen_schedule_start" value="{{ cfg.screen_schedule_start }}" />
+          </div>
+          <div class="col-auto">
+            <label class="form-label small">Brighten at</label>
+            <input type="time" class="form-control form-control-sm"
+                   name="screen_schedule_end" value="{{ cfg.screen_schedule_end }}" />
+          </div>
+          <div class="col-auto">
+            <label class="form-label small">Night brightness (0=off)</label>
+            <input type="number" min="0" max="5" class="form-control form-control-sm"
+                   name="screen_schedule_brightness" value="{{ cfg.screen_schedule_brightness }}"
+                   style="max-width:70px" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Clock / Date ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Clock &amp; Date</p>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
+               {% if cfg.clock_24hr %}checked{% endif %} />
+        <label class="form-check-label" for="clock_24hr">24-hour clock</label>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">Timezone</label>
+        <input type="text" class="form-control form-control-sm"
+               name="timezone" value="{{ cfg.timezone }}"
+               placeholder="e.g. Europe/London" style="max-width:260px" />
+        <div class="form-text text-muted small">Use IANA tz names, e.g. America/New_York</div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label small">Date format</label>
+        <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
+          <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
+          <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
+          <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ─── Data Source ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Data Source</p>
+      <div class="mb-2">
+        <label class="form-label small">tar1090 URL <small class="text-muted">(leave blank to use FlightRadar24)</small></label>
+        <input type="text" class="form-control form-control-sm"
+               name="tar1090_url" value="{{ cfg.tar1090_url }}"
+               placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
+      </div>
+    </div>
+
+    <!-- ─── Hardware ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Hardware</p>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
+               {% if cfg.hat_pwm_enabled %}checked{% endif %} />
+        <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">GPIO slowdown (1–4)</label>
+        <input type="number" min="1" max="4" class="form-control form-control-sm"
+               name="gpio_slowdown" value="{{ cfg.gpio_slowdown }}" style="max-width:80px" />
+        <div class="form-text text-muted small">Increase if you see flickering. Pi 4 usually needs 4.</div>
+      </div>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="loading_led_enabled" id="loading_led_enabled"
+               {% if cfg.loading_led_enabled %}checked{% endif %}
+               onchange="document.getElementById('led_pin_field').style.display=this.checked?'block':'none'" />
+        <label class="form-check-label" for="loading_led_enabled">Status LED (GPIO)</label>
+      </div>
+
+      <div id="led_pin_field" style="display:{% if cfg.loading_led_enabled %}block{% else %}none{% endif %}">
+        <label class="form-label small mt-2">GPIO pin</label>
+        <input type="number" min="1" max="40" class="form-control form-control-sm"
+               name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
+               style="max-width:80px" />
+      </div>
+    </div>
+
+    <div class="d-grid mb-5">
+      <button type="submit" class="btn btn-primary btn-lg">Save &amp; Restart</button>
+    </div>
+
+  </form>
+</div><!-- /container -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Airports lookup ──
+const AIRPORTS = {{ airports_json | safe }};
+
+// ── Leaflet map ──
+const initLat = parseFloat(document.getElementById("flight_lat").value) || 55.87;
+const initLng = parseFloat(document.getElementById("flight_lng").value) || -4.25;
+const initRadius = parseFloat(document.getElementById("flight_radius").value) || 20;
+
+const map = L.map("map").setView([initLat, initLng], 10);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap contributors", maxZoom: 18,
+}).addTo(map);
+
+let marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
+let circle = L.circle([initLat, initLng], { radius: initRadius * 1000, color: "#0d6efd", fillOpacity: 0.1 }).addTo(map);
+
+function updateLocation(lat, lng) {
+  document.getElementById("flight_lat").value = lat.toFixed(6);
+  document.getElementById("flight_lng").value = lng.toFixed(6);
+  document.getElementById("lat_display").value = lat.toFixed(6);
+  document.getElementById("lng_display").value = lng.toFixed(6);
+  marker.setLatLng([lat, lng]);
+  circle.setLatLng([lat, lng]);
+}
+
+marker.on("dragend", e => {
+  const pos = e.target.getLatLng();
+  updateLocation(pos.lat, pos.lng);
+});
+
+map.on("click", e => updateLocation(e.latlng.lat, e.latlng.lng));
+
+document.getElementById("lat_display").addEventListener("change", () => {
+  updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
+});
+document.getElementById("lng_display").addEventListener("change", () => {
+  updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
+});
+
+// ── Radius slider ──
+document.getElementById("flight_radius").addEventListener("input", e => {
+  document.getElementById("radius_display").textContent = e.target.value;
+  circle.setRadius(parseFloat(e.target.value) * 1000);
+});
+
+// ── Brightness slider ──
+document.getElementById("screen_brightness").addEventListener("input", e => {
+  document.getElementById("brightness_display").textContent = e.target.value;
+});
+
+// ── Airport name hint ──
+document.getElementById("home_airport_code").addEventListener("input", e => {
+  const code = e.target.value.toUpperCase();
+  e.target.value = code;
+  const hint = document.getElementById("airport_name_hint");
+  hint.textContent = AIRPORTS[code] ? AIRPORTS[code] : (code.length >= 3 ? "Unknown airport" : "");
+});
+
+// Trigger on load
+(function() {
+  const code = document.getElementById("home_airport_code").value.toUpperCase();
+  const hint = document.getElementById("airport_name_hint");
+  if (AIRPORTS[code]) hint.textContent = AIRPORTS[code];
+})();
+</script>
+</body>
+</html>

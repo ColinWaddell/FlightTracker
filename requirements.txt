@@ -4,12 +4,15 @@ certifi==2025.7.9
 cffi==2.0.0
 charset-normalizer==3.4.2
 curl_cffi==0.15.0
+Flask>=3.0.0
 FlightRadarAPI==1.5.1
 idna==3.10
 markdown-it-py==4.2.0
 mdurl==0.1.2
 pycparser==3.0
 Pygments==2.20.0
+pytz>=2024.1
+qrcode[pil]>=7.4.2
 requests==2.32.4
 rgbmatrix==0.0.1
 rich==15.0.0
