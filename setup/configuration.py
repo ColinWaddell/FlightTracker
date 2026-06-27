@@ -34,12 +34,9 @@ DEFAULTS: dict[str, Any] = {
     # Plane info row
     "details": 0,   # 0 = plane make/model, 1 = altitude/speed/heading
     # Weather
-    "weather_location": "London",
-    "openweather_api_key": "",
+    "weatherapi_key": "",   # weatherapi.com API key; empty = weather disabled
+    "weather_mode": 0,      # 0 = off, 1 = temperature only, 2 = temperature + rainfall
     "units": "m",           # 'm' = metric, 'i' = imperial
-    "rainfall_enabled": False,
-    "weather_graph": True,
-    "rain_sensitivity": 1,  # 0 = low, 1 = medium, 2 = high
     # Display
     "theme": 0,             # 0 = Default, 1 = Monochrome, 2 = Pastel
     "screen_brightness": 3, # 1–5
@@ -102,17 +99,21 @@ def _migrate(mod) -> dict[str, Any]:
     temp_units = get("TEMPERATURE_UNITS", "metric")
     data["units"] = "i" if str(temp_units).lower() == "imperial" else "m"
 
+    # Migrate old RAINFALL_ENABLED → weather_mode
+    # (WEATHER_LOCATION / OPENWEATHER_API_KEY are dropped — weatherapi uses lat/lng)
+    if get("RAINFALL_ENABLED"):
+        data["weather_mode"] = 2
+    elif get("WEATHER_LOCATION"):
+        data["weather_mode"] = 1
+
     # Simple renames
     _simple = {
         "GPIO_SLOWDOWN": "gpio_slowdown",
         "HAT_PWM_ENABLED": "hat_pwm_enabled",
         "JOURNEY_BLANK_FILLER": "journey_blank_filler",
-        "WEATHER_LOCATION": "weather_location",
-        "OPENWEATHER_API_KEY": "openweather_api_key",
         "TAR1090_URL": "tar1090_url",
         "LOADING_LED_ENABLED": "loading_led_enabled",
         "LOADING_LED_GPIO_PIN": "loading_led_gpio_pin",
-        "RAINFALL_ENABLED": "rainfall_enabled",
     }
     for old, new in _simple.items():
         val = get(old)
@@ -160,6 +161,12 @@ class Config:
                     loaded = json.load(fh)
                 # Merge over defaults so new keys always have a value
                 self._data = {**DEFAULTS, **loaded}
+                # One-time migration: old weather_graph/rainfall_enabled → weather_mode
+                if "weather_mode" not in loaded:
+                    if loaded.get("rainfall_enabled"):
+                        self._data["weather_mode"] = 2
+                    elif loaded.get("weather_graph"):
+                        self._data["weather_mode"] = 1
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -247,29 +254,18 @@ class Config:
         return int(self._data.get("details", 0))
 
     @property
-    def weather_location(self) -> str:
-        return str(self._data.get("weather_location", DEFAULTS["weather_location"]))
+    def weatherapi_key(self) -> str:
+        return str(self._data.get("weatherapi_key", ""))
 
     @property
-    def openweather_api_key(self) -> str:
-        return str(self._data.get("openweather_api_key", ""))
+    def weather_mode(self) -> int:
+        """0 = off, 1 = temperature only, 2 = temperature + rainfall graph."""
+        return max(0, min(2, int(self._data.get("weather_mode", 0))))
 
     @property
     def units(self) -> str:
         val = str(self._data.get("units", "m"))
         return val if val in ("m", "i") else "m"
-
-    @property
-    def rainfall_enabled(self) -> bool:
-        return bool(self._data.get("rainfall_enabled", False))
-
-    @property
-    def weather_graph(self) -> bool:
-        return bool(self._data.get("weather_graph", True))
-
-    @property
-    def rain_sensitivity(self) -> int:
-        return int(self._data.get("rain_sensitivity", 1))
 
     @property
     def theme(self) -> int:

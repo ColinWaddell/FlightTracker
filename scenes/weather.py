@@ -16,14 +16,15 @@ from setup.themes import (
 )
 from setup.configuration import Config
 
-import sys
+# WeatherAPI.com endpoint — 2-day forecast, no AQI/alerts
+_WEATHERAPI_URL = (
+    "http://api.weatherapi.com/v1/forecast.json"
+    "?key={key}&q={lat},{lng}&days=2&aqi=no&alerts=no"
+)
 
-# Weather API
-WEATHER_API_URL    = "https://taps-aff.co.uk/api/"
-OPENWEATHER_API_URL = "https://api.openweathermap.org/data/2.5/"
-WEATHER_RETRIES    = 3
+WEATHER_RETRIES = 3
 
-# Temperature → theme key lookup
+# Temperature → theme key lookup (thresholds in °C)
 _TEMPERATURE_THRESHOLDS = [
     (0,  THEME_WEATHER_00C),
     (1,  THEME_WEATHER_01C),
@@ -35,13 +36,13 @@ _TEMPERATURE_THRESHOLDS = [
 ]
 
 # Scene constants
-RAINFALL_REFRESH_SECONDS = 300
+WEATHER_REFRESH_SECONDS  = 300
 RAINFALL_HOURS           = 24
 RAINFALL_12HR_MARKERS    = True
 RAINFALL_GRAPH_ORIGIN    = (39, 15)
 RAINFALL_COLUMN_WIDTH    = 1
 RAINFALL_GRAPH_HEIGHT    = 8
-RAINFALL_MAX_VALUE       = 3   # mm
+RAINFALL_MAX_VALUE       = 3   # mm — columns taller than this will flash
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_REFRESH_SECONDS = 60
@@ -54,137 +55,147 @@ class WeatherError(Exception):
     pass
 
 
-@lru_cache()
-def _grab_weather_tapsaff(location, ttl_hash=None):
-    del ttl_hash
-    retries = WEATHER_RETRIES
-    while retries:
+# ---------------------------------------------------------------------------
+# WeatherAPI fetch — cached by (lat, lng, key, ttl bucket)
+# ---------------------------------------------------------------------------
+
+@lru_cache(maxsize=4)
+def _fetch_weatherapi(lat: float, lng: float, key: str, ttl_hash: int):
+    """Fetch and return the raw weatherapi.com response dict."""
+    del ttl_hash  # only used as a cache-busting key
+    url = _WEATHERAPI_URL.format(key=key, lat=lat, lng=lng)
+    for _ in range(WEATHER_RETRIES):
         try:
-            request = urllib.request.Request(WEATHER_API_URL + location)
-            raw = urllib.request.urlopen(request, timeout=3).read()
-            return json.loads(raw.decode("utf-8"))
+            with urllib.request.urlopen(urllib.request.Request(url), timeout=5) as resp:
+                return json.loads(resp.read().decode())
         except Exception:
-            retries -= 1
-    raise WeatherError(f"Failed to fetch weather for '{location}' after {WEATHER_RETRIES} retries")
+            pass
+    raise WeatherError("weatherapi.com request failed after retries")
 
 
-@lru_cache()
-def _grab_weather_openweather(location, apikey, units, ttl_hash=None):
-    del ttl_hash
-    retries = WEATHER_RETRIES
-    while retries:
-        try:
-            url = (f"{OPENWEATHER_API_URL}weather?q={location}"
-                   f"&appid={apikey}&units={units}")
-            raw = urllib.request.urlopen(urllib.request.Request(url), timeout=3).read()
-            content = json.loads(raw.decode("utf-8"))
-            return content["main"]["temp"]
-        except Exception:
-            retries -= 1
-    raise WeatherError(f"Failed to fetch OWM temp for '{location}' after {WEATHER_RETRIES} retries")
-
-
-def _get_ttl_hash(seconds=60):
+def _ttl_hash(seconds: int = 300) -> int:
     return round(time.time() / seconds)
 
 
-def _temperature_to_colour(temp):
-    """Map temperature (°C) to a theme colour, interpolating between thresholds."""
-    min_temp, min_key = _TEMPERATURE_THRESHOLDS[0]
-    max_temp, max_key = _TEMPERATURE_THRESHOLDS[1]
+def _parse_weather(raw: dict) -> dict:
+    """
+    Returns:
+        {
+            "temp_c": float,                          # current temperature
+            "forecast": [(temp_c, precip_mm), ...]   # 48 hourly entries (2 days)
+        }
+    """
+    temp_c = float(raw["current"]["temp_c"])
+    forecast = [
+        (float(h["temp_c"]), float(h["precip_mm"]))
+        for day in raw["forecast"]["forecastday"]
+        for h in day["hour"]
+    ]
+    return {"temp_c": temp_c, "forecast": forecast}
+
+
+# ---------------------------------------------------------------------------
+# Colour helpers
+# ---------------------------------------------------------------------------
+
+def _temperature_to_colour(temp_c: float) -> graphics.Color:
+    """Map a temperature in °C to an interpolated theme colour."""
+    lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[0]
+    hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[1]
 
     for i in range(1, len(_TEMPERATURE_THRESHOLDS) - 1):
-        if temp > _TEMPERATURE_THRESHOLDS[i][0]:
-            min_temp, min_key = _TEMPERATURE_THRESHOLDS[i]
-            max_temp, max_key = _TEMPERATURE_THRESHOLDS[i + 1]
+        if temp_c > _TEMPERATURE_THRESHOLDS[i][0]:
+            lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[i]
+            hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[i + 1]
 
-    c_min = TC(min_key)
-    c_max = TC(max_key)
+    c_lo = TC(lo_key)
+    c_hi = TC(hi_key)
 
-    if temp >= max_temp:
+    if temp_c >= hi_temp:
         ratio = 1.0
-    elif temp > min_temp:
-        ratio = (temp - min_temp) / (max_temp - min_temp)
+    elif temp_c > lo_temp:
+        ratio = (temp_c - lo_temp) / (hi_temp - lo_temp)
     else:
         ratio = 0.0
 
     return graphics.Color(
-        int(c_min.red   + (c_max.red   - c_min.red)   * ratio),
-        int(c_min.green + (c_max.green - c_min.green) * ratio),
-        int(c_min.blue  + (c_max.blue  - c_min.blue)  * ratio),
+        int(c_lo.red   + (c_hi.red   - c_lo.red)   * ratio),
+        int(c_lo.green + (c_hi.green - c_lo.green) * ratio),
+        int(c_lo.blue  + (c_hi.blue  - c_lo.blue)  * ratio),
     )
 
+
+# ---------------------------------------------------------------------------
+# Scene mixin
+# ---------------------------------------------------------------------------
 
 class WeatherScene(object):
     def __init__(self):
         super().__init__()
-        self._last_upcoming_rain_and_temp = None
-        self._last_temperature = None
-        self._last_temperature_str = None
-        self.upcoming_rain_and_temp = None
-        self.current_temperature = None
+        self._weather_cache    = None   # parsed weather dict
+        self._last_temp_c      = None
+        self._last_temp_str    = None
+        self._last_rain_data   = None   # list of dicts rendered last frame
+        self.current_weather   = None   # parsed weather dict (refreshed each cycle)
+
+    # ── Internal helpers ──────────────────────────────────────────────────
 
     def _cfg(self):
         return Config.instance()
 
-    def _owm_units(self):
-        return "imperial" if self._cfg().units == "i" else "metric"
-
-    def _grab_temperature(self):
+    def _fetch(self):
+        """Fetch current weather from weatherapi.com. Returns parsed dict or None."""
         cfg = self._cfg()
-        apikey = cfg.openweather_api_key
-        location = cfg.weather_location
-
-        if apikey:
-            try:
-                return _grab_weather_openweather(
-                    location, apikey, self._owm_units(),
-                    ttl_hash=_get_ttl_hash()
-                )
-            except WeatherError:
-                _grab_weather_openweather.cache_clear()
-
+        if not cfg.weatherapi_key:
+            return None
         try:
-            weather = _grab_weather_tapsaff(location, ttl_hash=_get_ttl_hash())
-            temp_c = weather["temp_c"]
-            if cfg.units == "i":
-                return temp_c * 9.0 / 5.0 + 32
-            return temp_c
+            raw = _fetch_weatherapi(
+                cfg.flight_lat, cfg.flight_lng,
+                cfg.weatherapi_key,
+                _ttl_hash(WEATHER_REFRESH_SECONDS),
+            )
+            return _parse_weather(raw)
         except WeatherError:
-            _grab_weather_tapsaff.cache_clear()
+            _fetch_weatherapi.cache_clear()
             return None
 
-    def _grab_rainfall(self):
-        cfg = self._cfg()
-        location = cfg.weather_location
-        try:
-            weather = _grab_weather_tapsaff(location, ttl_hash=_get_ttl_hash())
-            forecast_today    = weather["forecast"][0]["hourly"]
-            forecast_tomorrow = weather["forecast"][1]["hourly"]
-            hourly_forecast   = forecast_today + forecast_tomorrow
-            hourly_data = [
-                {"precip_mm": h["precip_mm"], "temp_c": h["temp_c"], "hour": h["hour"]}
-                for h in hourly_forecast
-            ]
-            current_hour = datetime.datetime.now().hour
-            return hourly_data[current_hour: current_hour + RAINFALL_HOURS]
-        except (WeatherError, KeyError, IndexError):
+    def _current_temp_c(self) -> float | None:
+        if self.current_weather is None:
             return None
+        return self.current_weather["temp_c"]
 
-    def draw_rainfall_and_temperature(self, rainfall_and_temperature,
-                                      graph_colour=None, flash_enabled=False):
+    def _rainfall_data(self):
+        """
+        Return 24 hourly dicts starting from the current hour:
+            {"precip_mm": float, "temp_c": float, "hour": int}
+        """
+        if self.current_weather is None:
+            return None
+        forecast = self.current_weather["forecast"]  # 48 entries
+        start = datetime.datetime.now().hour
+        slice_ = forecast[start: start + RAINFALL_HOURS]
+        return [
+            {
+                "precip_mm": precip,
+                "temp_c":    temp,
+                "hour":      (start + i) % 24,
+            }
+            for i, (temp, precip) in enumerate(slice_)
+        ]
+
+    # ── Rainfall graph drawing ────────────────────────────────────────────
+
+    def draw_rainfall_and_temperature(self, rain_data, graph_colour=None, flash_enabled=False):
         columns = range(0, RAINFALL_HOURS * RAINFALL_COLUMN_WIDTH, RAINFALL_COLUMN_WIDTH)
 
-        for data, column_x in zip(rainfall_and_temperature, columns):
+        for data, column_x in zip(rain_data, columns):
             rain_height = int(ceil(
                 data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / RAINFALL_MAX_VALUE)
             ))
 
             if rain_height > RAINFALL_GRAPH_HEIGHT:
-                flash_height = rain_height - RAINFALL_GRAPH_HEIGHT
-                if flash_height > RAINFALL_GRAPH_HEIGHT:
-                    flash_height = RAINFALL_GRAPH_HEIGHT + 1
-                rain_height = RAINFALL_GRAPH_HEIGHT
+                flash_height = min(rain_height - RAINFALL_GRAPH_HEIGHT, RAINFALL_GRAPH_HEIGHT + 1)
+                rain_height  = RAINFALL_GRAPH_HEIGHT
             else:
                 flash_height = 0
 
@@ -195,12 +206,8 @@ class WeatherScene(object):
             y1 = RAINFALL_GRAPH_ORIGIN[1] + (1 if hourly_marker else 0)
             y2 = RAINFALL_GRAPH_ORIGIN[1] - rain_height
 
-            square_colour = (
-                graph_colour if graph_colour is not None
-                else _temperature_to_colour(data["temp_c"])
-            )
-
-            self.draw_square(x1, y1, x2, y2, square_colour)
+            colour = graph_colour if graph_colour is not None else _temperature_to_colour(data["temp_c"])
+            self.draw_square(x1, y1, x2, y2, colour)
 
             if flash_height and flash_enabled and graph_colour is None:
                 self.draw_square(
@@ -211,62 +218,80 @@ class WeatherScene(object):
                     TC(THEME_BG),
                 )
 
+    # ── Keyframes ─────────────────────────────────────────────────────────
+
+    @Animator.KeyFrame.add(frames.PER_SECOND * 1)
+    def weather_update(self, count):
+        """Refresh weather data on the configured interval."""
+        if not (count % WEATHER_REFRESH_SECONDS):
+            self.current_weather = self._fetch()
+
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def rainfall(self, count):
         cfg = self._cfg()
-        if not cfg.rainfall_enabled or not cfg.weather_graph:
+        if cfg.weather_mode < 2:
+            # Clear graph if it was previously drawn
+            if self._last_rain_data is not None:
+                self.draw_rainfall_and_temperature(self._last_rain_data, TC(THEME_BG))
+                self._last_rain_data = None
             return
 
         if len(self._data):
-            self._last_upcoming_rain_and_temp = None
+            self._last_rain_data = None
             return
 
-        if not (count % RAINFALL_REFRESH_SECONDS):
-            self.upcoming_rain_and_temp = self._grab_rainfall()
+        rain_data = self._rainfall_data()
 
-        if self._last_upcoming_rain_and_temp != self.upcoming_rain_and_temp:
-            if self._last_upcoming_rain_and_temp is not None:
-                self.draw_rainfall_and_temperature(
-                    self._last_upcoming_rain_and_temp, TC(THEME_BG)
-                )
+        # Erase stale graph when data changes
+        if self._last_rain_data is not None and self._last_rain_data != rain_data:
+            self.draw_rainfall_and_temperature(self._last_rain_data, TC(THEME_BG))
 
-        if self.upcoming_rain_and_temp:
-            flash_enabled = (
-                RAINFALL_OVERSPILL_FLASH_ENABLED and bool(count % 2)
-            )
-            self.draw_rainfall_and_temperature(
-                self.upcoming_rain_and_temp, flash_enabled=flash_enabled
-            )
-            self._last_upcoming_rain_and_temp = self.upcoming_rain_and_temp.copy()
+        if rain_data:
+            flash_enabled = RAINFALL_OVERSPILL_FLASH_ENABLED and bool(count % 2)
+            self.draw_rainfall_and_temperature(rain_data, flash_enabled=flash_enabled)
+            self._last_rain_data = list(rain_data)
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def temperature(self, count):
+        cfg = self._cfg()
+        if cfg.weather_mode < 1:
+            # Clear temperature if it was previously drawn
+            if self._last_temp_str is not None:
+                graphics.DrawText(
+                    self.canvas, TEMPERATURE_FONT,
+                    TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
+                    TC(THEME_BG), self._last_temp_str,
+                )
+                self._last_temp_str = None
+            return
+
         if len(self._data):
             return
 
-        if not (count % TEMPERATURE_REFRESH_SECONDS):
-            self.current_temperature = None
-            self.current_temperature = self._grab_temperature()
+        temp_c = self._current_temp_c()
 
-        if self._last_temperature_str is not None:
+        # Erase old value
+        if self._last_temp_str is not None:
             graphics.DrawText(
                 self.canvas, TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
-                TC(THEME_BG), self._last_temperature_str,
+                TC(THEME_BG), self._last_temp_str,
             )
 
-        if self.current_temperature is not None:
-            unit_char = "F" if self._cfg().units == "i" else "C"
-            temp_str = f"{round(self.current_temperature)}°{unit_char}".rjust(5)
-            temp_colour = _temperature_to_colour(
-                self.current_temperature
-                if self._cfg().units == "m"
-                else (self.current_temperature - 32) * 5 / 9  # convert back to °C for colour
-            )
+        if temp_c is not None:
+            if cfg.units == "i":
+                display_temp = temp_c * 9.0 / 5.0 + 32
+                unit_char = "F"
+            else:
+                display_temp = temp_c
+                unit_char = "C"
+
+            temp_str = f"{round(display_temp)}°{unit_char}".rjust(5)
             graphics.DrawText(
                 self.canvas, TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
-                temp_colour, temp_str,
+                _temperature_to_colour(temp_c),  # colour always based on °C
+                temp_str,
             )
-            self._last_temperature       = self.current_temperature
-            self._last_temperature_str   = temp_str
+            self._last_temp_c   = temp_c
+            self._last_temp_str = temp_str

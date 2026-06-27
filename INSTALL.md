@@ -112,7 +112,8 @@ You can also create or edit `config.json` by hand in `/home/pi/FlightTracker/`. 
   "flight_radius": 20,
   "flight_min_altitude": 100,
   "home_airport_code": "GLA",
-  "weather_location": "Glasgow",
+  "weatherapi_key": "your_key_here",
+  "weather_mode": 1,
   "units": "m",
   "screen_brightness": 3,
   "gpio_slowdown": 2,
@@ -132,10 +133,9 @@ Any key omitted will use the built-in default.
 | `flight_min_altitude` | Ignore aircraft below this altitude (metres) | `100.0` |
 | `home_airport_code` | IATA code of your local airport - highlighted on display | `""` |
 | `full_airport_name` | Scroll the full airport name instead of just the IATA code | `false` |
-| `weather_location` | City name for weather data | `"London"` |
-| `openweather_api_key` | Optional - enables OpenWeatherMap. [Get a free key here](https://openweathermap.org/price) | `""` |
+| `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Weather uses your flight location coordinates. Leave blank to disable weather entirely | `""` |
+| `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
 | `units` | `"m"` for metric (°C / km), `"i"` for imperial (°F / mi) | `"m"` |
-| `rainfall_enabled` | Show 24-hour rainfall chart (requires taps-aff data source) | `false` |
 | `details` | Bottom row: `0` = aircraft make/model, `1` = altitude/speed/heading | `0` |
 | `theme` | `0` = Default, `1` = Monochrome, `2` = Pastel | `0` |
 | `screen_brightness` | 1 (dim) – 5 (full) | `3` |

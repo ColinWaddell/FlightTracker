@@ -119,16 +119,30 @@
       <p class="section-heading">Weather</p>
 
       <div class="mb-3">
-        <label class="form-label small">Location <small class="text-muted">(city name for taps-aff / OWM)</small></label>
+        <label class="form-label small">WeatherAPI.com API Key</label>
         <input type="text" class="form-control form-control-sm"
-               name="weather_location" value="{{ cfg.weather_location }}" />
+               name="weatherapi_key" value="{{ cfg.weatherapi_key }}"
+               placeholder="Get a free key at weatherapi.com" />
+        <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label small">OpenWeatherMap API Key <small class="text-muted">(optional)</small></label>
-        <input type="text" class="form-control form-control-sm"
-               name="openweather_api_key" value="{{ cfg.openweather_api_key }}"
-               placeholder="Leave blank to use taps-aff" />
+        <label class="form-label small">Weather display</label>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
+                 {% if cfg.weather_mode == 0 %}checked{% endif %} />
+          <label class="form-check-label" for="weather_off">Off</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
+                 {% if cfg.weather_mode == 1 %}checked{% endif %} />
+          <label class="form-check-label" for="weather_temp">Temperature</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
+                 {% if cfg.weather_mode == 2 %}checked{% endif %} />
+          <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
+        </div>
       </div>
 
       <div class="mb-3">
@@ -136,27 +150,6 @@
         <select class="form-select form-select-sm" name="units" style="max-width:180px">
           <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
           <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
-        </select>
-      </div>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="weather_graph" id="weather_graph"
-               {% if cfg.weather_graph %}checked{% endif %} />
-        <label class="form-check-label" for="weather_graph">Show rainfall graph</label>
-      </div>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="rainfall_enabled" id="rainfall_enabled"
-               {% if cfg.rainfall_enabled %}checked{% endif %} />
-        <label class="form-check-label" for="rainfall_enabled">Enable rainfall data</label>
-      </div>
-
-      <div class="mb-2">
-        <label class="form-label small">Rainfall sensitivity</label>
-        <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:180px">
-          <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Low</option>
-          <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Medium</option>
-          <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>High</option>
         </select>
       </div>
     </div>

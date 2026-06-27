@@ -21,7 +21,7 @@ from setup.configuration import Config, DEFAULTS, CONFIG_PATH
 FLASK_PORT = 8584
 
 app = Flask(__name__, template_folder="templates")
-# Secret key only used for flashing messages — not security-critical here
+# Secret key only used for flashing messages - not security-critical here
 app.secret_key = "flighttracker-web-config"
 
 
@@ -85,12 +85,9 @@ def settings():
             # Plane info row
             "details":              _int(form.get("details"), 0),
             # Weather
-            "weather_location":     _str(form.get("weather_location"),     cfg.weather_location),
-            "openweather_api_key":  _str(form.get("openweather_api_key"),  cfg.openweather_api_key),
-            "units":                _str(form.get("units"),                "m"),
-            "rainfall_enabled":     _bool(form.get("rainfall_enabled")),
-            "weather_graph":        _bool(form.get("weather_graph")),
-            "rain_sensitivity":     _int(form.get("rain_sensitivity"), 1),
+            "weatherapi_key":  _str(form.get("weatherapi_key"),  cfg.weatherapi_key),
+            "weather_mode":    _int(form.get("weather_mode"),    0),
+            "units":           _str(form.get("units"),           "m"),
             # Display
             "theme":                _int(form.get("theme"), 0),
             "screen_brightness":    max(1, min(5, _int(form.get("screen_brightness"), 3))),
