@@ -1,5 +1,4 @@
-import math
-import random
+import os
 import socket
 import sys
 import threading
@@ -40,13 +39,15 @@ def _start_flask_daemon():
 
 def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     """
-    Static plasma boot screen with centred QR code.
+    Splash-image boot screen with QR code overlaid at the top-left.
 
-    A single plasma frame is generated from a random seed, painted once,
-    and left on screen until the animator overwrites it on its first pass.
+    Loads assets/splash.bmp (64x32) via PIL and pushes it to the canvas
+    with SetImage, then paints QR modules on top at (0, 0).
     Waits at least 8 s (or indefinitely if no config.json exists yet).
+    The frame is left on screen after the deadline; the animator overwrites
+    it on its first render pass.
     """
-    from rgbmatrix import graphics
+    from PIL import Image
     from web.app import FLASK_PORT
 
     try:
@@ -58,12 +59,12 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     url = f"http://{_local_ip()}:{FLASK_PORT}"
     print(f"[web] Config interface: {url}/settings")
 
-    # -- Pre-compute QR module grid ----------------------------------------
-    qr_modules = None
-    qr_size = 0
-    x_offset = 0
-    y_offset = 0
+    # -- Load splash image ----------------------------------------------------
+    splash_path = os.path.join(os.path.dirname(__file__), "assets", "splash.bmp")
+    splash = Image.open(splash_path)
+    canvas.SetImage(splash)
 
+    # -- Overlay QR at top-left -----------------------------------------------
     if qrcode is not None:
         qr = qrcode.QRCode(
             version=1,
@@ -73,51 +74,20 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
         )
         qr.add_data(url)
         qr.make(fit=True)
-        qr_modules = qr.get_matrix()
-        qr_size = len(qr_modules)
-        x_offset = max(0, (64 - qr_size) // 2)
-        y_offset = max(0, (32 - qr_size) // 2)
+        modules = qr.get_matrix()
+        qr_size = len(modules)
 
-    # -- HSV → RGB helper -------------------------------------------------
-    def _hsv(h):
-        h = h % 360
-        hi = int(h / 60)
-        f = (h / 60) - hi
-        q = int((1 - f) * 255)
-        t_ = int(f * 255)
-        return (
-            (255, t_, 0),
-            (q, 255, 0),
-            (0, 255, t_),
-            (0, q, 255),
-            (t_, 0, 255),
-            (255, 0, q),
-        )[hi]
-
-    # -- Draw a single plasma frame at a random time offset ----------------
-    t = random.uniform(0, 100)
-
-    for y in range(32):
-        for x in range(64):
-            qx, qy = x - x_offset, y - y_offset
-            if qr_modules and 0 <= qx < qr_size and 0 <= qy < qr_size:
-                if qr_modules[qy][qx]:
-                    canvas.SetPixel(x, y, 0, 0, 0)
-                else:
-                    canvas.SetPixel(x, y, 255, 255, 255)
-                continue
-
-            v = math.sin(x / 5.0 + t)
-            v += math.sin(y / 3.0 + t * 1.3)
-            v += math.sin((x + y) / 7.0 + t * 0.7)
-            v += math.sin(math.sqrt((x - 32) ** 2 + (y - 16) ** 2) / 5.0 + t * 0.9)
-            hue = (v * 45.0 + t * 40.0) % 360
-            r, g, b = _hsv(hue)
-            canvas.SetPixel(x, y, r, g, b)
+        for qy, row in enumerate(modules):
+            for qx, cell in enumerate(row):
+                if 0 <= qx < 64 and 0 <= qy < 32:
+                    if cell:
+                        canvas.SetPixel(qx, qy, 0, 0, 0)
+                    else:
+                        canvas.SetPixel(qx, qy, 255, 255, 255)
 
     matrix.SwapOnVSync(canvas)
 
-    # -- Wait out the minimum display period ------------------------------
+    # -- Wait out the minimum display period ----------------------------------
     deadline = time.time() + 8
     while True:
         time.sleep(0.5)
