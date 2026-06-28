@@ -26,7 +26,9 @@
         <label for="password" class="form-label small fw-semibold">Password</label>
         <input type="password" class="form-control" id="password" name="password"
                autofocus autocomplete="current-password" />
+        {% if using_default_password %}
         <div class="form-text text-muted">Default password is <code>flighttracker</code></div>
+        {% endif %}
       </div>
 
       <div class="d-grid">

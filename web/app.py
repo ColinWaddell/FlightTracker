@@ -150,7 +150,9 @@ def login():
                 print("[web] Login failed — wrong password", flush=True)
                 error = "Incorrect password."
 
-    return render_template("login.html", error=error, csrf_token=_csrf_token())
+    using_default_password = not bool(Config.instance().get("web_password_hash"))
+    return render_template("login.html", error=error, csrf_token=_csrf_token(),
+                           using_default_password=using_default_password)
 
 
 @app.route("/logout")
