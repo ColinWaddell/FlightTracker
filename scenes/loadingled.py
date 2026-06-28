@@ -14,6 +14,7 @@ except (ModuleNotFoundError, NameError, ImportError):
 
 BLINKER_STEPS = 4
 
+
 class LoadingLEDScene(object):
     def __init__(self):
         self.gpio_setup_complete = False
@@ -40,10 +41,7 @@ class LoadingLEDScene(object):
 
         if self.overhead.processing:
             if self.gpio_setup_complete:
-                GPIO.output(
-                    LOADING_LED_GPIO_PIN,
-                    GPIO.HIGH if count % 2 else GPIO.LOW
-                )
+                GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH if count % 2 else GPIO.LOW)
 
         else:
             # Not processing, leave LED on

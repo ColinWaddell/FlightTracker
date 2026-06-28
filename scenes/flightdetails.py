@@ -45,7 +45,11 @@ class FlightDetailsScene(object):
                     FLIGHT_NO_FONT,
                     FLIGHT_NO_POSITION[0] + flight_no_text_length,
                     FLIGHT_NO_POSITION[1],
-                    TC(THEME_FLIGHT_NUMERIC) if ch.isnumeric() else TC(THEME_FLIGHT_ALPHA),
+                    (
+                        TC(THEME_FLIGHT_NUMERIC)
+                        if ch.isnumeric()
+                        else TC(THEME_FLIGHT_ALPHA)
+                    ),
                     ch,
                 )
                 flight_no_text_length += ch_length

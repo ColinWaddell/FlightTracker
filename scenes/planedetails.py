@@ -16,7 +16,13 @@ from rgbmatrix import graphics
 
 from utilities.animator import Animator
 from setup import fonts, screen
-from setup.themes import TC, THEME_PLANE, THEME_PLANE_TLM, THEME_PLANE_TLM_UNITS, THEME_BG
+from setup.themes import (
+    TC,
+    THEME_PLANE,
+    THEME_PLANE_TLM,
+    THEME_PLANE_TLM_UNITS,
+    THEME_BG,
+)
 from setup.configuration import Config
 
 PLANE_DISTANCE_FROM_TOP = 31
@@ -26,6 +32,7 @@ PLANE_TEXT_HEIGHT = 8
 # ---------------------------------------------------------------------------
 # Span helpers
 # ---------------------------------------------------------------------------
+
 
 def _spans_width(spans: list) -> int:
     """Total pixel width of a span list."""
@@ -47,10 +54,11 @@ def _draw_spans(canvas, spans: list, x: int, y: int) -> int:
 # Scene
 # ---------------------------------------------------------------------------
 
+
 class PlaneDetailsScene(object):
     def __init__(self):
         super().__init__()
-        self.plane_position   = screen.WIDTH
+        self.plane_position = screen.WIDTH
         self._data_all_looped = False
         self._last_details_mode = None
 
@@ -64,22 +72,22 @@ class PlaneDetailsScene(object):
         cfg = Config.instance()
         flight = self._data[self._data_index]
 
-        altitude_ft      = flight.get("altitude", 0) or 0
+        altitude_ft = flight.get("altitude", 0) or 0
         ground_speed_kts = flight.get("ground_speed", 0) or 0
-        heading          = flight.get("heading", 0) or 0
+        heading = flight.get("heading", 0) or 0
 
         if cfg.units == "i":
-            alt_val    = str(int(altitude_ft))
-            alt_unit   = "ft"
-            speed_val  = str(int(ground_speed_kts * 1.15078))
+            alt_val = str(int(altitude_ft))
+            alt_unit = "ft"
+            speed_val = str(int(ground_speed_kts * 1.15078))
             speed_unit = "mph"
         else:
-            alt_val    = str(int(altitude_ft * 0.3048))
-            alt_unit   = "m"
-            speed_val  = str(int(ground_speed_kts * 1.852))
+            alt_val = str(int(altitude_ft * 0.3048))
+            alt_unit = "m"
+            speed_val = str(int(ground_speed_kts * 1.852))
             speed_unit = "kmh"
 
-        f   = fonts.small_symbols
+        f = fonts.small_symbols
         val = TC(THEME_PLANE_TLM)
         ico = TC(THEME_PLANE_TLM_UNITS)
 
@@ -142,9 +150,7 @@ class PlaneDetailsScene(object):
             self.plane_position = screen.WIDTH
             if len(self._data) > 1:
                 self._data_index = (self._data_index + 1) % len(self._data)
-                self._data_all_looped = (
-                    (not self._data_index) or self._data_all_looped
-                )
+                self._data_all_looped = (not self._data_index) or self._data_all_looped
                 self.reset_scene()
 
     @Animator.KeyFrame.add(0)

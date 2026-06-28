@@ -9,10 +9,10 @@ from setup.configuration import Config
 
 from rgbmatrix import graphics
 
-CLOCK_FONT    = fonts.regular
+CLOCK_FONT = fonts.regular
 CLOCK_AMPM_FONT = fonts.extrasmall
 CLOCK_POSITION = (1, 8)
-AMPM_POSITION  = (44, 5)  # top-right, only shown in 12hr mode
+AMPM_POSITION = (44, 5)  # top-right, only shown in 12hr mode
 
 
 class ClockScene(object):
@@ -52,17 +52,41 @@ class ClockScene(object):
 
         # Undraw old
         if self._last_time is not None:
-            graphics.DrawText(self.canvas, CLOCK_FONT, CLOCK_POSITION[0], CLOCK_POSITION[1],
-                              TC(THEME_BG), self._last_time[:5])  # just the HH:MM part
+            graphics.DrawText(
+                self.canvas,
+                CLOCK_FONT,
+                CLOCK_POSITION[0],
+                CLOCK_POSITION[1],
+                TC(THEME_BG),
+                self._last_time[:5],
+            )  # just the HH:MM part
             if ampm_str:
-                graphics.DrawText(self.canvas, CLOCK_AMPM_FONT, AMPM_POSITION[0], AMPM_POSITION[1],
-                                  TC(THEME_BG), "AM" if "AM" in self._last_time else "PM")
+                graphics.DrawText(
+                    self.canvas,
+                    CLOCK_AMPM_FONT,
+                    AMPM_POSITION[0],
+                    AMPM_POSITION[1],
+                    TC(THEME_BG),
+                    "AM" if "AM" in self._last_time else "PM",
+                )
 
         self._last_time = current_time
 
         # Draw new
-        graphics.DrawText(self.canvas, CLOCK_FONT, CLOCK_POSITION[0], CLOCK_POSITION[1],
-                          TC(THEME_TIME), time_str)
+        graphics.DrawText(
+            self.canvas,
+            CLOCK_FONT,
+            CLOCK_POSITION[0],
+            CLOCK_POSITION[1],
+            TC(THEME_TIME),
+            time_str,
+        )
         if ampm_str:
-            graphics.DrawText(self.canvas, CLOCK_AMPM_FONT, AMPM_POSITION[0], AMPM_POSITION[1],
-                              TC(THEME_TIME_AMPM), ampm_str)
+            graphics.DrawText(
+                self.canvas,
+                CLOCK_AMPM_FONT,
+                AMPM_POSITION[0],
+                AMPM_POSITION[1],
+                TC(THEME_TIME_AMPM),
+                ampm_str,
+            )

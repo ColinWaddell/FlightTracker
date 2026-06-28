@@ -42,7 +42,8 @@ def distance_from_flight_to_home(flight, cfg: Config):
     home = cfg.location_home
     try:
         x0, y0, z0 = polar_to_cartesian(
-            flight.latitude, flight.longitude,
+            flight.latitude,
+            flight.longitude,
             feet_to_km_plus_earth(flight.altitude),
         )
         x1, y1, z1 = polar_to_cartesian(*home)
@@ -112,12 +113,15 @@ class Overhead:
             max_alt_ft = cfg.flight_max_altitude / 0.3048
 
             flights = [
-                f for f in flights
+                f
+                for f in flights
                 if isinstance(f.altitude, (int, float))
                 and min_alt_ft < f.altitude < max_alt_ft
             ]
 
-            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f, cfg))
+            flights = sorted(
+                flights, key=lambda f: distance_from_flight_to_home(f, cfg)
+            )
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
                 retries = RETRIES
@@ -143,7 +147,9 @@ class Overhead:
                             origin_name = ""
 
                         try:
-                            destination_name = details["airport"]["destination"]["name"] or ""
+                            destination_name = (
+                                details["airport"]["destination"]["name"] or ""
+                            )
                         except (KeyError, TypeError):
                             destination_name = ""
 
@@ -158,18 +164,20 @@ class Overhead:
                         except (TypeError, ValueError):
                             heading = 0
 
-                        data.append({
-                            "plane": plane,
-                            "origin": origin,
-                            "destination": destination,
-                            "origin_name": origin_name[:80],
-                            "destination_name": destination_name[:80],
-                            "vertical_speed": flight.vertical_speed,
-                            "altitude": flight.altitude,
-                            "ground_speed": ground_speed,
-                            "heading": heading,
-                            "callsign": callsign,
-                        })
+                        data.append(
+                            {
+                                "plane": plane,
+                                "origin": origin,
+                                "destination": destination,
+                                "origin_name": origin_name[:80],
+                                "destination_name": destination_name[:80],
+                                "vertical_speed": flight.vertical_speed,
+                                "altitude": flight.altitude,
+                                "ground_speed": ground_speed,
+                                "heading": heading,
+                                "callsign": callsign,
+                            }
+                        )
                         break
 
                     except (KeyError, AttributeError, TypeError):
@@ -181,9 +189,14 @@ class Overhead:
                 self._error = None
 
         except (
-            RequestException, ConnectionError,
-            NewConnectionError, MaxRetryError,
-            KeyError, AttributeError, TypeError, ValueError,
+            RequestException,
+            ConnectionError,
+            NewConnectionError,
+            MaxRetryError,
+            KeyError,
+            AttributeError,
+            TypeError,
+            ValueError,
         ) as e:
             with self._lock:
                 self._new_data = False

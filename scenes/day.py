@@ -9,7 +9,7 @@ from setup.configuration import Config
 
 from rgbmatrix import graphics
 
-DAY_FONT     = fonts.small
+DAY_FONT = fonts.small
 DAY_POSITION = (2, 23)
 
 
@@ -37,9 +37,21 @@ class DayScene(object):
             return
 
         if self._last_day is not None:
-            graphics.DrawText(self.canvas, DAY_FONT, DAY_POSITION[0], DAY_POSITION[1],
-                              TC(THEME_BG), self._last_day)
+            graphics.DrawText(
+                self.canvas,
+                DAY_FONT,
+                DAY_POSITION[0],
+                DAY_POSITION[1],
+                TC(THEME_BG),
+                self._last_day,
+            )
 
         self._last_day = current_day
-        graphics.DrawText(self.canvas, DAY_FONT, DAY_POSITION[0], DAY_POSITION[1],
-                          TC(THEME_CURRENT_DAY), current_day)
+        graphics.DrawText(
+            self.canvas,
+            DAY_FONT,
+            DAY_POSITION[0],
+            DAY_POSITION[1],
+            TC(THEME_CURRENT_DAY),
+            current_day,
+        )

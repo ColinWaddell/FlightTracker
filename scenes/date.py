@@ -9,13 +9,13 @@ from setup.configuration import Config
 
 from rgbmatrix import graphics
 
-DATE_FONT     = fonts.small
+DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
 
 _DATE_FORMATS = [
-    "%Y-%m-%d",   # 0 = YYYY-MM-DD
-    "%-d-%-m-%Y", # 1 = DD-MM-YYYY
-    "%-m-%-d-%Y", # 2 = MM-DD-YYYY
+    "%Y-%m-%d",  # 0 = YYYY-MM-DD
+    "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
+    "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
 ]
 
 
@@ -34,7 +34,11 @@ class DateScene(object):
 
     def _date_string(self) -> str:
         cfg = Config.instance()
-        fmt = _DATE_FORMATS[cfg.date_format] if cfg.date_format < len(_DATE_FORMATS) else _DATE_FORMATS[0]
+        fmt = (
+            _DATE_FORMATS[cfg.date_format]
+            if cfg.date_format < len(_DATE_FORMATS)
+            else _DATE_FORMATS[0]
+        )
         return self._now_local().strftime(fmt)
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
@@ -48,9 +52,21 @@ class DateScene(object):
             return
 
         if self._last_date is not None:
-            graphics.DrawText(self.canvas, DATE_FONT, DATE_POSITION[0], DATE_POSITION[1],
-                              TC(THEME_BG), self._last_date)
+            graphics.DrawText(
+                self.canvas,
+                DATE_FONT,
+                DATE_POSITION[0],
+                DATE_POSITION[1],
+                TC(THEME_BG),
+                self._last_date,
+            )
 
         self._last_date = current_date
-        graphics.DrawText(self.canvas, DATE_FONT, DATE_POSITION[0], DATE_POSITION[1],
-                          TC(THEME_CURRENT_DATE), current_date)
+        graphics.DrawText(
+            self.canvas,
+            DATE_FONT,
+            DATE_POSITION[0],
+            DATE_POSITION[1],
+            TC(THEME_CURRENT_DATE),
+            current_date,
+        )

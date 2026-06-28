@@ -22,6 +22,7 @@ BLANK_FIELDS = ["", "N/A", "NONE"]
 _airports: dict[str, str] = {}
 _airports_loaded = False
 
+
 def _load_airports():
     global _airports, _airports_loaded
     if _airports_loaded:
@@ -35,6 +36,7 @@ def _load_airports():
             _airports = {}
     _airports_loaded = True
 
+
 def airport_name(iata: str) -> str:
     _load_airports()
     return _airports.get(iata.upper(), "")
@@ -43,6 +45,7 @@ def airport_name(iata: str) -> str:
 # ---------------------------------------------------------------------------
 # Route lookup (adsb.im)
 # ---------------------------------------------------------------------------
+
 
 def lookup_route(callsign: str, lat=None, lng=None) -> dict | None:
     payload = {"planes": [{"callsign": callsign, "lat": lat, "lng": lng}]}
@@ -61,6 +64,7 @@ def lookup_route(callsign: str, lat=None, lng=None) -> dict | None:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _in_zone(lat, lon, zone):
     return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
 
@@ -73,6 +77,7 @@ def _distance_from_home(lat, lon, alt_ft, home):
             alt * math.sin(deg2rad * lat),
             alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
         ]
+
     altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
     x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
     x1, y1, z1 = polar_to_cartesian(*home)
@@ -82,6 +87,7 @@ def _distance_from_home(lat, lon, alt_ft, home):
 # ---------------------------------------------------------------------------
 # Overhead class
 # ---------------------------------------------------------------------------
+
 
 class Overhead:
     def __init__(self):
@@ -103,7 +109,9 @@ class Overhead:
             self._new_data = False
             self._error = None
             self._done.clear()
-            self._thread = Thread(target=self._grab_data, name="overhead-tar1090-grabber")
+            self._thread = Thread(
+                target=self._grab_data, name="overhead-tar1090-grabber"
+            )
         self._thread.start()
         return True
 
@@ -220,18 +228,20 @@ class Overhead:
                     except (TypeError, ValueError):
                         heading = 0
 
-                    data.append({
-                        "plane": plane,
-                        "origin": origin,
-                        "destination": destination,
-                        "origin_name": origin_name,
-                        "destination_name": destination_name,
-                        "vertical_speed": ac.get("baro_rate", 0),
-                        "altitude": ac.get("alt_baro", 0),
-                        "ground_speed": ground_speed,
-                        "heading": heading,
-                        "callsign": callsign,
-                    })
+                    data.append(
+                        {
+                            "plane": plane,
+                            "origin": origin,
+                            "destination": destination,
+                            "origin_name": origin_name,
+                            "destination_name": destination_name,
+                            "vertical_speed": ac.get("baro_rate", 0),
+                            "altitude": ac.get("alt_baro", 0),
+                            "ground_speed": ground_speed,
+                            "heading": heading,
+                            "callsign": callsign,
+                        }
+                    )
 
                 except (KeyError, AttributeError, TypeError):
                     continue
