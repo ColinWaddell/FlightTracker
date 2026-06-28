@@ -60,9 +60,15 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     print(f"[web] Config interface: {url}/settings")
 
     # -- Load splash image ----------------------------------------------------
+    # canvas.SetImage() is broken with Pillow 10+ (unsafe_ptrs removed).
+    # Read raw bytes and set pixels manually instead.
     splash_path = os.path.join(os.path.dirname(__file__), "assets", "splash.bmp")
     splash = Image.open(splash_path)
-    canvas.SetImage(splash)
+    pixels = splash.tobytes()
+    for y in range(32):
+        for x in range(64):
+            i = (y * 64 + x) * 3
+            canvas.SetPixel(x, y, pixels[i], pixels[i + 1], pixels[i + 2])
 
     # -- Overlay QR at top-left -----------------------------------------------
     if qrcode is not None:
