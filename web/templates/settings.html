@@ -224,13 +224,6 @@
         <label class="form-check-label" for="clock_24hr">24-hour clock</label>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label small">Timezone</label>
-        <input type="text" class="form-control form-control-sm"
-               name="timezone" value="{{ cfg.timezone }}"
-               placeholder="e.g. Europe/London" style="max-width:260px" />
-        <div class="form-text text-muted small">Use IANA tz names, e.g. America/New_York</div>
-      </div>
 
       <div class="mb-2">
         <label class="form-label small">Date format</label>
@@ -270,6 +263,13 @@
         <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
                {% if cfg.hat_pwm_enabled %}checked{% endif %} />
         <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>
+      </div>
+
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" name="led_clkphase" id="led_clkphase"
+               {% if cfg.led_clkphase %}checked{% endif %} />
+        <label class="form-check-label" for="led_clkphase">LED clock phase</label>
+        <div class="form-text text-muted small">Disable if colours look shifted or pixels appear in the wrong place.</div>
       </div>
 
       <div class="mb-3">

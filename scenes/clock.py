@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import pytz
-
 from utilities.animator import Animator
 from setup import fonts, frames
 from setup.themes import TC, THEME_TIME, THEME_TIME_AMPM, THEME_BG
@@ -21,12 +19,7 @@ class ClockScene(object):
         self._last_time = None
 
     def _now_local(self):
-        cfg = Config.instance()
-        try:
-            tz = pytz.timezone(cfg.timezone)
-        except Exception:
-            tz = pytz.utc
-        return datetime.now(tz)
+        return datetime.now()
 
     def _time_string(self) -> tuple[str, str | None]:
         """Returns (time_str, ampm_str_or_None)."""

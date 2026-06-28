@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import pytz
-
 from utilities.animator import Animator
 from setup import fonts, frames
 from setup.themes import TC, THEME_CURRENT_DAY, THEME_BG
@@ -19,12 +17,7 @@ class DayScene(object):
         self._last_day = None
 
     def _now_local(self):
-        cfg = Config.instance()
-        try:
-            tz = pytz.timezone(cfg.timezone)
-        except Exception:
-            tz = pytz.utc
-        return datetime.now(tz)
+        return datetime.now()
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def day(self, count):
