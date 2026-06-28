@@ -24,6 +24,19 @@ def callsigns_match(flights_a, flights_b):
     return set(get_callsigns(flights_a)) == set(get_callsigns(flights_b))
 
 
+_TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
+
+
+def telemetry_changed(flights_a, flights_b):
+    """True if any telemetry field differs for a matching callsign."""
+    lookup = {f["callsign"]: f for f in flights_a}
+    for flight in flights_b:
+        prev = lookup.get(flight["callsign"])
+        if prev and any(flight.get(k) != prev.get(k) for k in _TELEMETRY_FIELDS):
+            return True
+    return False
+
+
 _cfg = Config.instance()
 theme_set(_cfg.theme)
 
@@ -104,15 +117,19 @@ class Display(
         if self.overhead.new_data:
             there_is_data = len(self._data) > 0 or not self.overhead.data_is_empty
             new_data = self.overhead.data
-            data_is_different = not callsigns_match(self._data, new_data)
+            callsigns_changed = not callsigns_match(self._data, new_data)
 
-            if data_is_different:
+            if callsigns_changed:
+                # New or lost flights — full reset including scroll position
                 self._data_index = 0
                 self._data_all_looped = False
                 self._data = new_data
-
-            if there_is_data and data_is_different:
-                self.reset_scene()
+                if there_is_data:
+                    self.reset_scene()
+            elif telemetry_changed(self._data, new_data):
+                # Same flights, updated telemetry — swap data silently so the
+                # scroller picks up new values on its next frame without resetting
+                self._data = new_data
 
     @Animator.KeyFrame.add(1)
     def sync(self, count):
