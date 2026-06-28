@@ -88,6 +88,8 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
 
         matrix.SwapOnVSync(canvas)
 
+    print(f"[web] Config interface: {url}/settings")
+
     deadline = time.time() + 5
 
     _render()
