@@ -48,7 +48,6 @@ DEFAULTS: dict[str, Any] = {
     "screen_schedule_brightness": 0,
     # Clock / date
     "clock_24hr": True,
-    "timezone": "Europe/London",
     "date_format": 0,  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
     # Web interface
     "web_interface_enabled": True,
@@ -56,6 +55,7 @@ DEFAULTS: dict[str, Any] = {
     # Hardware
     "gpio_slowdown": 1,
     "hat_pwm_enabled": True,
+    "led_clkphase": True,
     "loading_led_enabled": False,
     "loading_led_gpio_pin": 25,
     # Data source
@@ -318,10 +318,6 @@ class Config:
         return bool(self._data.get("clock_24hr", True))
 
     @property
-    def timezone(self) -> str:
-        return str(self._data.get("timezone", "Europe/London"))
-
-    @property
     def date_format(self) -> int:
         return int(self._data.get("date_format", 0))
 
@@ -347,6 +343,10 @@ class Config:
     @property
     def hat_pwm_enabled(self) -> bool:
         return bool(self._data.get("hat_pwm_enabled", True))
+
+    @property
+    def led_clkphase(self) -> bool:
+        return bool(self._data.get("led_clkphase", True))
 
     @property
     def loading_led_enabled(self) -> bool:
