@@ -19,6 +19,7 @@ def _start_flask_daemon():
     from web.app import app, FLASK_PORT
     from werkzeug.serving import make_server
     import logging
+
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
     server = make_server("0.0.0.0", FLASK_PORT, app)
@@ -52,10 +53,10 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     except ImportError:
         qrcode = None
 
-    bg     = TC(THEME_BG)
-    fg     = graphics.Color(255, 255, 255)
+    bg = TC(THEME_BG)
+    fg = graphics.Color(255, 255, 255)
     text_c = TC(THEME_FLIGHT_NUMERIC)
-    url    = f"http://{_local_ip()}:{FLASK_PORT}"
+    url = f"http://{_local_ip()}:{FLASK_PORT}"
 
     def _render():
         canvas.Clear()
@@ -81,14 +82,16 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
                         c = fg if cell else bg
                         canvas.SetPixel(x, y, c.red, c.green, c.blue)
 
-        graphics.DrawText(canvas, fonts.extrasmall, qr_size + 2, 7,  text_c, "config:")
-        graphics.DrawText(canvas, fonts.extrasmall, qr_size + 2, 14, text_c, f":{FLASK_PORT}")
+        graphics.DrawText(canvas, fonts.extrasmall, qr_size + 2, 7, text_c, "config:")
+        graphics.DrawText(
+            canvas, fonts.extrasmall, qr_size + 2, 14, text_c, f":{FLASK_PORT}"
+        )
         matrix.SwapOnVSync(canvas)
 
     deadline = time.time() + 5
 
+    _render()
     while True:
-        _render()
         time.sleep(0.5)
         if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
             break
@@ -98,6 +101,7 @@ if __name__ == "__main__":
     cfg = Config.instance()
 
     from display import Display
+
     display = Display()
 
     if cfg.web_interface_enabled:
