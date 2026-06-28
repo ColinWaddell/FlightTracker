@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FlightTracker – Restarting</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <style>
+    body { background: #f8f9fa; }
+    .spinner-ring {
+      width: 48px; height: 48px;
+      border: 5px solid #dee2e6;
+      border-top-color: #0d6efd;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status { color: #6c757d; font-size: .95rem; }
+  </style>
+</head>
+<body>
+<div class="container py-5 text-center" style="max-width:480px">
+  <span class="fs-3 d-block mb-3">✈</span>
+  <h1 class="fs-4 fw-semibold mb-4">Settings saved</h1>
+  <div class="spinner-ring"></div>
+  <p class="status mb-1">FlightTracker is restarting…</p>
+  <p class="status small text-muted" id="elapsed">Waiting for server</p>
+</div>
+
+<script>
+  const start = Date.now();
+  const elapsed = document.getElementById("elapsed");
+
+  function poll() {
+    const secs = Math.round((Date.now() - start) / 1000);
+    elapsed.textContent = `${secs}s elapsed`;
+
+    fetch("/ping", { cache: "no-store" })
+      .then(r => {
+        if (r.ok) {
+          elapsed.textContent = "Back online — redirecting…";
+          window.location.href = "/settings";
+        } else {
+          setTimeout(poll, 1000);
+        }
+      })
+      .catch(() => setTimeout(poll, 1000));
+  }
+
+  // Give the server a moment to go down before we start polling
+  setTimeout(poll, 2000);
+</script>
+</body>
+</html>

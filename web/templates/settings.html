@@ -291,8 +291,14 @@
       </div>
     </div>
 
+    {% if error %}
+    <div class="alert alert-danger mb-3">
+      <strong>Error saving settings:</strong> {{ error }}
+    </div>
+    {% endif %}
+
     <div class="d-grid mb-5">
-      <button type="submit" class="btn btn-primary btn-lg">Save &amp; Restart</button>
+      <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save &amp; Restart</button>
     </div>
 
   </form>
@@ -364,6 +370,13 @@ document.getElementById("home_airport_code").addEventListener("input", e => {
   const hint = document.getElementById("airport_name_hint");
   if (AIRPORTS[code]) hint.textContent = AIRPORTS[code];
 })();
+
+// ── Save button feedback ──
+document.getElementById("settings-form").addEventListener("submit", () => {
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving…';
+});
 </script>
 </body>
 </html>
