@@ -19,7 +19,7 @@ from setup import fonts, screen
 from setup.themes import TC, THEME_PLANE, THEME_PLANE_TLM, THEME_PLANE_TLM_UNITS, THEME_BG
 from setup.configuration import Config
 
-PLANE_DISTANCE_FROM_TOP = 30
+PLANE_DISTANCE_FROM_TOP = 31
 PLANE_TEXT_HEIGHT = 9
 
 
