@@ -3,20 +3,25 @@ FlightTracker web configuration interface.
 
 Runs as a Flask daemon thread on port 8584.
 GET  /           → redirect to /settings
-GET  /settings   → settings form (current config values)
+GET  /login      → login form
+POST /login      → check password, set session
+GET  /logout     → clear session, redirect to /login
+GET  /settings   → settings form (requires login)
 POST /settings   → save config.json, return restarting page, exec after 1 s
-GET  /ping       → health-check used by the restarting page to detect when
-                   the server is back up
+GET  /ping       → health-check used by the restarting page
 """
 
 from __future__ import annotations
 
+import functools
+import hashlib
 import os
 import sys
 import threading
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import (Flask, redirect, render_template, request,
+                   session, url_for)
 
 from setup.configuration import Config, CONFIG_PATH
 
@@ -24,6 +29,27 @@ FLASK_PORT = 8584
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "flighttracker-web-config"
+
+
+# ---------------------------------------------------------------------------
+# Auth helpers
+# ---------------------------------------------------------------------------
+
+def _hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def _check_password(password: str) -> bool:
+    return _hash_password(password) == Config.instance().web_password_hash
+
+
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("login", next=request.path))
+        return f(*args, **kwargs)
+    return decorated
 
 
 # ---------------------------------------------------------------------------
@@ -60,15 +86,14 @@ def _bool(v) -> bool:
 # ---------------------------------------------------------------------------
 
 def _restart_after(delay: float = 1.0):
-    """Schedule os.execv to run after `delay` seconds on a daemon thread."""
+    """Schedule os.execv after `delay` seconds on a daemon thread."""
     def _do_restart():
         import time
         time.sleep(delay)
         print(f"[web] Restarting process: {sys.executable} {sys.argv}", flush=True)
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
-    t = threading.Thread(target=_do_restart, daemon=True, name="restart")
-    t.start()
+    threading.Thread(target=_do_restart, daemon=True, name="restart").start()
 
 
 # ---------------------------------------------------------------------------
@@ -82,11 +107,38 @@ def index():
 
 @app.route("/ping")
 def ping():
-    """Lightweight health-check used by the restarting page."""
     return "ok", 200
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("authenticated"):
+        return redirect(url_for("settings"))
+
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        print(f"[web] Login attempt", flush=True)
+        if _check_password(password):
+            session["authenticated"] = True
+            print("[web] Login successful", flush=True)
+            next_url = request.args.get("next") or url_for("settings")
+            return redirect(next_url)
+        else:
+            print("[web] Login failed — wrong password", flush=True)
+            error = "Incorrect password."
+
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/settings", methods=["GET", "POST"])
+@login_required
 def settings():
     cfg = Config.instance()
 
@@ -138,6 +190,18 @@ def settings():
                 "tar1090_url": _str(form.get("tar1090_url"), ""),
             }
 
+            # Password change — only update if a new password was supplied
+            new_password    = form.get("new_password", "").strip()
+            confirm_password = form.get("confirm_password", "").strip()
+            if new_password:
+                if new_password != confirm_password:
+                    raise ValueError("New passwords do not match.")
+                new_data["web_password_hash"] = _hash_password(new_password)
+                print("[web] Password updated", flush=True)
+            else:
+                # Preserve existing hash
+                new_data["web_password_hash"] = cfg.web_password_hash
+
             print(f"[web] Parsed settings: {new_data}", flush=True)
 
             cfg.update(new_data)
@@ -150,14 +214,11 @@ def settings():
             traceback.print_exc()
             return render_template("settings.html", cfg=cfg.as_dict(),
                                    airports_json=_airports_json(),
-                                   error=str(exc)), 500
+                                   error=str(exc)), 400
 
-        # Respond first, then exec — otherwise the browser gets a connection
-        # reset and appears to do nothing.
         _restart_after(delay=1.0)
         return render_template("restarting.html")
 
-    # GET
     return render_template(
         "settings.html",
         cfg=cfg.as_dict(),

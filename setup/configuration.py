@@ -52,6 +52,7 @@ DEFAULTS: dict[str, Any] = {
     "date_format": 0,       # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
     # Web interface
     "web_interface_enabled": True,
+    "web_password_hash": "",   # SHA-256 hex; empty = default password "flighttracker"
     # Hardware
     "gpio_slowdown": 1,
     "hat_pwm_enabled": True,
@@ -317,6 +318,16 @@ class Config:
     @property
     def web_interface_enabled(self) -> bool:
         return bool(self._data.get("web_interface_enabled", True))
+
+    @property
+    def web_password_hash(self) -> str:
+        """SHA-256 hex digest of the web UI password.
+        If not set, returns the hash of the default password 'flighttracker'."""
+        import hashlib
+        stored = str(self._data.get("web_password_hash", ""))
+        if stored:
+            return stored
+        return hashlib.sha256(b"flighttracker").hexdigest()
 
     @property
     def gpio_slowdown(self) -> int:

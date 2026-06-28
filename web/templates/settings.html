@@ -16,9 +16,12 @@
 </head>
 <body>
 <div class="container py-4" style="max-width:680px">
-  <div class="d-flex align-items-center mb-3">
-    <span class="fs-4 fw-semibold me-2">✈</span>
-    <h1 class="fs-4 fw-semibold mb-0">FlightTracker Settings</h1>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center">
+      <span class="fs-4 fw-semibold me-2">✈</span>
+      <h1 class="fs-4 fw-semibold mb-0">FlightTracker Settings</h1>
+    </div>
+    <a href="/logout" class="btn btn-sm btn-outline-secondary">Sign out</a>
   </div>
 
   <form method="post" action="/settings" id="settings-form" novalidate>
@@ -288,6 +291,25 @@
         <input type="number" min="1" max="40" class="form-control form-control-sm"
                name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
                style="max-width:80px" />
+      </div>
+    </div>
+
+    <!-- ─── Change Password ─── -->
+    <div class="card mb-3 p-3">
+      <p class="section-heading">Change Password</p>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <label class="form-label small">New password</label>
+          <input type="password" class="form-control form-control-sm"
+                 name="new_password" id="new_password" autocomplete="new-password"
+                 placeholder="Leave blank to keep current" />
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label small">Confirm new password</label>
+          <input type="password" class="form-control form-control-sm"
+                 name="confirm_password" id="confirm_password" autocomplete="new-password"
+                 placeholder="Repeat new password" />
+        </div>
       </div>
     </div>
 
