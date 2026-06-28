@@ -86,7 +86,7 @@ _THEME_DEFAULT = {
     THEME_WEATHER_01C:               colours.SAPPHIRE,
     THEME_WEATHER_10C:               colours.LIGHT_METHYL_BLUE,
     THEME_WEATHER_15C:               colours.WAX_YELLOW,
-    THEME_WEATHER_20C:               colours.PEACH,
+    THEME_WEATHER_20C:               colours.PEACH_SOFT,
     THEME_WEATHER_25C:               colours.PEACH_RED,
     THEME_WEATHER_35C:               colours.SCARLET_RED,
 }
@@ -154,7 +154,7 @@ _THEME_PASTEL = {
     THEME_WEATHER_01C:               colours.POWDER_BLUE,
     THEME_WEATHER_10C:               colours.LIGHT_SKY_BLUE,
     THEME_WEATHER_15C:               colours.LEMON_CHIFFON,
-    THEME_WEATHER_20C:               colours.PEACH,
+    THEME_WEATHER_20C:               colours.PEACH_SOFT,
     THEME_WEATHER_25C:               colours.PEACH_PUFF,
     THEME_WEATHER_35C:               colours.HOT_PINK,
 }
