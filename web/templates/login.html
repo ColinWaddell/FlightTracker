@@ -17,6 +17,7 @@
 
   <div class="card border-0 shadow-sm p-4">
     <form method="post" action="{{ url_for('login', next=request.args.get('next', '')) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
       {% if error %}
       <div class="alert alert-danger py-2 small">{{ error }}</div>
       {% endif %}
