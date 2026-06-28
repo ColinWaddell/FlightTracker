@@ -11,8 +11,13 @@ from setup import fonts, frames
 from setup.themes import TC
 from setup.themes import (
     THEME_BG,
-    THEME_WEATHER_00C, THEME_WEATHER_01C, THEME_WEATHER_10C,
-    THEME_WEATHER_15C, THEME_WEATHER_20C, THEME_WEATHER_25C, THEME_WEATHER_35C,
+    THEME_WEATHER_00C,
+    THEME_WEATHER_01C,
+    THEME_WEATHER_10C,
+    THEME_WEATHER_15C,
+    THEME_WEATHER_20C,
+    THEME_WEATHER_25C,
+    THEME_WEATHER_35C,
 )
 from setup.configuration import Config
 
@@ -26,8 +31,8 @@ WEATHER_RETRIES = 3
 
 # Temperature → theme key lookup (thresholds in °C)
 _TEMPERATURE_THRESHOLDS = [
-    (0,  THEME_WEATHER_00C),
-    (1,  THEME_WEATHER_01C),
+    (0, THEME_WEATHER_00C),
+    (1, THEME_WEATHER_01C),
     (10, THEME_WEATHER_10C),
     (15, THEME_WEATHER_15C),
     (20, THEME_WEATHER_20C),
@@ -36,19 +41,19 @@ _TEMPERATURE_THRESHOLDS = [
 ]
 
 # Scene constants
-WEATHER_REFRESH_SECONDS  = 300
-RAINFALL_HOURS           = 24
-RAINFALL_12HR_MARKERS    = True
-RAINFALL_GRAPH_ORIGIN    = (39, 15)
-RAINFALL_COLUMN_WIDTH    = 1
-RAINFALL_GRAPH_HEIGHT    = 8
-RAINFALL_MAX_VALUE       = 3   # mm — columns taller than this will flash
+WEATHER_REFRESH_SECONDS = 300
+RAINFALL_HOURS = 24
+RAINFALL_12HR_MARKERS = True
+RAINFALL_GRAPH_ORIGIN = (39, 15)
+RAINFALL_COLUMN_WIDTH = 1
+RAINFALL_GRAPH_HEIGHT = 8
+RAINFALL_MAX_VALUE = 3  # mm — columns taller than this will flash
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_REFRESH_SECONDS = 60
-TEMPERATURE_FONT            = fonts.extrasmall
-TEMPERATURE_FONT_HEIGHT     = 5
-TEMPERATURE_POSITION        = (48, TEMPERATURE_FONT_HEIGHT + 1)
+TEMPERATURE_FONT = fonts.extrasmall
+TEMPERATURE_FONT_HEIGHT = 5
+TEMPERATURE_POSITION = (48, TEMPERATURE_FONT_HEIGHT + 1)
 
 
 class WeatherError(Exception):
@@ -58,6 +63,7 @@ class WeatherError(Exception):
 # ---------------------------------------------------------------------------
 # WeatherAPI fetch — cached by (lat, lng, key, ttl bucket)
 # ---------------------------------------------------------------------------
+
 
 @lru_cache(maxsize=4)
 def _fetch_weatherapi(lat: float, lng: float, key: str, ttl_hash: int):
@@ -98,6 +104,7 @@ def _parse_weather(raw: dict) -> dict:
 # Colour helpers
 # ---------------------------------------------------------------------------
 
+
 def _temperature_to_colour(temp_c: float) -> graphics.Color:
     """Map a temperature in °C to an interpolated theme colour."""
     lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[0]
@@ -119,9 +126,9 @@ def _temperature_to_colour(temp_c: float) -> graphics.Color:
         ratio = 0.0
 
     return graphics.Color(
-        int(c_lo.red   + (c_hi.red   - c_lo.red)   * ratio),
+        int(c_lo.red + (c_hi.red - c_lo.red) * ratio),
         int(c_lo.green + (c_hi.green - c_lo.green) * ratio),
-        int(c_lo.blue  + (c_hi.blue  - c_lo.blue)  * ratio),
+        int(c_lo.blue + (c_hi.blue - c_lo.blue) * ratio),
     )
 
 
@@ -129,16 +136,17 @@ def _temperature_to_colour(temp_c: float) -> graphics.Color:
 # Scene mixin
 # ---------------------------------------------------------------------------
 
+
 class WeatherScene(object):
     def __init__(self):
         super().__init__()
-        self._weather_cache    = None   # parsed weather dict
-        self._last_temp_c      = None
-        self._last_temp_str    = None
-        self._last_rain_data   = None   # list of dicts rendered last frame
-        self.current_weather   = None   # parsed weather dict (refreshed each cycle)
+        self._weather_cache = None  # parsed weather dict
+        self._last_temp_c = None
+        self._last_temp_str = None
+        self._last_rain_data = None  # list of dicts rendered last frame
+        self.current_weather = None  # parsed weather dict (refreshed each cycle)
 
-    # ── Internal helpers ──────────────────────────────────────────────────
+    # -- Internal helpers --------------------------------------------------
 
     def _cfg(self):
         return Config.instance()
@@ -150,7 +158,8 @@ class WeatherScene(object):
             return None
         try:
             raw = _fetch_weatherapi(
-                cfg.flight_lat, cfg.flight_lng,
+                cfg.flight_lat,
+                cfg.flight_lng,
                 cfg.weatherapi_key,
                 _ttl_hash(WEATHER_REFRESH_SECONDS),
             )
@@ -173,29 +182,35 @@ class WeatherScene(object):
             return None
         forecast = self.current_weather["forecast"]  # 48 entries
         start = datetime.datetime.now().hour
-        slice_ = forecast[start: start + RAINFALL_HOURS]
+        slice_ = forecast[start : start + RAINFALL_HOURS]
         return [
             {
                 "precip_mm": precip,
-                "temp_c":    temp,
-                "hour":      (start + i) % 24,
+                "temp_c": temp,
+                "hour": (start + i) % 24,
             }
             for i, (temp, precip) in enumerate(slice_)
         ]
 
-    # ── Rainfall graph drawing ────────────────────────────────────────────
+    # -- Rainfall graph drawing --------------------------------------------
 
-    def draw_rainfall_and_temperature(self, rain_data, graph_colour=None, flash_enabled=False):
-        columns = range(0, RAINFALL_HOURS * RAINFALL_COLUMN_WIDTH, RAINFALL_COLUMN_WIDTH)
+    def draw_rainfall_and_temperature(
+        self, rain_data, graph_colour=None, flash_enabled=False
+    ):
+        columns = range(
+            0, RAINFALL_HOURS * RAINFALL_COLUMN_WIDTH, RAINFALL_COLUMN_WIDTH
+        )
 
         for data, column_x in zip(rain_data, columns):
-            rain_height = int(ceil(
-                data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / RAINFALL_MAX_VALUE)
-            ))
+            rain_height = int(
+                ceil(data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / RAINFALL_MAX_VALUE))
+            )
 
             if rain_height > RAINFALL_GRAPH_HEIGHT:
-                flash_height = min(rain_height - RAINFALL_GRAPH_HEIGHT, RAINFALL_GRAPH_HEIGHT + 1)
-                rain_height  = RAINFALL_GRAPH_HEIGHT
+                flash_height = min(
+                    rain_height - RAINFALL_GRAPH_HEIGHT, RAINFALL_GRAPH_HEIGHT + 1
+                )
+                rain_height = RAINFALL_GRAPH_HEIGHT
             else:
                 flash_height = 0
 
@@ -206,7 +221,11 @@ class WeatherScene(object):
             y1 = RAINFALL_GRAPH_ORIGIN[1] + (1 if hourly_marker else 0)
             y2 = RAINFALL_GRAPH_ORIGIN[1] - rain_height
 
-            colour = graph_colour if graph_colour is not None else _temperature_to_colour(data["temp_c"])
+            colour = (
+                graph_colour
+                if graph_colour is not None
+                else _temperature_to_colour(data["temp_c"])
+            )
             self.draw_square(x1, y1, x2, y2, colour)
 
             if flash_height and flash_enabled and graph_colour is None:
@@ -218,7 +237,7 @@ class WeatherScene(object):
                     TC(THEME_BG),
                 )
 
-    # ── Keyframes ─────────────────────────────────────────────────────────
+    # -- Keyframes ---------------------------------------------------------
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def weather_update(self, count):
@@ -258,9 +277,12 @@ class WeatherScene(object):
             # Clear temperature if it was previously drawn
             if self._last_temp_str is not None:
                 graphics.DrawText(
-                    self.canvas, TEMPERATURE_FONT,
-                    TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
-                    TC(THEME_BG), self._last_temp_str,
+                    self.canvas,
+                    TEMPERATURE_FONT,
+                    TEMPERATURE_POSITION[0],
+                    TEMPERATURE_POSITION[1],
+                    TC(THEME_BG),
+                    self._last_temp_str,
                 )
                 self._last_temp_str = None
             return
@@ -273,9 +295,12 @@ class WeatherScene(object):
         # Erase old value
         if self._last_temp_str is not None:
             graphics.DrawText(
-                self.canvas, TEMPERATURE_FONT,
-                TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
-                TC(THEME_BG), self._last_temp_str,
+                self.canvas,
+                TEMPERATURE_FONT,
+                TEMPERATURE_POSITION[0],
+                TEMPERATURE_POSITION[1],
+                TC(THEME_BG),
+                self._last_temp_str,
             )
 
         if temp_c is not None:
@@ -288,10 +313,12 @@ class WeatherScene(object):
 
             temp_str = f"{round(display_temp)}°{unit_char}".rjust(5)
             graphics.DrawText(
-                self.canvas, TEMPERATURE_FONT,
-                TEMPERATURE_POSITION[0], TEMPERATURE_POSITION[1],
+                self.canvas,
+                TEMPERATURE_FONT,
+                TEMPERATURE_POSITION[0],
+                TEMPERATURE_POSITION[1],
                 _temperature_to_colour(temp_c),  # colour always based on °C
                 temp_str,
             )
-            self._last_temp_c   = temp_c
+            self._last_temp_c = temp_c
             self._last_temp_str = temp_str

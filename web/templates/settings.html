@@ -26,7 +26,7 @@
 
   <form method="post" action="/settings" id="settings-form" novalidate>
 
-    <!-- ─── Flight Monitoring ─── -->
+    <!-- --- Flight Monitoring --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Flight Monitoring</p>
 
@@ -67,7 +67,7 @@
       </div>
     </div>
 
-    <!-- ─── Airport Display ─── -->
+    <!-- --- Airport Display --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Airport Display</p>
 
@@ -100,7 +100,7 @@
       </div>
     </div>
 
-    <!-- ─── Plane Info ─── -->
+    <!-- --- Plane Info --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Plane Info Row</p>
       <div class="mb-2">
@@ -117,7 +117,7 @@
       </div>
     </div>
 
-    <!-- ─── Weather ─── -->
+    <!-- --- Weather --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Weather</p>
 
@@ -157,7 +157,7 @@
       </div>
     </div>
 
-    <!-- ─── Display ─── -->
+    <!-- --- Display --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Display</p>
 
@@ -214,7 +214,7 @@
       </div>
     </div>
 
-    <!-- ─── Clock / Date ─── -->
+    <!-- --- Clock / Date --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Clock &amp; Date</p>
 
@@ -242,7 +242,7 @@
       </div>
     </div>
 
-    <!-- ─── Data Source ─── -->
+    <!-- --- Data Source --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Data Source</p>
       <div class="mb-2">
@@ -253,7 +253,7 @@
       </div>
     </div>
 
-    <!-- ─── Hardware ─── -->
+    <!-- --- Hardware --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Hardware</p>
 
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <!-- ─── Change Password ─── -->
+    <!-- --- Change Password --- -->
     <div class="card mb-3 p-3">
       <p class="section-heading">Change Password</p>
       <div class="row g-3">
@@ -328,10 +328,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ── Airports lookup ──
+// -- Airports lookup --
 const AIRPORTS = {{ airports_json | safe }};
 
-// ── Leaflet map ──
+// -- Leaflet map --
 const initLat = parseFloat(document.getElementById("flight_lat").value) || 55.87;
 const initLng = parseFloat(document.getElementById("flight_lng").value) || -4.25;
 const initRadius = parseFloat(document.getElementById("flight_radius").value) || 20;
@@ -367,18 +367,18 @@ document.getElementById("lng_display").addEventListener("change", () => {
   updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
 });
 
-// ── Radius slider ──
+// -- Radius slider --
 document.getElementById("flight_radius").addEventListener("input", e => {
   document.getElementById("radius_display").textContent = e.target.value;
   circle.setRadius(parseFloat(e.target.value) * 1000);
 });
 
-// ── Brightness slider ──
+// -- Brightness slider --
 document.getElementById("screen_brightness").addEventListener("input", e => {
   document.getElementById("brightness_display").textContent = e.target.value;
 });
 
-// ── Airport name hint ──
+// -- Airport name hint --
 document.getElementById("home_airport_code").addEventListener("input", e => {
   const code = e.target.value.toUpperCase();
   e.target.value = code;
@@ -393,7 +393,7 @@ document.getElementById("home_airport_code").addEventListener("input", e => {
   if (AIRPORTS[code]) hint.textContent = AIRPORTS[code];
 })();
 
-// ── Save button feedback ──
+// -- Save button feedback --
 document.getElementById("settings-form").addEventListener("submit", () => {
   const btn = document.getElementById("save-btn");
   btn.disabled = true;

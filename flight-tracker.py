@@ -58,7 +58,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     url = f"http://{_local_ip()}:{FLASK_PORT}"
     print(f"[web] Config interface: {url}/settings")
 
-    # ── Pre-compute QR module grid ────────────────────────────────────────
+    # -- Pre-compute QR module grid ----------------------------------------
     qr_modules = None
     qr_size = 0
     x_offset = 0
@@ -78,7 +78,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
         x_offset = max(0, (64 - qr_size) // 2)
         y_offset = max(0, (32 - qr_size) // 2)
 
-    # ── HSV → RGB helper ─────────────────────────────────────────────────
+    # -- HSV → RGB helper -------------------------------------------------
     def _hsv(h):
         h = h % 360
         hi = int(h / 60)
@@ -94,7 +94,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
             (255, 0, q),
         )[hi]
 
-    # ── Draw a single plasma frame at a random time offset ────────────────
+    # -- Draw a single plasma frame at a random time offset ----------------
     t = random.uniform(0, 100)
 
     for y in range(32):
@@ -117,7 +117,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
 
     matrix.SwapOnVSync(canvas)
 
-    # ── Wait out the minimum display period ──────────────────────────────
+    # -- Wait out the minimum display period ------------------------------
     deadline = time.time() + 8
     while True:
         time.sleep(0.5)
