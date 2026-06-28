@@ -24,7 +24,7 @@ def _start_flask_daemon():
 
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
-    server = make_server("0.0.0.0", FLASK_PORT, app)
+    server = make_server("0.0.0.0", FLASK_PORT, app, threaded=True)
     # Werkzeug sets the socket inheritable so its reloader can pass it to child
     # processes. We don't use the reloader, but the flag survives os.execv and
     # causes "Address already in use" on restart. Clear it here.
@@ -60,9 +60,9 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
 
     # ── Pre-compute QR module grid ────────────────────────────────────────
     qr_modules = None
-    qr_size    = 0
-    x_offset   = 0
-    y_offset   = 0
+    qr_size = 0
+    x_offset = 0
+    y_offset = 0
 
     if qrcode is not None:
         qr = qrcode.QRCode(
@@ -74,24 +74,24 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
         qr.add_data(url)
         qr.make(fit=True)
         qr_modules = qr.get_matrix()
-        qr_size    = len(qr_modules)
-        x_offset   = max(0, (64 - qr_size) // 2)
-        y_offset   = max(0, (32 - qr_size) // 2)
+        qr_size = len(qr_modules)
+        x_offset = max(0, (64 - qr_size) // 2)
+        y_offset = max(0, (32 - qr_size) // 2)
 
     # ── HSV → RGB helper ─────────────────────────────────────────────────
     def _hsv(h):
         h = h % 360
         hi = int(h / 60)
-        f  = (h / 60) - hi
-        q  = int((1 - f) * 255)
+        f = (h / 60) - hi
+        q = int((1 - f) * 255)
         t_ = int(f * 255)
         return (
-            (255, t_,  0  ),
-            (q,   255, 0  ),
-            (0,   255, t_ ),
-            (0,   q,   255),
-            (t_,  0,   255),
-            (255, 0,   q  ),
+            (255, t_, 0),
+            (q, 255, 0),
+            (0, 255, t_),
+            (0, q, 255),
+            (t_, 0, 255),
+            (255, 0, q),
         )[hi]
 
     # ── Draw a single plasma frame at a random time offset ────────────────
@@ -107,7 +107,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
                     canvas.SetPixel(x, y, 255, 255, 255)
                 continue
 
-            v  = math.sin(x / 5.0 + t)
+            v = math.sin(x / 5.0 + t)
             v += math.sin(y / 3.0 + t * 1.3)
             v += math.sin((x + y) / 7.0 + t * 0.7)
             v += math.sin(math.sqrt((x - 32) ** 2 + (y - 16) ** 2) / 5.0 + t * 0.9)

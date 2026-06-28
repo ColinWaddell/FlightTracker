@@ -1,4 +1,4 @@
-from time import sleep
+from time import perf_counter, sleep
 
 DELAY_DEFAULT = 0.01
 
@@ -37,6 +37,8 @@ class Animator(object):
 
     def play(self):
         while True:
+            start_time = perf_counter()
+
             for keyframe in self.keyframes:
                 # If divisor == 0 then only run once on first loop
                 if self.frame == 0:
@@ -59,7 +61,15 @@ class Animator(object):
 
             self._reset_scene = False
             self.frame += 1
-            sleep(self._delay)
+
+            elapsed = perf_counter() - start_time
+            target = self._delay
+            sleep_time = target - elapsed
+            if sleep_time < 0.001:
+                sleep_time = 0.001
+            elif sleep_time > 0.05:
+                sleep_time = 0.05
+            sleep(sleep_time)
 
     @property
     def delay(self):

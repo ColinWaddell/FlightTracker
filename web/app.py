@@ -16,24 +16,25 @@ from __future__ import annotations
 import functools
 import hashlib
 import os
+import secrets
 import sys
 import threading
 from pathlib import Path
 
-from flask import (Flask, redirect, render_template, request,
-                   session, url_for)
+from flask import Flask, redirect, render_template, request, session, url_for
 
 from setup.configuration import Config, CONFIG_PATH
 
 FLASK_PORT = 8584
 
 app = Flask(__name__, template_folder="templates")
-app.secret_key = "flighttracker-web-config"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
 
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
+
 
 def _hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -43,18 +44,32 @@ def _check_password(password: str) -> bool:
     return _hash_password(password) == Config.instance().web_password_hash
 
 
+def _csrf_token() -> str:
+    token = session.get("csrf_token")
+    if not token:
+        token = secrets.token_hex(16)
+        session["csrf_token"] = token
+    return token
+
+
+def _validate_csrf(form) -> bool:
+    return str(form.get("csrf_token", "")) == session.get("csrf_token")
+
+
 def login_required(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         if not session.get("authenticated"):
             return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
+
     return decorated
 
 
 # ---------------------------------------------------------------------------
 # Coerce helpers
 # ---------------------------------------------------------------------------
+
 
 def _str(v, default="") -> str:
     return str(v) if v is not None else default
@@ -85,10 +100,13 @@ def _bool(v) -> bool:
 # Restart helper
 # ---------------------------------------------------------------------------
 
+
 def _restart_after(delay: float = 1.0):
     """Schedule os.execv after `delay` seconds on a daemon thread."""
+
     def _do_restart():
         import time
+
         time.sleep(delay)
         print(f"[web] Restarting process: {sys.executable} {sys.argv}", flush=True)
         os.execv(sys.executable, [sys.executable] + sys.argv)
@@ -99,6 +117,7 @@ def _restart_after(delay: float = 1.0):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @app.route("/")
 def index():
@@ -117,18 +136,21 @@ def login():
 
     error = None
     if request.method == "POST":
-        password = request.form.get("password", "")
-        print(f"[web] Login attempt", flush=True)
-        if _check_password(password):
-            session["authenticated"] = True
-            print("[web] Login successful", flush=True)
-            next_url = request.args.get("next") or url_for("settings")
-            return redirect(next_url)
+        if not _validate_csrf(request.form):
+            error = "Invalid request."
         else:
-            print("[web] Login failed — wrong password", flush=True)
-            error = "Incorrect password."
+            password = request.form.get("password", "")
+            print(f"[web] Login attempt", flush=True)
+            if _check_password(password):
+                session["authenticated"] = True
+                print("[web] Login successful", flush=True)
+                next_url = request.args.get("next") or url_for("settings")
+                return redirect(next_url)
+            else:
+                print("[web] Login failed — wrong password", flush=True)
+                error = "Incorrect password."
 
-    return render_template("login.html", error=error)
+    return render_template("login.html", error=error, csrf_token=_csrf_token())
 
 
 @app.route("/logout")
@@ -148,50 +170,63 @@ def settings():
         print(f"[web] Raw form keys: {list(form.keys())}", flush=True)
 
         try:
+            if not _validate_csrf(form):
+                raise ValueError("Invalid CSRF token.")
+
             new_data = {
                 # Location / flight zone
-                "flight_lat":           _float(form.get("flight_lat"),      cfg.flight_lat),
-                "flight_lng":           _float(form.get("flight_lng"),      cfg.flight_lng),
-                "flight_radius":        _float(form.get("flight_radius"),   cfg.flight_radius),
-                "flight_min_altitude":  _float(form.get("flight_min_altitude"), cfg.flight_min_altitude),
-                "flight_max_altitude":  _float(form.get("flight_max_altitude"), cfg.flight_max_altitude),
+                "flight_lat": _float(form.get("flight_lat"), cfg.flight_lat),
+                "flight_lng": _float(form.get("flight_lng"), cfg.flight_lng),
+                "flight_radius": _float(form.get("flight_radius"), cfg.flight_radius),
+                "flight_min_altitude": _float(
+                    form.get("flight_min_altitude"), cfg.flight_min_altitude
+                ),
+                "flight_max_altitude": _float(
+                    form.get("flight_max_altitude"), cfg.flight_max_altitude
+                ),
                 # Airport display
-                "home_airport_code":    _str(form.get("home_airport_code")).upper()[:4],
-                "full_airport_name":    _bool(form.get("full_airport_name")),
-                "abbreviate_name":      _bool(form.get("abbreviate_name")),
+                "home_airport_code": _str(form.get("home_airport_code")).upper()[:4],
+                "full_airport_name": _bool(form.get("full_airport_name")),
+                "abbreviate_name": _bool(form.get("abbreviate_name")),
                 "journey_blank_filler": _str(form.get("journey_blank_filler"), " ? "),
                 # Plane info row
-                "details":              _int(form.get("details"), 0),
+                "details": _int(form.get("details"), 0),
                 # Weather
-                "weatherapi_key":  _str(form.get("weatherapi_key"),  cfg.weatherapi_key),
-                "weather_mode":    _int(form.get("weather_mode"),    0),
-                "units":           _str(form.get("units"),           "m"),
+                "weatherapi_key": _str(form.get("weatherapi_key"), cfg.weatherapi_key),
+                "weather_mode": _int(form.get("weather_mode"), 0),
+                "units": _str(form.get("units"), "m"),
                 # Display
-                "theme":                _int(form.get("theme"), 0),
-                "screen_brightness":    max(1, min(5, _int(form.get("screen_brightness"), 3))),
-                "screen_rotate":        _bool(form.get("screen_rotate")),
+                "theme": _int(form.get("theme"), 0),
+                "screen_brightness": max(
+                    1, min(5, _int(form.get("screen_brightness"), 3))
+                ),
+                "screen_rotate": _bool(form.get("screen_rotate")),
                 # Brightness schedule
-                "screen_schedule_enabled":    _bool(form.get("screen_schedule_enabled")),
-                "screen_schedule_start":      _str(form.get("screen_schedule_start"),     "22:00"),
-                "screen_schedule_end":        _str(form.get("screen_schedule_end"),       "07:00"),
-                "screen_schedule_brightness": max(0, min(5, _int(form.get("screen_schedule_brightness"), 0))),
+                "screen_schedule_enabled": _bool(form.get("screen_schedule_enabled")),
+                "screen_schedule_start": _str(
+                    form.get("screen_schedule_start"), "22:00"
+                ),
+                "screen_schedule_end": _str(form.get("screen_schedule_end"), "07:00"),
+                "screen_schedule_brightness": max(
+                    0, min(5, _int(form.get("screen_schedule_brightness"), 0))
+                ),
                 # Clock / date
-                "clock_24hr":  _bool(form.get("clock_24hr")),
-                "timezone":    _str(form.get("timezone"),    cfg.timezone),
+                "clock_24hr": _bool(form.get("clock_24hr")),
+                "timezone": _str(form.get("timezone"), cfg.timezone),
                 "date_format": _int(form.get("date_format"), 0),
                 # Web interface
                 "web_interface_enabled": _bool(form.get("web_interface_enabled")),
                 # Hardware
-                "gpio_slowdown":        max(1, min(4, _int(form.get("gpio_slowdown"), 1))),
-                "hat_pwm_enabled":      _bool(form.get("hat_pwm_enabled")),
-                "loading_led_enabled":  _bool(form.get("loading_led_enabled")),
+                "gpio_slowdown": max(1, min(4, _int(form.get("gpio_slowdown"), 1))),
+                "hat_pwm_enabled": _bool(form.get("hat_pwm_enabled")),
+                "loading_led_enabled": _bool(form.get("loading_led_enabled")),
                 "loading_led_gpio_pin": _int(form.get("loading_led_gpio_pin"), 25),
                 # Data source
                 "tar1090_url": _str(form.get("tar1090_url"), ""),
             }
 
             # Password change — only update if a new password was supplied
-            new_password    = form.get("new_password", "").strip()
+            new_password = form.get("new_password", "").strip()
             confirm_password = form.get("confirm_password", "").strip()
             if new_password:
                 if new_password != confirm_password:
@@ -211,10 +246,18 @@ def settings():
         except Exception as exc:
             print(f"[web] ERROR processing form: {exc}", flush=True)
             import traceback
+
             traceback.print_exc()
-            return render_template("settings.html", cfg=cfg.as_dict(),
-                                   airports_json=_airports_json(),
-                                   error=str(exc)), 400
+            return (
+                render_template(
+                    "settings.html",
+                    cfg=cfg.as_dict(),
+                    airports_json=_airports_json(),
+                    error=str(exc),
+                    csrf_token=_csrf_token(),
+                ),
+                400,
+            )
 
         _restart_after(delay=1.0)
         return render_template("restarting.html")
@@ -223,13 +266,24 @@ def settings():
         "settings.html",
         cfg=cfg.as_dict(),
         airports_json=_airports_json(),
+        csrf_token=_csrf_token(),
     )
 
 
+_AIRPORTS_JSON: str | None = None
+
+
+def _load_airports_json() -> str:
+    global _AIRPORTS_JSON
+    if _AIRPORTS_JSON is None:
+        airports_path = Path(__file__).parent.parent / "assets" / "airports.json"
+        try:
+            with open(airports_path) as fh:
+                _AIRPORTS_JSON = fh.read()
+        except Exception:
+            _AIRPORTS_JSON = "{}"
+    return _AIRPORTS_JSON
+
+
 def _airports_json() -> str:
-    airports_path = Path(__file__).parent.parent / "assets" / "airports.json"
-    try:
-        with open(airports_path) as fh:
-            return fh.read()
-    except Exception:
-        return "{}"
+    return _load_airports_json()

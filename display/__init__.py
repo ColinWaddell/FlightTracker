@@ -29,8 +29,12 @@ theme_set(_cfg.theme)
 
 if _cfg.use_tar1090:
     from utilities.overhead_tar1090 import Overhead
+
+    REFRESH_INTERVAL = 5
 else:
     from utilities.overhead_fr24 import Overhead
+
+    REFRESH_INTERVAL = 30
 
 _loading_scene = LoadingLEDScene if _cfg.loading_led_enabled else LoadingPulseScene
 
@@ -114,7 +118,7 @@ class Display(
     def sync(self, count):
         _ = self.matrix.SwapOnVSync(self.canvas)
 
-    @Animator.KeyFrame.add(frames.PER_SECOND * 30)
+    @Animator.KeyFrame.add(frames.PER_SECOND * REFRESH_INTERVAL)
     def grab_new_data(self, count):
         if (
             not self.overhead.processing

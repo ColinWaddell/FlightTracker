@@ -23,23 +23,23 @@ DEFAULTS: dict[str, Any] = {
     # Location / flight zone
     "flight_lat": 55.87,
     "flight_lng": -4.25,
-    "flight_radius": 20.0,          # km
-    "flight_min_altitude": 100.0,   # metres
-    "flight_max_altitude": 10000.0, # metres
+    "flight_radius": 20.0,  # km
+    "flight_min_altitude": 100.0,  # metres
+    "flight_max_altitude": 10000.0,  # metres
     # Airport display
     "full_airport_name": False,
     "abbreviate_name": False,
     "home_airport_code": "",
     "journey_blank_filler": " ? ",
     # Plane info row
-    "details": 0,   # 0 = plane make/model, 1 = altitude/speed/heading
+    "details": 0,  # 0 = plane make/model, 1 = altitude/speed/heading
     # Weather
-    "weatherapi_key": "",   # weatherapi.com API key; empty = weather disabled
-    "weather_mode": 0,      # 0 = off, 1 = temperature only, 2 = temperature + rainfall
-    "units": "m",           # 'm' = metric, 'i' = imperial
+    "weatherapi_key": "",  # weatherapi.com API key; empty = weather disabled
+    "weather_mode": 0,  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
+    "units": "m",  # 'm' = metric, 'i' = imperial
     # Display
-    "theme": 0,             # 0 = Default, 1 = Monochrome, 2 = Pastel
-    "screen_brightness": 3, # 1–5
+    "theme": 0,  # 0 = Default, 1 = Monochrome, 2 = Pastel
+    "screen_brightness": 3,  # 1–5
     "screen_rotate": False,
     # Brightness schedule
     "screen_schedule_enabled": False,
@@ -49,17 +49,17 @@ DEFAULTS: dict[str, Any] = {
     # Clock / date
     "clock_24hr": True,
     "timezone": "Europe/London",
-    "date_format": 0,       # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+    "date_format": 0,  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
     # Web interface
     "web_interface_enabled": True,
-    "web_password_hash": "",   # SHA-256 hex; empty = default password "flighttracker"
+    "web_password_hash": "",  # SHA-256 hex; empty = default password "flighttracker"
     # Hardware
     "gpio_slowdown": 1,
     "hat_pwm_enabled": True,
     "loading_led_enabled": False,
     "loading_led_gpio_pin": 25,
     # Data source
-    "tar1090_url": "",      # empty = use FlightRadar24
+    "tar1090_url": "",  # empty = use FlightRadar24
 }
 
 
@@ -70,8 +70,10 @@ def _import_legacy(path: Path):
     try:
         spec.loader.exec_module(mod)
     except Exception as exc:
-        print(f"[config] Warning: could not fully load legacy config.py: {exc}",
-              file=sys.stderr)
+        print(
+            f"[config] Warning: could not fully load legacy config.py: {exc}",
+            file=sys.stderr,
+        )
     return mod
 
 
@@ -186,8 +188,12 @@ class Config:
 
     def save(self):
         try:
-            with open(CONFIG_PATH, "w") as fh:
+            tmp_path = CONFIG_PATH.with_suffix(CONFIG_PATH.suffix + ".tmp")
+            with open(tmp_path, "w") as fh:
                 json.dump(self._data, fh, indent=2)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp_path, CONFIG_PATH)
         except Exception as exc:
             print(f"[config] Failed to write config.json: {exc}", file=sys.stderr)
 
@@ -230,11 +236,15 @@ class Config:
 
     @property
     def flight_min_altitude(self) -> float:
-        return float(self._data.get("flight_min_altitude", DEFAULTS["flight_min_altitude"]))
+        return float(
+            self._data.get("flight_min_altitude", DEFAULTS["flight_min_altitude"])
+        )
 
     @property
     def flight_max_altitude(self) -> float:
-        return float(self._data.get("flight_max_altitude", DEFAULTS["flight_max_altitude"]))
+        return float(
+            self._data.get("flight_max_altitude", DEFAULTS["flight_max_altitude"])
+        )
 
     @property
     def full_airport_name(self) -> bool:
@@ -324,6 +334,7 @@ class Config:
         """SHA-256 hex digest of the web UI password.
         If not set, returns the hash of the default password 'flighttracker'."""
         import hashlib
+
         stored = str(self._data.get("web_password_hash", ""))
         if stored:
             return stored
@@ -361,6 +372,7 @@ class Config:
         1 degree latitude ≈ 111 km; longitude varies with cos(lat).
         """
         import math
+
         lat, lng, r = self.flight_lat, self.flight_lng, self.flight_radius
         lat_deg = r / 111.0
         lng_deg = r / (111.0 * math.cos(math.radians(lat)))
