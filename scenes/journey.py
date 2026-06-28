@@ -275,8 +275,8 @@ class JourneyScene(object):
             origin_name = _abbreviate(origin_name)
             dest_name = _abbreviate(dest_name)
 
-        self._origin_name = origin_name or origin or "unknown"
-        self._dest_name = dest_name or destination or "unknown"
+        self._origin_name = origin_name or "unknown"
+        self._dest_name = dest_name or "unknown"
 
         for scroller, iata, name, arrow in (
             (self._origin_scroll, origin, self._origin_name, ">"),
