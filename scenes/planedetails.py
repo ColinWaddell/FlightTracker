@@ -96,15 +96,15 @@ class PlaneDetailsScene(object):
         #   { values_colour, speed }, { units_colour, speed_units },
         #   { values_colour, heading }, { units_colour, "*" }
         return [
-            (ico, f, "^ "),
+            (ico, f, "^"),
             (val, f, alt_val),
             (ico, f, alt_unit),
             (val, f, " "),
-            (ico, f, "~ "),
+            (ico, f, "~"),
             (val, f, speed_val),
             (ico, f, speed_unit),
             (val, f, " "),
-            (ico, f, "} "),
+            (ico, f, "}"),
             (val, f, str(heading)),
             (ico, f, "*"),
         ]
