@@ -20,7 +20,7 @@ from setup.themes import TC, THEME_PLANE, THEME_PLANE_TLM, THEME_PLANE_TLM_UNITS
 from setup.configuration import Config
 
 PLANE_DISTANCE_FROM_TOP = 31
-PLANE_TEXT_HEIGHT = 9
+PLANE_TEXT_HEIGHT = 8
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class PlaneDetailsScene(object):
         self._data_all_looped = False
         self._last_details_mode = None
 
-    # ── Span builders ────────────────────────────────────────────────────
+    # -- Span builders ----------------------------------------------------
 
     def _model_spans(self) -> list:
         text = self._data[self._data_index].get("plane", "")
@@ -105,7 +105,7 @@ class PlaneDetailsScene(object):
         cfg = Config.instance()
         return self._telemetry_spans() if cfg.details == 1 else self._model_spans()
 
-    # ── Keyframes ─────────────────────────────────────────────────────────
+    # -- Keyframes ---------------------------------------------------------
 
     @Animator.KeyFrame.add(1)
     def plane_details(self, count):
