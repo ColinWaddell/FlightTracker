@@ -71,7 +71,6 @@ class Display(
         options.show_refresh_rate = 0
         options.gpio_slowdown = cfg.gpio_slowdown
         options.disable_hardware_pulsing = True
-        options.clkphase = cfg.led_clkphase
         options.drop_privileges = True
 
         self.matrix = RGBMatrix(options=options)

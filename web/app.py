@@ -218,7 +218,6 @@ def settings():
                 # Hardware
                 "gpio_slowdown": max(1, min(4, _int(form.get("gpio_slowdown"), 1))),
                 "hat_pwm_enabled": _bool(form.get("hat_pwm_enabled")),
-                "led_clkphase": _bool(form.get("led_clkphase")),
                 "loading_led_enabled": _bool(form.get("loading_led_enabled")),
                 "loading_led_gpio_pin": _int(form.get("loading_led_gpio_pin"), 25),
                 # Data source
