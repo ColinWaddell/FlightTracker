@@ -21,7 +21,7 @@
     <h1 class="fs-4 fw-semibold mb-0">FlightTracker Settings</h1>
   </div>
 
-  <form method="post" action="/settings" id="settings-form">
+  <form method="post" action="/settings" id="settings-form" novalidate>
 
     <!-- ─── Flight Monitoring ─── -->
     <div class="card mb-3 p-3">
@@ -35,11 +35,11 @@
         <div class="row g-2 mt-1">
           <div class="col">
             <label class="form-label small">Latitude</label>
-            <input type="number" step="0.0001" class="form-control form-control-sm" id="lat_display" value="{{ cfg.flight_lat }}" />
+            <input type="number" step="any" class="form-control form-control-sm" id="lat_display" value="{{ cfg.flight_lat }}" />
           </div>
           <div class="col">
             <label class="form-label small">Longitude</label>
-            <input type="number" step="0.0001" class="form-control form-control-sm" id="lng_display" value="{{ cfg.flight_lng }}" />
+            <input type="number" step="any" class="form-control form-control-sm" id="lng_display" value="{{ cfg.flight_lng }}" />
           </div>
         </div>
       </div>
