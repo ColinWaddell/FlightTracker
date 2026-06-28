@@ -221,14 +221,14 @@ class JourneyScene(object):
     def _draw_full_line(self, line_idx: int, x_offset: int):
         """Draw one scrolling line at the given x_offset."""
         if line_idx == 0:
-            iata = self._data[self._data_index].get("origin", "???")
+            iata = self._data[self._data_index].get("origin") or "???"
             name = self._origin_name
             arrow = ">"
             colour_code = TC(THEME_LOCATION_ORIGIN)
             colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
             colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
         else:
-            iata = self._data[self._data_index].get("destination", "???")
+            iata = self._data[self._data_index].get("destination") or "???"
             name = self._dest_name
             arrow = "<"
             colour_code = TC(THEME_LOCATION_DESTINATION)
@@ -248,11 +248,11 @@ class JourneyScene(object):
     def _undraw_full_line(self, line_idx: int, x_offset: int):
         """Overdraw with BG to erase previous position."""
         if line_idx == 0:
-            iata = self._data[self._data_index].get("origin", "???")
+            iata = self._data[self._data_index].get("origin") or "???"
             name = self._origin_name
             arrow = ">"
         else:
-            iata = self._data[self._data_index].get("destination", "???")
+            iata = self._data[self._data_index].get("destination") or "???"
             name = self._dest_name
             arrow = "<"
 
@@ -266,17 +266,17 @@ class JourneyScene(object):
     def _setup_full_mode(self):
         """Compute scroll distances for both lines."""
         cfg = Config.instance()
-        origin = self._data[self._data_index].get("origin", "???")
-        destination = self._data[self._data_index].get("destination", "???")
-        origin_name = self._data[self._data_index].get("origin_name", "") or ""
-        dest_name = self._data[self._data_index].get("destination_name", "") or ""
+        origin = self._data[self._data_index].get("origin") or "???"
+        destination = self._data[self._data_index].get("destination") or "???"
+        origin_name = self._data[self._data_index].get("origin_name") or ""
+        dest_name = self._data[self._data_index].get("destination_name") or ""
 
         if cfg.abbreviate_name:
             origin_name = _abbreviate(origin_name)
             dest_name = _abbreviate(dest_name)
 
-        self._origin_name = origin_name or origin
-        self._dest_name = dest_name or destination
+        self._origin_name = origin_name or origin or "unknown"
+        self._dest_name = dest_name or destination or "unknown"
 
         for scroller, iata, name, arrow in (
             (self._origin_scroll, origin, self._origin_name, ">"),
