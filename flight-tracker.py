@@ -1,3 +1,4 @@
+import math
 import socket
 import sys
 import threading
@@ -38,12 +39,17 @@ def _start_flask_daemon():
 
 def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     """
-    Render a QR code pointing to the config UI, centred on the display.
-    Background is 80% white; modules are black.
-    Always shown for at least 5 s. If no config.json existed at launch,
-    stays up indefinitely until the user saves one.
-    After the deadline the QR is left on screen — the animator will
-    overwrite it naturally once rendering begins.
+    Animated plasma boot screen with centred QR code.
+
+    The background is a classic demo-scene plasma: overlapping sine waves
+    mapped to a continuously rotating HSV hue field.  The QR modules are
+    painted on top — black for dark cells, pure white for light cells —
+    so the code stays scannable regardless of the colours underneath.
+
+    Runs for at least 8 s.  If no config.json existed at launch it loops
+    indefinitely until the user saves one via the web UI.  The last frame
+    is left on screen after the deadline; the animator overwrites it on
+    its first render pass.
     """
     from rgbmatrix import graphics
     from web.app import FLASK_PORT
@@ -54,52 +60,79 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     except ImportError:
         qrcode = None
 
-    bg_grey   = graphics.Color(128, 128, 128)   # 50 % white — canvas background
-    off_white = graphics.Color(255, 255, 255)   # 100 % white — QR light modules
-    black     = graphics.Color(0, 0, 0)
     url = f"http://{_local_ip()}:{FLASK_PORT}"
+    print(f"[web] Config interface: {url}/settings")
 
-    def _render():
-        canvas.Clear()
+    # ── Pre-compute QR module grid ────────────────────────────────────────
+    qr_modules = None
+    qr_size    = 0
+    x_offset   = 0
+    y_offset   = 0
 
-        # Fill entire canvas with 50 % grey
-        for x in range(64):
-            graphics.DrawLine(canvas, x, 0, x, 31, bg_grey)
+    if qrcode is not None:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=ERROR_CORRECT_L,
+            box_size=1,
+            border=1,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+        qr_modules = qr.get_matrix()
+        qr_size    = len(qr_modules)
+        x_offset   = max(0, (64 - qr_size) // 2)
+        y_offset   = max(0, (32 - qr_size) // 2)
 
-        if qrcode is not None:
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=ERROR_CORRECT_L,
-                box_size=1,
-                border=1,
-            )
-            qr.add_data(url)
-            qr.make(fit=True)
-            modules = qr.get_matrix()
-            qr_size = len(modules)
-            x_offset = max(0, (64 - qr_size) // 2)
-            y_offset = max(0, (32 - qr_size) // 2)
+    # ── HSV → RGB helper ─────────────────────────────────────────────────
+    def _hsv(h):
+        """Hue-only HSV→RGB (S=1, V=1).  h in [0, 360).  Returns (r,g,b) 0-255."""
+        h = h % 360
+        hi = int(h / 60)
+        f  = (h / 60) - hi
+        q  = int((1 - f) * 255)
+        t  = int(f * 255)
+        return (
+            (255, t,   0  ),
+            (q,   255, 0  ),
+            (0,   255, t  ),
+            (0,   q,   255),
+            (t,   0,   255),
+            (255, 0,   q  ),
+        )[hi]
 
-            for row_idx, row in enumerate(modules):
-                for col_idx, cell in enumerate(row):
-                    x = x_offset + col_idx
-                    y = y_offset + row_idx
-                    if 0 <= x < 64 and 0 <= y < 32:
-                        c = black if cell else off_white
-                        canvas.SetPixel(x, y, c.red, c.green, c.blue)
+    # ── Per-frame render ──────────────────────────────────────────────────
+    def _render(t):
+        for y in range(32):
+            for x in range(64):
+                # QR overlay takes priority
+                qx, qy = x - x_offset, y - y_offset
+                if qr_modules and 0 <= qx < qr_size and 0 <= qy < qr_size:
+                    if qr_modules[qy][qx]:
+                        canvas.SetPixel(x, y, 0, 0, 0)
+                    else:
+                        canvas.SetPixel(x, y, 255, 255, 255)
+                    continue
+
+                # Plasma: four overlapping sine waves → hue
+                v  = math.sin(x / 5.0 + t)
+                v += math.sin(y / 3.0 + t * 1.3)
+                v += math.sin((x + y) / 7.0 + t * 0.7)
+                v += math.sin(math.sqrt((x - 32) ** 2 + (y - 16) ** 2) / 5.0 + t * 0.9)
+                hue = (v * 45.0 + t * 40.0) % 360
+                r, g, b = _hsv(hue)
+                canvas.SetPixel(x, y, r, g, b)
 
         matrix.SwapOnVSync(canvas)
 
-    print(f"[web] Config interface: {url}/settings")
+    # ── Animation loop ────────────────────────────────────────────────────
+    start    = time.time()
+    deadline = start + 8
 
-    deadline = time.time() + 5
-
-    _render()
     while True:
-        time.sleep(0.5)
+        _render(time.time() - start)
         if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
             break
-    # QR remains visible; display.run() will overwrite it on its first frame
+    # Last frame stays on screen until display.run() begins
 
 
 if __name__ == "__main__":
