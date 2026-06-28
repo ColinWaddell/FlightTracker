@@ -85,7 +85,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
 
         for qy, row in enumerate(modules):
             for qx, cell in enumerate(row):
-                px, py = qx, qy + 3
+                px, py = qx, qy + 2
                 if 0 <= px < 64 and 0 <= py < 32:
                     if cell:
                         canvas.SetPixel(px, py, 0, 0, 0)
