@@ -6,7 +6,24 @@ from time import sleep
 from requests.exceptions import RequestException, ConnectionError
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-from setup.configuration import Config
+try:
+    from setup.configuration import Config
+
+    _cfg = Config.instance()
+    ZONE_HOME = _cfg.zone_home
+    FLIGHT_MIN_ALTITUDE = _cfg.flight_min_altitude
+    FLIGHT_MAX_ALTITUDE = _cfg.flight_max_altitude
+    LOCATION_HOME = _cfg.location_home
+except Exception:
+    ZONE_HOME = {
+        "tl_y": 56.05,
+        "tl_x": -4.61,
+        "br_y": 55.69,
+        "br_x": -3.89,
+    }
+    FLIGHT_MIN_ALTITUDE = 100.0
+    FLIGHT_MAX_ALTITUDE = 10000.0
+    LOCATION_HOME = [55.87, -4.25, 6371.0]
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
@@ -25,7 +42,7 @@ def _clean_field(value):
     return "" if value.upper() in BLANK_FIELDS else value
 
 
-def distance_from_flight_to_home(flight, cfg: Config):
+def distance_from_flight_to_home(flight):
     import math
 
     def polar_to_cartesian(lat, lon, alt):
@@ -39,7 +56,7 @@ def distance_from_flight_to_home(flight, cfg: Config):
     def feet_to_km_plus_earth(altitude_ft):
         return 0.0003048 * altitude_ft + EARTH_RADIUS_KM
 
-    home = cfg.location_home
+    home = LOCATION_HOME
     try:
         x0, y0, z0 = polar_to_cartesian(
             flight.latitude,
@@ -103,14 +120,13 @@ class Overhead:
 
     def _grab_data(self):
         data = []
-        cfg = Config.instance()
 
         try:
-            bounds = self._api.get_bounds(cfg.zone_home)
+            bounds = self._api.get_bounds(ZONE_HOME)
             flights = self._api.get_flights(bounds=bounds)
 
-            min_alt_ft = cfg.flight_min_altitude / 0.3048
-            max_alt_ft = cfg.flight_max_altitude / 0.3048
+            min_alt_ft = FLIGHT_MIN_ALTITUDE / 0.3048
+            max_alt_ft = FLIGHT_MAX_ALTITUDE / 0.3048
 
             flights = [
                 f
@@ -119,9 +135,7 @@ class Overhead:
                 and min_alt_ft < f.altitude < max_alt_ft
             ]
 
-            flights = sorted(
-                flights, key=lambda f: distance_from_flight_to_home(f, cfg)
-            )
+            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f))
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
                 retries = RETRIES
@@ -184,6 +198,7 @@ class Overhead:
                         retries -= 1
 
             with self._lock:
+                print(data)
                 self._data = data
                 self._new_data = True
                 self._error = None
