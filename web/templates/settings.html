@@ -12,6 +12,29 @@
     .section-heading { font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid #dee2e6; padding-bottom: .4rem; margin-bottom: 1rem; }
     .form-check-label { cursor: pointer; }
     .card { border: none; box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+    .leaflet-control.map-lock-control {
+      background: #fff;
+      border-radius: 4px;
+    }
+    .leaflet-control.map-lock-control button {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+    .leaflet-control.map-lock-control button:focus {
+      outline: 2px solid rgba(13, 110, 253, 0.5);
+      outline-offset: 1px;
+    }
+    .leaflet-control.map-lock-control svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
   </style>
 </head>
 <body>
@@ -32,7 +55,7 @@
       <p class="section-heading">Flight Monitoring</p>
 
       <div class="mb-3">
-        <label class="form-label">Location <small class="text-muted">(click map to set)</small></label>
+        <label class="form-label">Location <small class="text-muted">(click the unlock icon to adjust)</small></label>
         <div id="map" class="mb-2"></div>
         <input type="hidden" name="flight_lat" id="flight_lat" value="{{ cfg.flight_lat }}" />
         <input type="hidden" name="flight_lng" id="flight_lng" value="{{ cfg.flight_lng }}" />
@@ -73,21 +96,31 @@
       <p class="section-heading">Airport Display</p>
 
       <div class="mb-3">
-        <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR)</small></label>
-        <input type="text" maxlength="4" class="form-control form-control-sm"
+        <label class="form-label small">Airport display style</label>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="full_airport_name" id="airport_short" value="0"
+                 {% if not cfg.full_airport_name %}checked{% endif %}
+                 onchange="document.getElementById('home_airport_fields').style.display='block';document.getElementById('abbreviate_fields').style.display='none'" />
+          <label class="form-check-label" for="airport_short">Short airport code</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="full_airport_name" id="airport_full" value="1"
+                 {% if cfg.full_airport_name %}checked{% endif %}
+                 onchange="document.getElementById('home_airport_fields').style.display='none';document.getElementById('abbreviate_fields').style.display='block'" />
+          <label class="form-check-label" for="airport_full">Full airport name (scrolling)</label>
+        </div>
+      </div>
+
+      <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.full_airport_name %}none{% else %}block{% endif %}">
+        <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR - it will appear in <strong>bold</strong> on the screen)</small></label>
+        <input type="text" maxlength="3" class="form-control form-control-sm"
                name="home_airport_code" id="home_airport_code"
                value="{{ cfg.home_airport_code }}"
                placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
         <div id="airport_name_hint" class="form-text text-muted small"></div>
       </div>
 
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="full_airport_name" id="full_airport_name"
-               {% if cfg.full_airport_name %}checked{% endif %} />
-        <label class="form-check-label" for="full_airport_name">Show full airport name (scrolling)</label>
-      </div>
-
-      <div class="mb-2 form-check">
+      <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
         <input type="checkbox" class="form-check-input" name="abbreviate_name" id="abbreviate_name"
                {% if cfg.abbreviate_name %}checked{% endif %} />
         <label class="form-check-label" for="abbreviate_name">Abbreviate long names (e.g. "Intl" for "International")</label>
@@ -95,7 +128,7 @@
 
       <div class="mb-2">
         <label class="form-label small">Unknown airport placeholder</label>
-        <input type="text" maxlength="10" class="form-control form-control-sm"
+        <input type="text" maxlength="3" class="form-control form-control-sm"
                name="journey_blank_filler" value="{{ cfg.journey_blank_filler }}"
                style="max-width:120px" />
       </div>
@@ -123,30 +156,34 @@
       <p class="section-heading">Weather</p>
 
       <div class="mb-3">
-        <label class="form-label small">WeatherAPI.com API Key</label>
-        <input type="text" class="form-control form-control-sm"
-               name="weatherapi_key" value="{{ cfg.weatherapi_key }}"
-               placeholder="Get a free key at weatherapi.com" />
-        <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
-      </div>
-
-      <div class="mb-3">
         <label class="form-label small">Weather display</label>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
-                 {% if cfg.weather_mode == 0 %}checked{% endif %} />
+                 {% if cfg.weather_mode == 0 %}checked{% endif %}
+                 onchange="document.getElementById('weather_key_fields').style.display='none'" />
           <label class="form-check-label" for="weather_off">Off</label>
         </div>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
-                 {% if cfg.weather_mode == 1 %}checked{% endif %} />
+                 {% if cfg.weather_mode == 1 %}checked{% endif %}
+                 onchange="document.getElementById('weather_key_fields').style.display='block'" />
           <label class="form-check-label" for="weather_temp">Temperature</label>
         </div>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
-                 {% if cfg.weather_mode == 2 %}checked{% endif %} />
+                 {% if cfg.weather_mode == 2 %}checked{% endif %}
+                 onchange="document.getElementById('weather_key_fields').style.display='block'" />
           <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
         </div>
+      </div>
+
+      <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
+        <label class="form-label small">WeatherAPI.com API Key</label>
+        <input type="text" class="form-control form-control-sm"
+               name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
+               placeholder="Get a free key at weatherapi.com" />
+        <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
+        <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
       </div>
 
       <div class="mb-3">
@@ -355,6 +392,120 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 let marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
 let circle = L.circle([initLat, initLng], { radius: initRadius * 1000, color: "#0d6efd", fillOpacity: 0.1 }).addTo(map);
 
+// -- Map lock state (default locked) --
+let mapLocked = true;
+let currentLocationButton = null;
+
+function setCurrentLocationEnabled(enabled) {
+  if (!currentLocationButton) return;
+  currentLocationButton.disabled = !enabled;
+  currentLocationButton.style.opacity = enabled ? "" : "0.45";
+  currentLocationButton.title = enabled ? "Use my current location" : "Unlock the map to use current location";
+}
+
+function setMapLocked(locked) {
+  const enable = (h) => h && h.enable && h.enable();
+  const disable = (h) => h && h.disable && h.disable();
+  mapLocked = locked;
+  setCurrentLocationEnabled(!locked);
+  document.getElementById("lat_display").disabled = locked;
+  document.getElementById("lng_display").disabled = locked;
+  if (locked) {
+    disable(map.dragging);
+    disable(map.scrollWheelZoom);
+    disable(map.touchZoom);
+    disable(map.doubleClickZoom);
+    disable(map.boxZoom);
+    disable(map.keyboard);
+    if (map.tap) disable(map.tap);
+    marker.dragging.disable();
+  } else {
+    enable(map.dragging);
+    enable(map.scrollWheelZoom);
+    enable(map.touchZoom);
+    enable(map.doubleClickZoom);
+    enable(map.boxZoom);
+    enable(map.keyboard);
+    if (map.tap) enable(map.tap);
+    marker.dragging.enable();
+  }
+}
+
+const iconLocked = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>';
+const iconUnlocked = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17 9V7a5 5 0 0 0-9.9-1H9a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1Z"/></svg>';
+
+const LockControl = L.Control.extend({
+  options: { position: "topleft" },
+  onAdd: function () {
+    const container = L.DomUtil.create("div", "leaflet-control leaflet-bar map-lock-control");
+    const button = L.DomUtil.create("button", "", container);
+    button.type = "button";
+    button.setAttribute("aria-label", "Toggle map lock");
+    let locked = true;
+    const render = () => {
+      button.innerHTML = locked ? iconLocked : iconUnlocked;
+      button.setAttribute("aria-pressed", locked ? "true" : "false");
+      button.title = locked ? "Map locked (click to unlock)" : "Map unlocked (click to lock)";
+    };
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    L.DomEvent.on(button, "click", (e) => {
+      L.DomEvent.stop(e);
+      locked = !locked;
+      setMapLocked(locked);
+      render();
+    });
+    render();
+    return container;
+  }
+});
+
+const CurrentLocationControl = L.Control.extend({
+  options: { position: "topleft" },
+  onAdd: function () {
+    const container = L.DomUtil.create("div", "leaflet-control leaflet-bar map-lock-control");
+    const button = L.DomUtil.create("button", "", container);
+    button.type = "button";
+    button.setAttribute("aria-label", "Use my current location");
+    button.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 0c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>';
+    currentLocationButton = button;
+    setCurrentLocationEnabled(!mapLocked);
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    L.DomEvent.on(button, "click", (e) => {
+      L.DomEvent.stop(e);
+      if (mapLocked) return;
+      if (!("geolocation" in navigator)) return;
+      button.disabled = true;
+      button.style.opacity = "0.6";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            map.setView(L.latLng(lat, lng), map.getZoom(), { animate: true });
+            marker.setLatLng([lat, lng]);
+            circle.setLatLng([lat, lng]);
+            updateLocation(lat, lng);
+          }
+          button.disabled = false;
+          button.style.opacity = "";
+        },
+        () => {
+          button.disabled = false;
+          button.style.opacity = "";
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+    return container;
+  }
+});
+
+map.addControl(new LockControl());
+map.addControl(new CurrentLocationControl());
+setMapLocked(true);
+
 function updateLocation(lat, lng) {
   document.getElementById("flight_lat").value = lat.toFixed(6);
   document.getElementById("flight_lng").value = lng.toFixed(6);
@@ -369,7 +520,7 @@ marker.on("dragend", e => {
   updateLocation(pos.lat, pos.lng);
 });
 
-map.on("click", e => updateLocation(e.latlng.lat, e.latlng.lng));
+map.on("click", e => { if (!mapLocked) updateLocation(e.latlng.lat, e.latlng.lng); });
 
 document.getElementById("lat_display").addEventListener("change", () => {
   updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
@@ -407,7 +558,20 @@ document.getElementById("home_airport_code").addEventListener("input", e => {
 })();
 
 // -- Save button feedback --
-document.getElementById("settings-form").addEventListener("submit", () => {
+document.getElementById("settings-form").addEventListener("submit", (e) => {
+  const weatherMode = document.querySelector('input[name="weather_mode"]:checked').value;
+  const weatherKey = document.getElementById("weatherapi_key").value.trim();
+  const weatherErr = document.getElementById("weather_key_error");
+  if (weatherMode !== "0" && !weatherKey) {
+    e.preventDefault();
+    weatherErr.style.display = "block";
+    document.getElementById("weather_key_fields").scrollIntoView({ behavior: "smooth", block: "center" });
+    const btn = document.getElementById("save-btn");
+    btn.disabled = false;
+    btn.innerHTML = 'Save &amp; Restart';
+    return;
+  }
+  weatherErr.style.display = "none";
   const btn = document.getElementById("save-btn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving…';

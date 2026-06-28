@@ -220,15 +220,21 @@ class JourneyScene(object):
 
     def _draw_full_line(self, line_idx: int, x_offset: int):
         """Draw one scrolling line at the given x_offset."""
+        cfg = Config.instance()
         if line_idx == 0:
-            iata = self._data[self._data_index].get("origin") or "???"
+            iata = (
+                self._data[self._data_index].get("origin") or cfg.journey_blank_filler
+            )
             name = self._origin_name
             arrow = ">"
             colour_code = TC(THEME_LOCATION_ORIGIN)
             colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
             colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
         else:
-            iata = self._data[self._data_index].get("destination") or "???"
+            iata = (
+                self._data[self._data_index].get("destination")
+                or cfg.journey_blank_filler
+            )
             name = self._dest_name
             arrow = "<"
             colour_code = TC(THEME_LOCATION_DESTINATION)
@@ -247,12 +253,18 @@ class JourneyScene(object):
 
     def _undraw_full_line(self, line_idx: int, x_offset: int):
         """Overdraw with BG to erase previous position."""
+        cfg = Config.instance()
         if line_idx == 0:
-            iata = self._data[self._data_index].get("origin") or "???"
+            iata = (
+                self._data[self._data_index].get("origin") or cfg.journey_blank_filler
+            )
             name = self._origin_name
             arrow = ">"
         else:
-            iata = self._data[self._data_index].get("destination") or "???"
+            iata = (
+                self._data[self._data_index].get("destination")
+                or cfg.journey_blank_filler
+            )
             name = self._dest_name
             arrow = "<"
 
@@ -266,8 +278,10 @@ class JourneyScene(object):
     def _setup_full_mode(self):
         """Compute scroll distances for both lines."""
         cfg = Config.instance()
-        origin = self._data[self._data_index].get("origin") or "???"
-        destination = self._data[self._data_index].get("destination") or "???"
+        origin = self._data[self._data_index].get("origin") or cfg.journey_blank_filler
+        destination = (
+            self._data[self._data_index].get("destination") or cfg.journey_blank_filler
+        )
         origin_name = self._data[self._data_index].get("origin_name") or ""
         dest_name = self._data[self._data_index].get("destination_name") or ""
 
