@@ -38,13 +38,14 @@ def _start_flask_daemon():
 
 def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     """
-    Render a QR code pointing to the config UI.
+    Render a QR code pointing to the config UI, centred on the display.
+    Background is 80% white; modules are black.
     Always shown for at least 5 s. If no config.json existed at launch,
     stays up indefinitely until the user saves one.
+    After the deadline the QR is left on screen — the animator will
+    overwrite it naturally once rendering begins.
     """
     from rgbmatrix import graphics
-    from setup import fonts
-    from setup.themes import TC, THEME_BG, THEME_FLIGHT_NUMERIC
     from web.app import FLASK_PORT
 
     try:
@@ -53,14 +54,16 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     except ImportError:
         qrcode = None
 
-    bg = TC(THEME_BG)
-    fg = graphics.Color(255, 255, 255)
-    text_c = TC(THEME_FLIGHT_NUMERIC)
+    off_white = graphics.Color(204, 204, 204)   # ~80 % white
+    black     = graphics.Color(0, 0, 0)
     url = f"http://{_local_ip()}:{FLASK_PORT}"
 
     def _render():
         canvas.Clear()
-        qr_size = 0
+
+        # Fill entire canvas with off-white
+        for x in range(64):
+            graphics.DrawLine(canvas, x, 0, x, 31, off_white)
 
         if qrcode is not None:
             qr = qrcode.QRCode(
@@ -73,19 +76,16 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
             qr.make(fit=True)
             modules = qr.get_matrix()
             qr_size = len(modules)
+            x_offset = max(0, (64 - qr_size) // 2)
             y_offset = max(0, (32 - qr_size) // 2)
 
             for row_idx, row in enumerate(modules):
                 for col_idx, cell in enumerate(row):
-                    x, y = col_idx, y_offset + row_idx
-                    if 0 <= x < 64 and 0 <= y < 31:
-                        c = fg if cell else bg
-                        canvas.SetPixel(x, y, c.red, c.green, c.blue)
+                    x = x_offset + col_idx
+                    y = y_offset + row_idx
+                    if 0 <= x < 64 and 0 <= y < 32 and cell:
+                        canvas.SetPixel(x, y, black.red, black.green, black.blue)
 
-        graphics.DrawText(canvas, fonts.extrasmall, qr_size + 2, 7, text_c, "config:")
-        graphics.DrawText(
-            canvas, fonts.extrasmall, qr_size + 2, 14, text_c, f":{FLASK_PORT}"
-        )
         matrix.SwapOnVSync(canvas)
 
     deadline = time.time() + 5
@@ -95,6 +95,7 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
         time.sleep(0.5)
         if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
             break
+    # QR remains visible; display.run() will overwrite it on its first frame
 
 
 if __name__ == "__main__":
@@ -108,6 +109,5 @@ if __name__ == "__main__":
         cfg_existed = CONFIG_PATH.exists()
         _start_flask_daemon()
         _show_boot_screen(display.matrix, display.canvas, cfg_existed)
-        display.canvas.Clear()
 
     display.run()
