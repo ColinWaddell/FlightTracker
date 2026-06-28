@@ -17,10 +17,18 @@ def _local_ip() -> str:
 
 def _start_flask_daemon():
     from web.app import app, FLASK_PORT
+    from werkzeug.serving import make_server
     import logging
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
+    server = make_server("0.0.0.0", FLASK_PORT, app)
+    # Werkzeug sets the socket inheritable so its reloader can pass it to child
+    # processes. We don't use the reloader, but the flag survives os.execv and
+    # causes "Address already in use" on restart. Clear it here.
+    server.socket.set_inheritable(False)
+
     t = threading.Thread(
-        target=lambda: app.run(host="0.0.0.0", port=FLASK_PORT, debug=False, use_reloader=False),
+        target=server.serve_forever,
         daemon=True,
         name="flask-config",
     )
