@@ -54,16 +54,17 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
     except ImportError:
         qrcode = None
 
-    off_white = graphics.Color(204, 204, 204)   # ~80 % white
+    bg_grey   = graphics.Color(128, 128, 128)   # 50 % white — canvas background
+    off_white = graphics.Color(255, 255, 255)   # 100 % white — QR light modules
     black     = graphics.Color(0, 0, 0)
     url = f"http://{_local_ip()}:{FLASK_PORT}"
 
     def _render():
         canvas.Clear()
 
-        # Fill entire canvas with off-white
+        # Fill entire canvas with 50 % grey
         for x in range(64):
-            graphics.DrawLine(canvas, x, 0, x, 31, off_white)
+            graphics.DrawLine(canvas, x, 0, x, 31, bg_grey)
 
         if qrcode is not None:
             qr = qrcode.QRCode(
@@ -83,8 +84,9 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
                 for col_idx, cell in enumerate(row):
                     x = x_offset + col_idx
                     y = y_offset + row_idx
-                    if 0 <= x < 64 and 0 <= y < 32 and cell:
-                        canvas.SetPixel(x, y, black.red, black.green, black.blue)
+                    if 0 <= x < 64 and 0 <= y < 32:
+                        c = black if cell else off_white
+                        canvas.SetPixel(x, y, c.red, c.green, c.blue)
 
         matrix.SwapOnVSync(canvas)
 
