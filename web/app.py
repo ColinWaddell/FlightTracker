@@ -151,8 +151,12 @@ def login():
                 error = "Incorrect password."
 
     using_default_password = not bool(Config.instance().get("web_password_hash"))
-    return render_template("login.html", error=error, csrf_token=_csrf_token(),
-                           using_default_password=using_default_password)
+    return render_template(
+        "login.html",
+        error=error,
+        csrf_token=_csrf_token(),
+        using_default_password=using_default_password,
+    )
 
 
 @app.route("/logout")
@@ -223,6 +227,11 @@ def settings():
                 "loading_led_enabled": _bool(form.get("loading_led_enabled")),
                 "loading_led_gpio_pin": _int(form.get("loading_led_gpio_pin"), 25),
                 # Data source
+                "data_source": (
+                    "tar1090"
+                    if _str(form.get("data_source"), "fr24").lower() == "tar1090"
+                    else "fr24"
+                ),
                 "tar1090_url": _str(form.get("tar1090_url"), ""),
             }
 

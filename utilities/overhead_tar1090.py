@@ -8,7 +8,26 @@ from pathlib import Path
 
 from requests.exceptions import RequestException
 
-from setup.configuration import Config
+try:
+    from setup.configuration import Config
+
+    _cfg = Config.instance()
+    TAR1090_URL = _cfg.tar1090_url
+    ZONE_HOME = _cfg.zone_home
+    FLIGHT_MIN_ALTITUDE = _cfg.flight_min_altitude
+    FLIGHT_MAX_ALTITUDE = _cfg.flight_max_altitude
+    LOCATION_HOME = _cfg.location_home
+except Exception:
+    TAR1090_URL = "http://10.0.0.12:8080//data/aircraft.json"
+    ZONE_HOME = {
+        "tl_y": 56.05,
+        "tl_x": -4.61,
+        "br_y": 55.69,
+        "br_x": -3.89,
+    }
+    FLIGHT_MIN_ALTITUDE = 100.0
+    FLIGHT_MAX_ALTITUDE = 10000.0
+    LOCATION_HOME = [55.87, -4.25, 6371.0]
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
@@ -161,18 +180,17 @@ class Overhead:
 
     def _grab_data(self):
         data = []
-        cfg = Config.instance()
 
         try:
-            response = requests.get(cfg.tar1090_url, timeout=10)
+            response = requests.get(TAR1090_URL, timeout=10)
             response.raise_for_status()
 
             aircraft_list = response.json().get("aircraft", [])
 
-            min_alt_ft = cfg.flight_min_altitude / 0.3048
-            max_alt_ft = cfg.flight_max_altitude / 0.3048
-            zone = cfg.zone_home
-            home = cfg.location_home
+            min_alt_ft = FLIGHT_MIN_ALTITUDE / 0.3048
+            max_alt_ft = FLIGHT_MAX_ALTITUDE / 0.3048
+            zone = ZONE_HOME
+            home = LOCATION_HOME
 
             candidates = []
             for ac in aircraft_list:

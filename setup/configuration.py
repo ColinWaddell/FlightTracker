@@ -58,7 +58,8 @@ DEFAULTS: dict[str, Any] = {
     "loading_led_enabled": False,
     "loading_led_gpio_pin": 25,
     # Data source
-    "tar1090_url": "",  # empty = use FlightRadar24
+    "data_source": "fr24",  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
+    "tar1090_url": "",  # only used when data_source == 'tar1090'
 }
 
 
@@ -356,8 +357,13 @@ class Config:
         return str(self._data.get("tar1090_url", ""))
 
     @property
+    def data_source(self) -> str:
+        val = str(self._data.get("data_source", "fr24")).lower()
+        return val if val in ("fr24", "tar1090") else "fr24"
+
+    @property
     def use_tar1090(self) -> bool:
-        return bool(self.tar1090_url)
+        return self.data_source == "tar1090" and bool(self.tar1090_url)
 
     # Derived: zone bounding box (same algorithm as DotboxServer)
     @property
