@@ -410,27 +410,6 @@
             </p>
           </div>
 
-          <div class="card bg-light p-3 mb-3">
-            <h5 class="pb-3">How the rainfall graph works</h5>
-            <div class="row g-3 align-items-center pb-3">
-              <div class="col-12 col-sm-5">
-                <img src="{{ url_for('static', filename='images/weather_explained.png') }}" class="img-fluid" style="max-height:150px;" alt="Weather graph example" />
-              </div>
-              <div class="col-12 col-sm-7">
-                <p class="small mb-1">Each column is one hour, the leftmost is <strong>now</strong>.</p>
-                <p class="small mb-0">The height of the column shows how much rain is expected that hour.</p>
-              </div>
-            </div>
-            <div class="row g-3 align-items-center">
-              <div class="col-12 col-sm-5">
-                <img src="{{ url_for('static', filename='images/scale_explained.png') }}" class="img-fluid"  style="max-height:75px" alt="Temperature colour scale" />
-              </div>
-              <div class="col-12 col-sm-7">
-                <p class="small mb-0">The colour of each column shows the temperature at that hour.</p>
-              </div>
-            </div>
-          </div>
-
           <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
             <label class="form-label small">WeatherAPI.com API Key</label>
             <input type="text" class="form-control form-control-sm"
@@ -448,6 +427,29 @@
             </select>
             <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
           </div>
+
+          <div class="card bg-light p-3 mb-3">
+            <h5 class="pb-3">How the rainfall graph works</h5>
+            <div class="row g-3 align-items-center pb-3">
+              <div class="col-12 col-sm-5 text-center">
+                <img src="{{ url_for('static', filename='images/weather_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:150px;" alt="Weather graph example" />
+              </div>
+              <div class="col-12 col-sm-7">
+                <p class="small mb-1">Each column is one hour, the leftmost is <strong>now</strong>.</p>
+                <p class="small mb-0">The height of the column shows how much rain is expected that hour.</p>
+              </div>
+            </div>
+            <hr class="pb-3">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-sm-5 text-center">
+                <img src="{{ url_for('static', filename='images/scale_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:75px" alt="Temperature colour scale" />
+              </div>
+              <div class="col-12 col-sm-7">
+                <p class="small mb-0">The colour of each column shows the temperature at that hour.</p>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- ====== Change Password ====== -->
