@@ -132,6 +132,8 @@ def _build_display_class():
         @Animator.KeyFrame.add(0)
         def clear_screen(self):
             if self._skip_first_clear:
+                # Don't clear on frame 0 — splash is still showing.
+                # The clear happens in run() instead, just before play().
                 self._skip_first_clear = False
                 return
             self.canvas.Clear()
@@ -175,6 +177,14 @@ def _build_display_class():
         def run(self):
             try:
                 print("Press CTRL-C to stop")
+                # If we came from a splash screen, clear it now and
+                # jump-start the frame counter so clock/date/weather
+                # scenes render on the first play() iteration.
+                if self._skip_first_clear:
+                    self._skip_first_clear = False
+                    self.canvas.Clear()
+                    self.matrix.SwapOnVSync(self.canvas)
+                    self.frame = int(frames.PER_SECOND * 2) - 1
                 self.play()
             except KeyboardInterrupt:
                 print("Exiting\n")
