@@ -120,19 +120,18 @@ def _build_display_class():
 
             self.overhead = Overhead()
             self.overhead.grab_data()
-    
-    @Animator.KeyFrame.add(frames.PER_SECOND * 1)
-    def screen_brightness_auto(self, count):
-        cfg = Config.instance()
-
-        if cfg.is_in_brightness_schedule():
-            self.matrix.brightness = cfg.schedule_brightness_percent
-        else:
-            self.matrix.brightness = cfg.brightness_percent
-
             super().__init__()
 
             self.delay = frames.PERIOD
+
+        @Animator.KeyFrame.add(frames.PER_SECOND * 1)
+        def screen_brightness_auto(self, count):
+            cfg = Config.instance()
+
+            if cfg.is_in_brightness_schedule():
+                self.matrix.brightness = cfg.schedule_brightness_percent
+            else:
+                self.matrix.brightness = cfg.brightness_percent
 
         def draw_square(self, x0, y0, x1, y1, colour):
             for x in range(x0, x1):
