@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FlightTracker – Settings</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body { background: #f8f9fa; }
@@ -35,10 +36,37 @@
       height: 18px;
       fill: currentColor;
     }
+    /* Sidebar */
+    .sidebar { position: sticky; top: 1rem; }
+    .sidebar .nav-link {
+      color: #495057;
+      padding: .4rem .75rem;
+      border-radius: .375rem;
+      font-size: .9rem;
+      font-weight: 500;
+    }
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+      color: #0d6efd;
+      background: rgba(13,110,253,.08);
+    }
+    .sidebar .nav-link .badge {
+      font-size: .65rem;
+      font-weight: 400;
+      margin-left: auto;
+    }
+    .group-header {
+      font-size: .95rem;
+      font-weight: 600;
+      padding: .75rem 0 .25rem 0;
+      margin-top: .5rem;
+      color: #212529;
+    }
+    .group-header:first-child { margin-top: 0; }
   </style>
 </head>
 <body>
-<div class="container py-4" style="max-width:680px">
+<div class="container-fluid py-4" style="max-width:1100px">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div class="d-flex align-items-center">
       <img src="{{ url_for('static', filename='logo.png') }}" alt="FlightTracker" height="32" class="me-2" />
@@ -47,332 +75,367 @@
     <a href="/logout" class="btn btn-sm btn-outline-secondary">Sign out</a>
   </div>
 
-  <form method="post" action="/settings" id="settings-form" novalidate>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-
-    <!-- --- Flight Monitoring --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Flight Monitoring</p>
-
-      <div class="mb-3">
-        <label class="form-label">Location <small class="text-muted">(click the unlock icon to adjust)</small></label>
-        <div id="map" class="mb-2"></div>
-        <input type="hidden" name="flight_lat" id="flight_lat" value="{{ cfg.flight_lat }}" />
-        <input type="hidden" name="flight_lng" id="flight_lng" value="{{ cfg.flight_lng }}" />
-        <div class="row g-2 mt-1">
-          <div class="col">
-            <label class="form-label small">Latitude</label>
-            <input type="number" step="any" class="form-control form-control-sm" id="lat_display" value="{{ cfg.flight_lat }}" />
-          </div>
-          <div class="col">
-            <label class="form-label small">Longitude</label>
-            <input type="number" step="any" class="form-control form-control-sm" id="lng_display" value="{{ cfg.flight_lng }}" />
-          </div>
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Search Radius: <span id="radius_display">{{ cfg.flight_radius }}</span> km</label>
-        <input type="range" class="form-range" name="flight_radius" id="flight_radius"
-               min="1" max="100" step="0.5" value="{{ cfg.flight_radius }}" />
-      </div>
-
-      <div class="row g-3">
-        <div class="col">
-          <label class="form-label small">Min Altitude (m)</label>
-          <input type="number" step="10" min="10" max="20000" class="form-control form-control-sm"
-                 name="flight_min_altitude" value="{{ cfg.flight_min_altitude }}" />
-        </div>
-        <div class="col">
-          <label class="form-label small">Max Altitude (m)</label>
-          <input type="number" step="100" min="100" max="40000" class="form-control form-control-sm"
-                 name="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
-        </div>
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3">
+      <div class="sidebar">
+        <div class="group-header"><i class="bi bi-airplane me-2"></i>Flight Monitoring</div>
+        <nav class="nav flex-column mb-2">
+          <a class="nav-link" href="#group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</a>
+          <a class="nav-link" href="#group-data-source"><i class="bi bi-cloud-download me-2"></i>Data Source</a>
+        </nav>
+        <div class="group-header"><i class="bi bi-card-list me-2"></i>Reporting</div>
+        <nav class="nav flex-column mb-2">
+          <a class="nav-link" href="#group-airport-display"><i class="bi bi-building me-2"></i>Airport Display</a>
+          <a class="nav-link" href="#group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</a>
+        </nav>
+        <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
+        <nav class="nav flex-column mb-2">
+          <a class="nav-link" href="#group-display"><i class="bi bi-display me-2"></i>Display</a>
+          <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
+        </nav>
+        <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
+        <nav class="nav flex-column mb-2">
+          <a class="nav-link" href="#group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</a>
+          <a class="nav-link" href="#group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</a>
+        </nav>
+        <div class="group-header"><i class="bi bi-shield-lock me-2"></i>Admin</div>
+        <nav class="nav flex-column mb-2">
+          <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
+        </nav>
       </div>
     </div>
 
-    <!-- --- Airport Display --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Airport Display</p>
+    <!-- Main content -->
+    <div class="col-md-9">
+      <form method="post" action="/settings" id="settings-form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-      <div class="mb-3">
-        <label class="form-label small">Airport display style</label>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="full_airport_name" id="airport_short" value="0"
-                 {% if not cfg.full_airport_name %}checked{% endif %}
-                 onchange="document.getElementById('home_airport_fields').style.display='block';document.getElementById('abbreviate_fields').style.display='none'" />
-          <label class="form-check-label" for="airport_short">Short airport code</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="full_airport_name" id="airport_full" value="1"
-                 {% if cfg.full_airport_name %}checked{% endif %}
-                 onchange="document.getElementById('home_airport_fields').style.display='none';document.getElementById('abbreviate_fields').style.display='block'" />
-          <label class="form-check-label" for="airport_full">Full airport name (scrolling)</label>
-        </div>
-      </div>
+        <!-- ====== Flight Monitoring ====== -->
+        <div id="group-flight-monitoring" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-geo-alt me-2"></i>Location</p>
 
-      <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.full_airport_name %}none{% else %}block{% endif %}">
-        <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR - it will appear in <strong>bold</strong> on the screen)</small></label>
-        <input type="text" maxlength="3" class="form-control form-control-sm"
-               name="home_airport_code" id="home_airport_code"
-               value="{{ cfg.home_airport_code }}"
-               placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
-        <div id="airport_name_hint" class="form-text text-muted small"></div>
-      </div>
-
-      <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
-        <input type="checkbox" class="form-check-input" name="abbreviate_name" id="abbreviate_name"
-               {% if cfg.abbreviate_name %}checked{% endif %} />
-        <label class="form-check-label" for="abbreviate_name">Abbreviate long names (e.g. "Intl" for "International")</label>
-      </div>
-
-      <div class="mb-2">
-        <label class="form-label small">Unknown airport placeholder</label>
-        <input type="text" maxlength="3" class="form-control form-control-sm"
-               name="journey_blank_filler" value="{{ cfg.journey_blank_filler }}"
-               style="max-width:120px" />
-      </div>
-    </div>
-
-    <!-- --- Plane Info --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Plane Info Row</p>
-      <div class="mb-2">
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="details" id="details_model" value="0"
-                 {% if cfg.details == 0 %}checked{% endif %} />
-          <label class="form-check-label" for="details_model">Aircraft make &amp; model</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="details" id="details_tlm" value="1"
-                 {% if cfg.details == 1 %}checked{% endif %} />
-          <label class="form-check-label" for="details_tlm">Telemetry (altitude / speed / heading)</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- --- Weather --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Weather</p>
-
-      <div class="mb-3">
-        <label class="form-label small">Weather display</label>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
-                 {% if cfg.weather_mode == 0 %}checked{% endif %}
-                 onchange="document.getElementById('weather_key_fields').style.display='none'" />
-          <label class="form-check-label" for="weather_off">Off</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
-                 {% if cfg.weather_mode == 1 %}checked{% endif %}
-                 onchange="document.getElementById('weather_key_fields').style.display='block'" />
-          <label class="form-check-label" for="weather_temp">Temperature</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
-                 {% if cfg.weather_mode == 2 %}checked{% endif %}
-                 onchange="document.getElementById('weather_key_fields').style.display='block'" />
-          <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
-        </div>
-      </div>
-
-      <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
-        <label class="form-label small">WeatherAPI.com API Key</label>
-        <input type="text" class="form-control form-control-sm"
-               name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
-               placeholder="Get a free key at weatherapi.com" />
-        <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
-        <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label small">Units</label>
-        <select class="form-select form-select-sm" name="units" style="max-width:180px">
-          <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
-          <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- --- Display --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Display</p>
-
-      <div class="mb-3">
-        <label class="form-label small">Theme</label>
-        <select class="form-select form-select-sm" name="theme" style="max-width:200px">
-          <option value="0" {% if cfg.theme == 0 %}selected{% endif %}>Default</option>
-          <option value="1" {% if cfg.theme == 1 %}selected{% endif %}>Monochrome</option>
-          <option value="2" {% if cfg.theme == 2 %}selected{% endif %}>Pastel</option>
-        </select>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label small">Brightness: <span id="brightness_display">{{ cfg.screen_brightness }}</span>/5</label>
-        <input type="range" class="form-range" name="screen_brightness" id="screen_brightness"
-               min="1" max="5" step="1" value="{{ cfg.screen_brightness }}" style="max-width:240px" />
-      </div>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
-               {% if cfg.screen_rotate %}checked{% endif %} />
-        <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
-      </div>
-
-      <hr class="my-3" />
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
-               id="screen_schedule_enabled"
-               {% if cfg.screen_schedule_enabled %}checked{% endif %}
-               onchange="document.getElementById('schedule_fields').style.display=this.checked?'block':'none'" />
-        <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
-      </div>
-
-      <div id="schedule_fields" style="display:{% if cfg.screen_schedule_enabled %}block{% else %}none{% endif %}">
-        <div class="row g-2 mt-1">
-          <div class="col-auto">
-            <label class="form-label small">Dim at</label>
-            <input type="time" class="form-control form-control-sm"
-                   name="screen_schedule_start" value="{{ cfg.screen_schedule_start }}" />
+          <div class="mb-3">
+            <label class="form-label"><small class="text-muted">(click the unlock icon to adjust)</small></label>
+            <div id="map" class="mb-2"></div>
+            <input type="hidden" name="flight_lat" id="flight_lat" value="{{ cfg.flight_lat }}" />
+            <input type="hidden" name="flight_lng" id="flight_lng" value="{{ cfg.flight_lng }}" />
+            <div class="row g-2 mt-1">
+              <div class="col">
+                <label class="form-label small">Latitude</label>
+                <input type="number" step="any" class="form-control form-control-sm" id="lat_display" value="{{ cfg.flight_lat }}" />
+              </div>
+              <div class="col">
+                <label class="form-label small">Longitude</label>
+                <input type="number" step="any" class="form-control form-control-sm" id="lng_display" value="{{ cfg.flight_lng }}" />
+              </div>
+            </div>
           </div>
-          <div class="col-auto">
-            <label class="form-label small">Brighten at</label>
-            <input type="time" class="form-control form-control-sm"
-                   name="screen_schedule_end" value="{{ cfg.screen_schedule_end }}" />
+
+          <div class="mb-3">
+            <label class="form-label">Search Radius: <span id="radius_display">{{ cfg.flight_radius }}</span> km</label>
+            <input type="range" class="form-range" name="flight_radius" id="flight_radius"
+                   min="1" max="100" step="0.5" value="{{ cfg.flight_radius }}" />
           </div>
-          <div class="col-auto">
-            <label class="form-label small">Night brightness (0=off)</label>
-            <input type="number" min="0" max="5" class="form-control form-control-sm"
-                   name="screen_schedule_brightness" value="{{ cfg.screen_schedule_brightness }}"
-                   style="max-width:70px" />
+
+          <div class="row g-3">
+            <div class="col">
+              <label class="form-label small">Min Altitude (m)</label>
+              <input type="number" step="10" min="10" max="20000" class="form-control form-control-sm"
+                     name="flight_min_altitude" value="{{ cfg.flight_min_altitude }}" />
+            </div>
+            <div class="col">
+              <label class="form-label small">Max Altitude (m)</label>
+              <input type="number" step="100" min="100" max="40000" class="form-control form-control-sm"
+                     name="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- --- Clock / Date --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Clock &amp; Date</p>
+        <!-- ====== Data Source ====== -->
+        <div id="group-data-source" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-cloud-download me-2"></i>Data Source</p>
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
+                     {% if cfg.data_source != 'tar1090' %}checked{% endif %}
+                     onchange="document.getElementById('tar1090_fields').style.display='none'" />
+              <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online)</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
+                     {% if cfg.data_source == 'tar1090' %}checked{% endif %}
+                     onchange="document.getElementById('tar1090_fields').style.display='block'" />
+              <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
+            </div>
+          </div>
 
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
-               {% if cfg.clock_24hr %}checked{% endif %} />
-        <label class="form-check-label" for="clock_24hr">24-hour clock</label>
-      </div>
-
-
-      <div class="mb-2">
-        <label class="form-label small">Date format</label>
-        <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
-          <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
-          <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
-          <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- --- Data Source --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Data Source</p>
-      <div class="mb-3">
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
-                 {% if cfg.data_source != 'tar1090' %}checked{% endif %}
-                 onchange="document.getElementById('tar1090_fields').style.display='none'" />
-          <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online)</label>
+          <div id="tar1090_fields" style="display:{% if cfg.data_source == 'tar1090' %}block{% else %}none{% endif %}">
+            <label class="form-label small">tar1090 URL</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="tar1090_url" value="{{ cfg.tar1090_url }}"
+                   placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
+            <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
+          </div>
         </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
-                 {% if cfg.data_source == 'tar1090' %}checked{% endif %}
-                 onchange="document.getElementById('tar1090_fields').style.display='block'" />
-          <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
+
+        <!-- ====== Airport Display ====== -->
+        <div id="group-airport-display" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Airport display style</label>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="full_airport_name" id="airport_short" value="0"
+                     {% if not cfg.full_airport_name %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='block';document.getElementById('abbreviate_fields').style.display='none'" />
+              <label class="form-check-label" for="airport_short">Short airport code</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="full_airport_name" id="airport_full" value="1"
+                     {% if cfg.full_airport_name %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='none';document.getElementById('abbreviate_fields').style.display='block'" />
+              <label class="form-check-label" for="airport_full">Full airport name (scrolling)</label>
+            </div>
+          </div>
+
+          <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.full_airport_name %}none{% else %}block{% endif %}">
+            <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR - it will appear in <strong>bold</strong> on the screen)</small></label>
+            <input type="text" maxlength="3" class="form-control form-control-sm"
+                   name="home_airport_code" id="home_airport_code"
+                   value="{{ cfg.home_airport_code }}"
+                   placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
+            <div id="airport_name_hint" class="form-text text-muted small"></div>
+          </div>
+
+          <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
+            <input type="checkbox" class="form-check-input" name="abbreviate_name" id="abbreviate_name"
+                   {% if cfg.abbreviate_name %}checked{% endif %} />
+            <label class="form-check-label" for="abbreviate_name">Abbreviate long names (e.g. "Intl" for "International")</label>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">Unknown airport placeholder</label>
+            <input type="text" maxlength="3" class="form-control form-control-sm"
+                   name="journey_blank_filler" value="{{ cfg.journey_blank_filler }}"
+                   style="max-width:120px" />
+          </div>
         </div>
-      </div>
 
-      <div id="tar1090_fields" style="display:{% if cfg.data_source == 'tar1090' %}block{% else %}none{% endif %}">
-        <label class="form-label small">tar1090 URL</label>
-        <input type="text" class="form-control form-control-sm"
-               name="tar1090_url" value="{{ cfg.tar1090_url }}"
-               placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
-        <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
-      </div>
-    </div>
-
-    <!-- --- Hardware --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Hardware</p>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="web_interface_enabled" id="web_interface_enabled"
-               {% if cfg.web_interface_enabled %}checked{% endif %} />
-        <label class="form-check-label" for="web_interface_enabled">Enable web interface on next boot</label>
-        <div class="form-text text-muted small">If disabled, the config UI will not start and no QR code will be shown. Re-enable by editing <code>config.json</code> directly.</div>
-      </div>
-
-      <hr class="my-3" />
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
-               {% if cfg.hat_pwm_enabled %}checked{% endif %} />
-        <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>
-      </div>
-
-
-      <div class="mb-3">
-        <label class="form-label small">GPIO slowdown (1–4)</label>
-        <input type="number" min="1" max="4" class="form-control form-control-sm"
-               name="gpio_slowdown" value="{{ cfg.gpio_slowdown }}" style="max-width:80px" />
-        <div class="form-text text-muted small">Increase if you see flickering. Pi 4 usually needs 4.</div>
-      </div>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="loading_led_enabled" id="loading_led_enabled"
-               {% if cfg.loading_led_enabled %}checked{% endif %}
-               onchange="document.getElementById('led_pin_field').style.display=this.checked?'block':'none'" />
-        <label class="form-check-label" for="loading_led_enabled">Status LED (GPIO)</label>
-      </div>
-
-      <div id="led_pin_field" style="display:{% if cfg.loading_led_enabled %}block{% else %}none{% endif %}">
-        <label class="form-label small mt-2">GPIO pin</label>
-        <input type="number" min="1" max="40" class="form-control form-control-sm"
-               name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
-               style="max-width:80px" />
-      </div>
-    </div>
-
-    <!-- --- Change Password --- -->
-    <div class="card mb-3 p-3">
-      <p class="section-heading">Change Password</p>
-      <div class="row g-3">
-        <div class="col-sm-6">
-          <label class="form-label small">New password</label>
-          <input type="password" class="form-control form-control-sm"
-                 name="new_password" id="new_password" autocomplete="new-password"
-                 placeholder="Leave blank to keep current" />
+        <!-- ====== Plane Info Row ====== -->
+        <div id="group-plane-info" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-info-circle me-2"></i>Plane Info Row</p>
+          <div class="mb-2">
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="details" id="details_model" value="0"
+                     {% if cfg.details == 0 %}checked{% endif %} />
+              <label class="form-check-label" for="details_model">Aircraft make &amp; model</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="details" id="details_tlm" value="1"
+                     {% if cfg.details == 1 %}checked{% endif %} />
+              <label class="form-check-label" for="details_tlm">Telemetry (altitude / speed / heading)</label>
+            </div>
+          </div>
         </div>
-        <div class="col-sm-6">
-          <label class="form-label small">Confirm new password</label>
-          <input type="password" class="form-control form-control-sm"
-                 name="confirm_password" id="confirm_password" autocomplete="new-password"
-                 placeholder="Repeat new password" />
+
+        <!-- ====== Display ====== -->
+        <div id="group-display" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-display me-2"></i>Display</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Theme</label>
+            <select class="form-select form-select-sm" name="theme" style="max-width:200px">
+              <option value="0" {% if cfg.theme == 0 %}selected{% endif %}>Default</option>
+              <option value="1" {% if cfg.theme == 1 %}selected{% endif %}>Monochrome</option>
+              <option value="2" {% if cfg.theme == 2 %}selected{% endif %}>Pastel</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Brightness: <span id="brightness_display">{{ cfg.screen_brightness }}</span>/5</label>
+            <input type="range" class="form-range" name="screen_brightness" id="screen_brightness"
+                   min="1" max="5" step="1" value="{{ cfg.screen_brightness }}" style="max-width:240px" />
+          </div>
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
+                   {% if cfg.screen_rotate %}checked{% endif %} />
+            <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
+          </div>
+
+          <hr class="my-3" />
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
+                   id="screen_schedule_enabled"
+                   {% if cfg.screen_schedule_enabled %}checked{% endif %}
+                   onchange="document.getElementById('schedule_fields').style.display=this.checked?'block':'none'" />
+            <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
+          </div>
+
+          <div id="schedule_fields" style="display:{% if cfg.screen_schedule_enabled %}block{% else %}none{% endif %}">
+            <div class="row g-2 mt-1">
+              <div class="col-auto">
+                <label class="form-label small">Dim at</label>
+                <input type="time" class="form-control form-control-sm"
+                       name="screen_schedule_start" value="{{ cfg.screen_schedule_start }}" />
+              </div>
+              <div class="col-auto">
+                <label class="form-label small">Brighten at</label>
+                <input type="time" class="form-control form-control-sm"
+                       name="screen_schedule_end" value="{{ cfg.screen_schedule_end }}" />
+              </div>
+              <div class="col-auto">
+                <label class="form-label small">Night brightness (0=off)</label>
+                <input type="number" min="0" max="5" class="form-control form-control-sm"
+                       name="screen_schedule_brightness" value="{{ cfg.screen_schedule_brightness }}"
+                       style="max-width:70px" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    {% if error %}
-    <div class="alert alert-danger mb-3">
-      <strong>Error saving settings:</strong> {{ error }}
-    </div>
-    {% endif %}
+        <!-- ====== Hardware ====== -->
+        <div id="group-hardware" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-motherboard me-2"></i>Hardware</p>
 
-    <div class="d-grid mb-5">
-      <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save &amp; Restart</button>
-    </div>
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="web_interface_enabled" id="web_interface_enabled"
+                   {% if cfg.web_interface_enabled %}checked{% endif %} />
+            <label class="form-check-label" for="web_interface_enabled">Enable web interface on next boot</label>
+            <div class="form-text text-muted small">If disabled, the config UI will not start and no QR code will be shown. Re-enable by editing <code>config.json</code> directly.</div>
+          </div>
 
-  </form>
-</div><!-- /container -->
+          <hr class="my-3" />
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
+                   {% if cfg.hat_pwm_enabled %}checked{% endif %} />
+            <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>
+          </div>
+
+
+          <div class="mb-3">
+            <label class="form-label small">GPIO slowdown (1–4)</label>
+            <input type="number" min="1" max="4" class="form-control form-control-sm"
+                   name="gpio_slowdown" value="{{ cfg.gpio_slowdown }}" style="max-width:80px" />
+            <div class="form-text text-muted small">Increase if you see flickering. Pi 4 usually needs 4.</div>
+          </div>
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="loading_led_enabled" id="loading_led_enabled"
+                   {% if cfg.loading_led_enabled %}checked{% endif %}
+                   onchange="document.getElementById('led_pin_field').style.display=this.checked?'block':'none'" />
+            <label class="form-check-label" for="loading_led_enabled">Status LED (GPIO)</label>
+          </div>
+
+          <div id="led_pin_field" style="display:{% if cfg.loading_led_enabled %}block{% else %}none{% endif %}">
+            <label class="form-label small mt-2">GPIO pin</label>
+            <input type="number" min="1" max="40" class="form-control form-control-sm"
+                   name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
+                   style="max-width:80px" />
+          </div>
+        </div>
+
+        <!-- ====== Clock & Date ====== -->
+        <div id="group-clock" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
+                   {% if cfg.clock_24hr %}checked{% endif %} />
+            <label class="form-check-label" for="clock_24hr">24-hour clock</label>
+          </div>
+
+
+          <div class="mb-2">
+            <label class="form-label small">Date format</label>
+            <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
+              <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
+              <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
+              <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ====== Weather ====== -->
+        <div id="group-weather" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Weather display</label>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
+                     {% if cfg.weather_mode == 0 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='none'" />
+              <label class="form-check-label" for="weather_off">Off</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
+                     {% if cfg.weather_mode == 1 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='block'" />
+              <label class="form-check-label" for="weather_temp">Temperature</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
+                     {% if cfg.weather_mode == 2 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='block'" />
+              <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
+            </div>
+          </div>
+
+          <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
+            <label class="form-label small">WeatherAPI.com API Key</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
+                   placeholder="Get a free key at weatherapi.com" />
+            <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
+            <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Units</label>
+            <select class="form-select form-select-sm" name="units" style="max-width:180px">
+              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
+              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ====== Change Password ====== -->
+        <div id="group-password" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-key me-2"></i>Change Password</p>
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label small">New password</label>
+              <input type="password" class="form-control form-control-sm"
+                     name="new_password" id="new_password" autocomplete="new-password"
+                     placeholder="Leave blank to keep current" />
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small">Confirm new password</label>
+              <input type="password" class="form-control form-control-sm"
+                     name="confirm_password" id="confirm_password" autocomplete="new-password"
+                     placeholder="Repeat new password" />
+            </div>
+          </div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger mb-3">
+          <strong>Error saving settings:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="d-grid mb-5">
+          <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save &amp; Restart</button>
+        </div>
+
+      </form>
+    </div><!-- /col-md-9 -->
+  </div><!-- /row -->
+</div><!-- /container-fluid -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
