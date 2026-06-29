@@ -161,16 +161,30 @@ def _import_legacy(path: Path):
 
 def _migrate(mod) -> dict[str, Any]:
     """Map legacy config.py variables onto the new JSON schema."""
+    import math
+
     data: dict[str, Any] = dict(DEFAULTS)
 
     def get(name, default=None):
         return getattr(mod, name, default)
 
-    # Location
+    # Location — prefer LOCATION_HOME [lat, lng, alt]; fall back to ZONE_HOME
+    # bounding box centre if LOCATION_HOME is not present.
     location_home = get("LOCATION_HOME")
     if location_home and len(location_home) >= 2:
         data["flight_lat"] = float(location_home[0])
         data["flight_lng"] = float(location_home[1])
+    else:
+        zone = get("ZONE_HOME")
+        if zone and all(k in zone for k in ("tl_y", "tl_x", "br_y", "br_x")):
+            data["flight_lat"] = round((float(zone["tl_y"]) + float(zone["br_y"])) / 2, 7)
+            data["flight_lng"] = round((float(zone["tl_x"]) + float(zone["br_x"])) / 2, 7)
+            # Derive radius from the bounding box (km, using the larger half-width)
+            lat_deg = abs(float(zone["tl_y"]) - float(zone["br_y"])) / 2
+            lng_deg = abs(float(zone["tl_x"]) - float(zone["br_x"])) / 2
+            lat_km = lat_deg * 111.0
+            lng_km = lng_deg * 111.0 * math.cos(math.radians(data["flight_lat"]))
+            data["flight_radius"] = round(max(lat_km, lng_km), 1)
 
     # Brightness: old scale 0–100 → new scale 1–5
     brightness = get("BRIGHTNESS")
@@ -206,6 +220,10 @@ def _migrate(mod) -> dict[str, Any]:
         val = get(old)
         if val is not None:
             data[new] = val
+
+    # If a tar1090 URL was configured, switch data_source to tar1090
+    if get("TAR1090_URL"):
+        data["data_source"] = "tar1090"
 
     # JOURNEY_CODE_SELECTED → home_airport_code
     jcs = get("JOURNEY_CODE_SELECTED")
