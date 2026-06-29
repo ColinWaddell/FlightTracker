@@ -21,7 +21,7 @@ import sys
 import threading
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, Response, redirect, render_template, request, session, url_for
 
 from setup.configuration import Config, CONFIG_PATH
 
@@ -300,3 +300,31 @@ def _load_airports_json() -> str:
 
 def _airports_json() -> str:
     return _load_airports_json()
+
+
+# Keys that may contain sensitive information and should be stripped from
+# the debug config export.
+_SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash"}
+
+
+@app.route("/debug-config")
+@login_required
+def debug_config():
+    """Return the current config as JSON with all API keys / passwords removed.
+
+    Intended for users to safely share their configuration when requesting
+    help via GitHub issues.
+    """
+    import json
+
+    cfg = Config.instance()
+    safe = {
+        k: ("***REDACTED***" if k in _SENSITIVE_KEYS and v else v)
+        for k, v in cfg.as_dict().items()
+    }
+    payload = json.dumps(safe, indent=2, sort_keys=True)
+    return Response(
+        payload,
+        mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=flighttracker-debug-config.json"},
+    )

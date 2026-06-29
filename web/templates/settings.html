@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}" />
   <title>FlightTracker – Settings</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
@@ -37,10 +38,17 @@
       fill: currentColor;
     }
     /* Sidebar */
-    .sidebar { position: sticky; top: 1rem; }
+    .sidebar {
+      position: sticky;
+      top: 1rem;
+      background: #fff;
+      border-radius: .375rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,.1);
+      padding: .5rem .75rem;
+    }
     .sidebar .nav-link {
       color: #495057;
-      padding: .4rem .75rem;
+      padding: .4rem .75rem .4rem 1.75rem;
       border-radius: .375rem;
       font-size: .9rem;
       font-weight: 500;
@@ -55,14 +63,21 @@
       font-weight: 400;
       margin-left: auto;
     }
-    .group-header {
-      font-size: .95rem;
-      font-weight: 600;
-      padding: .75rem 0 .25rem 0;
-      margin-top: .5rem;
-      color: #212529;
+    .sidebar .menu-section {
+      padding: .25rem 0;
     }
-    .group-header:first-child { margin-top: 0; }
+    .sidebar .menu-section + .menu-section {
+      border-top: 1px solid #dee2e6;
+    }
+    .group-header {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: .5rem .75rem .25rem .75rem;
+      margin-top: 0;
+      color: #6c757d;
+    }
   </style>
 </head>
 <body>
@@ -72,37 +87,49 @@
       <img src="{{ url_for('static', filename='images/logo.png') }}" alt="FlightTracker" height="32" class="me-2" />
       <h1 class="fs-4 fw-semibold mb-0">FlightTracker Settings</h1>
     </div>
-    <a href="/logout" class="btn btn-sm btn-outline-secondary">Sign out</a>
+    <a href="/logout" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-box-arrow-right me-1"></i>Sign out
+    </a>
   </div>
 
   <div class="row">
     <!-- Sidebar -->
     <div class="col-md-3">
       <div class="sidebar">
-        <div class="group-header"><i class="bi bi-airplane me-2"></i>Flight Monitoring</div>
-        <nav class="nav flex-column mb-2">
-          <a class="nav-link" href="#group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</a>
-          <a class="nav-link" href="#group-data-source"><i class="bi bi-cloud-download me-2"></i>Data Source</a>
-        </nav>
-        <div class="group-header"><i class="bi bi-card-list me-2"></i>Reporting</div>
-        <nav class="nav flex-column mb-2">
-          <a class="nav-link" href="#group-airport-display"><i class="bi bi-building me-2"></i>Airport Display</a>
-          <a class="nav-link" href="#group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</a>
-        </nav>
-        <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
-        <nav class="nav flex-column mb-2">
-          <a class="nav-link" href="#group-display"><i class="bi bi-display me-2"></i>Display</a>
-          <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
-        </nav>
-        <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
-        <nav class="nav flex-column mb-2">
-          <a class="nav-link" href="#group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</a>
-          <a class="nav-link" href="#group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</a>
-        </nav>
-        <div class="group-header"><i class="bi bi-shield-lock me-2"></i>Admin</div>
-        <nav class="nav flex-column mb-2">
-          <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
-        </nav>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-broadcast-pin me-2"></i>Flight Monitoring</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</a>
+            <a class="nav-link" href="#group-data-source"><i class="bi bi-hdd-network me-2"></i>Data Source</a>
+          </nav>
+        </div>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-card-list me-2"></i>Reporting</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</a>
+            <a class="nav-link" href="#group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</a>
+          </nav>
+        </div>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-display"><i class="bi bi-pip me-2"></i>Display</a>
+            <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
+          </nav>
+        </div>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</a>
+            <a class="nav-link" href="#group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</a>
+          </nav>
+        </div>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-shield-lock me-2"></i>Admin</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
+          </nav>
+        </div>
       </div>
     </div>
 
@@ -154,7 +181,7 @@
 
         <!-- ====== Data Source ====== -->
         <div id="group-data-source" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-cloud-download me-2"></i>Data Source</p>
+          <p class="section-heading"><i class="bi bi-hdd-network me-2"></i>Data Source</p>
           <div class="mb-3">
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
@@ -176,6 +203,7 @@
                    name="tar1090_url" value="{{ cfg.tar1090_url }}"
                    placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
             <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
+            <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home">adsb.im</a> target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
           </div>
         </div>
 
@@ -243,7 +271,7 @@
 
         <!-- ====== Display ====== -->
         <div id="group-display" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-display me-2"></i>Display</p>
+          <p class="section-heading"><i class="bi bi-pip me-2"></i>Display</p>
 
           <div class="mb-3">
             <label class="form-label small">Theme</label>
@@ -484,6 +512,19 @@
       </form>
     </div><!-- /col-md-9 -->
   </div><!-- /row -->
+
+  <footer class="mt-4 pt-3 border-top text-muted small">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <p class="mb-0" style="max-width:700px">
+        Need help? Download a safe copy of your configuration below &mdash; API keys
+        and passwords are automatically removed so you can paste it straight into a
+        GitHub issue.
+      </p>
+      <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-download me-1"></i>Download debug config
+      </a>
+    </div>
+  </footer>
 </div><!-- /container-fluid -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
