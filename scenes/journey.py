@@ -355,12 +355,12 @@ class JourneyScene(object):
             prev_x = scroller.position
             new_x = scroller.tick()
 
-            if (
-                prev_x != new_x
-                or scroller.state == _BounceState.REVEAL
-                or scroller.state == _BounceState.RETRACT
-            ):
-                self._undraw_full_line(line_idx, prev_x)
+            # if (
+            #     prev_x != new_x
+            #     or scroller.state == _BounceState.REVEAL
+            #     or scroller.state == _BounceState.RETRACT
+            # ): # TODO REMOVE?
+            self._undraw_full_line(line_idx, prev_x)
             self._draw_full_line(line_idx, new_x)
 
         # Sync timing between the two scrollers when both are active
