@@ -545,6 +545,9 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 let marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
 let circle = L.circle([initLat, initLng], { radius: initRadius * 1000, color: "#0d6efd", fillOpacity: 0.1 }).addTo(map);
 
+// Set the initial zoom level based on the monitoring circle radius
+map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+
 // -- Map lock state (default locked) --
 let mapLocked = true;
 let currentLocationButton = null;
