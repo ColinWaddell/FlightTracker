@@ -209,6 +209,7 @@ def settings():
                 "screen_rotate": _bool(form.get("screen_rotate")),
                 # Brightness schedule
                 "screen_schedule_enabled": _bool(form.get("screen_schedule_enabled")),
+                "screen_schedule_auto": _bool(form.get("screen_schedule_auto")),
                 "screen_schedule_start": _str(
                     form.get("screen_schedule_start"), "22:00"
                 ),

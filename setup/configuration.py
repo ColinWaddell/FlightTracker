@@ -39,6 +39,62 @@ def _time_in_window(start_str: str, end_str: str) -> bool:
     # Overnight window
     return now_mins >= start_mins or now_mins < end_mins
 
+
+def _approx_sunrise_sunset(lat: float, lng: float, date=None):
+    """Approximate sunrise/sunset times for a given lat/lng and date.
+
+    Uses a simplified solar position algorithm (NOAA approximation).
+    Returns (sunrise_str, sunset_str) as HH:MM strings.
+    """
+    import math
+
+    if date is None:
+        date = datetime.now()
+
+    day_of_year = date.timetuple().tm_yday
+
+    # Solar declination (degrees)
+    decl = 23.45 * math.sin(math.radians(360 / 365 * (day_of_year - 81)))
+
+    # Approximate equation of time in minutes
+    b = math.radians(360 / 365 * (day_of_year - 81))
+    eot = 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
+
+    # Solar noon in UTC (minutes from midnight)
+    solar_noon_utc = 720 - 4 * lng - eot
+
+    # Hour angle at sunrise/sunset (using 90° + 50' = -0.833° elevation)
+    lat_rad = math.radians(lat)
+    decl_rad = math.radians(decl)
+    cos_h = (math.sin(math.radians(-0.833)) - math.sin(lat_rad) * math.sin(decl_rad)) / (
+        math.cos(lat_rad) * math.cos(decl_rad)
+    )
+
+    # Polar night / midnight sun — clamp to 0 or 1440 minutes
+    if cos_h > 1:
+        # Sun never rises
+        return "12:00", "12:00"
+    if cos_h < -1:
+        # Sun never sets
+        return "12:00", "12:00"
+
+    ha = math.degrees(math.acos(cos_h))  # degrees
+    ha_minutes = ha * 4  # 1° = 4 minutes
+
+    sunrise = solar_noon_utc - ha_minutes
+    sunset = solar_noon_utc + ha_minutes
+
+    # Wrap into 0–1440
+    sunrise = sunrise % 1440
+    sunset = sunset % 1440
+
+    def _mins_to_hhmm(m):
+        m = int(round(m)) % 1440
+        return f"{m // 60:02d}:{m % 60:02d}"
+
+    return _mins_to_hhmm(sunrise), _mins_to_hhmm(sunset)
+
+
 _ROOT = Path(__file__).parent.parent
 CONFIG_PATH = _ROOT / "config.json"
 LEGACY_PATH = _ROOT / "config.py"
@@ -68,6 +124,7 @@ DEFAULTS: dict[str, Any] = {
     "screen_rotate": False,
     # Brightness schedule
     "screen_schedule_enabled": False,
+    "screen_schedule_auto": False,
     "screen_schedule_start": "22:00",
     "screen_schedule_end": "07:00",
     "screen_schedule_brightness": 0,
@@ -327,6 +384,10 @@ class Config:
         return bool(self._data.get("screen_schedule_enabled", False))
 
     @property
+    def screen_schedule_auto(self) -> bool:
+        return bool(self._data.get("screen_schedule_auto", False))
+
+    @property
     def screen_schedule_start(self) -> str:
         return str(self._data.get("screen_schedule_start", "22:00"))
 
@@ -349,9 +410,11 @@ class Config:
         """True if the current time falls within the configured brightness schedule."""
         if not self.screen_schedule_enabled:
             return False
-        return _time_in_window(
-            self.screen_schedule_start, self.screen_schedule_end
-        )
+        if self.screen_schedule_auto:
+            start, end = _approx_sunrise_sunset(self.flight_lat, self.flight_lng)
+        else:
+            start, end = self.screen_schedule_start, self.screen_schedule_end
+        return _time_in_window(start, end)
 
     @property
     def clock_24hr(self) -> bool:

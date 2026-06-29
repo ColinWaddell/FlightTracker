@@ -286,17 +286,28 @@
           </div>
 
           <div id="schedule_fields" style="display:{% if cfg.screen_schedule_enabled %}block{% else %}none{% endif %}">
-            <div class="row g-2 mt-1">
-              <div class="col-auto">
-                <label class="form-label small">Dim at</label>
-                <input type="time" class="form-control form-control-sm"
-                       name="screen_schedule_start" value="{{ cfg.screen_schedule_start }}" />
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" name="screen_schedule_auto" id="screen_schedule_auto"
+                     {% if cfg.screen_schedule_auto %}checked{% endif %}
+                     onchange="document.getElementById('manual_times').style.display=this.checked?'none':'block'" />
+              <label class="form-check-label" for="screen_schedule_auto">Automatically based on sunrise &amp; sunset</label>
+              <div class="form-text text-muted small">Uses your flight location coordinates to estimate sunrise and sunset times.</div>
+            </div>
+            <div id="manual_times" style="display:{% if cfg.screen_schedule_auto %}none{% else %}block{% endif %}">
+              <div class="row g-2 mt-1">
+                <div class="col-auto">
+                  <label class="form-label small">Dim at</label>
+                  <input type="time" class="form-control form-control-sm"
+                         name="screen_schedule_start" value="{{ cfg.screen_schedule_start }}" />
+                </div>
+                <div class="col-auto">
+                  <label class="form-label small">Brighten at</label>
+                  <input type="time" class="form-control form-control-sm"
+                         name="screen_schedule_end" value="{{ cfg.screen_schedule_end }}" />
+                </div>
               </div>
-              <div class="col-auto">
-                <label class="form-label small">Brighten at</label>
-                <input type="time" class="form-control form-control-sm"
-                       name="screen_schedule_end" value="{{ cfg.screen_schedule_end }}" />
-              </div>
+            </div>
+            <div class="row g-2 mt-2">
               <div class="col-auto">
                 <label class="form-label small">Night brightness (0=off)</label>
                 <input type="number" min="0" max="5" class="form-control form-control-sm"
