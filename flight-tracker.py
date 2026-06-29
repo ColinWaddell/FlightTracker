@@ -6,6 +6,9 @@ import time
 
 from setup.configuration import Config, CONFIG_PATH
 
+# Default port for the web config interface — must match web/app.py FLASK_PORT
+_DEFAULT_FLASK_PORT = 8584
+
 
 def _local_ip() -> str:
     try:
@@ -37,28 +40,15 @@ def _start_flask_daemon():
     t.start()
 
 
-def _show_boot_screen(matrix, canvas, cfg_existed: bool):
+def _render_splash(matrix, canvas, url: str, Image, qrcode, ERROR_CORRECT_L):
     """
     Splash-image boot screen with QR code overlaid at the top-left.
 
     Loads assets/splash.bmp (64x32) via PIL and pushes it to the canvas
     with SetImage, then paints QR modules on top at (0, 0).
-    Waits at least 8 s (or indefinitely if no config.json exists yet).
     The frame is left on screen after the deadline; the animator overwrites
     it on its first render pass.
     """
-    from PIL import Image
-    from web.app import FLASK_PORT
-
-    try:
-        import qrcode
-        from qrcode.constants import ERROR_CORRECT_L
-    except ImportError:
-        qrcode = None
-
-    url = f"http://{_local_ip()}:{FLASK_PORT}"
-    print(f"[web] Config interface: {url}/settings")
-
     # -- Load splash image ----------------------------------------------------
     # canvas.SetImage() is broken with Pillow 10+ (unsafe_ptrs removed).
     # Read raw bytes and set pixels manually instead.
@@ -94,25 +84,125 @@ def _show_boot_screen(matrix, canvas, cfg_existed: bool):
 
     matrix.SwapOnVSync(canvas)
 
-    # -- Wait out the minimum display period ----------------------------------
-    deadline = time.time() + 8
-    while True:
-        time.sleep(0.5)
-        if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
-            break
-    # Frame stays on screen; display.run() overwrites it on first render pass
+
+def _background_load(matrix, canvas, result: dict):
+    """
+    Background thread: import and initialise everything that isn't needed
+    for the splash screen.  Stores the fully-constructed Display in
+    result['display'] and starts the Flask daemon.
+    """
+    try:
+        # Import the display module and build the class lazily.
+        # This triggers all scene imports, the FR24 API library,
+        # fonts, themes, etc. — but only when called, not at module load.
+        from display import get_display_class
+
+        DisplayClass = get_display_class()
+
+        # Construct the Display, reusing the matrix/canvas from the splash
+        display = DisplayClass(matrix=matrix, canvas=canvas)
+        result['display'] = display
+
+        # Start the Flask config web server
+        cfg = Config.instance()
+        if cfg.web_interface_enabled:
+            _start_flask_daemon()
+            result['flask_started'] = True
+
+    except Exception as exc:
+        result['error'] = exc
+        import traceback
+        traceback.print_exc(file=sys.stderr)
 
 
 if __name__ == "__main__":
     cfg = Config.instance()
 
-    from display import Display
+    # -- Phase 1: Minimal imports for splash screen ---------------------------
+    # Only rgbmatrix + PIL + qrcode are needed to show the QR code.
+    # These are imported synchronously BEFORE the background thread starts
+    # to avoid GIL contention with the heavy FR24/Flask imports.
+    from rgbmatrix import RGBMatrix, RGBMatrixOptions
+    from PIL import Image
+    try:
+        import qrcode
+        from qrcode.constants import ERROR_CORRECT_L
+    except ImportError:
+        qrcode = None
 
-    display = Display()
+    options = RGBMatrixOptions()
+    options.hardware_mapping = (
+        "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
+    )
+    options.rows = 32
+    options.cols = 64
+    options.chain_length = 1
+    options.parallel = 1
+    options.row_address_type = 0
+    options.multiplexing = 0
+    options.pwm_bits = 11
+    options.brightness = cfg.brightness_percent
+    options.pwm_lsb_nanoseconds = 130
+    options.led_rgb_sequence = "RGB"
+    options.pixel_mapper_config = "Rotate:180" if cfg.screen_rotate else ""
+    options.show_refresh_rate = 0
+    options.gpio_slowdown = cfg.gpio_slowdown
+    options.disable_hardware_pulsing = True
+    options.drop_privileges = True
 
+    matrix = RGBMatrix(options=options)
+    canvas = matrix.CreateFrameCanvas()
+    canvas.Clear()
+
+    # -- Phase 2: Show splash + QR immediately --------------------------------
+    # Build the QR URL using the default port constant (no Flask import needed).
+    # The URL just points the phone at the right address; Flask will be ready
+    # by the time the user actually scans and connects.
     if cfg.web_interface_enabled:
-        cfg_existed = CONFIG_PATH.exists()
-        _start_flask_daemon()
-        _show_boot_screen(display.matrix, display.canvas, cfg_existed)
+        url = f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings"
+        print(f"[web] Config interface: {url}", flush=True)
+        _render_splash(matrix, canvas, url, Image, qrcode, ERROR_CORRECT_L)
 
+        # -- Phase 3: Kick off background loading -----------------------------
+        # Start heavy imports (FR24 API, Flask, scenes, fonts) in a background
+        # thread so they overlap with the splash screen display time.
+        result = {}
+        bg_thread = threading.Thread(
+            target=_background_load,
+            args=(matrix, canvas, result),
+            daemon=True,
+            name="background-load",
+        )
+        bg_thread.start()
+
+        # Wait the minimum 8 seconds (or indefinitely if no config yet)
+        cfg_existed = CONFIG_PATH.exists()
+        deadline = time.time() + 8
+        while True:
+            time.sleep(0.5)
+            if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
+                break
+    else:
+        # No web UI — brief splash only
+        _render_splash(matrix, canvas, f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings", Image, qrcode, ERROR_CORRECT_L)
+        result = {}
+        bg_thread = threading.Thread(
+            target=_background_load,
+            args=(matrix, canvas, result),
+            daemon=True,
+            name="background-load",
+        )
+        bg_thread.start()
+        time.sleep(2)
+
+    # -- Phase 4: Wait for background loading to finish -----------------------
+    bg_thread.join()
+
+    if 'error' in result:
+        print(f"[startup] Background load failed: {result['error']}", file=sys.stderr)
+        sys.exit(1)
+
+    display = result['display']
+
+    # -- Phase 5: Run the main display loop -----------------------------------
     display.run()

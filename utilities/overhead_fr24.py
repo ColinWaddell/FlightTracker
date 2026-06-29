@@ -1,29 +1,8 @@
-from FlightRadar24.api import FlightRadar24API
-
 from threading import Thread, Lock, Event
 from time import sleep
 
 from requests.exceptions import RequestException, ConnectionError
 from urllib3.exceptions import NewConnectionError, MaxRetryError
-
-try:
-    from setup.configuration import Config
-
-    _cfg = Config.instance()
-    ZONE_HOME = _cfg.zone_home
-    FLIGHT_MIN_ALTITUDE = _cfg.flight_min_altitude
-    FLIGHT_MAX_ALTITUDE = _cfg.flight_max_altitude
-    LOCATION_HOME = _cfg.location_home
-except Exception:
-    ZONE_HOME = {
-        "tl_y": 56.05,
-        "tl_x": -4.61,
-        "br_y": 55.69,
-        "br_x": -3.89,
-    }
-    FLIGHT_MIN_ALTITUDE = 100.0
-    FLIGHT_MAX_ALTITUDE = 10000.0
-    LOCATION_HOME = [55.87, -4.25, 6371.0]
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
@@ -42,7 +21,7 @@ def _clean_field(value):
     return "" if value.upper() in BLANK_FIELDS else value
 
 
-def distance_from_flight_to_home(flight):
+def distance_from_flight_to_home(flight, location_home):
     import math
 
     def polar_to_cartesian(lat, lon, alt):
@@ -56,7 +35,7 @@ def distance_from_flight_to_home(flight):
     def feet_to_km_plus_earth(altitude_ft):
         return 0.0003048 * altitude_ft + EARTH_RADIUS_KM
 
-    home = LOCATION_HOME
+    home = location_home
     try:
         x0, y0, z0 = polar_to_cartesian(
             flight.latitude,
@@ -71,6 +50,17 @@ def distance_from_flight_to_home(flight):
 
 class Overhead:
     def __init__(self):
+        # Lazy import — FlightRadar24API drags in curl_cffi + brotli (~4.7s on Pi)
+        from FlightRadar24.api import FlightRadar24API
+
+        from setup.configuration import Config
+
+        _cfg = Config.instance()
+        self._zone_home = _cfg.zone_home
+        self._min_altitude = _cfg.flight_min_altitude
+        self._max_altitude = _cfg.flight_max_altitude
+        self._location_home = _cfg.location_home
+
         self._api = FlightRadar24API()
         self._lock = Lock()
         self._done = Event()
@@ -122,11 +112,11 @@ class Overhead:
         data = []
 
         try:
-            bounds = self._api.get_bounds(ZONE_HOME)
+            bounds = self._api.get_bounds(self._zone_home)
             flights = self._api.get_flights(bounds=bounds)
 
-            min_alt_ft = FLIGHT_MIN_ALTITUDE / 0.3048
-            max_alt_ft = FLIGHT_MAX_ALTITUDE / 0.3048
+            min_alt_ft = self._min_altitude / 0.3048
+            max_alt_ft = self._max_altitude / 0.3048
 
             flights = [
                 f
@@ -135,7 +125,7 @@ class Overhead:
                 and min_alt_ft < f.altitude < max_alt_ft
             ]
 
-            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f))
+            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f, self._location_home))
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
                 retries = RETRIES
