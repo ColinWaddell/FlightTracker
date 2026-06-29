@@ -247,7 +247,7 @@ class JourneyScene(object):
         # IATA code
         x += graphics.DrawText(self.canvas, fonts.small, x, y, colour_code, iata)
         # Arrow separator
-        x += graphics.DrawText(self.canvas, fonts.small, x, y, colour_arrow, arrow)
+        x += graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_arrow, arrow)
         # Full name
         graphics.DrawText(self.canvas, fonts.small, x, y, colour_name, name)
 
