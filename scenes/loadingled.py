@@ -1,16 +1,9 @@
 from utilities.animator import Animator
 from setup import frames
+from setup.configuration import Config
 from time import sleep
 import RPi.GPIO as GPIO
 import sys
-
-# Attempt to load config data
-try:
-    from config import LOADING_LED_GPIO_PIN
-
-except (ModuleNotFoundError, NameError, ImportError):
-    # If there's no config data
-    LOADING_LED_GPIO_PIN = 25
 
 BLINKER_STEPS = 4
 
@@ -23,10 +16,14 @@ class LoadingLEDScene(object):
 
     def gpio_setup(self):
         try:
+            pin = Config.instance().loading_led_gpio_pin
+            if not pin:
+                self.gpio_setup_complete = False
+                return
             GPIO.setwarnings(False)
             GPIO.setmode(GPIO.BCM)
-            GPIO.setup(LOADING_LED_GPIO_PIN, GPIO.OUT)
-            GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH)
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.HIGH)
             self.gpio_setup_complete = True
         except:
             print("Error initializing GPIO", file=sys.stderr)
@@ -39,11 +36,16 @@ class LoadingLEDScene(object):
         if not self.gpio_setup_complete:
             self.gpio_setup()
 
+        if not self.gpio_setup_complete:
+            return
+
+        pin = Config.instance().loading_led_gpio_pin
+        if not pin:
+            return
+
         if self.overhead.processing:
-            if self.gpio_setup_complete:
-                GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH if count % 2 else GPIO.LOW)
+            GPIO.output(pin, GPIO.HIGH if count % 2 else GPIO.LOW)
 
         else:
             # Not processing, leave LED on
-            if self.gpio_setup_complete:
-                GPIO.output(LOADING_LED_GPIO_PIN, GPIO.HIGH)
+            GPIO.output(pin, GPIO.HIGH)

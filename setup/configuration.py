@@ -138,7 +138,7 @@ DEFAULTS: dict[str, Any] = {
     "gpio_slowdown": 1,
     "hat_pwm_enabled": True,
     "loading_led_enabled": False,
-    "loading_led_gpio_pin": 25,
+    "loading_led_gpio_pin": "",
     # Data source
     "data_source": "fr24",  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
     "tar1090_url": "",  # only used when data_source == 'tar1090'

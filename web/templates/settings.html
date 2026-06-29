@@ -177,6 +177,9 @@
                      name="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
             </div>
           </div>
+          <p class="form-text small text-muted mt-1 mb-0">
+            <i class="bi bi-info-circle me-1"></i>Setting a non-zero minimum altitude (say, <code>10m</code>) prevents the device always listing aircraft on the tarmac.
+          </p>
         </div>
 
         <!-- ====== Data Source ====== -->
@@ -203,7 +206,7 @@
                    name="tar1090_url" value="{{ cfg.tar1090_url }}"
                    placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
             <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
-            <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home">adsb.im</a> target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
+            <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
           </div>
         </div>
 
@@ -228,13 +231,12 @@
           </div>
 
           <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.full_airport_name %}none{% else %}block{% endif %}">
-            <label class="form-label small">Home Airport IATA Code <small class="text-muted">(e.g. GLA, LHR - it will appear in <strong>bold</strong> on the screen)</small></label>
             <input type="text" maxlength="3" class="form-control form-control-sm"
                    name="home_airport_code" id="home_airport_code"
                    value="{{ cfg.home_airport_code }}"
                    placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
             <div id="airport_name_hint" class="form-text text-muted small"></div>
-            <div class="form-text text-muted small mt-1">When a flight's origin or destination matches this code, that airport will appear <strong>bold</strong> on the display.</div>
+            <div class="form-text text-muted small mt-1">When a flight's origin or destination matches this code, that airport will appear <strong>bold</strong> on the display. Leave blank to disable.</div>
           </div>
 
           <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
@@ -248,6 +250,7 @@
             <input type="text" maxlength="3" class="form-control form-control-sm"
                    name="journey_blank_filler" value="{{ cfg.journey_blank_filler }}"
                    style="max-width:120px" />
+            <div class="form-text text-muted small mt-1">Code to be displayed when no airport information is available.</div>
           </div>
         </div>
 
@@ -373,6 +376,8 @@
             <div class="form-text text-muted small">Increase if you see flickering. Pi 4 usually needs 4.</div>
           </div>
 
+          <hr class="my-3" />
+
           <div class="mb-2 form-check">
             <input type="checkbox" class="form-check-input" name="loading_led_enabled" id="loading_led_enabled"
                    {% if cfg.loading_led_enabled %}checked{% endif %}
@@ -385,6 +390,7 @@
             <input type="number" min="1" max="40" class="form-control form-control-sm"
                    name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
                    style="max-width:80px" />
+            <div class="form-text text-muted small">An external LED can be used to indicate the search for flights. Requires LED driving circuitry. Leave blank if not required.</div>
           </div>
         </div>
 
