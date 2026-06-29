@@ -245,11 +245,15 @@ class JourneyScene(object):
         x = x_offset
 
         # IATA code
-        x += graphics.DrawText(self.canvas, fonts.small, x, y, colour_code, iata)
+        x += graphics.DrawText(
+            self.canvas, fonts.small_symbols, x, y, colour_code, iata
+        )
         # Arrow separator
-        x += graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_arrow, arrow)
+        x += graphics.DrawText(
+            self.canvas, fonts.small_symbols, x, y, colour_arrow, arrow
+        )
         # Full name
-        graphics.DrawText(self.canvas, fonts.small, x, y, colour_name, name)
+        graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_name, name)
 
     def _undraw_full_line(self, line_idx: int, x_offset: int):
         """Overdraw with BG to erase previous position."""
@@ -272,7 +276,7 @@ class JourneyScene(object):
         full_text = f"{iata}{arrow}{name}"
         # Erase by drawing entire text in BG colour (simpler than tracking bounds)
         graphics.DrawText(
-            self.canvas, fonts.small, x_offset, y, TC(THEME_BG), full_text
+            self.canvas, fonts.small_symbols, x_offset, y, TC(THEME_BG), full_text
         )
 
     def _setup_full_mode(self):
@@ -355,13 +359,13 @@ class JourneyScene(object):
             prev_x = scroller.position
             new_x = scroller.tick()
 
-            # if (
-            #     prev_x != new_x
-            #     or scroller.state == _BounceState.REVEAL
-            #     or scroller.state == _BounceState.RETRACT
-            # ): # TODO REMOVE?
-            self._undraw_full_line(line_idx, prev_x)
-            self._draw_full_line(line_idx, new_x)
+            if (
+                prev_x != new_x
+                or scroller.state == _BounceState.REVEAL
+                or scroller.state == _BounceState.RETRACT
+            ):
+                self._undraw_full_line(line_idx, prev_x)
+                self._draw_full_line(line_idx, new_x)
 
         # Sync timing between the two scrollers when both are active
         if self._origin_scroll.scroll_max > 0 and self._dest_scroll.scroll_max > 0:
