@@ -258,6 +258,13 @@
             <label class="form-label small">Brightness: <span id="brightness_display">{{ cfg.screen_brightness }}</span>/5</label>
             <input type="range" class="form-range pt-3 px-2" name="screen_brightness" id="screen_brightness"
                    min="1" max="5" step="1" value="{{ cfg.screen_brightness }}" style="max-width:240px" />
+            {% if in_schedule %}
+            <div class="alert alert-warning small mt-2 mb-0 py-2">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              The brightness schedule is currently active — changes to the default brightness
+              will not take effect until the scheduled period ends.
+            </div>
+            {% endif %}
           </div>
 
           <div class="mb-2 form-check">

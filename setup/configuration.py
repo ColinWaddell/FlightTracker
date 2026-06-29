@@ -11,8 +11,33 @@ import importlib.util
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+
+def _time_in_window(start_str: str, end_str: str) -> bool:
+    """Check if *now* falls inside a time window defined by two HH:MM strings.
+
+    Handles overnight windows (e.g. 22:00 → 07:00) where start > end.
+    """
+    try:
+        now = datetime.now()
+        start = datetime.strptime(start_str.strip(), "%H:%M")
+        end = datetime.strptime(end_str.strip(), "%H:%M")
+    except (ValueError, AttributeError):
+        return False
+
+    start_mins = start.hour * 60 + start.minute
+    end_mins = end.hour * 60 + end.minute
+    now_mins = now.hour * 60 + now.minute
+
+    if start_mins == end_mins:
+        return True
+    if start_mins < end_mins:
+        return start_mins <= now_mins < end_mins
+    # Overnight window
+    return now_mins >= start_mins or now_mins < end_mins
 
 _ROOT = Path(__file__).parent.parent
 CONFIG_PATH = _ROOT / "config.json"
@@ -312,6 +337,21 @@ class Config:
     @property
     def screen_schedule_brightness(self) -> int:
         return max(0, min(5, int(self._data.get("screen_schedule_brightness", 0))))
+
+    @property
+    def schedule_brightness_percent(self) -> int:
+        """Map 0–5 schedule brightness to 0–100 percent (0 = screen off)."""
+        return {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(
+            self.screen_schedule_brightness, 0
+        )
+
+    def is_in_brightness_schedule(self) -> bool:
+        """True if the current time falls within the configured brightness schedule."""
+        if not self.screen_schedule_enabled:
+            return False
+        return _time_in_window(
+            self.screen_schedule_start, self.screen_schedule_end
+        )
 
     @property
     def clock_24hr(self) -> bool:

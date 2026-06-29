@@ -143,6 +143,15 @@ class Display(
             and (self._data_all_looped or len(self._data) <= 1)
         ):
             self.overhead.grab_data()
+    
+    @Animator.KeyFrame.add(frames.PER_SECOND * 1)
+    def screen_brightness_auto(self, count):
+        cfg = Config.instance()
+
+        if cfg.is_in_brightness_schedule():
+            self.matrix.brightness = cfg.schedule_brightness_percent
+        else:
+            self.matrix.brightness = cfg.brightness_percent
 
     def run(self):
         try:
