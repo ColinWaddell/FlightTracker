@@ -8,27 +8,6 @@ from pathlib import Path
 
 from requests.exceptions import RequestException
 
-try:
-    from setup.configuration import Config
-
-    _cfg = Config.instance()
-    TAR1090_URL = _cfg.tar1090_url
-    ZONE_HOME = _cfg.zone_home
-    FLIGHT_MIN_ALTITUDE = _cfg.flight_min_altitude
-    FLIGHT_MAX_ALTITUDE = _cfg.flight_max_altitude
-    LOCATION_HOME = _cfg.location_home
-except Exception:
-    TAR1090_URL = "http://10.0.0.12:8080//data/aircraft.json"
-    ZONE_HOME = {
-        "tl_y": 56.05,
-        "tl_x": -4.61,
-        "br_y": 55.69,
-        "br_x": -3.89,
-    }
-    FLIGHT_MIN_ALTITUDE = 100.0
-    FLIGHT_MAX_ALTITUDE = 10000.0
-    LOCATION_HOME = [55.87, -4.25, 6371.0]
-
 ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
 EARTH_RADIUS_KM = 6371
@@ -110,6 +89,15 @@ def _distance_from_home(lat, lon, alt_ft, home):
 
 class Overhead:
     def __init__(self):
+        from setup.configuration import Config
+
+        _cfg = Config.instance()
+        self._tar1090_url = _cfg.tar1090_url
+        self._zone_home = _cfg.zone_home
+        self._min_altitude = _cfg.flight_min_altitude
+        self._max_altitude = _cfg.flight_max_altitude
+        self._location_home = _cfg.location_home
+
         self._route_cache: dict[str, tuple] = {}
         self._lock = Lock()
         self._done = Event()
@@ -182,15 +170,15 @@ class Overhead:
         data = []
 
         try:
-            response = requests.get(TAR1090_URL, timeout=10)
+            response = requests.get(self._tar1090_url, timeout=10)
             response.raise_for_status()
 
             aircraft_list = response.json().get("aircraft", [])
 
-            min_alt_ft = FLIGHT_MIN_ALTITUDE / 0.3048
-            max_alt_ft = FLIGHT_MAX_ALTITUDE / 0.3048
-            zone = ZONE_HOME
-            home = LOCATION_HOME
+            min_alt_ft = self._min_altitude / 0.3048
+            max_alt_ft = self._max_altitude / 0.3048
+            zone = self._zone_home
+            home = self._location_home
 
             candidates = []
             for ac in aircraft_list:
