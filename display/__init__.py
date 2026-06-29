@@ -113,6 +113,11 @@ def _build_display_class():
             self._data_index = 0
             self._data = []
 
+            # When reusing a matrix/canvas from the splash screen, don't
+            # clear on the first animator frame — let the clock/date/weather
+            # scenes overwrite the splash naturally so there's no black gap.
+            self._skip_first_clear = matrix is not None
+
             self.overhead = Overhead()
             self.overhead.grab_data()
 
@@ -126,6 +131,9 @@ def _build_display_class():
 
         @Animator.KeyFrame.add(0)
         def clear_screen(self):
+            if self._skip_first_clear:
+                self._skip_first_clear = False
+                return
             self.canvas.Clear()
 
         @Animator.KeyFrame.add(frames.PER_SECOND * 5)
