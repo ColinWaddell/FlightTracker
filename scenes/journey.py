@@ -365,7 +365,7 @@ class JourneyScene(object):
                 or scroller.state == _BounceState.RETRACT
             ):
                 self._undraw_full_line(line_idx, prev_x)
-                self._draw_full_line(line_idx, new_x)
+            self._draw_full_line(line_idx, new_x)
 
         # Sync timing between the two scrollers when both are active
         if self._origin_scroll.scroll_max > 0 and self._dest_scroll.scroll_max > 0:
