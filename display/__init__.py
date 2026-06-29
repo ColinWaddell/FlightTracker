@@ -1,7 +1,6 @@
 import sys
 
 
-
 def callsigns_match(flights_a, flights_b):
     get_callsigns = lambda flights: [f["callsign"] for f in flights]
     return set(get_callsigns(flights_a)) == set(get_callsigns(flights_b))
@@ -59,7 +58,7 @@ def _build_display_class():
     if _cfg.use_tar1090:
         from utilities.overhead_tar1090 import Overhead
 
-        REFRESH_INTERVAL = 5
+        REFRESH_INTERVAL = 10
     else:
         from utilities.overhead_fr24 import Overhead
 
