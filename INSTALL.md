@@ -7,7 +7,7 @@ This guide covers both fresh installs and upgrades from the previous version of 
 ## Hardware
 
 - Raspberry Pi (any model - Pi 4 recommended)
-- [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview) + 64×32 RGB LED matrix
+- [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview) + 64x32 RGB LED matrix
 - Optional: solder bridge on the HAT to enable PWM via the Pi's audio hardware (reduces flicker)
 
 ---
@@ -135,15 +135,15 @@ Any key omitted will use the built-in default.
 | `full_airport_name` | Scroll the full airport name instead of just the IATA code | `false` |
 | `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Weather uses your flight location coordinates. Leave blank to disable weather entirely | `""` |
 | `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
-| `units` | `"m"` for metric (°C / km), `"i"` for imperial (°F / mi) | `"m"` |
+| `units` | `"m"` for metric (C / km), `"i"` for imperial (F / mi) | `"m"` |
 | `details` | Bottom row: `0` = aircraft make/model, `1` = altitude/speed/heading | `0` |
 | `theme` | `0` = Default, `1` = Monochrome, `2` = Pastel | `0` |
-| `screen_brightness` | 1 (dim) – 5 (full) | `3` |
+| `screen_brightness` | 1 (dim) - 5 (full) | `3` |
 | `clock_24hr` | `true` for 24-hour clock | `true` |
 | `timezone` | IANA timezone name, e.g. `"America/New_York"` | `"Europe/London"` |
 | `date_format` | `0` = YYYY-MM-DD, `1` = DD-MM-YYYY, `2` = MM-DD-YYYY | `0` |
-| `web_interface_enabled` | Set to `false` to disable the config UI entirely — Flask will not start and no QR code will be shown on boot. Re-enable by editing `config.json` directly | `true` |
-| `gpio_slowdown` | 1–4; increase if display flickers. Pi 4 typically needs `4` | `1` |
+| `web_interface_enabled` | Set to `false` to disable the config UI entirely - Flask will not start and no QR code will be shown on boot. Re-enable by editing `config.json` directly | `true` |
+| `gpio_slowdown` | 1-4; increase if display flickers. Pi 4 typically needs `4` | `1` |
 | `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires solder bridge) | `true` |
 | `loading_led_enabled` | Blink a GPIO LED while loading flight data | `false` |
 | `loading_led_gpio_pin` | GPIO pin number for the loading LED | `25` |

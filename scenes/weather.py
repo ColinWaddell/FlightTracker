@@ -21,7 +21,7 @@ from setup.themes import (
 )
 from setup.configuration import Config
 
-# WeatherAPI.com endpoint — 2-day forecast, no AQI/alerts
+# WeatherAPI.com endpoint - 2-day forecast, no AQI/alerts
 _WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
     "?key={key}&q={lat},{lng}&days=2&aqi=no&alerts=no"
@@ -29,7 +29,7 @@ _WEATHERAPI_URL = (
 
 WEATHER_RETRIES = 3
 
-# Temperature → theme key lookup (thresholds in °C)
+# Temperature -> theme key lookup (thresholds in C)
 _TEMPERATURE_THRESHOLDS = [
     (0, THEME_WEATHER_00C),
     (1, THEME_WEATHER_01C),
@@ -47,7 +47,7 @@ RAINFALL_12HR_MARKERS = True
 RAINFALL_GRAPH_ORIGIN = (39, 15)
 RAINFALL_COLUMN_WIDTH = 1
 RAINFALL_GRAPH_HEIGHT = 8
-RAINFALL_MAX_VALUE = 3  # mm — columns taller than this will flash
+RAINFALL_MAX_VALUE = 3  # mm - columns taller than this will flash
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_REFRESH_SECONDS = 60
@@ -61,7 +61,7 @@ class WeatherError(Exception):
 
 
 # ---------------------------------------------------------------------------
-# WeatherAPI fetch — cached by (lat, lng, key, ttl bucket)
+# WeatherAPI fetch - cached by (lat, lng, key, ttl bucket)
 # ---------------------------------------------------------------------------
 
 
@@ -106,7 +106,7 @@ def _parse_weather(raw: dict) -> dict:
 
 
 def _temperature_to_colour(temp_c: float) -> graphics.Color:
-    """Map a temperature in °C to an interpolated theme colour."""
+    """Map a temperature in C to an interpolated theme colour."""
     lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[0]
     hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[1]
 
@@ -317,7 +317,7 @@ class WeatherScene(object):
                 TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0],
                 TEMPERATURE_POSITION[1],
-                _temperature_to_colour(temp_c),  # colour always based on °C
+                _temperature_to_colour(temp_c),  # colour always based on C
                 temp_str,
             )
             self._last_temp_c = temp_c

@@ -114,7 +114,7 @@ def _build_display_class():
             self._data = []
 
             # When reusing a matrix/canvas from the splash screen, don't
-            # clear on the first animator frame — let the clock/date/weather
+            # clear on the first animator frame - let the clock/date/weather
             # scenes overwrite the splash naturally so there's no black gap.
             self._skip_first_clear = matrix is not None
 
@@ -140,7 +140,7 @@ def _build_display_class():
         @Animator.KeyFrame.add(0)
         def clear_screen(self):
             if self._skip_first_clear:
-                # Don't clear on frame 0 — splash is still showing.
+                # Don't clear on frame 0 - splash is still showing.
                 # The clear happens in run() instead, just before play().
                 self._skip_first_clear = False
                 return
@@ -158,14 +158,14 @@ def _build_display_class():
                 callsigns_changed = not callsigns_match(self._data, new_data)
 
                 if callsigns_changed:
-                    # New or lost flights — full reset including scroll position
+                    # New or lost flights - full reset including scroll position
                     self._data_index = 0
                     self._data_all_looped = False
                     self._data = new_data
                     if there_is_data:
                         self.reset_scene()
                 elif telemetry_changed(self._data, new_data):
-                    # Same flights, updated telemetry — swap data silently so the
+                    # Same flights, updated telemetry - swap data silently so the
                     # scroller picks up new values on its next frame without resetting
                     self._data = new_data
 

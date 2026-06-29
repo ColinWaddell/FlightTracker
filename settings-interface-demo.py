@@ -51,7 +51,7 @@ def _patch_restart():
         print("[demo] Config reloaded (fake restart)", flush=True)
 
     web_app._restart_after = _fake_restart_after
-    print("[demo] Patched restart → config reload only", flush=True)
+    print("[demo] Patched restart -> config reload only", flush=True)
 
 
 def main():
@@ -67,7 +67,7 @@ def main():
     print(f"  Default password: flighttracker")
     print(f"{'='*60}\n")
 
-    # Flask dev server — threaded, with reloader disabled so the patched
+    # Flask dev server - threaded, with reloader disabled so the patched
     # restart doesn't get clobbered by a watchdog reload.
     app.run(
         host="0.0.0.0",

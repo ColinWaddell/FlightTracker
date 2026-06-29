@@ -147,7 +147,7 @@ def login():
                 next_url = request.args.get("next") or url_for("settings")
                 return redirect(next_url)
             else:
-                print("[web] Login failed — wrong password", flush=True)
+                print("[web] Login failed - wrong password", flush=True)
                 error = "Incorrect password."
 
     using_default_password = not bool(Config.instance().get("web_password_hash"))
@@ -236,7 +236,7 @@ def settings():
                 "tar1090_url": _str(form.get("tar1090_url"), ""),
             }
 
-            # Password change — only update if a new password was supplied
+            # Password change - only update if a new password was supplied
             new_password = form.get("new_password", "").strip()
             confirm_password = form.get("confirm_password", "").strip()
             if new_password:

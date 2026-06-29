@@ -1,12 +1,12 @@
 """
-PlaneDetailsScene — scrolling bottom row.
+PlaneDetailsScene - scrolling bottom row.
 
-details == 0  →  scrolls the plane make/model (e.g. "Airbus A320")
+details == 0  ->  scrolls the plane make/model (e.g. "Airbus A320")
                  single span, fonts.regular, THEME_PLANE colour
 
-details == 1  →  scrolls telemetry using multi-colour spans, fonts.small_symbols:
-                     icon  (^  ~  }  *)  →  THEME_PLANE_TLM_UNITS
-                     value (numbers + unit text)  →  THEME_PLANE_TLM
+details == 1  ->  scrolls telemetry using multi-colour spans, fonts.small_symbols:
+                     icon  (^  ~  }  *)  ->  THEME_PLANE_TLM_UNITS
+                     value (numbers + unit text)  ->  THEME_PLANE_TLM
 
 Spans are a list of (colour, font, text) tuples, mirroring the C++ MessageSpan
 pattern from DotboxClient's ScrollText widget.

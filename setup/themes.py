@@ -1,5 +1,5 @@
 """
-Theme system — mirrors the DotboxClient C++ themes.
+Theme system - mirrors the DotboxClient C++ themes.
 
 Usage:
     from setup.themes import theme_colour, theme_set, TC
@@ -180,5 +180,5 @@ def theme_count() -> int:
     return len(_THEMES)
 
 
-# Convenience shorthand — matches the TC() macro in C++
+# Convenience shorthand - matches the TC() macro in C++
 TC = theme_colour

@@ -70,7 +70,7 @@ def _approx_sunrise_sunset(lat: float, lng: float, date=None):
         math.cos(lat_rad) * math.cos(decl_rad)
     )
 
-    # Polar night / midnight sun — clamp to 0 or 1440 minutes
+    # Polar night / midnight sun - clamp to 0 or 1440 minutes
     if cos_h > 1:
         # Sun never rises
         return "12:00", "12:00"
@@ -84,7 +84,7 @@ def _approx_sunrise_sunset(lat: float, lng: float, date=None):
     sunrise = solar_noon_utc - ha_minutes
     sunset = solar_noon_utc + ha_minutes
 
-    # Wrap into 0–1440
+    # Wrap into 0-1440
     sunrise = sunrise % 1440
     sunset = sunset % 1440
 
@@ -99,7 +99,7 @@ _ROOT = Path(__file__).parent.parent
 CONFIG_PATH = _ROOT / "config.json"
 LEGACY_PATH = _ROOT / "config.py"
 
-# Sensible defaults — mirrors the Django Settings model for Dotbox
+# Sensible defaults - mirrors the Django Settings model for Dotbox
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
     "flight_lat": 55.87,
@@ -120,7 +120,7 @@ DEFAULTS: dict[str, Any] = {
     "units": "m",  # 'm' = metric, 'i' = imperial
     # Display
     "theme": 0,  # 0 = Default, 1 = Monochrome, 2 = Pastel
-    "screen_brightness": 3,  # 1–5
+    "screen_brightness": 3,  # 1-5
     "screen_rotate": False,
     # Brightness schedule
     "screen_schedule_enabled": False,
@@ -168,7 +168,7 @@ def _migrate(mod) -> dict[str, Any]:
     def get(name, default=None):
         return getattr(mod, name, default)
 
-    # Location — prefer LOCATION_HOME [lat, lng, alt]; fall back to ZONE_HOME
+    # Location - prefer LOCATION_HOME [lat, lng, alt]; fall back to ZONE_HOME
     # bounding box centre if LOCATION_HOME is not present.
     location_home = get("LOCATION_HOME")
     if location_home and len(location_home) >= 2:
@@ -186,22 +186,22 @@ def _migrate(mod) -> dict[str, Any]:
             lng_km = lng_deg * 111.0 * math.cos(math.radians(data["flight_lat"]))
             data["flight_radius"] = round(max(lat_km, lng_km), 1)
 
-    # Brightness: old scale 0–100 → new scale 1–5
+    # Brightness: old scale 0-100 -> new scale 1-5
     brightness = get("BRIGHTNESS")
     if brightness is not None:
         data["screen_brightness"] = max(1, min(5, round(int(brightness) / 20)))
 
-    # Min altitude: old value was in feet → convert to metres
+    # Min altitude: old value was in feet -> convert to metres
     min_alt = get("MIN_ALTITUDE")
     if min_alt is not None:
         data["flight_min_altitude"] = max(10.0, round(float(min_alt) * 0.3048, 1))
 
-    # Units: old 'metric'/'imperial' → new 'm'/'i'
+    # Units: old 'metric'/'imperial' -> new 'm'/'i'
     temp_units = get("TEMPERATURE_UNITS", "metric")
     data["units"] = "i" if str(temp_units).lower() == "imperial" else "m"
 
-    # Migrate old RAINFALL_ENABLED → weather_mode
-    # (WEATHER_LOCATION / OPENWEATHER_API_KEY are dropped — weatherapi uses lat/lng)
+    # Migrate old RAINFALL_ENABLED -> weather_mode
+    # (WEATHER_LOCATION / OPENWEATHER_API_KEY are dropped - weatherapi uses lat/lng)
     if get("RAINFALL_ENABLED"):
         data["weather_mode"] = 2
     elif get("WEATHER_LOCATION"):
@@ -282,7 +282,7 @@ class Config:
             self.save()
             return
 
-        # Fresh install — write defaults
+        # Fresh install - write defaults
         self._data = dict(DEFAULTS)
         self.save()
 
@@ -390,7 +390,7 @@ class Config:
 
     @property
     def brightness_percent(self) -> int:
-        """Map 1–5 brightness setting to 0–100 percent for rgbmatrix."""
+        """Map 1-5 brightness setting to 0-100 percent for rgbmatrix."""
         return {1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(self.screen_brightness, 60)
 
     @property
@@ -419,7 +419,7 @@ class Config:
 
     @property
     def schedule_brightness_percent(self) -> int:
-        """Map 0–5 schedule brightness to 0–100 percent (0 = screen off)."""
+        """Map 0-5 schedule brightness to 0-100 percent (0 = screen off)."""
         return {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(
             self.screen_schedule_brightness, 0
         )

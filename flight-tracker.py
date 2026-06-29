@@ -6,7 +6,7 @@ import time
 
 from setup.configuration import Config, CONFIG_PATH
 
-# Default port for the web config interface — must match web/app.py FLASK_PORT
+# Default port for the web config interface - must match web/app.py FLASK_PORT
 _DEFAULT_FLASK_PORT = 8584
 
 
@@ -94,7 +94,7 @@ def _background_load(matrix, canvas, result: dict):
     try:
         # Import the display module and build the class lazily.
         # This triggers all scene imports, the FR24 API library,
-        # fonts, themes, etc. — but only when called, not at module load.
+        # fonts, themes, etc. - but only when called, not at module load.
         from display import get_display_class
 
         DisplayClass = get_display_class()
@@ -183,7 +183,7 @@ if __name__ == "__main__":
             if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
                 break
     else:
-        # No web UI — brief splash only
+        # No web UI - brief splash only
         _render_splash(matrix, canvas, f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings", Image, qrcode, ERROR_CORRECT_L)
         result = {}
         bg_thread = threading.Thread(

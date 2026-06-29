@@ -1,9 +1,9 @@
 """
-LocationWidget — ported from DotboxClient C++ LocationWidget.
+LocationWidget - ported from DotboxClient C++ LocationWidget.
 
 Two display modes:
-  IATA   — large 3-letter codes with a filled-triangle arrow (original look)
-  FULL   — small font, "CODE>Full Airport Name" per line, with a bounce-scroll
+  IATA   - large 3-letter codes with a filled-triangle arrow (original look)
+  FULL   - small font, "CODE>Full Airport Name" per line, with a bounce-scroll
             animation when the name overflows the screen width.
 
 The mode is chosen at runtime from Config.full_airport_name.
@@ -48,7 +48,7 @@ INITIAL_TICKS = 100
 PAUSE_TICKS = 25
 
 # Y baseline for each line in FULL mode
-_FULL_LINE_Y = (7, 15)  # origin, destination (within 0–16 region)
+_FULL_LINE_Y = (7, 15)  # origin, destination (within 0-16 region)
 
 # X positions for IATA mode
 _IATA_ORIGIN_X = 1
@@ -108,7 +108,7 @@ class _LineScroller:
                 self.state = _BounceState.REVEAL
                 self.timer = 0
             elif self.scroll_max == 0:
-                # Nothing to scroll — done immediately
+                # Nothing to scroll - done immediately
                 self.loop_done = True
         elif st == _BounceState.REVEAL:
             if self.position <= -self.scroll_max:

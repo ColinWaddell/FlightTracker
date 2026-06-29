@@ -139,8 +139,8 @@ In reality you'll want to customise `config.py` for your own purposes.
 | `OPENWEATHER_API_KEY`    | If provided, enables OpenWeather API. [Get a free key here](https://openweathermap.org/price). *(Optional)* |
 | `TEMPERATURE_UNITS`      | One of `"metric"` or `"imperial"`. Defaults to `"metric"`. |
 | `MIN_ALTITUDE`           | Removes planes below this altitude (in feet). Useful for filtering out planes on the tarmac. |
-| `BRIGHTNESS`             | Range 0–100. Adjusts brightness of the display. |
-| `GPIO_SLOWDOWN`          | Range 0–4. Higher values help reduce flickering on faster hardware (e.g., `2` for Pi Zero 2 W). |
+| `BRIGHTNESS`             | Range 0-100. Adjusts brightness of the display. |
+| `GPIO_SLOWDOWN`          | Range 0-4. Higher values help reduce flickering on faster hardware (e.g., `2` for Pi Zero 2 W). |
 | `JOURNEY_CODE_SELECTED`  | Three-letter airport code of a local airport to display in **bold**. *(Optional)* |
 | `JOURNEY_BLANK_FILLER`   | Three-letter text used in place of an unknown airport. Defaults to `" ? "`. |
 | `HAT_PWM_ENABLED`        | Enables PWM via Pi's soundcard. Requires [solder bridge modification](https://learn.adafruit.com/assets/57727). Defaults to `True`. |
