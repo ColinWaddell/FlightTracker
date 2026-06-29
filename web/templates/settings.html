@@ -206,6 +206,7 @@
                    value="{{ cfg.home_airport_code }}"
                    placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
             <div id="airport_name_hint" class="form-text text-muted small"></div>
+            <div class="form-text text-muted small mt-1">When a flight's origin or destination matches this code, that airport will appear <strong>bold</strong> on the display.</div>
           </div>
 
           <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
@@ -237,6 +238,7 @@
               <label class="form-check-label" for="details_tlm">Telemetry (altitude / speed / heading)</label>
             </div>
           </div>
+          <div class="form-text text-muted small">Shown in the scrolling bar at the bottom of the display while a flight is overhead.</div>
         </div>
 
         <!-- ====== Display ====== -->
@@ -262,6 +264,7 @@
             <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
                    {% if cfg.screen_rotate %}checked{% endif %} />
             <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
+            <div class="form-text text-muted small">Useful if you want to flip the unit and route the cable from the other side.</div>
           </div>
 
           <hr class="my-3" />
@@ -272,6 +275,7 @@
                    {% if cfg.screen_schedule_enabled %}checked{% endif %}
                    onchange="document.getElementById('schedule_fields').style.display=this.checked?'block':'none'" />
             <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
+            <div class="form-text text-muted small">Automatically dims the screen at a set time and brightens it again in the morning.</div>
           </div>
 
           <div id="schedule_fields" style="display:{% if cfg.screen_schedule_enabled %}block{% else %}none{% endif %}">
@@ -377,11 +381,37 @@
                      onchange="document.getElementById('weather_key_fields').style.display='block'" />
               <label class="form-check-label" for="weather_temp">Temperature</label>
             </div>
-            <div class="form-check">
+            <div class="form-check mb-1">
               <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
                      {% if cfg.weather_mode == 2 %}checked{% endif %}
                      onchange="document.getElementById('weather_key_fields').style.display='block'" />
               <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
+            </div>
+            <p class="text-muted small mb-1">
+              The rainfall graph shows the forecast for the next 24 hours, hour by hour.
+            </p>
+            <button type="button" class="btn btn-outline-secondary btn-sm small"
+                    onclick="var s=document.getElementById('weather_explained');s.style.display=s.style.display==='none'?'block':'none'">
+              How it works
+            </button>
+            <div id="weather_explained" style="display:none" class="mt-3">
+              <div class="row g-3 mb-3 pb-2 border-bottom">
+                <div class="col-12 col-sm-5">
+                  <img src="/static/images/weather_explained.png" class="img-fluid" alt="Weather graph example" />
+                </div>
+                <div class="col-12 col-sm-7">
+                  <p class="small mb-1">Each column is one hour — the leftmost is now.</p>
+                  <p class="small mb-0">The height of the column shows how much rain is expected that hour.</p>
+                </div>
+              </div>
+              <div class="row g-3 mt-1">
+                <div class="col-12 col-sm-7">
+                  <p class="small mb-0">The colour of each column shows the temperature at that hour.</p>
+                </div>
+                <div class="col-12 col-sm-5">
+                  <img src="/static/images/scale_explained.png" class="img-fluid" alt="Temperature colour scale" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -400,6 +430,7 @@
               <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
               <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
             </select>
+            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
           </div>
         </div>
 
