@@ -326,5 +326,7 @@ def debug_config():
     return Response(
         payload,
         mimetype="application/json",
-        headers={"Content-Disposition": "attachment; filename=flighttracker-debug-config.json"},
+        headers={
+            "Content-Disposition": "attachment; filename=flighttracker-debug-config.json"
+        },
     )

@@ -125,7 +125,10 @@ class Overhead:
                 and min_alt_ft < f.altitude < max_alt_ft
             ]
 
-            flights = sorted(flights, key=lambda f: distance_from_flight_to_home(f, self._location_home))
+            flights = sorted(
+                flights,
+                key=lambda f: distance_from_flight_to_home(f, self._location_home),
+            )
 
             for flight in flights[:MAX_FLIGHT_LOOKUP]:
                 retries = RETRIES

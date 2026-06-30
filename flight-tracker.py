@@ -101,17 +101,18 @@ def _background_load(matrix, canvas, result: dict):
 
         # Construct the Display, reusing the matrix/canvas from the splash
         display = DisplayClass(matrix=matrix, canvas=canvas)
-        result['display'] = display
+        result["display"] = display
 
         # Start the Flask config web server
         cfg = Config.instance()
         if cfg.web_interface_enabled:
             _start_flask_daemon()
-            result['flask_started'] = True
+            result["flask_started"] = True
 
     except Exception as exc:
-        result['error'] = exc
+        result["error"] = exc
         import traceback
+
         traceback.print_exc(file=sys.stderr)
 
 
@@ -124,6 +125,7 @@ if __name__ == "__main__":
     # to avoid GIL contention with the heavy FR24/Flask imports.
     from rgbmatrix import RGBMatrix, RGBMatrixOptions
     from PIL import Image
+
     try:
         import qrcode
         from qrcode.constants import ERROR_CORRECT_L
@@ -184,7 +186,14 @@ if __name__ == "__main__":
                 break
     else:
         # No web UI - brief splash only
-        _render_splash(matrix, canvas, f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings", Image, qrcode, ERROR_CORRECT_L)
+        _render_splash(
+            matrix,
+            canvas,
+            f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings",
+            Image,
+            qrcode,
+            ERROR_CORRECT_L,
+        )
         result = {}
         bg_thread = threading.Thread(
             target=_background_load,
@@ -198,11 +207,11 @@ if __name__ == "__main__":
     # -- Phase 4: Wait for background loading to finish -----------------------
     bg_thread.join()
 
-    if 'error' in result:
+    if "error" in result:
         print(f"[startup] Background load failed: {result['error']}", file=sys.stderr)
         sys.exit(1)
 
-    display = result['display']
+    display = result["display"]
 
     # -- Phase 5: Run the main display loop -----------------------------------
     display.run()

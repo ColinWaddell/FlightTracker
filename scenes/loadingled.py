@@ -1,51 +1,60 @@
-from utilities.animator import Animator
-from setup import frames
-from setup.configuration import Config
-from time import sleep
-import RPi.GPIO as GPIO
+"""
+LoadingLEDIndicator — external GPIO LED blinks while overhead is fetching.
+
+Replaces the former LoadingLEDScene mixin.  Call tick(frame) once per
+frame after the active scene has drawn.
+"""
+
 import sys
 
-BLINKER_STEPS = 4
+from setup.configuration import Config
+
+try:
+    import RPi.GPIO as GPIO
+
+    _GPIO_AVAILABLE = True
+except ImportError:
+    _GPIO_AVAILABLE = False
 
 
-class LoadingLEDScene(object):
-    def __init__(self):
-        self.gpio_setup_complete = False
-        self.gpio_setup()
-        super().__init__()
+class LoadingLEDIndicator:
+    def __init__(self, canvas, overhead):
+        # canvas is accepted for API symmetry with LoadingPulseIndicator but not used
+        self._overhead = overhead
+        self._setup_complete = False
+        self._setup()
 
-    def gpio_setup(self):
+    def _setup(self) -> None:
+        if not _GPIO_AVAILABLE:
+            return
         try:
             pin = Config.instance().loading_led_gpio_pin
             if not pin:
-                self.gpio_setup_complete = False
                 return
             GPIO.setwarnings(False)
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.HIGH)
-            self.gpio_setup_complete = True
-        except:
+            self._setup_complete = True
+        except Exception:
             print("Error initializing GPIO", file=sys.stderr)
-            self.gpio_setup_complete = False
 
-    @Animator.KeyFrame.add(4)
-    def loading_led(self, count):
-        reset_count = True
+    def tick(self, frame: int) -> None:
+        # Run every 4 frames (matches original @KeyFrame.add(4))
+        if frame % 4:
+            return
 
-        if not self.gpio_setup_complete:
-            self.gpio_setup()
-
-        if not self.gpio_setup_complete:
+        if not self._setup_complete:
+            self._setup()
+        if not self._setup_complete:
             return
 
         pin = Config.instance().loading_led_gpio_pin
         if not pin:
             return
 
-        if self.overhead.processing:
-            GPIO.output(pin, GPIO.HIGH if count % 2 else GPIO.LOW)
-
+        if self._overhead.processing:
+            count = (frame // 4) % 2
+            GPIO.output(pin, GPIO.HIGH if count else GPIO.LOW)
         else:
-            # Not processing, leave LED on
             GPIO.output(pin, GPIO.HIGH)

@@ -66,9 +66,9 @@ def _approx_sunrise_sunset(lat: float, lng: float, date=None):
     # Hour angle at sunrise/sunset (using 90° + 50' = -0.833° elevation)
     lat_rad = math.radians(lat)
     decl_rad = math.radians(decl)
-    cos_h = (math.sin(math.radians(-0.833)) - math.sin(lat_rad) * math.sin(decl_rad)) / (
-        math.cos(lat_rad) * math.cos(decl_rad)
-    )
+    cos_h = (
+        math.sin(math.radians(-0.833)) - math.sin(lat_rad) * math.sin(decl_rad)
+    ) / (math.cos(lat_rad) * math.cos(decl_rad))
 
     # Polar night / midnight sun - clamp to 0 or 1440 minutes
     if cos_h > 1:
@@ -177,8 +177,12 @@ def _migrate(mod) -> dict[str, Any]:
     else:
         zone = get("ZONE_HOME")
         if zone and all(k in zone for k in ("tl_y", "tl_x", "br_y", "br_x")):
-            data["flight_lat"] = round((float(zone["tl_y"]) + float(zone["br_y"])) / 2, 7)
-            data["flight_lng"] = round((float(zone["tl_x"]) + float(zone["br_x"])) / 2, 7)
+            data["flight_lat"] = round(
+                (float(zone["tl_y"]) + float(zone["br_y"])) / 2, 7
+            )
+            data["flight_lng"] = round(
+                (float(zone["tl_x"]) + float(zone["br_x"])) / 2, 7
+            )
             # Derive radius from the bounding box (km, using the larger half-width)
             lat_deg = abs(float(zone["tl_y"]) - float(zone["br_y"])) / 2
             lng_deg = abs(float(zone["tl_x"]) - float(zone["br_x"])) / 2
