@@ -19,8 +19,16 @@ def _local_ip() -> str:
         return "127.0.0.1"
 
 
-def _render_splash(matrix, canvas, Image, graphics, loading_font,
-                   url=None, qrcode=None, ERROR_CORRECT_L=None):
+def _render_splash(
+    matrix,
+    canvas,
+    Image,
+    graphics,
+    loading_font,
+    url=None,
+    qrcode=None,
+    ERROR_CORRECT_L=None,
+):
     """
     Render the splash BMP to canvas and swap it onto the display.
 
@@ -61,7 +69,7 @@ def _render_splash(matrix, canvas, Image, graphics, loading_font,
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
         dim = graphics.Color(180, 180, 180)
-        graphics.DrawText(canvas, loading_font, 1, 6, dim, "loading...")
+        graphics.DrawText(canvas, loading_font, 1, 18, dim, "loading...")
 
     matrix.SwapOnVSync(canvas)
 
@@ -100,6 +108,7 @@ def _flask_load(ready_event: threading.Event, result: dict):
     except Exception as exc:
         result["flask_error"] = exc
         import traceback
+
         traceback.print_exc(file=sys.stderr)
         # Unblock the main thread even on failure so startup doesn't hang.
         ready_event.set()
@@ -121,6 +130,7 @@ def _display_load(matrix, canvas, result: dict):
     except Exception as exc:
         result["error"] = exc
         import traceback
+
         traceback.print_exc(file=sys.stderr)
 
 
@@ -134,9 +144,7 @@ if __name__ == "__main__":
     from PIL import Image
 
     loading_font = graphics.Font()
-    loading_font.LoadFont(
-        os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf")
-    )
+    loading_font.LoadFont(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
 
     try:
         import qrcode
@@ -203,8 +211,16 @@ if __name__ == "__main__":
         # always has a full 8 seconds to scan the code.
         flask_ready.wait()
         if "flask_error" not in result:
-            _render_splash(matrix, canvas, Image, graphics, loading_font,
-                           url, qrcode, ERROR_CORRECT_L)
+            _render_splash(
+                matrix,
+                canvas,
+                Image,
+                graphics,
+                loading_font,
+                url,
+                qrcode,
+                ERROR_CORRECT_L,
+            )
 
         cfg_existed = CONFIG_PATH.exists()
         deadline = time.time() + 8
