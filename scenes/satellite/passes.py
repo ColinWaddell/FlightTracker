@@ -31,7 +31,7 @@ EARTH_R_KM = 6378.137
 # Debug flag — flip to True to inject a fake always-active pass for testing.
 # Remove once satellite scene has been validated on real hardware.
 # ---------------------------------------------------------------------------
-DEBUG_FAKE_PASS = False
+DEBUG_FAKE_PASS = True
 
 
 # ---------------------------------------------------------------------------
