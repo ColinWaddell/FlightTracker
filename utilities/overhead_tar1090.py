@@ -9,7 +9,6 @@ from pathlib import Path
 from requests.exceptions import RequestException
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
-MAX_FLIGHT_LOOKUP = 5
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
@@ -202,7 +201,7 @@ class Overhead:
                 )
             )
 
-            for ac in candidates[:MAX_FLIGHT_LOOKUP]:
+            for ac in candidates[:Config.instance().max_flight_lookup]:
                 try:
                     callsign = (ac.get("flight") or "").strip()
                     if callsign.upper() in BLANK_FIELDS:

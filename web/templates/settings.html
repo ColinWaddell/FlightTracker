@@ -188,14 +188,12 @@
           <div class="mb-3">
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
-                     {% if cfg.data_source != 'tar1090' %}checked{% endif %}
-                     onchange="document.getElementById('tar1090_fields').style.display='none'" />
+                     {% if cfg.data_source != 'tar1090' %}checked{% endif %} />
               <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online)</label>
             </div>
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
-                     {% if cfg.data_source == 'tar1090' %}checked{% endif %}
-                     onchange="document.getElementById('tar1090_fields').style.display='block'" />
+                     {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
               <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
             </div>
           </div>
@@ -208,7 +206,36 @@
             <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
             <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
           </div>
+
+          <div class="mt-3">
+            <label class="form-label small" for="max_flight_lookup">Flights to track</label>
+            <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
+                   name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
+            <div class="form-text text-muted small">Candidates are ranked by distance, so this controls how wide a net you cast — a higher number brings in flights from further afield.</div>
+            <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
+                 style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>Keep this at 5 or below when using FlightRadar24 — each flight requires a separate API call and higher values risk hitting rate limits.
+            </div>
+          </div>
         </div>
+
+        <script>
+          (function () {
+            var fr24Radio   = document.getElementById('data_source_fr24');
+            var tar1090Radio = document.getElementById('data_source_tar1090');
+            var tar1090Fields = document.getElementById('tar1090_fields');
+            var fr24Warning   = document.getElementById('fr24_lookup_warning');
+
+            function updateDataSourceUI() {
+              var isTar1090 = tar1090Radio.checked;
+              tar1090Fields.style.display = isTar1090 ? 'block' : 'none';
+              fr24Warning.style.display   = isTar1090 ? 'none'  : 'block';
+            }
+
+            fr24Radio.addEventListener('change', updateDataSourceUI);
+            tar1090Radio.addEventListener('change', updateDataSourceUI);
+          })();
+        </script>
 
         <!-- ====== Airport Display ====== -->
         <div id="group-airport-display" class="card mb-3 p-3">

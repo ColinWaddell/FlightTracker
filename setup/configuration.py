@@ -142,6 +142,7 @@ DEFAULTS: dict[str, Any] = {
     # Data source
     "data_source": "fr24",  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
     "tar1090_url": "",  # only used when data_source == 'tar1090'
+    "max_flight_lookup": 5,  # how many nearby flights to track at once
 }
 
 
@@ -489,6 +490,13 @@ class Config:
     @property
     def use_tar1090(self) -> bool:
         return self.data_source == "tar1090" and bool(self.tar1090_url)
+
+    @property
+    def max_flight_lookup(self) -> int:
+        try:
+            return max(1, int(self._data.get("max_flight_lookup", 5)))
+        except (TypeError, ValueError):
+            return 5
 
     # Derived: zone bounding box (same algorithm as DotboxServer)
     @property

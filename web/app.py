@@ -234,6 +234,7 @@ def settings():
                     else "fr24"
                 ),
                 "tar1090_url": _str(form.get("tar1090_url"), ""),
+                "max_flight_lookup": max(1, _int(form.get("max_flight_lookup"), 5)),
             }
 
             # Password change - only update if a new password was supplied

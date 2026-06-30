@@ -6,7 +6,6 @@ from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
-MAX_FLIGHT_LOOKUP = 5
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
@@ -130,7 +129,7 @@ class Overhead:
                 key=lambda f: distance_from_flight_to_home(f, self._location_home),
             )
 
-            for flight in flights[:MAX_FLIGHT_LOOKUP]:
+            for flight in flights[:Config.instance().max_flight_lookup]:
                 retries = RETRIES
                 while retries:
                     sleep(RATE_LIMIT_DELAY)
