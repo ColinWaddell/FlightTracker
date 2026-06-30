@@ -1,49 +1,156 @@
 """
 Pass prediction for SatelliteScene.
 
-Takes a list of (name, line1, line2) TLE tuples and an observer position,
-and returns a list of PassWindow objects describing upcoming satellite passes
-that meet the minimum elevation threshold.
+Uses the sgp4 library (pure Python, no native deps) for orbital propagation.
+Az/El and pass-finding are implemented directly here so there is no
+dependency on pyorbital or pyproj.
 
 Each PassWindow pre-bakes the full trajectory as a list of (az_deg, el_deg, t)
-samples so draw() never has to call pyorbital during the frame loop.
+samples so draw() never has to do orbital math during the frame loop.
 """
 
 from __future__ import annotations
 
 import datetime
+import math
 from dataclasses import dataclass, field
 from typing import List, Tuple
 
-from pyorbital.orbital import Orbital
+from sgp4.api import Satrec, jday as sgp4_jday
 
-# How far ahead to compute passes (hours)
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
 LOOKAHEAD_HOURS = 24
-
-# Trajectory sample interval (seconds)
-SAMPLE_INTERVAL_S = 10
+SAMPLE_INTERVAL_S = 10      # trajectory pre-bake resolution
+SCAN_INTERVAL_S = 30        # coarser step used while hunting for pass windows
+EARTH_R_KM = 6378.137
 
 # ---------------------------------------------------------------------------
 # Debug flag — flip to True to inject a fake always-active pass for testing.
 # Remove once satellite scene has been validated on real hardware.
 # ---------------------------------------------------------------------------
-DEBUG_FAKE_PASS = True
+DEBUG_FAKE_PASS = False
 
+
+# ---------------------------------------------------------------------------
+# Data types
+# ---------------------------------------------------------------------------
 
 @dataclass
 class PassWindow:
     """A single overhead pass for one satellite."""
+    name: str
+    tle_index: int
+    aos: datetime.datetime
+    los: datetime.datetime
+    max_el: float
+    trajectory: List[Tuple[float, float, datetime.datetime]] = field(default_factory=list)
+    # Each entry: (azimuth_deg, elevation_deg, utc_time)
 
-    name: str  # Satellite display name
-    tle_index: int  # Index into the TLE list (determines plot colour)
-    aos: datetime.datetime  # Acquisition of Signal (rises above horizon)
-    los: datetime.datetime  # Loss of Signal (drops below horizon)
-    max_el: float  # Peak elevation in degrees
-    trajectory: List[Tuple[float, float, datetime.datetime]] = field(
-        default_factory=list
+
+# ---------------------------------------------------------------------------
+# Coordinate math (no external deps)
+# ---------------------------------------------------------------------------
+
+def _jday_from_dt(dt: datetime.datetime) -> tuple[float, float]:
+    """Convert a UTC datetime to (jd, fr) for sgp4."""
+    return sgp4_jday(
+        dt.year, dt.month, dt.day,
+        dt.hour, dt.minute,
+        dt.second + dt.microsecond * 1e-6,
     )
-    # Each trajectory entry: (azimuth_deg, elevation_deg, utc_time)
 
+
+def _gmst_rad(jd: float, fr: float) -> float:
+    """Greenwich Mean Sidereal Time in radians."""
+    t = (jd + fr - 2451545.0) / 36525.0
+    deg = (
+        280.46061837
+        + 360.98564736629 * (jd + fr - 2451545.0)
+        + t * t * (0.000387933 - t / 38710000.0)
+    )
+    return math.radians(deg % 360.0)
+
+
+def _teme_to_azel(
+    r_teme: list[float],
+    obs_lat_deg: float,
+    obs_lon_deg: float,
+    jd: float,
+    fr: float,
+) -> tuple[float, float]:
+    """
+    Convert a TEME position vector (km) to azimuth/elevation as seen from the
+    observer at the given geodetic latitude and longitude (sea level).
+
+    Returns (azimuth_deg, elevation_deg).
+    Azimuth: 0° = North, increases clockwise.
+    """
+    # TEME → ECEF via GMST rotation (sufficient accuracy for a 64×32 display)
+    theta = _gmst_rad(jd, fr)
+    cos_t, sin_t = math.cos(theta), math.sin(theta)
+    sx = r_teme[0] * cos_t + r_teme[1] * sin_t
+    sy = -r_teme[0] * sin_t + r_teme[1] * cos_t
+    sz = r_teme[2]
+
+    # Observer ECEF (spherical Earth, altitude=0)
+    lat = math.radians(obs_lat_deg)
+    lon = math.radians(obs_lon_deg)
+    ox = EARTH_R_KM * math.cos(lat) * math.cos(lon)
+    oy = EARTH_R_KM * math.cos(lat) * math.sin(lon)
+    oz = EARTH_R_KM * math.sin(lat)
+
+    # Satellite relative to observer
+    dx, dy, dz = sx - ox, sy - oy, sz - oz
+
+    # Rotate into topocentric South-East-Zenith frame
+    s = (  math.sin(lat) * math.cos(lon) * dx
+         + math.sin(lat) * math.sin(lon) * dy
+         - math.cos(lat) * dz)
+    e = -math.sin(lon) * dx + math.cos(lon) * dy
+    z = (  math.cos(lat) * math.cos(lon) * dx
+         + math.cos(lat) * math.sin(lon) * dy
+         + math.sin(lat) * dz)
+
+    rng = math.sqrt(s * s + e * e + z * z)
+    if rng < 1e-6:
+        return 0.0, 90.0
+
+    el = math.degrees(math.asin(z / rng))
+    # atan2(-e, s) gives azimuth from North, clockwise
+    az = math.degrees(math.atan2(-e, s)) % 360.0
+    return az, el
+
+
+def _propagate(sat: Satrec, dt: datetime.datetime) -> tuple[list[float], list[float]] | None:
+    """Propagate sat to dt; returns (r_teme_km, v_teme_km_s) or None on error."""
+    jd, fr = _jday_from_dt(dt)
+    err, r, v = sat.sgp4(jd, fr)
+    if err != 0:
+        return None
+    return list(r), list(v)
+
+
+def _elevation_at(
+    sat: Satrec,
+    dt: datetime.datetime,
+    lat: float,
+    lng: float,
+) -> float | None:
+    """Return elevation in degrees at dt, or None on propagation error."""
+    jd, fr = _jday_from_dt(dt)
+    err, r, _ = sat.sgp4(jd, fr)
+    if err != 0 or r[0] == 0:
+        return None
+    az, el = _teme_to_azel(r, lat, lng, jd, fr)
+    return el
+
+
+# ---------------------------------------------------------------------------
+# Debug helper
+# ---------------------------------------------------------------------------
 
 def _fake_pass_window() -> PassWindow:
     """
@@ -58,11 +165,10 @@ def _fake_pass_window() -> PassWindow:
 
     trajectory = []
     for i in range(0, total_seconds, SAMPLE_INTERVAL_S):
-        frac = i / total_seconds  # 0.0 → 1.0 over the pass
+        frac = i / total_seconds
         t = aos + datetime.timedelta(seconds=i)
-        # Arc: rise from S (az=180), peak overhead (el≈85), set toward N (az=0/360)
-        az = 180.0 - frac * 180.0  # 180 → 0 (S → N)
-        el = 85.0 * (1.0 - (2.0 * frac - 1.0) ** 2)  # parabola peaking at midpoint
+        az = 180.0 - frac * 180.0
+        el = 85.0 * (1.0 - (2.0 * frac - 1.0) ** 2)
         trajectory.append((az, el, t))
 
     return PassWindow(
@@ -75,6 +181,10 @@ def _fake_pass_window() -> PassWindow:
     )
 
 
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 def compute_passes(
     tles: list[tuple[str, str, str]],
     lat: float,
@@ -86,78 +196,108 @@ def compute_passes(
     """
     Compute upcoming passes for all TLEs from the observer position.
 
-    Args:
-        tles            : list of (name, line1, line2)
-        lat, lng        : observer position in decimal degrees
-        min_elevation   : minimum peak elevation in degrees; passes below
-                          this threshold are discarded
-        max_count       : cap on simultaneous satellites to include
-        lookahead_hours : how far ahead to search
-
-    Returns a list of PassWindows sorted by AOS, covering the next
-    lookahead_hours from now.
+    Returns a list of PassWindows sorted by AOS.
     """
     if DEBUG_FAKE_PASS:
         return [_fake_pass_window()]
 
-    now_utc = datetime.datetime.utcnow()
+    now = datetime.datetime.utcnow()
+    end = now + datetime.timedelta(hours=lookahead_hours)
     windows: list[PassWindow] = []
 
     for idx, (name, line1, line2) in enumerate(tles):
         try:
-            orb = Orbital(name, line1=line1, line2=line2)
-            # get_next_passes returns [(rise_time, fall_time, max_el_time), ...]
-            # horizon= is the minimum elevation at AOS/LOS
-            raw_passes = orb.get_next_passes(
-                now_utc,
-                lookahead_hours,
-                lng,  # pyorbital uses (lng, lat) order
-                lat,
-                0.0,  # observer altitude in km (sea level)
-                horizon=0.0,  # find all passes that clear the horizon
-            )
+            sat = Satrec.twoline2rv(line1, line2)
         except Exception as exc:
-            print(f"[passes] prediction failed for '{name}': {exc}")
+            print(f"[passes] TLE parse failed for '{name}': {exc}")
             continue
 
-        for aos_t, los_t, max_el_t in raw_passes:
-            # Sample the trajectory to find actual peak elevation
-            try:
-                _, peak_el = orb.get_observer_look(max_el_t, lng, lat, 0.0)
-            except Exception:
+        # Scan at coarse resolution to find horizon crossings
+        t = now
+        step = datetime.timedelta(seconds=SCAN_INTERVAL_S)
+        prev_el = _elevation_at(sat, t, lat, lng)
+
+        while t < end:
+            t += step
+            el = _elevation_at(sat, t, lat, lng)
+            if el is None or prev_el is None:
+                prev_el = el
                 continue
 
-            if peak_el < min_elevation:
-                continue
+            # Rising edge: satellite crossed above horizon
+            if prev_el <= 0.0 < el:
+                aos_approx = t - step
+                window = _refine_pass(sat, name, idx, aos_approx, end, lat, lng, min_elevation)
+                if window is not None:
+                    windows.append(window)
+                    # Skip past the LOS of this pass to avoid duplicates
+                    t = window.los + step
 
-            # Pre-bake the trajectory at SAMPLE_INTERVAL_S resolution
-            trajectory: list[tuple[float, float, datetime.datetime]] = []
-            t = aos_t
-            dt = datetime.timedelta(seconds=SAMPLE_INTERVAL_S)
-            while t <= los_t:
-                try:
-                    az, el = orb.get_observer_look(t, lng, lat, 0.0)
-                    trajectory.append((az, el, t))
-                except Exception:
-                    pass
-                t += dt
-
-            if not trajectory:
-                continue
-
-            windows.append(
-                PassWindow(
-                    name=name,
-                    tle_index=idx,
-                    aos=aos_t,
-                    los=los_t,
-                    max_el=peak_el,
-                    trajectory=trajectory,
-                )
-            )
+            prev_el = el
 
     windows.sort(key=lambda w: w.aos)
     return windows
+
+
+def _refine_pass(
+    sat: Satrec,
+    name: str,
+    idx: int,
+    aos_approx: datetime.datetime,
+    end: datetime.datetime,
+    lat: float,
+    lng: float,
+    min_elevation: float,
+) -> PassWindow | None:
+    """
+    Given an approximate AOS, walk forward at fine resolution to find the
+    exact AOS, LOS, and peak elevation, then pre-bake the trajectory.
+    Returns None if the pass doesn't reach min_elevation.
+    """
+    fine = datetime.timedelta(seconds=SAMPLE_INTERVAL_S)
+
+    # Find AOS (first moment elevation >= 0)
+    t = aos_approx
+    while t < end:
+        el = _elevation_at(sat, t, lat, lng)
+        if el is not None and el >= 0.0:
+            break
+        t += fine
+    else:
+        return None
+    aos = t
+
+    # Walk forward collecting trajectory until elevation drops back below 0
+    trajectory: list[tuple[float, float, datetime.datetime]] = []
+    max_el = 0.0
+    t = aos
+
+    while t < end:
+        jd, fr = _jday_from_dt(t)
+        err, r, _ = sat.sgp4(jd, fr)
+        if err != 0:
+            break
+        az, el = _teme_to_azel(r, lat, lng, jd, fr)
+        if el < 0.0 and trajectory:
+            break
+        if el >= 0.0:
+            trajectory.append((az, el, t))
+            if el > max_el:
+                max_el = el
+        t += fine
+
+    if not trajectory or max_el < min_elevation:
+        return None
+
+    los = trajectory[-1][2]
+    return PassWindow(
+        name=name,
+        tle_index=idx,
+        aos=aos,
+        los=los,
+        max_el=max_el,
+        trajectory=trajectory,
+    )
 
 
 def current_passes(windows: list[PassWindow]) -> list[PassWindow]:
@@ -168,15 +308,14 @@ def current_passes(windows: list[PassWindow]) -> list[PassWindow]:
 
 def current_position(window: PassWindow) -> tuple[float, float] | None:
     """
-    Interpolate the current Az/El for a pass that is currently active.
-    Returns (az_deg, el_deg) or None if the trajectory is empty.
+    Interpolate the current Az/El for an active pass.
+    Returns (az_deg, el_deg) or None if trajectory is empty.
     """
     if not window.trajectory:
         return None
 
     now = datetime.datetime.utcnow()
 
-    # Find the two bracketing samples
     for i in range(len(window.trajectory) - 1):
         _, _, t0 = window.trajectory[i]
         _, _, t1 = window.trajectory[i + 1]
@@ -187,12 +326,10 @@ def current_position(window: PassWindow) -> tuple[float, float] | None:
             if span <= 0:
                 return az0, el0
             frac = (now - t0).total_seconds() / span
-            # Interpolate azimuth carefully across the 360→0 wrap
             diff = ((az1 - az0 + 180) % 360) - 180
             az = (az0 + diff * frac) % 360
             el = el0 + (el1 - el0) * frac
             return az, el
 
-    # Past last sample — return the final position
     az, el, _ = window.trajectory[-1]
     return az, el
