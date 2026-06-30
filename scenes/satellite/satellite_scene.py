@@ -35,7 +35,7 @@ CYCLE_INTERVAL_S = 4
 
 # Right-column text positions (extrasmall 4×6 font, 6 lines)
 TEXT_COL_X = 0
-NAME_Y = 6  # satellite name (yellow)
+NAME_Y = 5  # satellite name (yellow)
 # blank line at y=6
 LINE1_Y = 14  # "Speed" label
 LINE2_Y = 20  # speed value + unit
@@ -67,6 +67,10 @@ class SatelliteScene:
         # Track drawn positions so we can update only when the pixel changes.
         # name → (px, py, tle_index)
         self._last_positions: dict[str, tuple[int, int, int]] = {}
+
+        # Blink state for the position dot (toggles every 0.5 s)
+        self._blink_on: bool = True
+        self._last_blink_on: bool = True
 
         # Stash previous text draws so we can erase only what changed
         self._last_text: dict[str, tuple[str, int, int, graphics.Color]] = {}
@@ -112,6 +116,8 @@ class SatelliteScene:
         self._last_cycle_second = 0.0
         self._last_positions = {}
         self._last_text = {}
+        self._blink_on = True
+        self._last_blink_on = True
         self._ring_drawn = False
 
     def draw(self) -> None:
@@ -173,15 +179,20 @@ class SatelliteScene:
         """
         Update satellite position dots using a pixel-change-only strategy.
 
+        The dot blinks at a 0.5 s cadence: bright when "on", dim when "off".
         On each frame the current Az/El is converted to a pixel.  If the
-        pixel is the same as last frame nothing happens.  When the pixel
-        *does* change:
+        pixel is the same as last frame *and* the blink state hasn't changed,
+        nothing happens.  When either changes:
           - the old pixel is repainted in the DIM (trail) colour
-          - the new pixel is painted in the BRIGHT (current) colour
+          - the new pixel is painted in BRIGHT (blink on) or DIM (blink off)
 
         This avoids redrawing the entire trajectory every frame and
         eliminates flicker.
         """
+        # Blink toggle: flip every 0.5 s
+        blink_frames = int(frames.PER_SECOND * 0.5)
+        self._blink_on = (self._frame // blink_frames) % 2 == 0
+
         new_positions: dict[str, tuple[int, int, int]] = {}
 
         for window in active:
@@ -193,15 +204,26 @@ class SatelliteScene:
             new_positions[window.name] = (px, py, window.tle_index)
 
             old = self._last_positions.get(window.name)
-            if old is None:
-                # First frame for this satellite — just draw the bright dot
-                azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+            if old is None or self._blink_on != self._last_blink_on:
+                # First frame or blink toggled — redraw
+                if old is not None:
+                    old_px, old_py, old_idx = old
+                    azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+                if self._blink_on:
+                    azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+                else:
+                    azel_plot.draw_trail_pixel(self.canvas, px, py, window.tle_index)
             else:
                 old_px, old_py, old_idx = old
                 if (px, py) != (old_px, old_py):
-                    # Pixel changed: dim the old, brighten the new
+                    # Pixel changed: dim the old, draw the new (respecting blink)
                     azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
-                    azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+                    if self._blink_on:
+                        azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+                    else:
+                        azel_plot.draw_trail_pixel(
+                            self.canvas, px, py, window.tle_index
+                        )
 
         # Dim any satellites that were active last frame but aren't now
         for name, (old_px, old_py, old_idx) in self._last_positions.items():
@@ -209,6 +231,7 @@ class SatelliteScene:
                 azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
 
         self._last_positions = new_positions
+        self._last_blink_on = self._blink_on
 
     def _update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
         """
