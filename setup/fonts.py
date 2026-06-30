@@ -6,7 +6,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 extrasmall = graphics.Font()
 small = graphics.Font()
-small_symbols = graphics.Font()  # custom 5x8: ^=altitude, ~=speed, *=degrees, }=heading
+small_symbols = graphics.Font()
 regular = graphics.Font()
 large = graphics.Font()
 large_bold = graphics.Font()

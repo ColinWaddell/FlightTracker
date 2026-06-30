@@ -20,7 +20,7 @@ ROOT_PATH = Path(__file__).parent.parent
 CONFIG_PATH = ROOT_PATH / "config.json"
 LEGACY_PATH = ROOT_PATH / "config.py"
 
-# Sensible defaults — single source of truth for each config key.
+# Sensible defaults - single source of truth for each config key.
 # These constants are used both to populate DEFAULTS below and as the
 # fallback in every Config @property, so the two never drift apart.
 DEFAULT_PASSWORD = b"flighttracker"
@@ -81,7 +81,7 @@ DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
 DEFAULT_SATELLITE_NORAD_IDS = [25544]  # ISS (ZARYA) = 25544; celestrak.org for others
-DEFAULT_SATELLITE_MIN_ELEVATION = 20  # degrees — passes peaking below this are ignored
+DEFAULT_SATELLITE_MIN_ELEVATION = 20  # degrees - passes peaking below this are ignored
 DEFAULT_SATELLITE_MAX_COUNT = 5  # max simultaneous satellites to plot
 
 DEFAULTS: dict[str, Any] = {

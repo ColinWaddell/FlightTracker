@@ -2,7 +2,7 @@ import sys
 from time import perf_counter, sleep
 
 # ---------------------------------------------------------------------------
-# Lazy class construction — defers rgbmatrix, font, and overhead imports
+# Lazy class construction - defers rgbmatrix, font, and overhead imports
 # until first access so the boot screen and web interface start cheaply.
 # ---------------------------------------------------------------------------
 

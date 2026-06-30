@@ -1,8 +1,8 @@
 """
-SceneManager — pure scene dispatch engine.
+SceneManager - pure scene dispatch engine.
 
 Mirrors the C++ SceneManager in DotboxClient exactly: registration and
-kick() only.  No timing, no brightness, no data fetching — those belong
+kick() only.  No timing, no brightness, no data fetching - those belong
 in the main loop (Display.run()).
 
 Each scene must implement:

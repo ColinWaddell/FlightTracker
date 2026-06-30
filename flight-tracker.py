@@ -98,7 +98,7 @@ def flask_load(ready_event: threading.Event, result: dict):
         # if the process is restarted via os.execv.
         server.socket.set_inheritable(False)
 
-        # Port is bound — signal the main thread to show the QR code.
+        # Port is bound - signal the main thread to show the QR code.
         ready_event.set()
 
         threading.Thread(
@@ -156,14 +156,14 @@ def load_full_interface(matrix, canvas, cfg: Config):
 
     flask_ready = threading.Event()
 
-    # Thread A: Flask (fast — just binds a port)
+    # Thread A: Flask (fast - just binds a port)
     flask_thread = threading.Thread(
         target=flask_load,
         args=(flask_ready, result),
         daemon=True,
         name="flask-load",
     )
-    # Thread B: Display class (slow — FR24 API, scenes, fonts)
+    # Thread B: Display class (slow - FR24 API, scenes, fonts)
     display_thread = threading.Thread(
         target=display_load,
         args=(matrix, canvas, result),
@@ -203,7 +203,7 @@ def load_full_interface(matrix, canvas, cfg: Config):
 
 
 def load_minimum_interface(matrix, canvas, cfg: Config):
-    # No web UI — brief splash, then build display in the background.
+    # No web UI - brief splash, then build display in the background.
     display_thread = threading.Thread(
         target=display_load,
         args=(matrix, canvas, result),

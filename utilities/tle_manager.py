@@ -1,5 +1,5 @@
 """
-TLEManager — fetch and cache TLE data from CelesTrak.
+TLEManager - fetch and cache TLE data from CelesTrak.
 
 Resolves NORAD catalog IDs (integers) to (name, line1, line2) tuples using
 CelesTrak's GP endpoint:
@@ -155,6 +155,6 @@ class TLEManager:
                 self.tles = results
                 self.fetched_at = time.time()
         else:
-            print("[tle] fetch returned no results — keeping existing cache")
+            print("[tle] fetch returned no results - keeping existing cache")
 
         self.ready.set()

@@ -1,5 +1,5 @@
 """
-LoadingLEDIndicator — external GPIO LED blinks while overhead is fetching.
+LoadingLEDIndicator - external GPIO LED blinks while overhead is fetching.
 
 Replaces the former LoadingLEDScene mixin.  Call tick(frame) once per
 frame after the active scene has drawn.

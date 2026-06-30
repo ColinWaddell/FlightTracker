@@ -1,5 +1,5 @@
 """
-SatelliteScene — Az-El polar plot for overhead satellite passes.
+SatelliteScene - Az-El polar plot for overhead satellite passes.
 
 Shown when one or more tracked satellites are currently above the configured
 minimum elevation.  Priority 2 (beats FlightScene at 1 and IdleScene at 0).
@@ -13,7 +13,7 @@ Display layout:
 Data flow:
     TLEManager  ->  passes.compute_passes()  ->  list[PassWindow]
     poll() checks whether any PassWindow is active right now.
-    draw() reads pre-baked trajectory data — no orbital math per frame.
+    draw() reads pre-baked trajectory data - no orbital math per frame.
 """
 
 from __future__ import annotations
@@ -205,7 +205,7 @@ class SatelliteScene:
 
             old = self.last_positions.get(window.name)
             if old is None or self.blink_on != self.last_blink_on:
-                # First frame or blink toggled — redraw
+                # First frame or blink toggled - redraw
                 if old is not None:
                     old_px, old_py, old_idx = old
                     azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)

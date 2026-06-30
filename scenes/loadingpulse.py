@@ -1,5 +1,5 @@
 """
-LoadingPulseIndicator — top-right pixel pulses while overhead is fetching.
+LoadingPulseIndicator - top-right pixel pulses while overhead is fetching.
 
 Replaces the former LoadingPulseScene mixin.  Call tick(frame) once per
 frame after the active scene has drawn.

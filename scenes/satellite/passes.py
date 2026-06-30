@@ -28,7 +28,7 @@ SCAN_INTERVAL_S = 30  # coarser step used while hunting for pass windows
 EARTH_R_KM = 6378.137
 
 # ---------------------------------------------------------------------------
-# Debug flag — flip to True to inject a fake always-active pass for testing.
+# Debug flag - flip to True to inject a fake always-active pass for testing.
 # Remove once satellite scene has been validated on real hardware.
 # ---------------------------------------------------------------------------
 DEBUG_FAKE_PASS = False
@@ -261,13 +261,13 @@ def compute_passes(
                         windows.append(window)
                     break
             else:
-                # No horizon crossing found in the past 6 hours — the sat may
+                # No horizon crossing found in the past 6 hours - the sat may
                 # have been above the horizon for a very long time.  Refine
                 # from now anyway so we at least get the remainder of the pass.
                 window = refine_pass(sat, name, idx, now, end, lat, lng, min_elevation)
                 if window is not None:
                     windows.append(window)
-            # Skip the forward scan — we already handled this satellite
+            # Skip the forward scan - we already handled this satellite
             continue
 
         while t < end:

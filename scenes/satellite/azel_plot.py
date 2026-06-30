@@ -27,7 +27,7 @@ PLOT_CY = 19  # centre y within the canvas
 PLOT_RADIUS = 12  # pixels from centre to horizon ring
 
 # ---------------------------------------------------------------------------
-# Colour palette — one slot per satellite (index 0..4)
+# Colour palette - one slot per satellite (index 0..4)
 # Bright  = current-position dot
 # Dim     = previous-position dot (trail)
 # Dimmer  = predicted trajectory arc (light grey, uniform across satellites)

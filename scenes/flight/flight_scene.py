@@ -1,5 +1,5 @@
 """
-FlightScene — callsign bar, origin->destination journey, scrolling telemetry.
+FlightScene - callsign bar, origin->destination journey, scrolling telemetry.
 
 Shown when flight data is available.  Priority 1 (beats IdleScene).
 
@@ -229,7 +229,7 @@ class FlightScene:
         self.overhead.grab_data()
         self.last_grab_time = time.time()
 
-        # Internal flight state — owned entirely by this scene
+        # Internal flight state - owned entirely by this scene
         self.flights: list = []
         self.flight_index: int = 0
         self.all_looped_flag: bool = False
@@ -250,12 +250,12 @@ class FlightScene:
         self.plane_position: int = screen.WIDTH
         self.last_details_mode: int | None = None
 
-        # Callsign bar cache — only redraw when these change
+        # Callsign bar cache - only redraw when these change
         self.last_callsign_drawn: str | None = None
         self.last_index_drawn: int | None = None
         self.last_flight_count_drawn: int | None = None
 
-        # Error backoff — log once, hold off before retrying
+        # Error backoff - log once, hold off before retrying
         self.error_logged: bool = False
         self.retry_at: float = 0.0
 
@@ -278,14 +278,14 @@ class FlightScene:
                 self.error_logged = True
                 self.retry_at = now + ERROR_BACKOFF_S
             if now >= self.retry_at:
-                # Backoff expired — clear state and kick a fresh grab.
+                # Backoff expired - clear state and kick a fresh grab.
                 # grab_data() resets the error flag internally.
                 self.error_logged = False
                 self.overhead.grab_data()
                 self.last_grab_time = now
             return
 
-        # Successful state — clear any lingering backoff flags.
+        # Successful state - clear any lingering backoff flags.
         self.error_logged = False
         self.retry_at = 0.0
 
@@ -317,7 +317,7 @@ class FlightScene:
             if there_is_data:
                 self.reset()
         elif telemetry_changed(old_flights, new_flights):
-            # Silent swap — scroller continues uninterrupted
+            # Silent swap - scroller continues uninterrupted
             self.flights = new_flights
 
     @property

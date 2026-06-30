@@ -1,15 +1,15 @@
 """
-IdleScene — clock, date, day-of-week, and weather bar.
+IdleScene - clock, date, day-of-week, and weather bar.
 
 Shown whenever no flight data is available. Always has_data() -> True
 (priority 0 fallback). Weather is fetched on a background daemon thread
 so it never blocks the draw loop.
 
 Merges the four former mixin scenes:
-    ClockScene  ->  draw_clock()
-    DateScene   ->  draw_date()
-    DayScene    ->  draw_day()
-    WeatherScene -> draw_weather()
+    ClockScene   ->  draw_clock()
+    DateScene    ->  draw_date()
+    DayScene     ->  draw_day()
+    WeatherScene ->  draw_weather()
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ DATE_FORMATS = [
 DAY_FONT = fonts.small
 DAY_POSITION = (2, 23)
 
-# Weather — shared constants also referenced by FlightScene for the
+# Weather - shared constants also referenced by FlightScene for the
 # temperature-to-colour mapping used in the rainfall graph.
 WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
@@ -77,7 +77,7 @@ RAINFALL_12HR_MARKERS = True
 RAINFALL_GRAPH_ORIGIN = (39, 15)
 RAINFALL_COLUMN_WIDTH = 1
 RAINFALL_GRAPH_HEIGHT = 8
-RAINFALL_MAX_VALUE = 3  # mm — columns taller than this flash
+RAINFALL_MAX_VALUE = 3  # mm - columns taller than this flash
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_FONT = fonts.extrasmall
