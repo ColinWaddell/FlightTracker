@@ -1,19 +1,19 @@
 """
-FlightScene — callsign bar, origin→destination journey, scrolling telemetry.
+FlightScene — callsign bar, origin->destination journey, scrolling telemetry.
 
 Shown when flight data is available.  Priority 1 (beats IdleScene).
 
 Merges the three former mixin scenes:
-    FlightDetailsScene → draw_callsign()
-    JourneyScene       → draw_journey()
-    PlaneDetailsScene  → draw_plane_details()
+    FlightDetailsScene -> draw_callsign()
+    JourneyScene       -> draw_journey()
+    PlaneDetailsScene  -> draw_plane_details()
 
 Owns its own flight data.  Call on_data(new_flights) whenever the overhead
 source produces a fresh result; the scene decides internally whether that
 warrants a full reset (callsigns changed) or a silent telemetry swap.
 
 Screen layout:
-    rows  0-15  JourneyWidget (origin → destination)
+    rows  0-15  JourneyWidget (origin -> destination)
     rows 16-24  Callsign bar + optional N/M index
     rows 23-31  Scrolling plane details (make/model or telemetry)
 """

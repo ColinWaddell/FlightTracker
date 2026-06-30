@@ -143,6 +143,7 @@ Any key omitted will use the built-in default.
 | `timezone` | IANA timezone name, e.g. `"America/New_York"` | `"Europe/London"` |
 | `date_format` | `0` = YYYY-MM-DD, `1` = DD-MM-YYYY, `2` = MM-DD-YYYY | `0` |
 | `web_interface_enabled` | Set to `false` to disable the config UI entirely - Flask will not start and no QR code will be shown on boot. Re-enable by editing `config.json` directly | `true` |
+| `web_port` | TCP port for the Flask config server (1–65535). Change requires a restart | `8584` |
 | `gpio_slowdown` | 1-4; increase if display flickers. Pi 4 typically needs `4` | `1` |
 | `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires solder bridge) | `true` |
 | `loading_led_enabled` | Blink a GPIO LED while loading flight data | `false` |

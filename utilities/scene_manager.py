@@ -28,9 +28,9 @@ class SceneManager:
     kick() logic (mirrors scene_manager.cpp):
       1. Search all non-fallback scenes for the highest-priority one that
          has_data() and the highest-priority one that is active().
-      2. If the has_data scene outranks the active scene → reset + draw it.
-      3. Else if something is active → keep drawing it.
-      4. Else → fall back to scenes[0], resetting if we just arrived here.
+      2. If the has_data scene outranks the active scene -> reset + draw it.
+      3. Else if something is active -> keep drawing it.
+      4. Else -> fall back to scenes[0], resetting if we just arrived here.
     """
 
     def __init__(self):
@@ -38,7 +38,7 @@ class SceneManager:
         self.current_scene = None
 
     def register(self, scene) -> None:
-        """Register a scene. Kept sorted lowest→highest priority so index 0
+        """Register a scene. Kept sorted lowest->highest priority so index 0
         is the fallback, matching the C++ array layout."""
         self.scenes.append(scene)
         self.scenes.sort(key=lambda s: s.priority)

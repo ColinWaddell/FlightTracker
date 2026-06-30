@@ -11,42 +11,180 @@ import importlib.util
 import json
 import os
 import sys
-from datetime import datetime
+import math
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any
 
+ROOT_PATH = Path(__file__).parent.parent
+CONFIG_PATH = ROOT_PATH / "config.json"
+LEGACY_PATH = ROOT_PATH / "config.py"
 
-def time_in_window(start_str: str, end_str: str) -> bool:
-    """Check if *now* falls inside a time window defined by two HH:MM strings.
+# Sensible defaults — single source of truth for each config key.
+# These constants are used both to populate DEFAULTS below and as the
+# fallback in every Config @property, so the two never drift apart.
+DEFAULT_PASSWORD = b"flighttracker"
 
-    Handles overnight windows (e.g. 22:00 → 07:00) where start > end.
+# Location / flight zone
+DEFAULT_FLIGHT_LAT = 55.87
+DEFAULT_FLIGHT_LNG = -4.25
+DEFAULT_FLIGHT_RADIUS = 20.0  # km
+DEFAULT_FLIGHT_MIN_ALTITUDE = 100.0  # metres
+DEFAULT_FLIGHT_MAX_ALTITUDE = 10000.0  # metres
+
+# Airport display
+DEFAULT_FULL_AIRPORT_NAME = False
+DEFAULT_ABBREVIATE_NAME = False
+DEFAULT_HOME_AIRPORT_CODE = ""
+DEFAULT_JOURNEY_BLANK_FILLER = " ? "
+
+# Plane info row
+DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
+
+# Weather
+DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
+DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
+DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
+
+# Display
+DEFAULT_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel
+DEFAULT_SCREEN_BRIGHTNESS = 3  # 1-5
+DEFAULT_SCREEN_ROTATE = False
+
+# Brightness schedule
+DEFAULT_SCREEN_SCHEDULE_ENABLED = False
+DEFAULT_SCREEN_SCHEDULE_AUTO = False
+DEFAULT_SCREEN_SCHEDULE_START = "22:00"
+DEFAULT_SCREEN_SCHEDULE_END = "07:00"
+DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
+
+# Clock / date
+DEFAULT_CLOCK_24HR = True
+DEFAULT_DATE_FORMAT = 0  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+
+# Web interface
+DEFAULT_WEB_INTERFACE_ENABLED = True
+DEFAULT_WEB_PORT = 8584  # TCP port for the Flask config server
+DEFAULT_WEB_PASSWORD_HASH = ""  # SHA-256 hex; empty = default password "flighttracker"
+
+# Hardware
+DEFAULT_GPIO_SLOWDOWN = 1
+DEFAULT_HAT_PWM_ENABLED = True
+DEFAULT_LOADING_LED_ENABLED = False
+DEFAULT_LOADING_LED_GPIO_PIN = ""
+
+# Data source
+DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
+DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
+DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
+
+# Satellite tracking
+DEFAULT_SATELLITE_TRACKING_ENABLED = True
+DEFAULT_SATELLITE_NORAD_IDS = [25544]  # ISS (ZARYA) = 25544; celestrak.org for others
+DEFAULT_SATELLITE_MIN_ELEVATION = 20  # degrees — passes peaking below this are ignored
+DEFAULT_SATELLITE_MAX_COUNT = 5  # max simultaneous satellites to plot
+
+DEFAULTS: dict[str, Any] = {
+    # Location / flight zone
+    "flight_lat": DEFAULT_FLIGHT_LAT,
+    "flight_lng": DEFAULT_FLIGHT_LNG,
+    "flight_radius": DEFAULT_FLIGHT_RADIUS,
+    "flight_min_altitude": DEFAULT_FLIGHT_MIN_ALTITUDE,
+    "flight_max_altitude": DEFAULT_FLIGHT_MAX_ALTITUDE,
+    # Airport display
+    "full_airport_name": DEFAULT_FULL_AIRPORT_NAME,
+    "abbreviate_name": DEFAULT_ABBREVIATE_NAME,
+    "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
+    "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
+    # Plane info row
+    "details": DEFAULT_DETAILS,
+    # Weather
+    "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
+    "weather_mode": DEFAULT_WEATHER_MODE,
+    "units": DEFAULT_UNITS,
+    # Display
+    "theme": DEFAULT_THEME,
+    "screen_brightness": DEFAULT_SCREEN_BRIGHTNESS,
+    "screen_rotate": DEFAULT_SCREEN_ROTATE,
+    # Brightness schedule
+    "screen_schedule_enabled": DEFAULT_SCREEN_SCHEDULE_ENABLED,
+    "screen_schedule_auto": DEFAULT_SCREEN_SCHEDULE_AUTO,
+    "screen_schedule_start": DEFAULT_SCREEN_SCHEDULE_START,
+    "screen_schedule_end": DEFAULT_SCREEN_SCHEDULE_END,
+    "screen_schedule_brightness": DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS,
+    # Clock / date
+    "clock_24hr": DEFAULT_CLOCK_24HR,
+    "date_format": DEFAULT_DATE_FORMAT,
+    # Web interface
+    "web_interface_enabled": DEFAULT_WEB_INTERFACE_ENABLED,
+    "web_port": DEFAULT_WEB_PORT,
+    "web_password_hash": DEFAULT_WEB_PASSWORD_HASH,
+    # Hardware
+    "gpio_slowdown": DEFAULT_GPIO_SLOWDOWN,
+    "hat_pwm_enabled": DEFAULT_HAT_PWM_ENABLED,
+    "loading_led_enabled": DEFAULT_LOADING_LED_ENABLED,
+    "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
+    # Data source
+    "data_source": DEFAULT_DATA_SOURCE,
+    "tar1090_url": DEFAULT_TAR1090_URL,
+    "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
+    # Satellite tracking
+    "satellite_tracking_enabled": DEFAULT_SATELLITE_TRACKING_ENABLED,
+    "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
+    "satellite_min_elevation": DEFAULT_SATELLITE_MIN_ELEVATION,
+    "satellite_max_count": DEFAULT_SATELLITE_MAX_COUNT,
+}
+
+
+def mins_to_time(m: float) -> time:
+    """Convert minutes-from-midnight (0-1440) into a ``datetime.time``."""
+    m = int(round(m)) % 1440
+    return time(hour=m // 60, minute=m % 60)
+
+
+def time_to_mins(t: time) -> int:
+    """Convert a ``datetime.time`` to minutes from midnight."""
+    return t.hour * 60 + t.minute
+
+
+def parse_time(value: Any, default: str = "00:00") -> time:
+    """Parse an ``HH:MM`` string (or anything str()-able) into a ``datetime.time``.
+
+    Falls back to *default* on failure. Used at the JSON-storage boundary.
     """
     try:
-        now = datetime.now()
-        start = datetime.strptime(start_str.strip(), "%H:%M")
-        end = datetime.strptime(end_str.strip(), "%H:%M")
-    except (ValueError, AttributeError):
+        return datetime.strptime(str(value).strip(), "%H:%M").time()
+    except (ValueError, AttributeError, TypeError):
+        return datetime.strptime(default, "%H:%M").time()
+
+
+def time_in_window(start: time, end: time) -> bool:
+    """Check if *now* falls inside a time window defined by two ``time`` objects.
+
+    Handles overnight windows (e.g. 22:00 -> 07:00) where start > end.
+    """
+    if start is None or end is None:
         return False
 
-    start_mins = start.hour * 60 + start.minute
-    end_mins = end.hour * 60 + end.minute
-    now_mins = now.hour * 60 + now.minute
+    now_mins = datetime.now().hour * 60 + datetime.now().minute
+    start_mins = time_to_mins(start)
+    end_mins = time_to_mins(end)
 
     if start_mins == end_mins:
         return True
     if start_mins < end_mins:
         return start_mins <= now_mins < end_mins
+
     # Overnight window
     return now_mins >= start_mins or now_mins < end_mins
 
 
-def approx_sunrise_sunset(lat: float, lng: float, date=None):
+def approx_sunrise_sunset(lat: float, lng: float, date=None) -> tuple[time, time]:
     """Approximate sunrise/sunset times for a given lat/lng and date.
 
     Uses a simplified solar position algorithm (NOAA approximation).
-    Returns (sunrise_str, sunset_str) as HH:MM strings.
+    Returns (sunrise, sunset) as ``datetime.time`` objects.
     """
-    import math
 
     if date is None:
         date = datetime.now()
@@ -73,10 +211,12 @@ def approx_sunrise_sunset(lat: float, lng: float, date=None):
     # Polar night / midnight sun - clamp to 0 or 1440 minutes
     if cos_h > 1:
         # Sun never rises
-        return "12:00", "12:00"
+        noon = mins_to_time(720)
+        return noon, noon
     if cos_h < -1:
         # Sun never sets
-        return "12:00", "12:00"
+        noon = mins_to_time(720)
+        return noon, noon
 
     ha = math.degrees(math.acos(cos_h))  # degrees
     ha_minutes = ha * 4  # 1° = 4 minutes
@@ -88,69 +228,7 @@ def approx_sunrise_sunset(lat: float, lng: float, date=None):
     sunrise = sunrise % 1440
     sunset = sunset % 1440
 
-    def mins_to_hhmm(m):
-        m = int(round(m)) % 1440
-        return f"{m // 60:02d}:{m % 60:02d}"
-
-    return mins_to_hhmm(sunrise), mins_to_hhmm(sunset)
-
-
-ROOT_PATH = Path(__file__).parent.parent
-CONFIG_PATH = ROOT_PATH / "config.json"
-LEGACY_PATH = ROOT_PATH / "config.py"
-
-# Sensible defaults - mirrors the Django Settings model for Dotbox
-DEFAULTS: dict[str, Any] = {
-    # Location / flight zone
-    "flight_lat": 55.87,
-    "flight_lng": -4.25,
-    "flight_radius": 20.0,  # km
-    "flight_min_altitude": 100.0,  # metres
-    "flight_max_altitude": 10000.0,  # metres
-    # Airport display
-    "full_airport_name": False,
-    "abbreviate_name": False,
-    "home_airport_code": "",
-    "journey_blank_filler": " ? ",
-    # Plane info row
-    "details": 0,  # 0 = plane make/model, 1 = altitude/speed/heading
-    # Weather
-    "weatherapi_key": "",  # weatherapi.com API key; empty = weather disabled
-    "weather_mode": 0,  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
-    "units": "m",  # 'm' = metric, 'i' = imperial
-    # Display
-    "theme": 0,  # 0 = Default, 1 = Monochrome, 2 = Pastel
-    "screen_brightness": 3,  # 1-5
-    "screen_rotate": False,
-    # Brightness schedule
-    "screen_schedule_enabled": False,
-    "screen_schedule_auto": False,
-    "screen_schedule_start": "22:00",
-    "screen_schedule_end": "07:00",
-    "screen_schedule_brightness": 0,
-    # Clock / date
-    "clock_24hr": True,
-    "date_format": 0,  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
-    # Web interface
-    "web_interface_enabled": True,
-    "web_password_hash": "",  # SHA-256 hex; empty = default password "flighttracker"
-    # Hardware
-    "gpio_slowdown": 1,
-    "hat_pwm_enabled": True,
-    "loading_led_enabled": False,
-    "loading_led_gpio_pin": "",
-    # Data source
-    "data_source": "fr24",  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
-    "tar1090_url": "",  # only used when data_source == 'tar1090'
-    "max_flight_lookup": 5,  # how many nearby flights to track at once
-    # Satellite tracking
-    "satellite_tracking_enabled": True,
-    "satellite_norad_ids": [
-        25544
-    ],  # ISS (ZARYA) = 25544; look up others at celestrak.org
-    "satellite_min_elevation": 20,  # degrees — passes peaking below this are ignored
-    "satellite_max_count": 5,  # max simultaneous satellites to plot
-}
+    return mins_to_time(sunrise), mins_to_time(sunset)
 
 
 def import_legacy(path: Path):
@@ -169,7 +247,6 @@ def import_legacy(path: Path):
 
 def migrate_config(mod) -> dict[str, Any]:
     """Map legacy config.py variables onto the new JSON schema."""
-    import math
 
     data: dict[str, Any] = dict(DEFAULTS)
 
@@ -210,7 +287,7 @@ def migrate_config(mod) -> dict[str, Any]:
 
     # Units: old 'metric'/'imperial' -> new 'm'/'i'
     temp_units = get("TEMPERATURE_UNITS", "metric")
-    data["units"] = "i" if str(temp_units).lower() == "imperial" else "m"
+    data["units"] = "i" if str(temp_units).lower() == "imperial" else DEFAULT_UNITS
 
     # Migrate old RAINFALL_ENABLED -> weather_mode
     # (WEATHER_LOCATION / OPENWEATHER_API_KEY are dropped - weatherapi uses lat/lng)
@@ -237,12 +314,12 @@ def migrate_config(mod) -> dict[str, Any]:
     if get("TAR1090_URL"):
         data["data_source"] = "tar1090"
 
-    # JOURNEY_CODE_SELECTED → home_airport_code
+    # JOURNEY_CODE_SELECTED -> home_airport_code
     jcs = get("JOURNEY_CODE_SELECTED")
     if jcs:
         data["home_airport_code"] = str(jcs).strip().upper()[:3]
 
-    print("[config] Migrated legacy config.py → config.json", file=sys.stderr)
+    print("[config] Migrated legacy config.py -> config.json", file=sys.stderr)
     return data
 
 
@@ -278,12 +355,6 @@ class Config:
                     loaded = json.load(fh)
                 # Merge over defaults so new keys always have a value
                 self.data_store = {**DEFAULTS, **loaded}
-                # One-time migration: old weather_graph/rainfall_enabled → weather_mode
-                if "weather_mode" not in loaded:
-                    if loaded.get("rainfall_enabled"):
-                        self.data_store["weather_mode"] = 2
-                    elif loaded.get("weather_graph"):
-                        self.data_store["weather_mode"] = 1
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -336,69 +407,83 @@ class Config:
 
     @property
     def flight_lat(self) -> float:
-        return float(self.data_store.get("flight_lat", DEFAULTS["flight_lat"]))
+        return float(self.data_store.get("flight_lat", DEFAULT_FLIGHT_LAT))
 
     @property
     def flight_lng(self) -> float:
-        return float(self.data_store.get("flight_lng", DEFAULTS["flight_lng"]))
+        return float(self.data_store.get("flight_lng", DEFAULT_FLIGHT_LNG))
 
     @property
     def flight_radius(self) -> float:
-        return float(self.data_store.get("flight_radius", DEFAULTS["flight_radius"]))
+        return float(self.data_store.get("flight_radius", DEFAULT_FLIGHT_RADIUS))
 
     @property
     def flight_min_altitude(self) -> float:
         return float(
-            self.data_store.get("flight_min_altitude", DEFAULTS["flight_min_altitude"])
+            self.data_store.get("flight_min_altitude", DEFAULT_FLIGHT_MIN_ALTITUDE)
         )
 
     @property
     def flight_max_altitude(self) -> float:
         return float(
-            self.data_store.get("flight_max_altitude", DEFAULTS["flight_max_altitude"])
+            self.data_store.get("flight_max_altitude", DEFAULT_FLIGHT_MAX_ALTITUDE)
         )
 
     @property
     def full_airport_name(self) -> bool:
-        return bool(self.data_store.get("full_airport_name", False))
+        return bool(self.data_store.get("full_airport_name", DEFAULT_FULL_AIRPORT_NAME))
 
     @property
     def abbreviate_name(self) -> bool:
-        return bool(self.data_store.get("abbreviate_name", False))
+        return bool(self.data_store.get("abbreviate_name", DEFAULT_ABBREVIATE_NAME))
 
     @property
     def home_airport_code(self) -> str:
-        return str(self.data_store.get("home_airport_code", "")).upper()
+        return str(
+            self.data_store.get("home_airport_code", DEFAULT_HOME_AIRPORT_CODE)
+        ).upper()
 
     @property
     def journey_blank_filler(self) -> str:
-        return str(self.data_store.get("journey_blank_filler", " ? "))
+        return str(
+            self.data_store.get("journey_blank_filler", DEFAULT_JOURNEY_BLANK_FILLER)
+        )
 
     @property
     def details(self) -> int:
-        return int(self.data_store.get("details", 0))
+        return int(self.data_store.get("details", DEFAULT_DETAILS))
 
     @property
     def weatherapi_key(self) -> str:
-        return str(self.data_store.get("weatherapi_key", ""))
+        return str(self.data_store.get("weatherapi_key", DEFAULT_WEATHERAPI_KEY))
 
     @property
     def weather_mode(self) -> int:
         """0 = off, 1 = temperature only, 2 = temperature + rainfall graph."""
-        return max(0, min(2, int(self.data_store.get("weather_mode", 0))))
+        return max(
+            0, min(2, int(self.data_store.get("weather_mode", DEFAULT_WEATHER_MODE)))
+        )
 
     @property
     def units(self) -> str:
-        val = str(self.data_store.get("units", "m"))
-        return val if val in ("m", "i") else "m"
+        val = str(self.data_store.get("units", DEFAULT_UNITS))
+        return val if val in ("m", "i") else DEFAULT_UNITS
 
     @property
     def theme(self) -> int:
-        return int(self.data_store.get("theme", 0))
+        return int(self.data_store.get("theme", DEFAULT_THEME))
 
     @property
     def screen_brightness(self) -> int:
-        return max(1, min(5, int(self.data_store.get("screen_brightness", 3))))
+        return max(
+            1,
+            min(
+                5,
+                int(
+                    self.data_store.get("screen_brightness", DEFAULT_SCREEN_BRIGHTNESS)
+                ),
+            ),
+        )
 
     @property
     def brightness_percent(self) -> int:
@@ -407,27 +492,47 @@ class Config:
 
     @property
     def screen_rotate(self) -> bool:
-        return bool(self.data_store.get("screen_rotate", False))
+        return bool(self.data_store.get("screen_rotate", DEFAULT_SCREEN_ROTATE))
 
     @property
     def screen_schedule_enabled(self) -> bool:
-        return bool(self.data_store.get("screen_schedule_enabled", False))
+        return bool(
+            self.data_store.get(
+                "screen_schedule_enabled", DEFAULT_SCREEN_SCHEDULE_ENABLED
+            )
+        )
 
     @property
     def screen_schedule_auto(self) -> bool:
-        return bool(self.data_store.get("screen_schedule_auto", False))
+        return bool(
+            self.data_store.get("screen_schedule_auto", DEFAULT_SCREEN_SCHEDULE_AUTO)
+        )
 
     @property
-    def screen_schedule_start(self) -> str:
-        return str(self.data_store.get("screen_schedule_start", "22:00"))
+    def screen_schedule_start(self) -> time:
+        return parse_time(
+            self.data_store.get("screen_schedule_start", DEFAULT_SCREEN_SCHEDULE_START)
+        )
 
     @property
-    def screen_schedule_end(self) -> str:
-        return str(self.data_store.get("screen_schedule_end", "07:00"))
+    def screen_schedule_end(self) -> time:
+        return parse_time(
+            self.data_store.get("screen_schedule_end", DEFAULT_SCREEN_SCHEDULE_END)
+        )
 
     @property
     def screen_schedule_brightness(self) -> int:
-        return max(0, min(5, int(self.data_store.get("screen_schedule_brightness", 0))))
+        return max(
+            0,
+            min(
+                5,
+                int(
+                    self.data_store.get(
+                        "screen_schedule_brightness", DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS
+                    )
+                ),
+            ),
+        )
 
     @property
     def schedule_brightness_percent(self) -> int:
@@ -448,15 +553,26 @@ class Config:
 
     @property
     def clock_24hr(self) -> bool:
-        return bool(self.data_store.get("clock_24hr", True))
+        return bool(self.data_store.get("clock_24hr", DEFAULT_CLOCK_24HR))
 
     @property
     def date_format(self) -> int:
-        return int(self.data_store.get("date_format", 0))
+        return int(self.data_store.get("date_format", DEFAULT_DATE_FORMAT))
 
     @property
     def web_interface_enabled(self) -> bool:
-        return bool(self.data_store.get("web_interface_enabled", True))
+        return bool(
+            self.data_store.get("web_interface_enabled", DEFAULT_WEB_INTERFACE_ENABLED)
+        )
+
+    @property
+    def web_port(self) -> int:
+        try:
+            return max(
+                1, min(65535, int(self.data_store.get("web_port", DEFAULT_WEB_PORT)))
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_WEB_PORT
 
     @property
     def web_password_hash(self) -> str:
@@ -464,35 +580,41 @@ class Config:
         If not set, returns the hash of the default password 'flighttracker'."""
         import hashlib
 
-        stored = str(self.data_store.get("web_password_hash", ""))
+        stored = str(
+            self.data_store.get("web_password_hash", DEFAULT_WEB_PASSWORD_HASH)
+        )
         if stored:
             return stored
-        return hashlib.sha256(b"flighttracker").hexdigest()
+        return hashlib.sha256(DEFAULT_PASSWORD).hexdigest()
 
     @property
     def gpio_slowdown(self) -> int:
-        return int(self.data_store.get("gpio_slowdown", 1))
+        return int(self.data_store.get("gpio_slowdown", DEFAULT_GPIO_SLOWDOWN))
 
     @property
     def hat_pwm_enabled(self) -> bool:
-        return bool(self.data_store.get("hat_pwm_enabled", True))
+        return bool(self.data_store.get("hat_pwm_enabled", DEFAULT_HAT_PWM_ENABLED))
 
     @property
     def loading_led_enabled(self) -> bool:
-        return bool(self.data_store.get("loading_led_enabled", False))
+        return bool(
+            self.data_store.get("loading_led_enabled", DEFAULT_LOADING_LED_ENABLED)
+        )
 
     @property
     def loading_led_gpio_pin(self) -> int:
-        return int(self.data_store.get("loading_led_gpio_pin", 25))
+        return int(
+            self.data_store.get("loading_led_gpio_pin", DEFAULT_LOADING_LED_GPIO_PIN)
+        )
 
     @property
     def tar1090_url(self) -> str:
-        return str(self.data_store.get("tar1090_url", ""))
+        return str(self.data_store.get("tar1090_url", DEFAULT_TAR1090_URL))
 
     @property
     def data_source(self) -> str:
-        val = str(self.data_store.get("data_source", "fr24")).lower()
-        return val if val in ("fr24", "tar1090") else "fr24"
+        val = str(self.data_store.get("data_source", DEFAULT_DATA_SOURCE)).lower()
+        return val if val in ("fr24", "tar1090") else DEFAULT_DATA_SOURCE
 
     @property
     def use_tar1090(self) -> bool:
@@ -501,17 +623,26 @@ class Config:
     @property
     def max_flight_lookup(self) -> int:
         try:
-            return max(1, int(self.data_store.get("max_flight_lookup", 5)))
+            return max(
+                1,
+                int(
+                    self.data_store.get("max_flight_lookup", DEFAULT_MAX_FLIGHT_LOOKUP)
+                ),
+            )
         except (TypeError, ValueError):
-            return 5
+            return DEFAULT_MAX_FLIGHT_LOOKUP
 
     @property
     def satellite_tracking_enabled(self) -> bool:
-        return bool(self.data_store.get("satellite_tracking_enabled", True))
+        return bool(
+            self.data_store.get(
+                "satellite_tracking_enabled", DEFAULT_SATELLITE_TRACKING_ENABLED
+            )
+        )
 
     @property
     def satellite_norad_ids(self) -> list[int]:
-        val = self.data_store.get("satellite_norad_ids", [25544])
+        val = self.data_store.get("satellite_norad_ids", DEFAULT_SATELLITE_NORAD_IDS)
         if isinstance(val, list):
             ids = []
             for n in val:
@@ -520,23 +651,41 @@ class Config:
                 except (TypeError, ValueError):
                     pass
             return ids
-        return [25544]
+        return list(DEFAULT_SATELLITE_NORAD_IDS)
 
     @property
     def satellite_min_elevation(self) -> int:
         try:
             return max(
-                0, min(90, int(self.data_store.get("satellite_min_elevation", 20)))
+                0,
+                min(
+                    90,
+                    int(
+                        self.data_store.get(
+                            "satellite_min_elevation", DEFAULT_SATELLITE_MIN_ELEVATION
+                        )
+                    ),
+                ),
             )
         except (TypeError, ValueError):
-            return 20
+            return DEFAULT_SATELLITE_MIN_ELEVATION
 
     @property
     def satellite_max_count(self) -> int:
         try:
-            return max(1, min(10, int(self.data_store.get("satellite_max_count", 5))))
+            return max(
+                1,
+                min(
+                    10,
+                    int(
+                        self.data_store.get(
+                            "satellite_max_count", DEFAULT_SATELLITE_MAX_COUNT
+                        )
+                    ),
+                ),
+            )
         except (TypeError, ValueError):
-            return 5
+            return DEFAULT_SATELLITE_MAX_COUNT
 
     # Derived: zone bounding box (same algorithm as DotboxServer)
     @property

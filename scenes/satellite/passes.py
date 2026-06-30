@@ -96,7 +96,7 @@ def teme_to_azel(
     Returns (azimuth_deg, elevation_deg).
     Azimuth: 0° = North, increases clockwise.
     """
-    # TEME → ECEF via GMST rotation (sufficient accuracy for a 64x32 display)
+    # TEME -> ECEF via GMST rotation (sufficient accuracy for a 64x32 display)
     theta = gmst_rad(jd, fr)
     cos_t, sin_t = math.cos(theta), math.sin(theta)
     sx = r_teme[0] * cos_t + r_teme[1] * sin_t
@@ -188,8 +188,8 @@ def fake_pass_window() -> PassWindow:
         frac = i / total_seconds
         t = aos + datetime.timedelta(seconds=i)
 
-        # Azimuth: 160° → 20° (SSE → NNE), sinusoidal rate
-        # sin(π·frac - π/2) maps [0,1] → [-1,1], then scale to [0,1]
+        # Azimuth: 160° -> 20° (SSE -> NNE), sinusoidal rate
+        # sin(π·frac - π/2) maps [0,1] -> [-1,1], then scale to [0,1]
         az_frac = (math.sin(math.pi * frac - math.pi / 2) + 1.0) / 2.0
         az = 160.0 - az_frac * 140.0
 

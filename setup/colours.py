@@ -26,7 +26,7 @@ ORANGE_DARK = graphics.Color(113, 55, 0)
 ORANGE_RED = graphics.Color(255, 69, 0)
 LIGHT_SALMON = graphics.Color(255, 160, 122)
 PEACH = graphics.Color(255, 173, 114)
-PEACH_SOFT = graphics.Color(255, 204, 179)  # C++ PEACH - lighter, used for 20C weather
+PEACH_SOFT = graphics.Color(255, 204, 179)
 PEACH_PUFF = graphics.Color(255, 218, 185)
 PEACH_RED = graphics.Color(247, 109, 94)
 

@@ -6,8 +6,21 @@ import time
 
 from setup.configuration import Config, CONFIG_PATH
 
-# Default port for the web config interface - must match web/app.py FLASK_PORT
-DEFAULT_FLASK_PORT = 8584
+# -- Phase 1: Minimal imports for the splash screen -----------------------
+# Only rgbmatrix + PIL + qrcode are needed here.  Imported before the
+# background threads start to avoid GIL contention with heavy imports.
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from PIL import Image
+
+loading_font = graphics.Font()
+loading_font.LoadFont(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
+
+try:
+    import qrcode
+    from qrcode.constants import ERROR_CORRECT_L
+except ImportError:
+    qrcode = None
+    ERROR_CORRECT_L = None
 
 
 def local_ip() -> str:
@@ -31,14 +44,6 @@ def render_splash(
 ):
     """
     Render the splash BMP to canvas and swap it onto the display.
-
-    Called twice during startup:
-      - Without url: shows the splash image + "loading..." text (waiting state).
-      - With url:    re-renders the splash and overlays the QR code, which
-                     naturally overwrites the loading text region.
-
-    Re-rendering the splash on the second call avoids having to keep a copy
-    of the bitmap pixels in memory between the two phases.
     """
     # canvas.SetImage() is broken with Pillow 10+ (unsafe_ptrs removed).
     # Read raw bytes and set pixels manually instead.
@@ -51,7 +56,6 @@ def render_splash(
             canvas.SetPixel(x, y, pixels[i], pixels[i + 1], pixels[i + 2])
 
     if url is not None and qrcode is not None:
-        # QR code overwrites the loading text — no explicit erase needed.
         qr = qrcode.QRCode(
             version=1,
             error_correction=ERROR_CORRECT_L,
@@ -134,45 +138,87 @@ def display_load(matrix, canvas, result: dict):
         traceback.print_exc(file=sys.stderr)
 
 
+def build_matrix_options(cfg: Config) -> RGBMatrixOptions:
+    options = RGBMatrixOptions()
+    options.rows = cfg.matrix_rows
+    options.cols = cfg.matrix_cols
+    options.chain_length = cfg.matrix_chain_length
+    options.parallel = cfg.matrix_parallel
+    options.hardware_mapping = cfg.matrix_hardware_mapping
+    options.gpio_slowdown = cfg.matrix_gpio_slowdown
+    options.brightness = cfg.matrix_brightness
+    return options
+
+
+def load_full_interface(matrix, canvas, cfg: Config):
+    url = f"http://{local_ip()}:{cfg.web_port}/settings"
+    print(f"[web] Config interface: {url}", flush=True)
+
+    flask_ready = threading.Event()
+
+    # Thread A: Flask (fast — just binds a port)
+    flask_thread = threading.Thread(
+        target=flask_load,
+        args=(flask_ready, result),
+        daemon=True,
+        name="flask-load",
+    )
+    # Thread B: Display class (slow — FR24 API, scenes, fonts)
+    display_thread = threading.Thread(
+        target=display_load,
+        args=(matrix, canvas, result),
+        daemon=True,
+        name="display-load",
+    )
+
+    flask_thread.start()
+    display_thread.start()
+
+    # -- Phase 3: Wait for Flask, then show QR and start 8-second clock --
+    # The countdown begins only once Flask is provably ready so the user
+    # always has a full 8 seconds to scan the code.
+    flask_ready.wait()
+    if "flask_error" not in result:
+        render_splash(
+            matrix,
+            canvas,
+            Image,
+            graphics,
+            loading_font,
+            url,
+            qrcode,
+            ERROR_CORRECT_L,
+        )
+
+    cfg_existed = CONFIG_PATH.exists()
+    deadline = time.time() + 8
+    while True:
+        time.sleep(0.5)
+        if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
+            break
+
+    # -- Phase 4: Wait for display build to finish ------------------------
+    display_thread.join()
+    flask_thread.join()
+
+
+def load_minimum_interface(matrix, canvas, cfg: Config):
+    # No web UI — brief splash, then build display in the background.
+    display_thread = threading.Thread(
+        target=display_load,
+        args=(matrix, canvas, result),
+        daemon=True,
+        name="display-load",
+    )
+    display_thread.start()
+    time.sleep(2)
+    display_thread.join()
+
+
 if __name__ == "__main__":
     cfg = Config.instance()
 
-    # -- Phase 1: Minimal imports for the splash screen -----------------------
-    # Only rgbmatrix + PIL + qrcode are needed here.  Imported before the
-    # background threads start to avoid GIL contention with heavy imports.
-    from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-    from PIL import Image
-
-    loading_font = graphics.Font()
-    loading_font.LoadFont(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
-
-    try:
-        import qrcode
-        from qrcode.constants import ERROR_CORRECT_L
-    except ImportError:
-        qrcode = None
-        ERROR_CORRECT_L = None
-
-    options = RGBMatrixOptions()
-    options.hardware_mapping = (
-        "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
-    )
-    options.rows = 32
-    options.cols = 64
-    options.chain_length = 1
-    options.parallel = 1
-    options.row_address_type = 0
-    options.multiplexing = 0
-    options.pwm_bits = 11
-    options.brightness = cfg.brightness_percent
-    options.pwm_lsb_nanoseconds = 130
-    options.led_rgb_sequence = "RGB"
-    options.pixel_mapper_config = "Rotate:180" if cfg.screen_rotate else ""
-    options.show_refresh_rate = 0
-    options.gpio_slowdown = cfg.gpio_slowdown
-    options.disable_hardware_pulsing = True
-    options.drop_privileges = True
-
+    options = build_matrix_options(cfg)
     matrix = RGBMatrix(options=options)
     canvas = matrix.CreateFrameCanvas()
     canvas.Clear()
@@ -183,67 +229,10 @@ if __name__ == "__main__":
     result = {}
 
     if cfg.web_interface_enabled:
-        url = f"http://{local_ip()}:{DEFAULT_FLASK_PORT}/settings"
-        print(f"[web] Config interface: {url}", flush=True)
-
-        flask_ready = threading.Event()
-
-        # Thread A: Flask (fast — just binds a port)
-        flask_thread = threading.Thread(
-            target=flask_load,
-            args=(flask_ready, result),
-            daemon=True,
-            name="flask-load",
-        )
-        # Thread B: Display class (slow — FR24 API, scenes, fonts)
-        display_thread = threading.Thread(
-            target=display_load,
-            args=(matrix, canvas, result),
-            daemon=True,
-            name="display-load",
-        )
-
-        flask_thread.start()
-        display_thread.start()
-
-        # -- Phase 3: Wait for Flask, then show QR and start 8-second clock --
-        # The countdown begins only once Flask is provably ready so the user
-        # always has a full 8 seconds to scan the code.
-        flask_ready.wait()
-        if "flask_error" not in result:
-            render_splash(
-                matrix,
-                canvas,
-                Image,
-                graphics,
-                loading_font,
-                url,
-                qrcode,
-                ERROR_CORRECT_L,
-            )
-
-        cfg_existed = CONFIG_PATH.exists()
-        deadline = time.time() + 8
-        while True:
-            time.sleep(0.5)
-            if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
-                break
-
-        # -- Phase 4: Wait for display build to finish ------------------------
-        display_thread.join()
-        flask_thread.join()
+        load_full_interface(matrix, canvas, cfg)
 
     else:
-        # No web UI — brief splash, then build display in the background.
-        display_thread = threading.Thread(
-            target=display_load,
-            args=(matrix, canvas, result),
-            daemon=True,
-            name="display-load",
-        )
-        display_thread.start()
-        time.sleep(2)
-        display_thread.join()
+        load_minimum_interface(matrix, canvas, cfg)
 
     if "error" in result:
         print(f"[startup] Display build failed: {result['error']}", file=sys.stderr)

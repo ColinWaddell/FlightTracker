@@ -11,7 +11,7 @@ Display layout:
                  rendered in its matching palette colour.
 
 Data flow:
-    TLEManager  →  passes.compute_passes()  →  list[PassWindow]
+    TLEManager  ->  passes.compute_passes()  ->  list[PassWindow]
     poll() checks whether any PassWindow is active right now.
     draw() reads pre-baked trajectory data — no orbital math per frame.
 """
@@ -65,7 +65,7 @@ class SatelliteScene:
         self.last_cycle_second: float = 0.0
 
         # Track drawn positions so we can update only when the pixel changes.
-        # name → (px, py, tle_index)
+        # name -> (px, py, tle_index)
         self.last_positions: dict[str, tuple[int, int, int]] = {}
 
         # Blink state for the position dot (toggles every 0.5 s)

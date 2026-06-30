@@ -2,13 +2,13 @@
 FlightTracker web configuration interface.
 
 Runs as a Flask daemon thread on port 8584.
-GET  /           → redirect to /settings
-GET  /login      → login form
-POST /login      → check password, set session
-GET  /logout     → clear session, redirect to /login
-GET  /settings   → settings form (requires login)
-POST /settings   → save config.json, return restarting page, exec after 1 s
-GET  /ping       → health-check used by the restarting page
+GET  /           -> redirect to /settings
+GET  /login      -> login form
+POST /login      -> check password, set session
+GET  /logout     -> clear session, redirect to /login
+GET  /settings   -> settings form (requires login)
+POST /settings   -> save config.json, return restarting page, exec after 1 s
+GET  /ping       -> health-check used by the restarting page
 """
 
 from __future__ import annotations
@@ -25,7 +25,8 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 
 from setup.configuration import Config, CONFIG_PATH
 
-FLASK_PORT = 8584
+# Port is read from config.json via Config.web_port (default 8584).
+FLASK_PORT = Config.instance().web_port
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
@@ -232,6 +233,9 @@ def settings():
                 "date_format": int_val(form.get("date_format"), 0),
                 # Web interface
                 "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
+                "web_port": max(
+                    1, min(65535, int_val(form.get("web_port"), cfg.web_port))
+                ),
                 # Hardware
                 "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
                 "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),

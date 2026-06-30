@@ -140,7 +140,7 @@ class LineScroller:
 
 
 class JourneyScene(object):
-    """Draws origin → destination in either IATA or FULL (bounce) mode."""
+    """Draws origin -> destination in either IATA or FULL (bounce) mode."""
 
     def __init__(self):
         super().__init__()

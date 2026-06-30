@@ -1,15 +1,15 @@
 """
 IdleScene — clock, date, day-of-week, and weather bar.
 
-Shown whenever no flight data is available. Always has_data() → True
+Shown whenever no flight data is available. Always has_data() -> True
 (priority 0 fallback). Weather is fetched on a background daemon thread
 so it never blocks the draw loop.
 
 Merges the four former mixin scenes:
-    ClockScene  →  draw_clock()
-    DateScene   →  draw_date()
-    DayScene    →  draw_day()
-    WeatherScene → draw_weather()
+    ClockScene  ->  draw_clock()
+    DateScene   ->  draw_date()
+    DayScene    ->  draw_day()
+    WeatherScene -> draw_weather()
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ TEMPERATURE_THRESHOLDS = [
 
 
 # ---------------------------------------------------------------------------
-# Temperature → colour (module-level so it can be imported by other modules)
+# Temperature -> colour (module-level so it can be imported by other modules)
 # ---------------------------------------------------------------------------
 
 
