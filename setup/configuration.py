@@ -569,7 +569,8 @@ class Config:
     def web_port(self) -> int:
         try:
             return max(
-                1, min(65535, int(self.data_store.get("web_port", DEFAULT_WEB_PORT)))
+                1024,
+                min(65535, int(self.data_store.get("web_port", DEFAULT_WEB_PORT))),
             )
         except (TypeError, ValueError):
             return DEFAULT_WEB_PORT

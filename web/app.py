@@ -161,7 +161,7 @@ def parse_settings_form(form, cfg) -> dict:
         "date_format": int_val(form.get("date_format"), 0),
         # Web interface
         "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
-        "web_port": max(1, min(65535, int_val(form.get("web_port"), cfg.web_port))),
+        "web_port": max(1024, min(65535, int_val(form.get("web_port"), cfg.web_port))),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),

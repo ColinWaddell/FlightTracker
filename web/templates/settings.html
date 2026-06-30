@@ -97,7 +97,7 @@
     <div class="col-md-3">
       <div class="sidebar">
         <div class="menu-section">
-          <div class="group-header"><i class="bi bi-broadcast-pin me-2"></i>Flight Monitoring</div>
+          <div class="group-header"><i class="bi bi-rocket-takeoff-pin me-2"></i>Flight Monitoring</div>
           <nav class="nav flex-column">
             <a class="nav-link" href="#group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</a>
             <a class="nav-link" href="#group-data-source"><i class="bi bi-hdd-network me-2"></i>Data Source</a>
@@ -108,7 +108,7 @@
           <nav class="nav flex-column">
             <a class="nav-link" href="#group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</a>
             <a class="nav-link" href="#group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</a>
-            <a class="nav-link" href="#group-satellite"><i class="bi bi-broadcast me-2"></i>Satellite Tracking</a>
+            <a class="nav-link" href="#group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</a>
           </nav>
         </div>
         <div class="menu-section">
@@ -301,7 +301,9 @@
 
         <!-- ====== Satellite Tracking ====== -->
         <div id="group-satellite" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-broadcast me-2"></i>Satellite Tracking</p>
+          <p class="section-heading"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</p>
+
+          <p class="form-text text-muted small mb-2">This feature allows you to track satellites (including the ISS) and display their passes over your location. TLE data is fetched automatically from CelesTrak.</p>
 
           <div class="form-check mb-3">
             <input type="checkbox" class="form-check-input" id="satellite_tracking_enabled"
@@ -379,7 +381,7 @@
             <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
                    {% if cfg.screen_rotate %}checked{% endif %} />
             <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
-            <div class="form-text text-muted small">Useful if you want to flip the unit and route the cable from the other side.</div>
+            <div class="form-text text-muted small">Useful if you want to flip the unit and route cables from the other side.</div>
           </div>
 
           <hr class="my-3" />
@@ -608,7 +610,7 @@
       <p class="mb-0" style="max-width:700px">
         Need help? Download a safe copy of your configuration below &mdash; API keys
         and passwords are automatically removed so you can paste it straight into a
-        GitHub issue.
+        <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">GitHub issue</a>.
       </p>
       <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-download me-1"></i>Download debug config
