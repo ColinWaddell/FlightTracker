@@ -239,6 +239,11 @@ class IdleScene:
     def active(self) -> bool:
         return True  # never interrupted mid-draw
 
+    def on_enter(self) -> None:
+        """Called by SceneManager on scene transition. Clears canvas then resets."""
+        self.canvas.Clear()
+        self.reset()
+
     def reset(self) -> None:
         """Clear cached draw state so everything redraws on next tick."""
         self._frame = 0

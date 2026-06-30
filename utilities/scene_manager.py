@@ -10,7 +10,8 @@ Each scene must implement:
     has_data()  bool    Scene has something to show right now.
     active()    bool    Scene is mid-presentation; prevent preemption.
     draw()      None    Render one frame. Scene owns its own frame counter.
-    reset()     None    Called when this scene is freshly selected.
+    reset()     None    Internal state reset (e.g. carousel advance). No canvas clear.
+    on_enter()  None    Called by SceneManager on scene transition. Clears canvas + resets.
 """
 
 from __future__ import annotations
@@ -69,13 +70,13 @@ class SceneManager:
             or highest_with_data.priority > highest_active.priority
         ):
             if highest_with_data is not self._current:
-                highest_with_data.reset()
+                highest_with_data.on_enter()
                 self._current = highest_with_data
         elif highest_active:
             self._current = highest_active
         else:
             if self._current is not fallback:
-                fallback.reset()
+                fallback.on_enter()
                 self._current = fallback
 
         self._current.draw()

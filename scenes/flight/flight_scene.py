@@ -306,6 +306,11 @@ class FlightScene:
     def active(self) -> bool:
         return len(self._flights) > 0
 
+    def on_enter(self) -> None:
+        """Called by SceneManager on scene transition. Clears canvas then resets."""
+        self.canvas.Clear()
+        self.reset()
+
     def reset(self) -> None:
         self._frame = 0
         self._journey_first_draw = True
