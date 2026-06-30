@@ -59,6 +59,7 @@ class Overhead:
         self._min_altitude = _cfg.flight_min_altitude
         self._max_altitude = _cfg.flight_max_altitude
         self._location_home = _cfg.location_home
+        self._max_flight_lookup = _cfg.max_flight_lookup
 
         self._api = FlightRadar24API()
         self._lock = Lock()
@@ -129,7 +130,7 @@ class Overhead:
                 key=lambda f: distance_from_flight_to_home(f, self._location_home),
             )
 
-            for flight in flights[:Config.instance().max_flight_lookup]:
+            for flight in flights[: self._max_flight_lookup]:
                 retries = RETRIES
                 while retries:
                     sleep(RATE_LIMIT_DELAY)

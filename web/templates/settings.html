@@ -211,7 +211,6 @@
             <label class="form-label small" for="max_flight_lookup">Flights to track</label>
             <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
                    name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
-            <div class="form-text text-muted small">Candidates are ranked by distance, so this controls how wide a net you cast — a higher number brings in flights from further afield.</div>
             <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
                  style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
               <i class="bi bi-exclamation-triangle-fill me-1"></i>Keep this at 5 or below when using FlightRadar24 — each flight requires a separate API call and higher values risk hitting rate limits.

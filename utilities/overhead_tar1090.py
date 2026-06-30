@@ -96,7 +96,7 @@ class Overhead:
         self._min_altitude = _cfg.flight_min_altitude
         self._max_altitude = _cfg.flight_max_altitude
         self._location_home = _cfg.location_home
-
+        self._max_flight_lookup = _cfg.max_flight_lookup
         self._route_cache: dict[str, tuple] = {}
         self._lock = Lock()
         self._done = Event()
@@ -201,7 +201,7 @@ class Overhead:
                 )
             )
 
-            for ac in candidates[:Config.instance().max_flight_lookup]:
+            for ac in candidates[: self._max_flight_lookup]:
                 try:
                     callsign = (ac.get("flight") or "").strip()
                     if callsign.upper() in BLANK_FIELDS:
