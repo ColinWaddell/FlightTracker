@@ -17,8 +17,10 @@ def _build_display_class():
     from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 
     from utilities.scene_manager import SceneManager
+    from utilities.tle_manager import TLEManager
     from scenes.idle.idle_scene import IdleScene
     from scenes.flight.flight_scene import FlightScene
+    from scenes.satellite.satellite_scene import SatelliteScene
 
     _cfg = Config.instance()
     theme_set(_cfg.theme)
@@ -82,6 +84,13 @@ def _build_display_class():
             self._sm.register(
                 FlightScene(self.canvas, draw_square, overhead, REFRESH_INTERVAL)
             )
+
+            if _cfg.satellite_tracking_enabled:
+                _tle_manager = TLEManager()
+                _tle_manager.start()
+                self._sm.register(
+                    SatelliteScene(self.canvas, draw_square, _tle_manager)
+                )
 
             self._loading = _IndicatorClass(self.canvas, overhead)
             self._frames = frames

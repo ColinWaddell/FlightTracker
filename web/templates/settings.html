@@ -236,6 +236,56 @@
           })();
         </script>
 
+        <!-- ====== Satellite Tracking ====== -->
+        <div id="group-satellite" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-broadcast me-2"></i>Satellite Tracking</p>
+
+          <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="satellite_tracking_enabled"
+                   name="satellite_tracking_enabled" value="1"
+                   {% if cfg.satellite_tracking_enabled %}checked{% endif %} />
+            <label class="form-check-label small" for="satellite_tracking_enabled">Enable satellite tracking</label>
+          </div>
+
+          <div id="satellite_fields" style="display:{% if cfg.satellite_tracking_enabled %}block{% else %}none{% endif %}">
+
+            <div class="mb-3">
+              <label class="form-label small" for="satellite_names">Satellites to track</label>
+              <textarea class="form-control form-control-sm font-monospace" id="satellite_names"
+                        name="satellite_names" rows="4"
+                        placeholder="ISS (ZARYA)">{{ cfg.satellite_names | join('\n') }}</textarea>
+              <div class="form-text text-muted small">One satellite name per line, exactly as listed on <a href="https://celestrak.org/SATCAT/search.php" target="_blank" rel="noopener noreferrer">CelesTrak</a>. TLEs are fetched automatically and refreshed every 24 hours.</div>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-auto">
+                <label class="form-label small" for="satellite_min_elevation">Minimum elevation (°)</label>
+                <input type="number" class="form-control form-control-sm" id="satellite_min_elevation"
+                       name="satellite_min_elevation" value="{{ cfg.satellite_min_elevation }}"
+                       min="0" max="90" style="width:5rem" />
+                <div class="form-text text-muted small">Passes that don't reach this elevation above the horizon are ignored.</div>
+              </div>
+              <div class="col-auto">
+                <label class="form-label small" for="satellite_max_count">Max simultaneous satellites</label>
+                <input type="number" class="form-control form-control-sm" id="satellite_max_count"
+                       name="satellite_max_count" value="{{ cfg.satellite_max_count }}"
+                       min="1" max="10" style="width:5rem" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <script>
+          (function () {
+            var satEnabled = document.getElementById('satellite_tracking_enabled');
+            var satFields  = document.getElementById('satellite_fields');
+            satEnabled.addEventListener('change', function () {
+              satFields.style.display = satEnabled.checked ? 'block' : 'none';
+            });
+          })();
+        </script>
+
         <!-- ====== Airport Display ====== -->
         <div id="group-airport-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>

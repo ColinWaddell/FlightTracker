@@ -143,6 +143,11 @@ DEFAULTS: dict[str, Any] = {
     "data_source": "fr24",  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
     "tar1090_url": "",  # only used when data_source == 'tar1090'
     "max_flight_lookup": 5,  # how many nearby flights to track at once
+    # Satellite tracking
+    "satellite_tracking_enabled": True,
+    "satellite_names": ["ISS (ZARYA)"],  # display names as listed on CelesTrak
+    "satellite_min_elevation": 20,  # degrees — passes peaking below this are ignored
+    "satellite_max_count": 5,  # max simultaneous satellites to plot
 }
 
 
@@ -495,6 +500,31 @@ class Config:
     def max_flight_lookup(self) -> int:
         try:
             return max(1, int(self._data.get("max_flight_lookup", 5)))
+        except (TypeError, ValueError):
+            return 5
+
+    @property
+    def satellite_tracking_enabled(self) -> bool:
+        return bool(self._data.get("satellite_tracking_enabled", True))
+
+    @property
+    def satellite_names(self) -> list:
+        val = self._data.get("satellite_names", ["ISS (ZARYA)"])
+        if isinstance(val, list):
+            return [str(n) for n in val if str(n).strip()]
+        return ["ISS (ZARYA)"]
+
+    @property
+    def satellite_min_elevation(self) -> int:
+        try:
+            return max(0, min(90, int(self._data.get("satellite_min_elevation", 20))))
+        except (TypeError, ValueError):
+            return 20
+
+    @property
+    def satellite_max_count(self) -> int:
+        try:
+            return max(1, min(10, int(self._data.get("satellite_max_count", 5))))
         except (TypeError, ValueError):
             return 5
 
