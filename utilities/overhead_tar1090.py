@@ -22,15 +22,19 @@ airports_loaded = False
 
 def load_airports():
     global airports_cache, airports_loaded
+
     if airports_loaded:
         return
+
     path = Path(__file__).parent.parent / "assets" / "airports.json"
     if path.exists():
         try:
             with open(path) as fh:
                 airports_cache = json.load(fh)
+
         except Exception:
             airports_cache = {}
+
     airports_loaded = True
 
 
@@ -69,6 +73,7 @@ def in_zone(lat, lon, zone):
 def distance_from_home(lat, lon, alt_ft, home):
     def polar_to_cartesian(lat, lon, alt):
         deg2rad = math.pi / 180
+
         return [
             alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
             alt * math.sin(deg2rad * lat),
@@ -78,6 +83,7 @@ def distance_from_home(lat, lon, alt_ft, home):
     altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
     x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
     x1, y1, z1 = polar_to_cartesian(*home)
+
     return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
 
 
@@ -111,6 +117,7 @@ class Overhead:
         with self.lock:
             if self.processing_store:
                 return False
+
             self.processing_store = True
             self.new_data_store = False
             self.error_store = None
@@ -118,6 +125,7 @@ class Overhead:
             self.thread = Thread(
                 target=self.grab_data_impl, name="overhead-tar1090-grabber"
             )
+
         self.thread.start()
         return True
 
@@ -125,10 +133,12 @@ class Overhead:
         with self.lock:
             if self.processing_store:
                 return False
+
             self.processing_store = True
             self.new_data_store = False
             self.error_store = None
             self.done.clear()
+
         self.grab_data_impl()
         return True
 
@@ -136,12 +146,14 @@ class Overhead:
         finished = self.done.wait(timeout)
         if finished and self.thread is not None:
             self.thread.join()
+
         return finished
 
     def get_route(self, callsign, lat=None, lng=None):
         now = time()
         with self.lock:
             cached = self.route_cache.get(callsign)
+
         if cached is not None:
             origin, dest, ts = cached
             if now - ts < ROUTE_CACHE_TTL:
@@ -150,19 +162,24 @@ class Overhead:
         origin, dest = "", ""
         try:
             route = lookup_route(callsign, lat, lng)
+
             if route and route.get("_airports"):
                 airports = route["_airports"]
                 origin = airports[0].get("iata", "") or ""
                 dest = airports[-1].get("iata", "") or ""
+
                 if origin.upper() in BLANK_FIELDS:
                     origin = ""
+
                 if dest.upper() in BLANK_FIELDS:
                     dest = ""
+
         except (RequestException, ValueError, KeyError, AttributeError, TypeError):
             pass
 
         with self.lock:
             self.route_cache[callsign] = (origin, dest, time())
+
         return origin, dest
 
     def grab_data_impl(self):
@@ -193,6 +210,7 @@ class Overhead:
                     continue
                 if not in_zone(lat, lon, zone):
                     continue
+
                 candidates.append(ac)
 
             candidates.sort(

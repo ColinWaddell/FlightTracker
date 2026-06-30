@@ -1,10 +1,6 @@
 """
 SceneManager - pure scene dispatch engine.
 
-Mirrors the C++ SceneManager in DotboxClient exactly: registration and
-kick() only.  No timing, no brightness, no data fetching - those belong
-in the main loop (Display.run()).
-
 Each scene must implement:
     priority    int     Higher value = higher priority.
     has_data()  bool    Scene has something to show right now.
@@ -56,11 +52,14 @@ class SceneManager:
         highest_with_data = None
         highest_active = None
 
-        for scene in reversed(non_fallback):  # highest priority first
+        # highest priority first
+        for scene in reversed(non_fallback):
             if highest_with_data is None and scene.has_data():
                 highest_with_data = scene
+
             if highest_active is None and scene.active():
                 highest_active = scene
+
             if highest_with_data and highest_active:
                 break
 
@@ -72,8 +71,10 @@ class SceneManager:
             if highest_with_data is not self.current_scene:
                 highest_with_data.on_enter()
                 self.current_scene = highest_with_data
+
         elif highest_active:
             self.current_scene = highest_active
+
         else:
             if self.current_scene is not fallback:
                 fallback.on_enter()

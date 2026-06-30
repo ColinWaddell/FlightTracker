@@ -116,6 +116,95 @@ def restart_after(delay: float = 1.0):
 
 
 # ---------------------------------------------------------------------------
+# Settings form parsing
+# ---------------------------------------------------------------------------
+
+
+def parse_settings_form(form, cfg) -> dict:
+    """Coerce the submitted HTML form into a config dict, applying clamps."""
+    return {
+        # Location / flight zone
+        "flight_lat": float_val(form.get("flight_lat"), cfg.flight_lat),
+        "flight_lng": float_val(form.get("flight_lng"), cfg.flight_lng),
+        "flight_radius": float_val(form.get("flight_radius"), cfg.flight_radius),
+        "flight_min_altitude": float_val(
+            form.get("flight_min_altitude"), cfg.flight_min_altitude
+        ),
+        "flight_max_altitude": float_val(
+            form.get("flight_max_altitude"), cfg.flight_max_altitude
+        ),
+        # Airport display
+        "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],
+        "full_airport_name": bool_val(form.get("full_airport_name")),
+        "abbreviate_name": bool_val(form.get("abbreviate_name")),
+        "journey_blank_filler": str_val(form.get("journey_blank_filler"), " ? "),
+        # Plane info row
+        "details": int_val(form.get("details"), 0),
+        # Weather
+        "weatherapi_key": str_val(form.get("weatherapi_key"), cfg.weatherapi_key),
+        "weather_mode": int_val(form.get("weather_mode"), 0),
+        "units": str_val(form.get("units"), "m"),
+        # Display
+        "theme": int_val(form.get("theme"), 0),
+        "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
+        "screen_rotate": bool_val(form.get("screen_rotate")),
+        # Brightness schedule
+        "screen_schedule_enabled": bool_val(form.get("screen_schedule_enabled")),
+        "screen_schedule_auto": bool_val(form.get("screen_schedule_auto")),
+        "screen_schedule_start": str_val(form.get("screen_schedule_start"), "22:00"),
+        "screen_schedule_end": str_val(form.get("screen_schedule_end"), "07:00"),
+        "screen_schedule_brightness": max(
+            0, min(5, int_val(form.get("screen_schedule_brightness"), 0))
+        ),
+        # Clock / date
+        "clock_24hr": bool_val(form.get("clock_24hr")),
+        "date_format": int_val(form.get("date_format"), 0),
+        # Web interface
+        "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
+        "web_port": max(1, min(65535, int_val(form.get("web_port"), cfg.web_port))),
+        # Hardware
+        "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
+        "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
+        "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
+        "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
+        # Data source
+        "data_source": (
+            "tar1090"
+            if str_val(form.get("data_source"), "fr24").lower() == "tar1090"
+            else "fr24"
+        ),
+        "tar1090_url": str_val(form.get("tar1090_url"), ""),
+        "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
+        # Satellite tracking
+        "satellite_tracking_enabled": bool_val(form.get("satellite_tracking_enabled")),
+        "satellite_norad_ids": [
+            int(n.strip())
+            for n in form.get("satellite_norad_ids", "").splitlines()
+            if n.strip().isdigit()
+        ],
+        "satellite_min_elevation": max(
+            0, min(90, int_val(form.get("satellite_min_elevation"), 20))
+        ),
+        "satellite_max_count": max(
+            1, min(10, int_val(form.get("satellite_max_count"), 5))
+        ),
+    }
+
+
+def handle_password_change(form, cfg) -> str:
+    """Return the web_password_hash to store, raising on mismatch."""
+    new_password = form.get("new_password", "").strip()
+    confirm_password = form.get("confirm_password", "").strip()
+    if new_password:
+        if new_password != confirm_password:
+            raise ValueError("New passwords do not match.")
+        print("[web] Password updated", flush=True)
+        return hash_password(new_password)
+    # Preserve existing hash
+    return cfg.web_password_hash
+
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -180,103 +269,8 @@ def settings():
             if not validate_csrf(form):
                 raise ValueError("Invalid CSRF token.")
 
-            new_data = {
-                # Location / flight zone
-                "flight_lat": float_val(form.get("flight_lat"), cfg.flight_lat),
-                "flight_lng": float_val(form.get("flight_lng"), cfg.flight_lng),
-                "flight_radius": float_val(
-                    form.get("flight_radius"), cfg.flight_radius
-                ),
-                "flight_min_altitude": float_val(
-                    form.get("flight_min_altitude"), cfg.flight_min_altitude
-                ),
-                "flight_max_altitude": float_val(
-                    form.get("flight_max_altitude"), cfg.flight_max_altitude
-                ),
-                # Airport display
-                "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],
-                "full_airport_name": bool_val(form.get("full_airport_name")),
-                "abbreviate_name": bool_val(form.get("abbreviate_name")),
-                "journey_blank_filler": str_val(
-                    form.get("journey_blank_filler"), " ? "
-                ),
-                # Plane info row
-                "details": int_val(form.get("details"), 0),
-                # Weather
-                "weatherapi_key": str_val(
-                    form.get("weatherapi_key"), cfg.weatherapi_key
-                ),
-                "weather_mode": int_val(form.get("weather_mode"), 0),
-                "units": str_val(form.get("units"), "m"),
-                # Display
-                "theme": int_val(form.get("theme"), 0),
-                "screen_brightness": max(
-                    1, min(5, int_val(form.get("screen_brightness"), 3))
-                ),
-                "screen_rotate": bool_val(form.get("screen_rotate")),
-                # Brightness schedule
-                "screen_schedule_enabled": bool_val(
-                    form.get("screen_schedule_enabled")
-                ),
-                "screen_schedule_auto": bool_val(form.get("screen_schedule_auto")),
-                "screen_schedule_start": str_val(
-                    form.get("screen_schedule_start"), "22:00"
-                ),
-                "screen_schedule_end": str_val(
-                    form.get("screen_schedule_end"), "07:00"
-                ),
-                "screen_schedule_brightness": max(
-                    0, min(5, int_val(form.get("screen_schedule_brightness"), 0))
-                ),
-                # Clock / date
-                "clock_24hr": bool_val(form.get("clock_24hr")),
-                "date_format": int_val(form.get("date_format"), 0),
-                # Web interface
-                "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
-                "web_port": max(
-                    1, min(65535, int_val(form.get("web_port"), cfg.web_port))
-                ),
-                # Hardware
-                "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
-                "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
-                "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
-                "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
-                # Data source
-                "data_source": (
-                    "tar1090"
-                    if str_val(form.get("data_source"), "fr24").lower() == "tar1090"
-                    else "fr24"
-                ),
-                "tar1090_url": str_val(form.get("tar1090_url"), ""),
-                "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
-                # Satellite tracking
-                "satellite_tracking_enabled": bool_val(
-                    form.get("satellite_tracking_enabled")
-                ),
-                "satellite_norad_ids": [
-                    int(n.strip())
-                    for n in form.get("satellite_norad_ids", "").splitlines()
-                    if n.strip().isdigit()
-                ],
-                "satellite_min_elevation": max(
-                    0, min(90, int_val(form.get("satellite_min_elevation"), 20))
-                ),
-                "satellite_max_count": max(
-                    1, min(10, int_val(form.get("satellite_max_count"), 5))
-                ),
-            }
-
-            # Password change - only update if a new password was supplied
-            new_password = form.get("new_password", "").strip()
-            confirm_password = form.get("confirm_password", "").strip()
-            if new_password:
-                if new_password != confirm_password:
-                    raise ValueError("New passwords do not match.")
-                new_data["web_password_hash"] = hash_password(new_password)
-                print("[web] Password updated", flush=True)
-            else:
-                # Preserve existing hash
-                new_data["web_password_hash"] = cfg.web_password_hash
+            new_data = parse_settings_form(form, cfg)
+            new_data["web_password_hash"] = handle_password_change(form, cfg)
 
             print(f"[web] Parsed settings: {new_data}", flush=True)
 
