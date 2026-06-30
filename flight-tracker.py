@@ -19,13 +19,15 @@ def _local_ip() -> str:
         return "127.0.0.1"
 
 
-def _render_splash(matrix, canvas, Image, url=None, qrcode=None, ERROR_CORRECT_L=None):
+def _render_splash(matrix, canvas, Image, graphics, loading_font,
+                   url=None, qrcode=None, ERROR_CORRECT_L=None):
     """
     Render the splash BMP to canvas and swap it onto the display.
 
     Called twice during startup:
-      - Without url: shows the splash image only (loading state).
-      - With url:    re-renders the splash and overlays the QR code on top.
+      - Without url: shows the splash image + "loading..." text (waiting state).
+      - With url:    re-renders the splash and overlays the QR code, which
+                     naturally overwrites the loading text region.
 
     Re-rendering the splash on the second call avoids having to keep a copy
     of the bitmap pixels in memory between the two phases.
@@ -41,6 +43,7 @@ def _render_splash(matrix, canvas, Image, url=None, qrcode=None, ERROR_CORRECT_L
             canvas.SetPixel(x, y, pixels[i], pixels[i + 1], pixels[i + 2])
 
     if url is not None and qrcode is not None:
+        # QR code overwrites the loading text — no explicit erase needed.
         qr = qrcode.QRCode(
             version=1,
             error_correction=ERROR_CORRECT_L,
@@ -55,6 +58,10 @@ def _render_splash(matrix, canvas, Image, url=None, qrcode=None, ERROR_CORRECT_L
                 if 0 <= px < 64 and 0 <= py < 32:
                     v = 0 if cell else 255
                     canvas.SetPixel(px, py, v, v, v)
+    else:
+        # Loading state: dim white "loading..." at top-left while Flask starts.
+        dim = graphics.Color(180, 180, 180)
+        graphics.DrawText(canvas, loading_font, 1, 6, dim, "loading...")
 
     matrix.SwapOnVSync(canvas)
 
@@ -123,8 +130,13 @@ if __name__ == "__main__":
     # -- Phase 1: Minimal imports for the splash screen -----------------------
     # Only rgbmatrix + PIL + qrcode are needed here.  Imported before the
     # background threads start to avoid GIL contention with heavy imports.
-    from rgbmatrix import RGBMatrix, RGBMatrixOptions
+    from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
     from PIL import Image
+
+    loading_font = graphics.Font()
+    loading_font.LoadFont(
+        os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf")
+    )
 
     try:
         import qrcode
@@ -158,7 +170,7 @@ if __name__ == "__main__":
     canvas.Clear()
 
     # -- Phase 2: Show splash (loading state, no QR) --------------------------
-    _render_splash(matrix, canvas, Image)
+    _render_splash(matrix, canvas, Image, graphics, loading_font)
 
     result = {}
 
@@ -191,7 +203,8 @@ if __name__ == "__main__":
         # always has a full 8 seconds to scan the code.
         flask_ready.wait()
         if "flask_error" not in result:
-            _render_splash(matrix, canvas, Image, url, qrcode, ERROR_CORRECT_L)
+            _render_splash(matrix, canvas, Image, graphics, loading_font,
+                           url, qrcode, ERROR_CORRECT_L)
 
         cfg_existed = CONFIG_PATH.exists()
         deadline = time.time() + 8
