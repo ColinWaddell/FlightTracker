@@ -4,6 +4,7 @@ _crap/
 .vscode/
 config.py
 config.json
+tle_cache.json
 
 
 # Byte-compiled / optimized / DLL files

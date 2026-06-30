@@ -1,9 +1,11 @@
 [Unit]
 Description=Flight Tracker
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+ExecStartPre=/bin/sleep 20
 ExecStart=/home/pi/FlightTracker/env/bin/python /home/pi/FlightTracker/flight-tracker.py
 WorkingDirectory=/home/pi/FlightTracker
 StandardOutput=append:/home/pi/plane.log
@@ -11,6 +13,9 @@ StandardError=append:/home/pi/plane.log
 Restart=on-failure
 User=pi
 Environment=PYTHONUNBUFFERED=1
+Nice=-10
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
 
 [Install]
 WantedBy=multi-user.target
