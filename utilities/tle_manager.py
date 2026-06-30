@@ -31,18 +31,14 @@ TLE_CACHE_TTL = 86400  # 24 hours
 TLE_CACHE_PATH = CONFIG_PATH.parent / "tle_cache.json"
 HTTP_TIMEOUT = 15
 
-# GP name-search API — the GP flag requests orbital elements rather than
-# the satellite catalog metadata returned by SATCAT queries.
-_GP_NAME_URL = (
-    "https://celestrak.org/SATCAT/search.php"
-    "?GP&NAME={name}&FORMAT=TLE"
-)
+# CelesTrak GP.php — current query endpoint for General Perturbations data.
+# Replaced the legacy /SATCAT/*.txt static files and /SATCAT/search.php?GP& paths.
+_GP_NAME_URL = "https://celestrak.org/GP.php?NAME={name}&FORMAT=TLE"
 
-# Pre-built group files — plain 3-line TLE text, one per satellite.
-# Searched when the name-query returns nothing.
+# Pre-built group queries — searched when the name query returns nothing.
 _GROUP_URLS = [
-    "https://celestrak.org/SATCAT/stations.txt",   # space stations (ISS, CSS, …)
-    "https://celestrak.org/SATCAT/visual.txt",      # visually observable (~1 000 objects)
+    "https://celestrak.org/GP.php?GROUP=stations&FORMAT=TLE",   # space stations (ISS, CSS, …)
+    "https://celestrak.org/GP.php?GROUP=visual&FORMAT=TLE",     # visually observable (~1 000 objects)
 ]
 
 # ---------------------------------------------------------------------------
@@ -92,14 +88,31 @@ def _name_matches(tle_name: str, query: str) -> bool:
 
 
 def _fetch_by_gp_api(name: str) -> tuple[str, str, str] | None:
-    """Try CelesTrak's GP name-search endpoint."""
-    url = _GP_NAME_URL.format(name=urllib.parse.quote(name.strip()))
-    body = _request(url)
-    if not body:
-        return None
-    tles = _parse_tles(body)
-    if tles:
-        return tles[0]
+    """
+    Try CelesTrak's GP name-search endpoint.
+
+    Attempts two encodings:
+      1. Full name with parens URL-encoded   — e.g. ISS%20%28ZARYA%29
+      2. Full name with parens un-encoded    — e.g. ISS%20(ZARYA)
+    Returns the first matching result.
+    """
+    stripped = name.strip()
+    candidates = [
+        _GP_NAME_URL.format(name=urllib.parse.quote(stripped)),           # encode (
+        _GP_NAME_URL.format(name=urllib.parse.quote(stripped, safe="()")),# keep (
+    ]
+    seen: set[str] = set()
+    for url in candidates:
+        if url in seen:
+            continue
+        seen.add(url)
+        body = _request(url)
+        if not body:
+            continue
+        tles = _parse_tles(body)
+        if tles:
+            return tles[0]
+
     print(f"[tle] GP API returned no TLE for '{name}'")
     return None
 
