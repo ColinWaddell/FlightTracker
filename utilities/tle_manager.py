@@ -1,9 +1,13 @@
 """
-TLEManager — fetch and cache TLE data via the satellitetle package.
+TLEManager — fetch and cache TLE data from CelesTrak.
 
 Resolves NORAD catalog IDs (integers) to (name, line1, line2) tuples using
-CelesTrak as the upstream source.  Results are cached to disk and refreshed
-automatically after TLE_CACHE_TTL seconds.  Thread-safe.
+CelesTrak's GP endpoint:
+
+    https://celestrak.org/NORAD/elements/gp.php?CATNR={id}&FORMAT=TLE
+
+Results are cached to disk and refreshed automatically after TLE_CACHE_TTL
+seconds.  Thread-safe.
 """
 
 from __future__ import annotations
@@ -11,9 +15,8 @@ from __future__ import annotations
 import json
 import threading
 import time
+import urllib.request
 from pathlib import Path
-
-from satellite_tle import fetch_tle_from_celestrak
 
 from setup.configuration import Config, CONFIG_PATH
 
@@ -23,10 +26,40 @@ from setup.configuration import Config, CONFIG_PATH
 
 TLE_CACHE_TTL = 86400  # 24 hours
 TLE_CACHE_PATH = CONFIG_PATH.parent / "tle_cache.json"
+HTTP_TIMEOUT = 15
+
+_GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
 
 
 # ---------------------------------------------------------------------------
-# Disk cache helpers
+# Fetch helpers
+# ---------------------------------------------------------------------------
+
+
+def _fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
+    """Fetch a single TLE by NORAD catalog number. Returns (name, l1, l2) or None."""
+    url = _GP_URL.format(catnr=norad_id)
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "FlightTracker/1.0 (raspberry-pi)"},
+        )
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+    except Exception as exc:
+        print(f"[tle] HTTP error for NORAD {norad_id}: {exc}")
+        return None
+
+    lines = [l.rstrip() for l in body.splitlines() if l.strip()]
+    if len(lines) >= 3 and lines[1].startswith("1 ") and lines[2].startswith("2 "):
+        return lines[0].strip(), lines[1], lines[2]
+
+    print(f"[tle] no valid TLE in response for NORAD {norad_id}")
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Disk cache
 # ---------------------------------------------------------------------------
 
 
@@ -86,7 +119,7 @@ class TLEManager:
         self._ready.clear()
 
     def _run(self) -> None:
-        # Serve from disk cache immediately if fresh enough
+        # Serve from disk cache immediately if still fresh
         cached = _load_cache()
         if cached and (time.time() - cached["timestamp"]) < TLE_CACHE_TTL:
             with self._lock:
@@ -102,23 +135,17 @@ class TLEManager:
             time.sleep(300)  # check every 5 minutes
 
     def _do_fetch(self) -> None:
-        cfg = Config.instance()
-        norad_ids = cfg.satellite_norad_ids
+        norad_ids = Config.instance().satellite_norad_ids
         if not norad_ids:
             self._ready.set()
             return
 
         results: list[tuple[str, str, str]] = []
         for norad_id in norad_ids:
-            try:
-                tle = fetch_tle_from_celestrak(norad_id)
-                if tle:
-                    results.append(tuple(tle))
-                    print(f"[tle] fetched TLE for NORAD {norad_id}: {tle[0]}")
-                else:
-                    print(f"[tle] no TLE returned for NORAD {norad_id}")
-            except Exception as exc:
-                print(f"[tle] fetch failed for NORAD {norad_id}: {exc}")
+            tle = _fetch_tle(norad_id)
+            if tle:
+                print(f"[tle] fetched {tle[0]} (NORAD {norad_id})")
+                results.append(tle)
 
         if results:
             _save_cache(results)
