@@ -245,6 +245,11 @@ class FlightScene:
         self._plane_position: int = screen.WIDTH
         self._last_details_mode: int | None = None
 
+        # Callsign bar cache — only redraw when these change
+        self._last_callsign_drawn: str | None = None
+        self._last_index_drawn: int | None = None
+        self._last_flight_count_drawn: int | None = None
+
     # ------------------------------------------------------------------
     # Data ownership
     # ------------------------------------------------------------------
@@ -323,6 +328,9 @@ class FlightScene:
         self._origin_name = ""
         self._dest_name = ""
         self._plane_position = screen.WIDTH
+        self._last_callsign_drawn = None
+        self._last_index_drawn = None
+        self._last_flight_count_drawn = None
 
     def draw(self) -> None:
         self._frame += 1
@@ -335,6 +343,21 @@ class FlightScene:
     # ------------------------------------------------------------------
 
     def _draw_callsign(self) -> None:
+        callsign = self._flights[self._index].get("callsign", "")
+        flight_count = len(self._flights)
+        index = self._index
+
+        if (
+            callsign == self._last_callsign_drawn
+            and index == self._last_index_drawn
+            and flight_count == self._last_flight_count_drawn
+        ):
+            return
+
+        self._last_callsign_drawn = callsign
+        self._last_index_drawn = index
+        self._last_flight_count_drawn = flight_count
+
         self.draw_square(
             0,
             BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
@@ -342,8 +365,6 @@ class FlightScene:
             BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
             TC(THEME_BG),
         )
-
-        callsign = self._flights[self._index].get("callsign", "")
         flight_no_text_length = 0
         if callsign and callsign != "N/A":
             for ch in callsign:
@@ -361,7 +382,7 @@ class FlightScene:
                 )
                 flight_no_text_length += ch_length
 
-        if len(self._flights) > 1:
+        if flight_count > 1:
             self.draw_square(
                 DATA_INDEX_POSITION[0] - BAR_PADDING,
                 BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
@@ -383,7 +404,7 @@ class FlightScene:
                 DATA_INDEX_POSITION[0],
                 DATA_INDEX_POSITION[1],
                 TC(THEME_DATA_INDEX),
-                f"{self._index + 1}/{len(self._flights)}",
+                f"{index + 1}/{flight_count}",
             )
         else:
             graphics.DrawLine(
