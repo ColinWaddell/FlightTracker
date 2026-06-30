@@ -23,7 +23,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 
-def _local_ip() -> str:
+def local_ip() -> str:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
@@ -32,7 +32,7 @@ def _local_ip() -> str:
         return "127.0.0.1"
 
 
-def _patch_restart():
+def patch_restart():
     """
     Replace the real os.execv restart with a harmless print + config reload.
 
@@ -42,7 +42,7 @@ def _patch_restart():
     """
     import web.app as web_app
 
-    def _fake_restart_after(delay: float = 1.0):
+    def fake_restart_after(delay: float = 1.0):
         import time
         from setup.configuration import Config
 
@@ -50,16 +50,16 @@ def _patch_restart():
         Config.reload()
         print("[demo] Config reloaded (fake restart)", flush=True)
 
-    web_app._restart_after = _fake_restart_after
+    web_app.restart_after = fake_restart_after
     print("[demo] Patched restart -> config reload only", flush=True)
 
 
 def main():
-    _patch_restart()
+    patch_restart()
 
     from web.app import app, FLASK_PORT
 
-    ip = _local_ip()
+    ip = local_ip()
     url = f"http://{ip}:{FLASK_PORT}"
     print(f"\n{'='*60}")
     print(f"  FlightTracker Settings Demo")

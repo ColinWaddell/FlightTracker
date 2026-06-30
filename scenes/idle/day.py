@@ -14,32 +14,32 @@ DAY_POSITION = (2, 23)
 class DayScene(object):
     def __init__(self):
         super().__init__()
-        self._last_day = None
+        self.last_day = None
 
-    def _now_local(self):
+    def now_local(self):
         return datetime.now()
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def day(self, count):
-        if len(self._data):
-            self._last_day = None
+        if len(self.data):
+            self.last_day = None
             return
 
-        current_day = self._now_local().strftime("%A")
-        if self._last_day == current_day:
+        current_day = self.now_local().strftime("%A")
+        if self.last_day == current_day:
             return
 
-        if self._last_day is not None:
+        if self.last_day is not None:
             graphics.DrawText(
                 self.canvas,
                 DAY_FONT,
                 DAY_POSITION[0],
                 DAY_POSITION[1],
                 TC(THEME_BG),
-                self._last_day,
+                self.last_day,
             )
 
-        self._last_day = current_day
+        self.last_day = current_day
         graphics.DrawText(
             self.canvas,
             DAY_FONT,

@@ -6,10 +6,10 @@ from time import perf_counter, sleep
 # until first access so the boot screen and web interface start cheaply.
 # ---------------------------------------------------------------------------
 
-_DisplayClass = None
+DisplayClass = None
 
 
-def _build_display_class():
+def build_display_class():
     from setup.configuration import Config
     from setup import frames
     from setup.themes import theme_set
@@ -22,10 +22,10 @@ def _build_display_class():
     from scenes.flight.flight_scene import FlightScene
     from scenes.satellite.satellite_scene import SatelliteScene
 
-    _cfg = Config.instance()
-    theme_set(_cfg.theme)
+    cfg = Config.instance()
+    theme_set(cfg.theme)
 
-    if _cfg.use_tar1090:
+    if cfg.use_tar1090:
         from utilities.overhead_tar1090 import Overhead
 
         REFRESH_INTERVAL = 10
@@ -34,10 +34,10 @@ def _build_display_class():
 
         REFRESH_INTERVAL = 30
 
-    if _cfg.loading_led_enabled:
-        from scenes.loadingled import LoadingLEDIndicator as _IndicatorClass
+    if cfg.loading_led_enabled:
+        from scenes.loadingled import LoadingLEDIndicator as IndicatorClass
     else:
-        from scenes.loadingpulse import LoadingPulseIndicator as _IndicatorClass
+        from scenes.loadingpulse import LoadingPulseIndicator as IndicatorClass
 
     class Display:
         def __init__(self, matrix=None, canvas=None):
@@ -46,7 +46,7 @@ def _build_display_class():
             if matrix is not None:
                 self.matrix = matrix
                 self.canvas = canvas
-                self._from_splash = True
+                self.from_splash = True
             else:
                 options = RGBMatrixOptions()
                 options.hardware_mapping = (
@@ -71,7 +71,7 @@ def _build_display_class():
                 self.matrix = RGBMatrix(options=options)
                 self.canvas = self.matrix.CreateFrameCanvas()
                 self.canvas.Clear()
-                self._from_splash = False
+                self.from_splash = False
 
             def draw_square(x0, y0, x1, y1, colour):
                 for x in range(x0, x1):
@@ -79,23 +79,23 @@ def _build_display_class():
 
             overhead = Overhead()
 
-            self._sm = SceneManager()
-            self._sm.register(IdleScene(self.canvas, draw_square))
-            self._sm.register(
+            self.scene_manager = SceneManager()
+            self.scene_manager.register(IdleScene(self.canvas, draw_square))
+            self.scene_manager.register(
                 FlightScene(self.canvas, draw_square, overhead, REFRESH_INTERVAL)
             )
 
-            if _cfg.satellite_tracking_enabled:
-                _tle_manager = TLEManager()
-                _tle_manager.start()
-                self._sm.register(
-                    SatelliteScene(self.canvas, draw_square, _tle_manager)
+            if cfg.satellite_tracking_enabled:
+                tle_manager = TLEManager()
+                tle_manager.start()
+                self.scene_manager.register(
+                    SatelliteScene(self.canvas, draw_square, tle_manager)
                 )
 
-            self._loading = _IndicatorClass(self.canvas, overhead)
-            self._frames = frames
+            self.loading = IndicatorClass(self.canvas, overhead)
+            self.frames = frames
 
-        def _update_brightness(self):
+        def update_brightness(self):
             cfg = Config.instance()
             if cfg.is_in_brightness_schedule():
                 self.matrix.brightness = cfg.schedule_brightness_percent
@@ -105,7 +105,7 @@ def _build_display_class():
         def run(self):
             print("Press CTRL-C to stop")
 
-            if self._from_splash:
+            if self.from_splash:
                 self.canvas.Clear()
                 self.matrix.SwapOnVSync(self.canvas)
 
@@ -116,19 +116,19 @@ def _build_display_class():
                 while True:
                     start = perf_counter()
 
-                    if not (frame % int(self._frames.PER_SECOND)):
-                        self._update_brightness()
+                    if not (frame % int(self.frames.PER_SECOND)):
+                        self.update_brightness()
 
-                    self._sm.kick()
+                    self.scene_manager.kick()
 
-                    self._loading.tick(frame)
+                    self.loading.tick(frame)
 
                     self.matrix.SwapOnVSync(self.canvas)
 
                     frame += 1
 
                     elapsed = perf_counter() - start
-                    sleep_time = self._frames.PERIOD - elapsed
+                    sleep_time = self.frames.PERIOD - elapsed
                     if sleep_time < 0.001:
                         sleep_time = 0.001
                     elif sleep_time > 0.05:
@@ -143,10 +143,10 @@ def _build_display_class():
 
 
 def get_display_class():
-    global _DisplayClass
-    if _DisplayClass is None:
-        _DisplayClass = _build_display_class()
-    return _DisplayClass
+    global DisplayClass
+    if DisplayClass is None:
+        DisplayClass = build_display_class()
+    return DisplayClass
 
 
 def __getattr__(name):

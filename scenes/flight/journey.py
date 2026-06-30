@@ -33,11 +33,11 @@ from rgbmatrix import graphics
 # Bounce-scroll easing (mirrors C++ tick_to_offset)
 # ---------------------------------------------------------------------------
 
-_EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
+EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
 
 
-def _tick_to_offset(tick: int) -> int:
-    return 1 if tick >= len(_EASING_STEPS) else _EASING_STEPS[tick]
+def tick_to_offset(tick: int) -> int:
+    return 1 if tick >= len(EASING_STEPS) else EASING_STEPS[tick]
 
 
 # ---------------------------------------------------------------------------
@@ -48,20 +48,20 @@ INITIAL_TICKS = 100
 PAUSE_TICKS = 25
 
 # Y baseline for each line in FULL mode
-_FULL_LINE_Y = (7, 15)  # origin, destination (within 0-16 region)
+FULL_LINE_Y = (7, 15)  # origin, destination (within 0-16 region)
 
 # X positions for IATA mode
-_IATA_ORIGIN_X = 1
-_IATA_DESTINATION_X = 40
+IATA_ORIGIN_X = 1
+IATA_DESTINATION_X = 40
 
 # Arrow geometry for IATA mode
-_ARROW_TIP_X = 34
-_ARROW_TIP_Y = 7
-_ARROW_WIDTH = 4
-_ARROW_HEIGHT = 8
+ARROW_TIP_X = 34
+ARROW_TIP_Y = 7
+ARROW_WIDTH = 4
+ARROW_HEIGHT = 8
 
 
-def _font_text_width(font, text: str) -> int:
+def font_text_width(font, text: str) -> int:
     """Sum character widths using rgbmatrix Font.CharacterWidth."""
     return sum(font.CharacterWidth(ord(c)) for c in text)
 
@@ -71,21 +71,21 @@ def _font_text_width(font, text: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-class _BounceState(Enum):
+class BounceState(Enum):
     INITIAL = auto()
     REVEAL = auto()
     PAUSE = auto()
     RETRACT = auto()
 
 
-class _LineScroller:
+class LineScroller:
     """Manages bounce-scroll state for one text line."""
 
     def __init__(self):
         self.reset()
 
     def reset(self):
-        self.state = _BounceState.INITIAL
+        self.state = BounceState.INITIAL
         self.timer = 0
         self.position = 0  # current x offset (0 = at home, negative = scrolled left)
         self.scroll_max = 0  # how far left we need to scroll (pixels)
@@ -97,37 +97,37 @@ class _LineScroller:
         st = self.state
 
         # Movement
-        if st == _BounceState.REVEAL:
-            self.position -= _tick_to_offset(self.timer)
-        elif st == _BounceState.RETRACT:
-            self.position += _tick_to_offset(self.timer)
+        if st == BounceState.REVEAL:
+            self.position -= tick_to_offset(self.timer)
+        elif st == BounceState.RETRACT:
+            self.position += tick_to_offset(self.timer)
 
         # Transitions
-        if st == _BounceState.INITIAL:
+        if st == BounceState.INITIAL:
             if self.scroll_max > 0 and self.timer >= INITIAL_TICKS:
-                self.state = _BounceState.REVEAL
+                self.state = BounceState.REVEAL
                 self.timer = 0
             elif self.scroll_max == 0:
                 # Nothing to scroll - done immediately
                 self.loop_done = True
-        elif st == _BounceState.REVEAL:
+        elif st == BounceState.REVEAL:
             if self.position <= -self.scroll_max:
                 self.position = -self.scroll_max
-                self.state = _BounceState.PAUSE
+                self.state = BounceState.PAUSE
                 self.timer = 0
-        elif st == _BounceState.PAUSE:
+        elif st == BounceState.PAUSE:
             if self.timer >= PAUSE_TICKS:
                 if self.position <= -self.scroll_max:
-                    self.state = _BounceState.RETRACT
+                    self.state = BounceState.RETRACT
                 else:
-                    self.state = _BounceState.INITIAL
+                    self.state = BounceState.INITIAL
                 self.timer = 0
-        elif st == _BounceState.RETRACT:
+        elif st == BounceState.RETRACT:
             if self.position >= 0:
                 self.position = 0
                 self.loop_count += 1
                 self.loop_done = True
-                self.state = _BounceState.PAUSE
+                self.state = BounceState.PAUSE
                 self.timer = 0
 
         self.timer += 1
@@ -144,32 +144,32 @@ class JourneyScene(object):
 
     def __init__(self):
         super().__init__()
-        self._loc_origin = ""
-        self._loc_destination = ""
-        self._origin_name = ""
-        self._dest_name = ""
-        self._first_draw = True
-        self._mode = None  # 'iata' or 'full'
-        self._origin_scroll = _LineScroller()
-        self._dest_scroll = _LineScroller()
+        self.loc_origin = ""
+        self.loc_destination = ""
+        self.origin_name = ""
+        self.dest_name = ""
+        self.first_draw = True
+        self.mode = None  # 'iata' or 'full'
+        self.origin_scroll = LineScroller()
+        self.dest_scroll = LineScroller()
         self.loop_completed = False
-        self._last_origin = None
-        self._last_dest = None
+        self.last_origin = None
+        self.last_dest = None
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _text_width(self, font, text: str) -> int:
-        return _font_text_width(font, text)
+    def text_width(self, font, text: str) -> int:
+        return font_text_width(font, text)
 
-    def _draw_iata_mode(self):
+    def draw_iata_mode(self):
         cfg = Config.instance()
         origin = (
-            self._data[self._data_index].get("origin", "") or cfg.journey_blank_filler
+            self.data[self.data_index].get("origin", "") or cfg.journey_blank_filler
         )
         destination = (
-            self._data[self._data_index].get("destination", "")
+            self.data[self.data_index].get("destination", "")
             or cfg.journey_blank_filler
         )
         home_code = cfg.home_airport_code
@@ -182,7 +182,7 @@ class JourneyScene(object):
         graphics.DrawText(
             self.canvas,
             font,
-            _IATA_ORIGIN_X,
+            IATA_ORIGIN_X,
             12,
             TC(THEME_LOCATION_ORIGIN),
             origin,
@@ -193,21 +193,21 @@ class JourneyScene(object):
         graphics.DrawText(
             self.canvas,
             font,
-            _IATA_DESTINATION_X,
+            IATA_DESTINATION_X,
             12,
             TC(THEME_LOCATION_DESTINATION),
             destination,
         )
 
         # Filled-triangle arrow
-        ax, ay = _ARROW_TIP_X, _ARROW_TIP_Y
-        x = ax - _ARROW_WIDTH
-        y1 = ay - (_ARROW_HEIGHT // 2)
-        y2 = ay + (_ARROW_HEIGHT // 2)
+        ax, ay = ARROW_TIP_X, ARROW_TIP_Y
+        x = ax - ARROW_WIDTH
+        y1 = ay - (ARROW_HEIGHT // 2)
+        y2 = ay + (ARROW_HEIGHT // 2)
         self.canvas.SetPixel(
             ax, ay, TC(THEME_ARROW).red, TC(THEME_ARROW).green, TC(THEME_ARROW).blue
         )
-        for _ in range(_ARROW_WIDTH):
+        for _ in range(ARROW_WIDTH):
             graphics.DrawLine(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
             x += 1
             y1 += 1
@@ -215,33 +215,31 @@ class JourneyScene(object):
 
         self.loop_completed = True
 
-    def _line_text(self, iata: str, name: str, arrow: str) -> str:
+    def line_text(self, iata: str, name: str, arrow: str) -> str:
         return f"{iata}{arrow}{name}"
 
-    def _draw_full_line(self, line_idx: int, x_offset: int):
+    def draw_full_line(self, line_idx: int, x_offset: int):
         """Draw one scrolling line at the given x_offset."""
         cfg = Config.instance()
         if line_idx == 0:
-            iata = (
-                self._data[self._data_index].get("origin") or cfg.journey_blank_filler
-            )
-            name = self._origin_name
+            iata = self.data[self.data_index].get("origin") or cfg.journey_blank_filler
+            name = self.origin_name
             arrow = ">"
             colour_code = TC(THEME_LOCATION_ORIGIN)
             colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
             colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
         else:
             iata = (
-                self._data[self._data_index].get("destination")
+                self.data[self.data_index].get("destination")
                 or cfg.journey_blank_filler
             )
-            name = self._dest_name
+            name = self.dest_name
             arrow = "<"
             colour_code = TC(THEME_LOCATION_DESTINATION)
             colour_name = TC(THEME_LOCATION_DESTINATION_FULL)
             colour_arrow = TC(THEME_LOCATION_DESTINATION_ARROW)
 
-        y = _FULL_LINE_Y[line_idx]
+        y = FULL_LINE_Y[line_idx]
         x = x_offset
 
         # IATA code
@@ -255,54 +253,52 @@ class JourneyScene(object):
         # Full name
         graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_name, name)
 
-    def _undraw_full_line(self, line_idx: int, x_offset: int):
+    def undraw_full_line(self, line_idx: int, x_offset: int):
         """Overdraw with BG to erase previous position."""
         cfg = Config.instance()
         if line_idx == 0:
-            iata = (
-                self._data[self._data_index].get("origin") or cfg.journey_blank_filler
-            )
-            name = self._origin_name
+            iata = self.data[self.data_index].get("origin") or cfg.journey_blank_filler
+            name = self.origin_name
             arrow = ">"
         else:
             iata = (
-                self._data[self._data_index].get("destination")
+                self.data[self.data_index].get("destination")
                 or cfg.journey_blank_filler
             )
-            name = self._dest_name
+            name = self.dest_name
             arrow = "<"
 
-        y = _FULL_LINE_Y[line_idx]
+        y = FULL_LINE_Y[line_idx]
         full_text = f"{iata}{arrow}{name}"
         # Erase by drawing entire text in BG colour (simpler than tracking bounds)
         graphics.DrawText(
             self.canvas, fonts.small_symbols, x_offset, y, TC(THEME_BG), full_text
         )
 
-    def _setup_full_mode(self):
+    def setup_full_mode(self):
         """Compute scroll distances for both lines."""
         cfg = Config.instance()
-        origin = self._data[self._data_index].get("origin") or cfg.journey_blank_filler
+        origin = self.data[self.data_index].get("origin") or cfg.journey_blank_filler
         destination = (
-            self._data[self._data_index].get("destination") or cfg.journey_blank_filler
+            self.data[self.data_index].get("destination") or cfg.journey_blank_filler
         )
-        origin_name = self._data[self._data_index].get("origin_name") or ""
-        dest_name = self._data[self._data_index].get("destination_name") or ""
+        origin_name = self.data[self.data_index].get("origin_name") or ""
+        dest_name = self.data[self.data_index].get("destination_name") or ""
 
         if cfg.abbreviate_name:
-            origin_name = _abbreviate(origin_name)
-            dest_name = _abbreviate(dest_name)
+            origin_name = abbreviate(origin_name)
+            dest_name = abbreviate(dest_name)
 
-        self._origin_name = origin_name or "Unknown"
-        self._dest_name = dest_name or "Unknown"
+        self.origin_name = origin_name or "Unknown"
+        self.dest_name = dest_name or "Unknown"
 
         for scroller, iata, name, arrow in (
-            (self._origin_scroll, origin, self._origin_name, ">"),
-            (self._dest_scroll, destination, self._dest_name, "<"),
+            (self.origin_scroll, origin, self.origin_name, ">"),
+            (self.dest_scroll, destination, self.dest_name, "<"),
         ):
             scroller.reset()
             full_text = f"{iata}{arrow}{name}"
-            w = _font_text_width(fonts.small, full_text)
+            w = font_text_width(fonts.small, full_text)
             overflow = w - screen.WIDTH
             scroller.scroll_max = max(0, overflow)
 
@@ -313,72 +309,70 @@ class JourneyScene(object):
     @Animator.KeyFrame.add(0)
     def journey_reset(self):
         """Called on every scene reset (frame == 0 in the Animator loop)."""
-        self._first_draw = True
-        self._mode = None
-        self._origin_scroll.reset()
-        self._dest_scroll.reset()
+        self.first_draw = True
+        self.mode = None
+        self.origin_scroll.reset()
+        self.dest_scroll.reset()
         self.loop_completed = False
-        self._last_origin = None
-        self._last_dest = None
+        self.last_origin = None
+        self.last_dest = None
 
     @Animator.KeyFrame.add(1)
     def journey(self, count):
-        if len(self._data) == 0:
+        if len(self.data) == 0:
             return
 
         cfg = Config.instance()
-        origin = self._data[self._data_index].get("origin")
-        destination = self._data[self._data_index].get("destination")
+        origin = self.data[self.data_index].get("origin")
+        destination = self.data[self.data_index].get("destination")
 
         # Detect flight change
-        if origin != self._last_origin or destination != self._last_dest:
-            self._first_draw = True
-            self._mode = None
-            self._origin_scroll.reset()
-            self._dest_scroll.reset()
+        if origin != self.last_origin or destination != self.last_dest:
+            self.first_draw = True
+            self.mode = None
+            self.origin_scroll.reset()
+            self.dest_scroll.reset()
             self.loop_completed = False
-            self._last_origin = origin
-            self._last_dest = destination
+            self.last_origin = origin
+            self.last_dest = destination
 
         target_mode = "full" if cfg.full_airport_name else "iata"
 
         if target_mode == "iata":
             if not self.loop_completed:
-                self._draw_iata_mode()
+                self.draw_iata_mode()
             return
 
         # ----- FULL mode -----
-        if self._mode != "full" or self._first_draw:
-            self._mode = "full"
-            self._setup_full_mode()
+        if self.mode != "full" or self.first_draw:
+            self.mode = "full"
+            self.setup_full_mode()
             # Clear location area on first draw
             self.draw_square(0, 0, screen.WIDTH - 1, 16, TC(THEME_BG))
-            self._first_draw = False
+            self.first_draw = False
 
-        for line_idx, scroller in enumerate((self._origin_scroll, self._dest_scroll)):
+        for line_idx, scroller in enumerate((self.origin_scroll, self.dest_scroll)):
             prev_x = scroller.position
             new_x = scroller.tick()
 
             if (
                 prev_x != new_x
-                or scroller.state == _BounceState.REVEAL
-                or scroller.state == _BounceState.RETRACT
+                or scroller.state == BounceState.REVEAL
+                or scroller.state == BounceState.RETRACT
             ):
-                self._undraw_full_line(line_idx, prev_x)
-            self._draw_full_line(line_idx, new_x)
+                self.undraw_full_line(line_idx, prev_x)
+            self.draw_full_line(line_idx, new_x)
 
         # Sync timing between the two scrollers when both are active
-        if self._origin_scroll.scroll_max > 0 and self._dest_scroll.scroll_max > 0:
-            if self._origin_scroll.state != self._dest_scroll.state:
+        if self.origin_scroll.scroll_max > 0 and self.dest_scroll.scroll_max > 0:
+            if self.origin_scroll.state != self.dest_scroll.state:
                 # Keep them in lock-step by resetting the slower one's timer
-                self._origin_scroll.timer = 0
-                self._dest_scroll.timer = 0
+                self.origin_scroll.timer = 0
+                self.dest_scroll.timer = 0
 
         # Mark completed when both have done at least two loops (or have nothing to scroll)
-        origin_done = (
-            self._origin_scroll.loop_done or self._origin_scroll.scroll_max == 0
-        )
-        dest_done = self._dest_scroll.loop_done or self._dest_scroll.scroll_max == 0
+        origin_done = self.origin_scroll.loop_done or self.origin_scroll.scroll_max == 0
+        dest_done = self.dest_scroll.loop_done or self.dest_scroll.scroll_max == 0
         if origin_done and dest_done:
             self.loop_completed = True
 
@@ -387,7 +381,7 @@ class JourneyScene(object):
 # Optional name abbreviation helper
 # ---------------------------------------------------------------------------
 
-_ABBREVIATIONS = {
+ABBREVIATIONS = {
     "International": "Intl",
     "international": "Intl",
     "Airport": "",
@@ -399,8 +393,8 @@ _ABBREVIATIONS = {
 }
 
 
-def _abbreviate(name: str) -> str:
-    for long, short in _ABBREVIATIONS.items():
+def abbreviate(name: str) -> str:
+    for long, short in ABBREVIATIONS.items():
         name = name.replace(long, short)
     # Collapse multiple spaces
     return " ".join(name.split())

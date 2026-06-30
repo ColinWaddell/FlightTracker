@@ -57,7 +57,7 @@ THEME_WEATHER_35C = "WEATHER_35C"
 # Theme definitions
 # ---------------------------------------------------------------------------
 
-_THEME_DEFAULT = {
+THEME_DEFAULT = {
     THEME_BG: colours.BLACK,
     THEME_TEXT: colours.WHITE,
     THEME_PLANE: colours.PURPLE,
@@ -87,7 +87,7 @@ _THEME_DEFAULT = {
     THEME_WEATHER_35C: colours.SCARLET_RED,
 }
 
-_THEME_MONOCHROME = {
+THEME_MONOCHROME = {
     THEME_BG: colours.BLACK,
     THEME_TEXT: colours.WHITE,
     THEME_PLANE: colours.WHITE_SMOKE,
@@ -117,7 +117,7 @@ _THEME_MONOCHROME = {
     THEME_WEATHER_35C: colours.WHITE_SMOKE,
 }
 
-_THEME_PASTEL = {
+THEME_PASTEL = {
     THEME_BG: colours.BLACK,
     THEME_TEXT: colours.LAVENDER_BLUSH,
     THEME_PLANE: colours.HOT_PINK,
@@ -147,37 +147,37 @@ _THEME_PASTEL = {
     THEME_WEATHER_35C: colours.HOT_PINK,
 }
 
-_THEMES = [_THEME_DEFAULT, _THEME_MONOCHROME, _THEME_PASTEL]
+THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL]
 THEME_NAMES = ["Default", "Monochrome", "Pastel"]
 
 # ---------------------------------------------------------------------------
 # Active theme state
 # ---------------------------------------------------------------------------
 
-_current_theme = _THEME_DEFAULT
-_current_theme_id = 0
+current_theme = THEME_DEFAULT
+current_theme_id = 0
 
 
 def theme_set(theme_id: int):
-    global _current_theme, _current_theme_id
-    if theme_id < 0 or theme_id >= len(_THEMES):
+    global current_theme, current_theme_id
+    if theme_id < 0 or theme_id >= len(THEMES):
         theme_id = 0
-    _current_theme = _THEMES[theme_id]
-    _current_theme_id = theme_id
+    current_theme = THEMES[theme_id]
+    current_theme_id = theme_id
 
 
 def theme_get() -> int:
-    return _current_theme_id
+    return current_theme_id
 
 
 def theme_colour(key: str):
     """Return the active theme's colour for the given key.
     Falls back to WHITE if the key is not found."""
-    return _current_theme.get(key, colours.WHITE)
+    return current_theme.get(key, colours.WHITE)
 
 
 def theme_count() -> int:
-    return len(_THEMES)
+    return len(THEMES)
 
 
 # Convenience shorthand - matches the TC() macro in C++

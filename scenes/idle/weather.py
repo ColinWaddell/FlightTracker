@@ -22,7 +22,7 @@ from setup.themes import (
 from setup.configuration import Config
 
 # WeatherAPI.com endpoint - 2-day forecast, no AQI/alerts
-_WEATHERAPI_URL = (
+WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
     "?key={key}&q={lat},{lng}&days=2&aqi=no&alerts=no"
 )
@@ -30,7 +30,7 @@ _WEATHERAPI_URL = (
 WEATHER_RETRIES = 3
 
 # Temperature -> theme key lookup (thresholds in C)
-_TEMPERATURE_THRESHOLDS = [
+TEMPERATURE_THRESHOLDS = [
     (0, THEME_WEATHER_00C),
     (1, THEME_WEATHER_01C),
     (10, THEME_WEATHER_10C),
@@ -66,10 +66,10 @@ class WeatherError(Exception):
 
 
 @lru_cache(maxsize=4)
-def _fetch_weatherapi(lat: float, lng: float, key: str, ttl_hash: int):
+def fetch_weatherapi(lat: float, lng: float, key: str, ttl_hash: int):
     """Fetch and return the raw weatherapi.com response dict."""
     del ttl_hash  # only used as a cache-busting key
-    url = _WEATHERAPI_URL.format(key=key, lat=lat, lng=lng)
+    url = WEATHERAPI_URL.format(key=key, lat=lat, lng=lng)
     for _ in range(WEATHER_RETRIES):
         try:
             with urllib.request.urlopen(urllib.request.Request(url), timeout=5) as resp:
@@ -79,11 +79,11 @@ def _fetch_weatherapi(lat: float, lng: float, key: str, ttl_hash: int):
     raise WeatherError("weatherapi.com request failed after retries")
 
 
-def _ttl_hash(seconds: int = 300) -> int:
+def ttl_hash(seconds: int = 300) -> int:
     return round(time.time() / seconds)
 
 
-def _parse_weather(raw: dict) -> dict:
+def parse_weather(raw: dict) -> dict:
     """
     Returns:
         {
@@ -105,15 +105,15 @@ def _parse_weather(raw: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _temperature_to_colour(temp_c: float) -> graphics.Color:
+def temperature_to_colour(temp_c: float) -> graphics.Color:
     """Map a temperature in C to an interpolated theme colour."""
-    lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[0]
-    hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[1]
+    lo_temp, lo_key = TEMPERATURE_THRESHOLDS[0]
+    hi_temp, hi_key = TEMPERATURE_THRESHOLDS[1]
 
-    for i in range(1, len(_TEMPERATURE_THRESHOLDS) - 1):
-        if temp_c > _TEMPERATURE_THRESHOLDS[i][0]:
-            lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[i]
-            hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[i + 1]
+    for i in range(1, len(TEMPERATURE_THRESHOLDS) - 1):
+        if temp_c > TEMPERATURE_THRESHOLDS[i][0]:
+            lo_temp, lo_key = TEMPERATURE_THRESHOLDS[i]
+            hi_temp, hi_key = TEMPERATURE_THRESHOLDS[i + 1]
 
     c_lo = TC(lo_key)
     c_hi = TC(hi_key)
@@ -140,40 +140,40 @@ def _temperature_to_colour(temp_c: float) -> graphics.Color:
 class WeatherScene(object):
     def __init__(self):
         super().__init__()
-        self._weather_cache = None  # parsed weather dict
-        self._last_temp_c = None
-        self._last_temp_str = None
-        self._last_rain_data = None  # list of dicts rendered last frame
+        self.weather_cache = None  # parsed weather dict
+        self.last_temp_c = None
+        self.last_temp_str = None
+        self.last_rain_data = None  # list of dicts rendered last frame
         self.current_weather = None  # parsed weather dict (refreshed each cycle)
 
     # -- Internal helpers --------------------------------------------------
 
-    def _cfg(self):
+    def get_cfg(self):
         return Config.instance()
 
-    def _fetch(self):
+    def fetch_weather(self):
         """Fetch current weather from weatherapi.com. Returns parsed dict or None."""
-        cfg = self._cfg()
+        cfg = self.get_cfg()
         if not cfg.weatherapi_key:
             return None
         try:
-            raw = _fetch_weatherapi(
+            raw = fetch_weatherapi(
                 cfg.flight_lat,
                 cfg.flight_lng,
                 cfg.weatherapi_key,
-                _ttl_hash(WEATHER_REFRESH_SECONDS),
+                ttl_hash(WEATHER_REFRESH_SECONDS),
             )
-            return _parse_weather(raw)
+            return parse_weather(raw)
         except WeatherError:
-            _fetch_weatherapi.cache_clear()
+            fetch_weatherapi.cache_clear()
             return None
 
-    def _current_temp_c(self) -> float | None:
+    def current_temp_c(self) -> float | None:
         if self.current_weather is None:
             return None
         return self.current_weather["temp_c"]
 
-    def _rainfall_data(self):
+    def rainfall_data(self):
         """
         Return 24 hourly dicts starting from the current hour:
             {"precip_mm": float, "temp_c": float, "hour": int}
@@ -224,7 +224,7 @@ class WeatherScene(object):
             colour = (
                 graph_colour
                 if graph_colour is not None
-                else _temperature_to_colour(data["temp_c"])
+                else temperature_to_colour(data["temp_c"])
             )
             self.draw_square(x1, y1, x2, y2, colour)
 
@@ -243,64 +243,64 @@ class WeatherScene(object):
     def weather_update(self, count):
         """Refresh weather data on the configured interval."""
         if not (count % WEATHER_REFRESH_SECONDS):
-            self.current_weather = self._fetch()
+            self.current_weather = self.fetch_weather()
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def rainfall(self, count):
-        cfg = self._cfg()
+        cfg = self.get_cfg()
         if cfg.weather_mode < 2:
             # Clear graph if it was previously drawn
-            if self._last_rain_data is not None:
-                self.draw_rainfall_and_temperature(self._last_rain_data, TC(THEME_BG))
-                self._last_rain_data = None
+            if self.last_rain_data is not None:
+                self.draw_rainfall_and_temperature(self.last_rain_data, TC(THEME_BG))
+                self.last_rain_data = None
             return
 
-        if len(self._data):
-            self._last_rain_data = None
+        if len(self.data):
+            self.last_rain_data = None
             return
 
-        rain_data = self._rainfall_data()
+        rain_data = self.rainfall_data()
 
         # Erase stale graph when data changes
-        if self._last_rain_data is not None and self._last_rain_data != rain_data:
-            self.draw_rainfall_and_temperature(self._last_rain_data, TC(THEME_BG))
+        if self.last_rain_data is not None and self.last_rain_data != rain_data:
+            self.draw_rainfall_and_temperature(self.last_rain_data, TC(THEME_BG))
 
         if rain_data:
             flash_enabled = RAINFALL_OVERSPILL_FLASH_ENABLED and bool(count % 2)
             self.draw_rainfall_and_temperature(rain_data, flash_enabled=flash_enabled)
-            self._last_rain_data = list(rain_data)
+            self.last_rain_data = list(rain_data)
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def temperature(self, count):
-        cfg = self._cfg()
+        cfg = self.get_cfg()
         if cfg.weather_mode < 1:
             # Clear temperature if it was previously drawn
-            if self._last_temp_str is not None:
+            if self.last_temp_str is not None:
                 graphics.DrawText(
                     self.canvas,
                     TEMPERATURE_FONT,
                     TEMPERATURE_POSITION[0],
                     TEMPERATURE_POSITION[1],
                     TC(THEME_BG),
-                    self._last_temp_str,
+                    self.last_temp_str,
                 )
-                self._last_temp_str = None
+                self.last_temp_str = None
             return
 
-        if len(self._data):
+        if len(self.data):
             return
 
-        temp_c = self._current_temp_c()
+        temp_c = self.current_temp_c()
 
         # Erase old value
-        if self._last_temp_str is not None:
+        if self.last_temp_str is not None:
             graphics.DrawText(
                 self.canvas,
                 TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0],
                 TEMPERATURE_POSITION[1],
                 TC(THEME_BG),
-                self._last_temp_str,
+                self.last_temp_str,
             )
 
         if temp_c is not None:
@@ -317,8 +317,8 @@ class WeatherScene(object):
                 TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0],
                 TEMPERATURE_POSITION[1],
-                _temperature_to_colour(temp_c),  # colour always based on C
+                temperature_to_colour(temp_c),  # colour always based on C
                 temp_str,
             )
-            self._last_temp_c = temp_c
-            self._last_temp_str = temp_str
+            self.last_temp_c = temp_c
+            self.last_temp_str = temp_str

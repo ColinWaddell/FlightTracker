@@ -16,14 +16,14 @@ class Animator(object):
     def __init__(self):
         self.keyframes = []
         self.frame = 0
-        self._delay = DELAY_DEFAULT
-        self._reset_scene = True
+        self.delay_value = DELAY_DEFAULT
+        self.reset_scene_flag = True
 
-        self._register_keyframes()
+        self.register_keyframes()
 
         super().__init__()
 
-    def _register_keyframes(self):
+    def register_keyframes(self):
         # Some introspection to setup keyframes
         for methodname in dir(self):
             method = getattr(self, methodname)
@@ -59,11 +59,11 @@ class Animator(object):
                     else:
                         keyframe.properties["count"] += 1
 
-            self._reset_scene = False
+            self.reset_scene_flag = False
             self.frame += 1
 
             elapsed = perf_counter() - start_time
-            target = self._delay
+            target = self.delay_value
             sleep_time = target - elapsed
             if sleep_time < 0.001:
                 sleep_time = 0.001
@@ -73,11 +73,11 @@ class Animator(object):
 
     @property
     def delay(self):
-        return self._delay
+        return self.delay_value
 
     @delay.setter
     def delay(self, value):
-        self._delay = value
+        self.delay_value = value
 
 
 if __name__ == "__main__":

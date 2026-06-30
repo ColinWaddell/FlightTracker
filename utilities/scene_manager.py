@@ -34,24 +34,24 @@ class SceneManager:
     """
 
     def __init__(self):
-        self._scenes: list = []
-        self._current = None
+        self.scenes: list = []
+        self.current_scene = None
 
     def register(self, scene) -> None:
         """Register a scene. Kept sorted lowest→highest priority so index 0
         is the fallback, matching the C++ array layout."""
-        self._scenes.append(scene)
-        self._scenes.sort(key=lambda s: s.priority)
+        self.scenes.append(scene)
+        self.scenes.sort(key=lambda s: s.priority)
 
     def kick(self) -> None:
-        if not self._scenes:
+        if not self.scenes:
             return
 
-        for scene in self._scenes:
+        for scene in self.scenes:
             scene.poll()
 
-        fallback = self._scenes[0]
-        non_fallback = self._scenes[1:]
+        fallback = self.scenes[0]
+        non_fallback = self.scenes[1:]
 
         highest_with_data = None
         highest_active = None
@@ -69,14 +69,14 @@ class SceneManager:
             highest_active is None
             or highest_with_data.priority > highest_active.priority
         ):
-            if highest_with_data is not self._current:
+            if highest_with_data is not self.current_scene:
                 highest_with_data.on_enter()
-                self._current = highest_with_data
+                self.current_scene = highest_with_data
         elif highest_active:
-            self._current = highest_active
+            self.current_scene = highest_active
         else:
-            if self._current is not fallback:
+            if self.current_scene is not fallback:
                 fallback.on_enter()
-                self._current = fallback
+                self.current_scene = fallback
 
-        self._current.draw()
+        self.current_scene.draw()

@@ -23,7 +23,7 @@ class FlightDetailsScene(object):
 
     @Animator.KeyFrame.add(0)
     def flight_details(self):
-        if len(self._data) == 0:
+        if len(self.data) == 0:
             return
 
         # Clear the whole callsign/bar area
@@ -37,7 +37,7 @@ class FlightDetailsScene(object):
 
         # Draw flight number character by character (numeric / alpha colour split)
         flight_no_text_length = 0
-        callsign = self._data[self._data_index].get("callsign", "")
+        callsign = self.data[self.data_index].get("callsign", "")
         if callsign and callsign != "N/A":
             for ch in callsign:
                 ch_length = graphics.DrawText(
@@ -55,7 +55,7 @@ class FlightDetailsScene(object):
                 flight_no_text_length += ch_length
 
         # Dividing bar + optional N/M index
-        if len(self._data) > 1:
+        if len(self.data) > 1:
             # Clear N/M area first
             self.draw_square(
                 DATA_INDEX_POSITION[0] - BAR_PADDING,
@@ -80,7 +80,7 @@ class FlightDetailsScene(object):
                 DATA_INDEX_POSITION[0],
                 DATA_INDEX_POSITION[1],
                 TC(THEME_DATA_INDEX),
-                f"{self._data_index + 1}/{len(self._data)}",
+                f"{self.data_index + 1}/{len(self.data)}",
             )
         else:
             graphics.DrawLine(

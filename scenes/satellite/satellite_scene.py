@@ -46,7 +46,7 @@ LINE4_Y = 32  # altitude value + unit
 class SatelliteScene:
     """
     Priority-2 scene.  Shows overhead satellite passes on an Az-El polar plot
-    with cycling name and telemetry in the right panel.
+    with cycling name and telemetry in the left panel.
     """
 
     priority = PRIORITY
@@ -54,29 +54,29 @@ class SatelliteScene:
     def __init__(self, canvas, draw_square, tle_manager):
         self.canvas = canvas
         self.draw_square = draw_square
-        self._tle_manager = tle_manager
+        self.tle_manager = tle_manager
 
-        self._frame: int = 0
-        self._pass_windows: list[passes_mod.PassWindow] = []
-        self._windows_computed_at: float = 0.0
+        self.frame: int = 0
+        self.pass_windows: list[passes_mod.PassWindow] = []
+        self.windows_computed_at: float = 0.0
 
         # Which satellite's telemetry is currently shown in the right panel
-        self._cycle_index: int = 0
-        self._last_cycle_second: float = 0.0
+        self.cycle_index: int = 0
+        self.last_cycle_second: float = 0.0
 
         # Track drawn positions so we can update only when the pixel changes.
         # name → (px, py, tle_index)
-        self._last_positions: dict[str, tuple[int, int, int]] = {}
+        self.last_positions: dict[str, tuple[int, int, int]] = {}
 
         # Blink state for the position dot (toggles every 0.5 s)
-        self._blink_on: bool = True
-        self._last_blink_on: bool = True
+        self.blink_on: bool = True
+        self.last_blink_on: bool = True
 
         # Stash previous text draws so we can erase only what changed
-        self._last_text: dict[str, tuple[str, int, int, graphics.Color]] = {}
+        self.last_text: dict[str, tuple[str, int, int, graphics.Color]] = {}
 
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
-        self._ring_drawn: bool = False
+        self.ring_drawn: bool = False
 
     # ------------------------------------------------------------------
     # Scene protocol
@@ -91,16 +91,16 @@ class SatelliteScene:
         # or are older than 1 hour (to catch new passes that overlap
         # with currently active ones).
         needs_refresh = (
-            not self._pass_windows
-            or all(w.los.timestamp() < now_ts for w in self._pass_windows)
-            or (now_ts - self._windows_computed_at) > 3600
+            not self.pass_windows
+            or all(w.los.timestamp() < now_ts for w in self.pass_windows)
+            or (now_ts - self.windows_computed_at) > 3600
         )
 
         if needs_refresh:
-            self._recompute_passes(cfg)
+            self.recompute_passes(cfg)
 
     def has_data(self) -> bool:
-        return bool(passes_mod.current_passes(self._pass_windows))
+        return bool(passes_mod.current_passes(self.pass_windows))
 
     def active(self) -> bool:
         return self.has_data()
@@ -111,19 +111,19 @@ class SatelliteScene:
         self.reset()
 
     def reset(self) -> None:
-        self._frame = 0
-        self._cycle_index = 0
-        self._last_cycle_second = 0.0
-        self._last_positions = {}
-        self._last_text = {}
-        self._blink_on = True
-        self._last_blink_on = True
-        self._ring_drawn = False
+        self.frame = 0
+        self.cycle_index = 0
+        self.last_cycle_second = 0.0
+        self.last_positions = {}
+        self.last_text = {}
+        self.blink_on = True
+        self.last_blink_on = True
+        self.ring_drawn = False
 
     def draw(self) -> None:
-        self._frame += 1
+        self.frame += 1
 
-        active = passes_mod.current_passes(self._pass_windows)
+        active = passes_mod.current_passes(self.pass_windows)
         if not active:
             return
 
@@ -132,50 +132,50 @@ class SatelliteScene:
         active = active[:max_count]
 
         # Draw ring once (persists across frames)
-        if not self._ring_drawn:
+        if not self.ring_drawn:
             # Clear plot area before redrawing ring + trajectories
             self.draw_square(0, 0, 31, screen.HEIGHT, graphics.Color(0, 0, 0))
             azel_plot.draw_horizon_ring(self.canvas)
-            self._draw_trajectories(active)
-            self._ring_drawn = True
+            self.draw_trajectories(active)
+            self.ring_drawn = True
 
         # Update current-position dots
-        self._draw_positions(active)
+        self.draw_positions(active)
 
         # Update right-panel text at ~1 fps
-        if self._frame % int(frames.PER_SECOND) == 0:
-            self._update_text_panel(active)
+        if self.frame % int(frames.PER_SECOND) == 0:
+            self.update_text_panel(active)
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _recompute_passes(self, cfg) -> None:
-        tles = self._tle_manager.get(timeout=5.0)
+    def recompute_passes(self, cfg) -> None:
+        tles = self.tle_manager.get(timeout=5.0)
         if not tles:
             return
         try:
-            self._pass_windows = passes_mod.compute_passes(
+            self.pass_windows = passes_mod.compute_passes(
                 tles,
                 cfg.flight_lat,
                 cfg.flight_lng,
                 cfg.satellite_min_elevation,
                 cfg.satellite_max_count,
             )
-            self._windows_computed_at = datetime.datetime.utcnow().timestamp()
+            self.windows_computed_at = datetime.datetime.utcnow().timestamp()
             # Force redraw of ring + trajectories on next draw()
-            self._ring_drawn = False
-            self._last_positions = {}
+            self.ring_drawn = False
+            self.last_positions = {}
         except Exception as exc:
             print(f"[satellite] pass computation failed: {exc}")
 
-    def _draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
+    def draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
         """Paint dim trajectory arcs for all currently active passes."""
         for window in active:
             traj_2d = [(az, el) for az, el, _, _ in window.trajectory]
             azel_plot.draw_trajectory(self.canvas, traj_2d, window.tle_index)
 
-    def _draw_positions(self, active: list[passes_mod.PassWindow]) -> None:
+    def draw_positions(self, active: list[passes_mod.PassWindow]) -> None:
         """
         Update satellite position dots using a pixel-change-only strategy.
 
@@ -191,7 +191,7 @@ class SatelliteScene:
         """
         # Blink toggle: flip every 0.5 s
         blink_frames = int(frames.PER_SECOND * 0.5)
-        self._blink_on = (self._frame // blink_frames) % 2 == 0
+        self.blink_on = (self.frame // blink_frames) % 2 == 0
 
         new_positions: dict[str, tuple[int, int, int]] = {}
 
@@ -203,13 +203,13 @@ class SatelliteScene:
             px, py = azel_plot.azel_to_xy(az, el)
             new_positions[window.name] = (px, py, window.tle_index)
 
-            old = self._last_positions.get(window.name)
-            if old is None or self._blink_on != self._last_blink_on:
+            old = self.last_positions.get(window.name)
+            if old is None or self.blink_on != self.last_blink_on:
                 # First frame or blink toggled — redraw
                 if old is not None:
                     old_px, old_py, old_idx = old
                     azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
-                if self._blink_on:
+                if self.blink_on:
                     azel_plot.draw_position(self.canvas, az, el, window.tle_index)
                 else:
                     azel_plot.draw_trail_pixel(self.canvas, px, py, window.tle_index)
@@ -218,7 +218,7 @@ class SatelliteScene:
                 if (px, py) != (old_px, old_py):
                     # Pixel changed: dim the old, draw the new (respecting blink)
                     azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
-                    if self._blink_on:
+                    if self.blink_on:
                         azel_plot.draw_position(self.canvas, az, el, window.tle_index)
                     else:
                         azel_plot.draw_trail_pixel(
@@ -226,14 +226,14 @@ class SatelliteScene:
                         )
 
         # Dim any satellites that were active last frame but aren't now
-        for name, (old_px, old_py, old_idx) in self._last_positions.items():
+        for name, (old_px, old_py, old_idx) in self.last_positions.items():
             if name not in new_positions:
                 azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
 
-        self._last_positions = new_positions
-        self._last_blink_on = self._blink_on
+        self.last_positions = new_positions
+        self.last_blink_on = self.blink_on
 
-    def _update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
+    def update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
         """
         Render the currently cycled satellite's name and telemetry.
 
@@ -251,17 +251,17 @@ class SatelliteScene:
         now_s = datetime.datetime.utcnow().timestamp()
 
         # Advance the cycle counter once per CYCLE_INTERVAL_S
-        if now_s - self._last_cycle_second >= CYCLE_INTERVAL_S:
-            self._cycle_index = (self._cycle_index + 1) % len(active)
-            self._last_cycle_second = now_s
+        if now_s - self.last_cycle_second >= CYCLE_INTERVAL_S:
+            self.cycle_index = (self.cycle_index + 1) % len(active)
+            self.last_cycle_second = now_s
 
-        window = active[self._cycle_index % len(active)]
+        window = active[self.cycle_index % len(active)]
 
         # Telemetry: speed and altitude from current position
         pos = passes_mod.current_position(window)
         if pos is not None:
             az, el = pos
-            telemetry = _compute_telemetry(window, az, el)
+            telemetry = compute_telemetry(window, az, el)
 
             cfg = Config.instance()
             if telemetry is not None:
@@ -313,7 +313,7 @@ class SatelliteScene:
         black = graphics.Color(0, 0, 0)
 
         for key, (text, x, y, col, font) in new_texts.items():
-            old = self._last_text.get(key)
+            old = self.last_text.get(key)
             if old is not None:
                 old_text, old_x, old_y, _, old_font = old
                 # Only erase if something changed (text, position, or font)
@@ -323,7 +323,7 @@ class SatelliteScene:
                     )
             graphics.DrawText(self.canvas, font, x, y, col, text)
 
-        self._last_text = new_texts
+        self.last_text = new_texts
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +331,7 @@ class SatelliteScene:
 # ---------------------------------------------------------------------------
 
 
-def _compute_telemetry(
+def compute_telemetry(
     window: passes_mod.PassWindow,
     az_deg: float,
     el_deg: float,

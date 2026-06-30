@@ -10,7 +10,7 @@ from rgbmatrix import graphics
 DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
 
-_DATE_FORMATS = [
+DATE_FORMATS = [
     "%Y-%m-%d",  # 0 = YYYY-MM-DD
     "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
     "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
@@ -20,41 +20,41 @@ _DATE_FORMATS = [
 class DateScene(object):
     def __init__(self):
         super().__init__()
-        self._last_date = None
+        self.last_date = None
 
-    def _now_local(self):
+    def now_local(self):
         return datetime.now()
 
-    def _date_string(self) -> str:
+    def date_string(self) -> str:
         cfg = Config.instance()
         fmt = (
-            _DATE_FORMATS[cfg.date_format]
-            if cfg.date_format < len(_DATE_FORMATS)
-            else _DATE_FORMATS[0]
+            DATE_FORMATS[cfg.date_format]
+            if cfg.date_format < len(DATE_FORMATS)
+            else DATE_FORMATS[0]
         )
-        return self._now_local().strftime(fmt)
+        return self.now_local().strftime(fmt)
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def date(self, count):
-        if len(self._data):
-            self._last_date = None
+        if len(self.data):
+            self.last_date = None
             return
 
-        current_date = self._date_string()
-        if self._last_date == current_date:
+        current_date = self.date_string()
+        if self.last_date == current_date:
             return
 
-        if self._last_date is not None:
+        if self.last_date is not None:
             graphics.DrawText(
                 self.canvas,
                 DATE_FONT,
                 DATE_POSITION[0],
                 DATE_POSITION[1],
                 TC(THEME_BG),
-                self._last_date,
+                self.last_date,
             )
 
-        self._last_date = current_date
+        self.last_date = current_date
         graphics.DrawText(
             self.canvas,
             DATE_FONT,

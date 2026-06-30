@@ -33,7 +33,7 @@ PLOT_RADIUS = 12  # pixels from centre to horizon ring
 # Dimmer  = predicted trajectory arc (light grey, uniform across satellites)
 # ---------------------------------------------------------------------------
 
-_PALETTE_BRIGHT = [
+PALETTE_BRIGHT = [
     graphics.Color(255, 220, 0),  # 0 amber
     graphics.Color(0, 200, 255),  # 1 cyan
     graphics.Color(180, 0, 255),  # 2 violet
@@ -41,7 +41,7 @@ _PALETTE_BRIGHT = [
     graphics.Color(255, 60, 60),  # 4 red
 ]
 
-_PALETTE_DIM = [
+PALETTE_DIM = [
     graphics.Color(80, 60, 0),  # 0 amber dim
     graphics.Color(0, 60, 80),  # 1 cyan dim
     graphics.Color(55, 0, 80),  # 2 violet dim
@@ -49,7 +49,7 @@ _PALETTE_DIM = [
     graphics.Color(80, 20, 20),  # 4 red dim
 ]
 
-_PALETTE_DIMMER = [
+PALETTE_DIMMER = [
     graphics.Color(30, 25, 0),  # 0 amber dimmer
     graphics.Color(0, 25, 30),  # 1 cyan dimmer
     graphics.Color(20, 0, 30),  # 2 violet dimmer
@@ -57,20 +57,20 @@ _PALETTE_DIMMER = [
     graphics.Color(30, 8, 8),  # 4 red dimmer
 ]
 
-_RING_COLOUR = graphics.Color(80, 80, 80)
-_NOTCH_COLOUR = graphics.Color(200, 200, 200)
+RING_COLOUR = graphics.Color(80, 80, 80)
+NOTCH_COLOUR = graphics.Color(200, 200, 200)
 
 
 def sat_colour_bright(tle_index: int) -> graphics.Color:
-    return _PALETTE_BRIGHT[tle_index % len(_PALETTE_BRIGHT)]
+    return PALETTE_BRIGHT[tle_index % len(PALETTE_BRIGHT)]
 
 
 def sat_colour_dim(tle_index: int) -> graphics.Color:
-    return _PALETTE_DIM[tle_index % len(_PALETTE_DIM)]
+    return PALETTE_DIM[tle_index % len(PALETTE_DIM)]
 
 
 def sat_colour_dimmer(tle_index: int) -> graphics.Color:
-    return _PALETTE_DIMMER[tle_index % len(_PALETTE_DIMMER)]
+    return PALETTE_DIMMER[tle_index % len(PALETTE_DIMMER)]
 
 
 # ---------------------------------------------------------------------------
@@ -100,14 +100,14 @@ def azel_to_xy(az_deg: float, el_deg: float) -> tuple[int, int]:
 
 
 def draw_horizon_ring(canvas) -> None:
-    graphics.DrawCircle(canvas, PLOT_CX, PLOT_CY, PLOT_RADIUS, _RING_COLOUR)
+    graphics.DrawCircle(canvas, PLOT_CX, PLOT_CY, PLOT_RADIUS, RING_COLOUR)
     graphics.DrawLine(
         canvas,
         PLOT_CX,
         PLOT_CY - PLOT_RADIUS,
         PLOT_CX,
         PLOT_CY - PLOT_RADIUS - 1,
-        _NOTCH_COLOUR,
+        NOTCH_COLOUR,
     )
 
 

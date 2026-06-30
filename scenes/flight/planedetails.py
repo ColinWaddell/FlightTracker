@@ -34,7 +34,7 @@ PLANE_TEXT_HEIGHT = 8
 # ---------------------------------------------------------------------------
 
 
-def _spans_width(spans: list) -> int:
+def spans_width(spans: list) -> int:
     """Total pixel width of a span list."""
     total = 0
     for _colour, font, text in spans:
@@ -42,7 +42,7 @@ def _spans_width(spans: list) -> int:
     return total
 
 
-def _draw_spans(canvas, spans: list, x: int, y: int) -> int:
+def draw_spans(canvas, spans: list, x: int, y: int) -> int:
     """Draw spans left-to-right from x. Returns total pixel width drawn."""
     start_x = x
     for colour, font, text in spans:
@@ -59,18 +59,18 @@ class PlaneDetailsScene(object):
     def __init__(self):
         super().__init__()
         self.plane_position = screen.WIDTH
-        self._data_all_looped = False
-        self._last_details_mode = None
+        self.data_all_looped = False
+        self.last_details_mode = None
 
     # -- Span builders ----------------------------------------------------
 
-    def _model_spans(self) -> list:
-        text = self._data[self._data_index].get("plane", "")
+    def model_spans(self) -> list:
+        text = self.data[self.data_index].get("plane", "")
         return [(TC(THEME_PLANE), fonts.regular, text)]
 
-    def _telemetry_spans(self) -> list:
+    def telemetry_spans(self) -> list:
         cfg = Config.instance()
-        flight = self._data[self._data_index]
+        flight = self.data[self.data_index]
 
         altitude_ft = flight.get("altitude", 0) or 0
         ground_speed_kts = flight.get("ground_speed", 0) or 0
@@ -109,26 +109,26 @@ class PlaneDetailsScene(object):
             (ico, f, "*"),
         ]
 
-    def _build_spans(self) -> list:
+    def build_spans(self) -> list:
         cfg = Config.instance()
-        return self._telemetry_spans() if cfg.details == 1 else self._model_spans()
+        return self.telemetry_spans() if cfg.details == 1 else self.model_spans()
 
     # -- Keyframes ---------------------------------------------------------
 
     @Animator.KeyFrame.add(1)
     def plane_details(self, count):
-        if len(self._data) == 0:
+        if len(self.data) == 0:
             return
 
         cfg = Config.instance()
         current_mode = cfg.details
 
         # Reset scroller if mode changed mid-display
-        if current_mode != self._last_details_mode:
+        if current_mode != self.last_details_mode:
             self.plane_position = screen.WIDTH
-            self._last_details_mode = current_mode
+            self.last_details_mode = current_mode
 
-        spans = self._build_spans()
+        spans = self.build_spans()
 
         # Clear plane row
         self.draw_square(
@@ -140,7 +140,7 @@ class PlaneDetailsScene(object):
         )
 
         # Draw spans from current scroll position
-        total_width = _draw_spans(
+        total_width = draw_spans(
             self.canvas, spans, self.plane_position, PLANE_DISTANCE_FROM_TOP
         )
 
@@ -148,9 +148,9 @@ class PlaneDetailsScene(object):
         self.plane_position -= 1
         if self.plane_position + total_width < 0:
             self.plane_position = screen.WIDTH
-            if len(self._data) > 1:
-                self._data_index = (self._data_index + 1) % len(self._data)
-                self._data_all_looped = (not self._data_index) or self._data_all_looped
+            if len(self.data) > 1:
+                self.data_index = (self.data_index + 1) % len(self.data)
+                self.data_all_looped = (not self.data_index) or self.data_all_looped
                 self.reset_scene()
 
     @Animator.KeyFrame.add(0)

@@ -4,9 +4,9 @@ FlightScene — callsign bar, origin→destination journey, scrolling telemetry.
 Shown when flight data is available.  Priority 1 (beats IdleScene).
 
 Merges the three former mixin scenes:
-    FlightDetailsScene → _draw_callsign()
-    JourneyScene       → _draw_journey()
-    PlaneDetailsScene  → _draw_plane_details()
+    FlightDetailsScene → draw_callsign()
+    JourneyScene       → draw_journey()
+    PlaneDetailsScene  → draw_plane_details()
 
 Owns its own flight data.  Call on_data(new_flights) whenever the overhead
 source produces a fresh result; the scene decides internally whether that
@@ -57,18 +57,18 @@ ERROR_BACKOFF_S = 60
 # Data update helpers
 # ---------------------------------------------------------------------------
 
-_TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
+TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
 
 
-def _callsigns_match(a: list, b: list) -> bool:
+def callsigns_match(a: list, b: list) -> bool:
     return {f["callsign"] for f in a} == {f["callsign"] for f in b}
 
 
-def _telemetry_changed(old: list, new: list) -> bool:
+def telemetry_changed(old: list, new: list) -> bool:
     lookup = {f["callsign"]: f for f in old}
     for flight in new:
         prev = lookup.get(flight["callsign"])
-        if prev and any(flight.get(k) != prev.get(k) for k in _TELEMETRY_FIELDS):
+        if prev and any(flight.get(k) != prev.get(k) for k in TELEMETRY_FIELDS):
             return True
     return False
 
@@ -97,26 +97,26 @@ PLANE_TEXT_HEIGHT = 8
 # Journey widget
 # ---------------------------------------------------------------------------
 
-_EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
+EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
 
 
-def _tick_to_offset(tick: int) -> int:
-    return 1 if tick >= len(_EASING_STEPS) else _EASING_STEPS[tick]
+def tick_to_offset(tick: int) -> int:
+    return 1 if tick >= len(EASING_STEPS) else EASING_STEPS[tick]
 
 
 INITIAL_TICKS = 100
 PAUSE_TICKS = 25
 
-_FULL_LINE_Y = (7, 15)
+FULL_LINE_Y = (7, 15)
 
-_IATA_ORIGIN_X = 1
-_IATA_DESTINATION_X = 40
-_ARROW_TIP_X = 34
-_ARROW_TIP_Y = 7
-_ARROW_WIDTH = 4
-_ARROW_HEIGHT = 8
+IATA_ORIGIN_X = 1
+IATA_DESTINATION_X = 40
+ARROW_TIP_X = 34
+ARROW_TIP_Y = 7
+ARROW_WIDTH = 4
+ARROW_HEIGHT = 8
 
-_ABBREVIATIONS = {
+ABBREVIATIONS = {
     "International": "Intl",
     "international": "Intl",
     "Airport": "",
@@ -128,29 +128,29 @@ _ABBREVIATIONS = {
 }
 
 
-def _abbreviate(name: str) -> str:
-    for long, short in _ABBREVIATIONS.items():
+def abbreviate(name: str) -> str:
+    for long, short in ABBREVIATIONS.items():
         name = name.replace(long, short)
     return " ".join(name.split())
 
 
-def _font_text_width(font, text: str) -> int:
+def font_text_width(font, text: str) -> int:
     return sum(font.CharacterWidth(ord(c)) for c in text)
 
 
-class _BounceState(Enum):
+class BounceState(Enum):
     INITIAL = auto()
     REVEAL = auto()
     PAUSE = auto()
     RETRACT = auto()
 
 
-class _LineScroller:
+class LineScroller:
     def __init__(self):
         self.reset()
 
     def reset(self):
-        self.state = _BounceState.INITIAL
+        self.state = BounceState.INITIAL
         self.timer = 0
         self.position = 0
         self.scroll_max = 0
@@ -160,36 +160,36 @@ class _LineScroller:
     def tick(self) -> int:
         st = self.state
 
-        if st == _BounceState.REVEAL:
-            self.position -= _tick_to_offset(self.timer)
-        elif st == _BounceState.RETRACT:
-            self.position += _tick_to_offset(self.timer)
+        if st == BounceState.REVEAL:
+            self.position -= tick_to_offset(self.timer)
+        elif st == BounceState.RETRACT:
+            self.position += tick_to_offset(self.timer)
 
-        if st == _BounceState.INITIAL:
+        if st == BounceState.INITIAL:
             if self.scroll_max > 0 and self.timer >= INITIAL_TICKS:
-                self.state = _BounceState.REVEAL
+                self.state = BounceState.REVEAL
                 self.timer = 0
             elif self.scroll_max == 0:
                 self.loop_done = True
-        elif st == _BounceState.REVEAL:
+        elif st == BounceState.REVEAL:
             if self.position <= -self.scroll_max:
                 self.position = -self.scroll_max
-                self.state = _BounceState.PAUSE
+                self.state = BounceState.PAUSE
                 self.timer = 0
-        elif st == _BounceState.PAUSE:
+        elif st == BounceState.PAUSE:
             if self.timer >= PAUSE_TICKS:
                 self.state = (
-                    _BounceState.RETRACT
+                    BounceState.RETRACT
                     if self.position <= -self.scroll_max
-                    else _BounceState.INITIAL
+                    else BounceState.INITIAL
                 )
                 self.timer = 0
-        elif st == _BounceState.RETRACT:
+        elif st == BounceState.RETRACT:
             if self.position >= 0:
                 self.position = 0
                 self.loop_count += 1
                 self.loop_done = True
-                self.state = _BounceState.PAUSE
+                self.state = BounceState.PAUSE
                 self.timer = 0
 
         self.timer += 1
@@ -222,42 +222,42 @@ class FlightScene:
         """
         self.canvas = canvas
         self.draw_square = draw_square
-        self._overhead = overhead
-        self._refresh_interval = refresh_interval
+        self.overhead = overhead
+        self.refresh_interval = refresh_interval
 
         # Kick the first fetch immediately
-        self._overhead.grab_data()
-        self._last_grab_time = time.time()
+        self.overhead.grab_data()
+        self.last_grab_time = time.time()
 
         # Internal flight state — owned entirely by this scene
-        self._flights: list = []
-        self._index: int = 0
-        self._all_looped: bool = False
-        self._frame: int = 0
+        self.flights: list = []
+        self.flight_index: int = 0
+        self.all_looped_flag: bool = False
+        self.frame: int = 0
 
         # Journey state
-        self._journey_first_draw = True
-        self._journey_mode: str | None = None
-        self._origin_scroll = _LineScroller()
-        self._dest_scroll = _LineScroller()
-        self._journey_loop_completed = False
-        self._last_origin: str | None = None
-        self._last_dest: str | None = None
-        self._origin_name = ""
-        self._dest_name = ""
+        self.journey_first_draw = True
+        self.journey_mode: str | None = None
+        self.origin_scroll = LineScroller()
+        self.dest_scroll = LineScroller()
+        self.journey_loop_completed = False
+        self.last_origin: str | None = None
+        self.last_dest: str | None = None
+        self.origin_name = ""
+        self.dest_name = ""
 
         # Plane details state
-        self._plane_position: int = screen.WIDTH
-        self._last_details_mode: int | None = None
+        self.plane_position: int = screen.WIDTH
+        self.last_details_mode: int | None = None
 
         # Callsign bar cache — only redraw when these change
-        self._last_callsign_drawn: str | None = None
-        self._last_index_drawn: int | None = None
-        self._last_flight_count_drawn: int | None = None
+        self.last_callsign_drawn: str | None = None
+        self.last_index_drawn: int | None = None
+        self.last_flight_count_drawn: int | None = None
 
         # Error backoff — log once, hold off before retrying
-        self._error_logged: bool = False
-        self._retry_at: float = 0.0
+        self.error_logged: bool = False
+        self.retry_at: float = 0.0
 
     # ------------------------------------------------------------------
     # Data ownership
@@ -271,35 +271,35 @@ class FlightScene:
         """
         now = time.time()
 
-        if self._overhead.error is not None:
-            if not self._error_logged:
-                print(f"[overhead] fetch failed: {self._overhead.error}")
+        if self.overhead.error is not None:
+            if not self.error_logged:
+                print(f"[overhead] fetch failed: {self.overhead.error}")
                 print(f"[overhead] retrying in {ERROR_BACKOFF_S}s")
-                self._error_logged = True
-                self._retry_at = now + ERROR_BACKOFF_S
-            if now >= self._retry_at:
+                self.error_logged = True
+                self.retry_at = now + ERROR_BACKOFF_S
+            if now >= self.retry_at:
                 # Backoff expired — clear state and kick a fresh grab.
                 # grab_data() resets the error flag internally.
-                self._error_logged = False
-                self._overhead.grab_data()
-                self._last_grab_time = now
+                self.error_logged = False
+                self.overhead.grab_data()
+                self.last_grab_time = now
             return
 
         # Successful state — clear any lingering backoff flags.
-        self._error_logged = False
-        self._retry_at = 0.0
+        self.error_logged = False
+        self.retry_at = 0.0
 
-        if self._overhead.new_data:
-            self.on_data(self._overhead.data)  # accessing .data clears new_data flag
+        if self.overhead.new_data:
+            self.on_data(self.overhead.data)  # accessing .data clears new_data flag
 
         if (
-            now - self._last_grab_time >= self._refresh_interval
-            and not self._overhead.processing
-            and not self._overhead.new_data
+            now - self.last_grab_time >= self.refresh_interval
+            and not self.overhead.processing
+            and not self.overhead.new_data
             and self.all_looped
         ):
-            self._overhead.grab_data()
-            self._last_grab_time = now
+            self.overhead.grab_data()
+            self.last_grab_time = now
 
     def on_data(self, new_flights: list) -> None:
         """
@@ -307,34 +307,34 @@ class FlightScene:
         Decides whether to fully reset (callsigns changed) or silently
         swap telemetry values without interrupting the scroll.
         """
-        old_flights = self._flights
+        old_flights = self.flights
         there_is_data = len(old_flights) > 0
 
-        if not _callsigns_match(old_flights, new_flights):
-            self._index = 0
-            self._all_looped = False
-            self._flights = new_flights
+        if not callsigns_match(old_flights, new_flights):
+            self.flight_index = 0
+            self.all_looped_flag = False
+            self.flights = new_flights
             if there_is_data:
                 self.reset()
-        elif _telemetry_changed(old_flights, new_flights):
+        elif telemetry_changed(old_flights, new_flights):
             # Silent swap — scroller continues uninterrupted
-            self._flights = new_flights
+            self.flights = new_flights
 
     @property
     def all_looped(self) -> bool:
         """True when the scene has cycled through all flights at least once,
         or when there are 0-1 flights (no meaningful looping to wait for)."""
-        return self._all_looped or len(self._flights) <= 1
+        return self.all_looped_flag or len(self.flights) <= 1
 
     # ------------------------------------------------------------------
     # Scene protocol
     # ------------------------------------------------------------------
 
     def has_data(self) -> bool:
-        return len(self._flights) > 0
+        return len(self.flights) > 0
 
     def active(self) -> bool:
-        return len(self._flights) > 0
+        return len(self.flights) > 0
 
     def on_enter(self) -> None:
         """Called by SceneManager on scene transition. Clears canvas then resets."""
@@ -342,46 +342,46 @@ class FlightScene:
         self.reset()
 
     def reset(self) -> None:
-        self._frame = 0
-        self._journey_first_draw = True
-        self._journey_mode = None
-        self._origin_scroll.reset()
-        self._dest_scroll.reset()
-        self._journey_loop_completed = False
-        self._last_origin = None
-        self._last_dest = None
-        self._origin_name = ""
-        self._dest_name = ""
-        self._plane_position = screen.WIDTH
-        self._last_callsign_drawn = None
-        self._last_index_drawn = None
-        self._last_flight_count_drawn = None
+        self.frame = 0
+        self.journey_first_draw = True
+        self.journey_mode = None
+        self.origin_scroll.reset()
+        self.dest_scroll.reset()
+        self.journey_loop_completed = False
+        self.last_origin = None
+        self.last_dest = None
+        self.origin_name = ""
+        self.dest_name = ""
+        self.plane_position = screen.WIDTH
+        self.last_callsign_drawn = None
+        self.last_index_drawn = None
+        self.last_flight_count_drawn = None
 
     def draw(self) -> None:
-        self._frame += 1
-        self._draw_callsign()
-        self._draw_journey()
-        self._draw_plane_details()
+        self.frame += 1
+        self.draw_callsign()
+        self.draw_journey()
+        self.draw_plane_details()
 
     # ------------------------------------------------------------------
     # Callsign bar
     # ------------------------------------------------------------------
 
-    def _draw_callsign(self) -> None:
-        callsign = self._flights[self._index].get("callsign", "")
-        flight_count = len(self._flights)
-        index = self._index
+    def draw_callsign(self) -> None:
+        callsign = self.flights[self.flight_index].get("callsign", "")
+        flight_count = len(self.flights)
+        index = self.flight_index
 
         if (
-            callsign == self._last_callsign_drawn
-            and index == self._last_index_drawn
-            and flight_count == self._last_flight_count_drawn
+            callsign == self.last_callsign_drawn
+            and index == self.last_index_drawn
+            and flight_count == self.last_flight_count_drawn
         ):
             return
 
-        self._last_callsign_drawn = callsign
-        self._last_index_drawn = index
-        self._last_flight_count_drawn = flight_count
+        self.last_callsign_drawn = callsign
+        self.last_index_drawn = index
+        self.last_flight_count_drawn = flight_count
 
         self.draw_square(
             0,
@@ -445,56 +445,54 @@ class FlightScene:
     # Journey widget
     # ------------------------------------------------------------------
 
-    def _draw_journey(self) -> None:
+    def draw_journey(self) -> None:
         cfg = Config.instance()
-        flight = self._flights[self._index]
+        flight = self.flights[self.flight_index]
         origin = flight.get("origin")
         destination = flight.get("destination")
 
-        if origin != self._last_origin or destination != self._last_dest:
-            self._journey_first_draw = True
-            self._journey_mode = None
-            self._origin_scroll.reset()
-            self._dest_scroll.reset()
-            self._journey_loop_completed = False
-            self._last_origin = origin
-            self._last_dest = destination
+        if origin != self.last_origin or destination != self.last_dest:
+            self.journey_first_draw = True
+            self.journey_mode = None
+            self.origin_scroll.reset()
+            self.dest_scroll.reset()
+            self.journey_loop_completed = False
+            self.last_origin = origin
+            self.last_dest = destination
 
         if not cfg.full_airport_name:
-            if not self._journey_loop_completed:
-                self._draw_iata_mode(cfg, flight)
+            if not self.journey_loop_completed:
+                self.draw_iata_mode(cfg, flight)
             return
 
-        if self._journey_mode != "full" or self._journey_first_draw:
-            self._journey_mode = "full"
-            self._setup_full_mode(cfg, flight)
+        if self.journey_mode != "full" or self.journey_first_draw:
+            self.journey_mode = "full"
+            self.setup_full_mode(cfg, flight)
             self.draw_square(0, 0, screen.WIDTH - 1, 16, TC(THEME_BG))
-            self._journey_first_draw = False
+            self.journey_first_draw = False
 
-        for line_idx, scroller in enumerate((self._origin_scroll, self._dest_scroll)):
+        for line_idx, scroller in enumerate((self.origin_scroll, self.dest_scroll)):
             prev_x = scroller.position
             new_x = scroller.tick()
             if (
                 prev_x != new_x
-                or scroller.state == _BounceState.REVEAL
-                or scroller.state == _BounceState.RETRACT
+                or scroller.state == BounceState.REVEAL
+                or scroller.state == BounceState.RETRACT
             ):
-                self._undraw_full_line(cfg, flight, line_idx, prev_x)
-            self._draw_full_line(cfg, flight, line_idx, new_x)
+                self.undraw_full_line(cfg, flight, line_idx, prev_x)
+            self.draw_full_line(cfg, flight, line_idx, new_x)
 
-        if self._origin_scroll.scroll_max > 0 and self._dest_scroll.scroll_max > 0:
-            if self._origin_scroll.state != self._dest_scroll.state:
-                self._origin_scroll.timer = 0
-                self._dest_scroll.timer = 0
+        if self.origin_scroll.scroll_max > 0 and self.dest_scroll.scroll_max > 0:
+            if self.origin_scroll.state != self.dest_scroll.state:
+                self.origin_scroll.timer = 0
+                self.dest_scroll.timer = 0
 
-        origin_done = (
-            self._origin_scroll.loop_done or self._origin_scroll.scroll_max == 0
-        )
-        dest_done = self._dest_scroll.loop_done or self._dest_scroll.scroll_max == 0
+        origin_done = self.origin_scroll.loop_done or self.origin_scroll.scroll_max == 0
+        dest_done = self.dest_scroll.loop_done or self.dest_scroll.scroll_max == 0
         if origin_done and dest_done:
-            self._journey_loop_completed = True
+            self.journey_loop_completed = True
 
-    def _draw_iata_mode(self, cfg, flight: dict) -> None:
+    def draw_iata_mode(self, cfg, flight: dict) -> None:
         origin = flight.get("origin", "") or cfg.journey_blank_filler
         destination = flight.get("destination", "") or cfg.journey_blank_filler
         home_code = cfg.home_airport_code
@@ -503,71 +501,71 @@ class FlightScene:
 
         font = fonts.large_bold if origin == home_code else fonts.large
         graphics.DrawText(
-            self.canvas, font, _IATA_ORIGIN_X, 12, TC(THEME_LOCATION_ORIGIN), origin
+            self.canvas, font, IATA_ORIGIN_X, 12, TC(THEME_LOCATION_ORIGIN), origin
         )
         font = fonts.large_bold if destination == home_code else fonts.large
         graphics.DrawText(
             self.canvas,
             font,
-            _IATA_DESTINATION_X,
+            IATA_DESTINATION_X,
             12,
             TC(THEME_LOCATION_DESTINATION),
             destination,
         )
 
-        ax, ay = _ARROW_TIP_X, _ARROW_TIP_Y
-        x = ax - _ARROW_WIDTH
-        y1 = ay - (_ARROW_HEIGHT // 2)
-        y2 = ay + (_ARROW_HEIGHT // 2)
+        ax, ay = ARROW_TIP_X, ARROW_TIP_Y
+        x = ax - ARROW_WIDTH
+        y1 = ay - (ARROW_HEIGHT // 2)
+        y2 = ay + (ARROW_HEIGHT // 2)
         self.canvas.SetPixel(
             ax, ay, TC(THEME_ARROW).red, TC(THEME_ARROW).green, TC(THEME_ARROW).blue
         )
-        for _ in range(_ARROW_WIDTH):
+        for _ in range(ARROW_WIDTH):
             graphics.DrawLine(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
             x += 1
             y1 += 1
             y2 -= 1
 
-        self._journey_loop_completed = True
+        self.journey_loop_completed = True
 
-    def _setup_full_mode(self, cfg, flight: dict) -> None:
+    def setup_full_mode(self, cfg, flight: dict) -> None:
         origin = flight.get("origin") or cfg.journey_blank_filler
         destination = flight.get("destination") or cfg.journey_blank_filler
         origin_name = flight.get("origin_name") or ""
         dest_name = flight.get("destination_name") or ""
 
         if cfg.abbreviate_name:
-            origin_name = _abbreviate(origin_name)
-            dest_name = _abbreviate(dest_name)
+            origin_name = abbreviate(origin_name)
+            dest_name = abbreviate(dest_name)
 
-        self._origin_name = origin_name or "Unknown"
-        self._dest_name = dest_name or "Unknown"
+        self.origin_name = origin_name or "Unknown"
+        self.dest_name = dest_name or "Unknown"
 
         for scroller, iata, name, arrow in (
-            (self._origin_scroll, origin, self._origin_name, ">"),
-            (self._dest_scroll, destination, self._dest_name, "<"),
+            (self.origin_scroll, origin, self.origin_name, ">"),
+            (self.dest_scroll, destination, self.dest_name, "<"),
         ):
             scroller.reset()
-            w = _font_text_width(fonts.small, f"{iata}{arrow}{name}")
+            w = font_text_width(fonts.small, f"{iata}{arrow}{name}")
             scroller.scroll_max = max(0, w - screen.WIDTH)
 
-    def _draw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
+    def draw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
         if line_idx == 0:
             iata = flight.get("origin") or cfg.journey_blank_filler
-            name = self._origin_name
+            name = self.origin_name
             arrow = ">"
             colour_code = TC(THEME_LOCATION_ORIGIN)
             colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
             colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
         else:
             iata = flight.get("destination") or cfg.journey_blank_filler
-            name = self._dest_name
+            name = self.dest_name
             arrow = "<"
             colour_code = TC(THEME_LOCATION_DESTINATION)
             colour_name = TC(THEME_LOCATION_DESTINATION_FULL)
             colour_arrow = TC(THEME_LOCATION_DESTINATION_ARROW)
 
-        y = _FULL_LINE_Y[line_idx]
+        y = FULL_LINE_Y[line_idx]
         x = x_offset
         x += graphics.DrawText(
             self.canvas, fonts.small_symbols, x, y, colour_code, iata
@@ -577,21 +575,19 @@ class FlightScene:
         )
         graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_name, name)
 
-    def _undraw_full_line(
-        self, cfg, flight: dict, line_idx: int, x_offset: int
-    ) -> None:
+    def undraw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
         iata = (
             (flight.get("origin") or cfg.journey_blank_filler)
             if line_idx == 0
             else (flight.get("destination") or cfg.journey_blank_filler)
         )
-        name = self._origin_name if line_idx == 0 else self._dest_name
+        name = self.origin_name if line_idx == 0 else self.dest_name
         arrow = ">" if line_idx == 0 else "<"
         graphics.DrawText(
             self.canvas,
             fonts.small_symbols,
             x_offset,
-            _FULL_LINE_Y[line_idx],
+            FULL_LINE_Y[line_idx],
             TC(THEME_BG),
             f"{iata}{arrow}{name}",
         )
@@ -600,15 +596,15 @@ class FlightScene:
     # Plane details (scrolling bar)
     # ------------------------------------------------------------------
 
-    def _build_spans(self, cfg) -> list:
-        return self._telemetry_spans(cfg) if cfg.details == 1 else self._model_spans()
+    def build_spans(self, cfg) -> list:
+        return self.telemetry_spans(cfg) if cfg.details == 1 else self.model_spans()
 
-    def _model_spans(self) -> list:
-        text = self._flights[self._index].get("plane", "")
+    def model_spans(self) -> list:
+        text = self.flights[self.flight_index].get("plane", "")
         return [(TC(THEME_PLANE), fonts.regular, text)]
 
-    def _telemetry_spans(self, cfg) -> list:
-        flight = self._flights[self._index]
+    def telemetry_spans(self, cfg) -> list:
+        flight = self.flights[self.flight_index]
         altitude_ft = flight.get("altitude", 0) or 0
         ground_speed_kts = flight.get("ground_speed", 0) or 0
         heading = flight.get("heading", 0) or 0
@@ -642,24 +638,24 @@ class FlightScene:
             (ico, f, "*"),
         ]
 
-    def _spans_width(self, spans: list) -> int:
+    def spans_width(self, spans: list) -> int:
         return sum(font.CharacterWidth(ord(c)) for _, font, text in spans for c in text)
 
-    def _draw_spans(self, spans: list, x: int, y: int) -> int:
+    def draw_spans(self, spans: list, x: int, y: int) -> int:
         start_x = x
         for colour, font, text in spans:
             x += graphics.DrawText(self.canvas, font, x, y, colour, text)
         return x - start_x
 
-    def _draw_plane_details(self) -> None:
+    def draw_plane_details(self) -> None:
         cfg = Config.instance()
         current_mode = cfg.details
 
-        if current_mode != self._last_details_mode:
-            self._plane_position = screen.WIDTH
-            self._last_details_mode = current_mode
+        if current_mode != self.last_details_mode:
+            self.plane_position = screen.WIDTH
+            self.last_details_mode = current_mode
 
-        spans = self._build_spans(cfg)
+        spans = self.build_spans(cfg)
 
         self.draw_square(
             0,
@@ -669,14 +665,14 @@ class FlightScene:
             TC(THEME_BG),
         )
 
-        total_width = self._draw_spans(
-            spans, self._plane_position, PLANE_DISTANCE_FROM_TOP
+        total_width = self.draw_spans(
+            spans, self.plane_position, PLANE_DISTANCE_FROM_TOP
         )
 
-        self._plane_position -= 1
-        if self._plane_position + total_width < 0:
-            self._plane_position = screen.WIDTH
-            if len(self._flights) > 1:
-                self._index = (self._index + 1) % len(self._flights)
-                self._all_looped = (not self._index) or self._all_looped
+        self.plane_position -= 1
+        if self.plane_position + total_width < 0:
+            self.plane_position = screen.WIDTH
+            if len(self.flights) > 1:
+                self.flight_index = (self.flight_index + 1) % len(self.flights)
+                self.all_looped_flag = (not self.flight_index) or self.all_looped_flag
                 self.reset()

@@ -7,10 +7,10 @@ import time
 from setup.configuration import Config, CONFIG_PATH
 
 # Default port for the web config interface - must match web/app.py FLASK_PORT
-_DEFAULT_FLASK_PORT = 8584
+DEFAULT_FLASK_PORT = 8584
 
 
-def _local_ip() -> str:
+def local_ip() -> str:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
@@ -19,7 +19,7 @@ def _local_ip() -> str:
         return "127.0.0.1"
 
 
-def _render_splash(
+def render_splash(
     matrix,
     canvas,
     Image,
@@ -74,7 +74,7 @@ def _render_splash(
     matrix.SwapOnVSync(canvas)
 
 
-def _flask_load(ready_event: threading.Event, result: dict):
+def flask_load(ready_event: threading.Event, result: dict):
     """
     Thread A: import and start the Flask config server.
 
@@ -114,11 +114,11 @@ def _flask_load(ready_event: threading.Event, result: dict):
         ready_event.set()
 
 
-def _display_load(matrix, canvas, result: dict):
+def display_load(matrix, canvas, result: dict):
     """
     Thread B: import and build the Display class (heavy: FR24 API, scenes, fonts).
 
-    Runs in parallel with _flask_load so both complete during the splash window.
+    Runs in parallel with flask_load so both complete during the splash window.
     """
     try:
         from display import get_display_class
@@ -178,26 +178,26 @@ if __name__ == "__main__":
     canvas.Clear()
 
     # -- Phase 2: Show splash (loading state, no QR) --------------------------
-    _render_splash(matrix, canvas, Image, graphics, loading_font)
+    render_splash(matrix, canvas, Image, graphics, loading_font)
 
     result = {}
 
     if cfg.web_interface_enabled:
-        url = f"http://{_local_ip()}:{_DEFAULT_FLASK_PORT}/settings"
+        url = f"http://{local_ip()}:{DEFAULT_FLASK_PORT}/settings"
         print(f"[web] Config interface: {url}", flush=True)
 
         flask_ready = threading.Event()
 
         # Thread A: Flask (fast — just binds a port)
         flask_thread = threading.Thread(
-            target=_flask_load,
+            target=flask_load,
             args=(flask_ready, result),
             daemon=True,
             name="flask-load",
         )
         # Thread B: Display class (slow — FR24 API, scenes, fonts)
         display_thread = threading.Thread(
-            target=_display_load,
+            target=display_load,
             args=(matrix, canvas, result),
             daemon=True,
             name="display-load",
@@ -211,7 +211,7 @@ if __name__ == "__main__":
         # always has a full 8 seconds to scan the code.
         flask_ready.wait()
         if "flask_error" not in result:
-            _render_splash(
+            render_splash(
                 matrix,
                 canvas,
                 Image,
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     else:
         # No web UI — brief splash, then build display in the background.
         display_thread = threading.Thread(
-            target=_display_load,
+            target=display_load,
             args=(matrix, canvas, result),
             daemon=True,
             name="display-load",

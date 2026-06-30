@@ -10,7 +10,7 @@ EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
 
-def _clean_field(value):
+def clean_field(value):
     if value is None:
         return ""
     try:
@@ -54,69 +54,69 @@ class Overhead:
 
         from setup.configuration import Config
 
-        _cfg = Config.instance()
-        self._zone_home = _cfg.zone_home
-        self._min_altitude = _cfg.flight_min_altitude
-        self._max_altitude = _cfg.flight_max_altitude
-        self._location_home = _cfg.location_home
-        self._max_flight_lookup = _cfg.max_flight_lookup
+        cfg = Config.instance()
+        self.zone_home = cfg.zone_home
+        self.min_altitude = cfg.flight_min_altitude
+        self.max_altitude = cfg.flight_max_altitude
+        self.location_home = cfg.location_home
+        self.max_flight_lookup = cfg.max_flight_lookup
 
-        self._api = FlightRadar24API()
-        self._lock = Lock()
-        self._done = Event()
+        self.api = FlightRadar24API()
+        self.lock = Lock()
+        self.done = Event()
 
-        self._thread = None
-        self._data = []
-        self._new_data = False
-        self._processing = False
-        self._error = None
+        self.thread = None
+        self.data_store = []
+        self.new_data_store = False
+        self.processing_store = False
+        self.error_store = None
 
         # Configure FR24 to exclude ground traffic
-        flight_tracker = self._api.get_flight_tracker_config()
+        flight_tracker = self.api.get_flight_tracker_config()
         flight_tracker.gnd = 0
-        self._api.set_flight_tracker_config(flight_tracker)
+        self.api.set_flight_tracker_config(flight_tracker)
 
     def grab_data(self):
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-            self._thread = Thread(
-                target=self._grab_data,
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+            self.thread = Thread(
+                target=self.grab_data_impl,
                 name="overhead-flightradar24-grabber",
             )
-        self._thread.start()
+        self.thread.start()
         return True
 
     def refresh(self):
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-        self._grab_data()
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+        self.grab_data_impl()
         return True
 
     def wait(self, timeout=None):
-        finished = self._done.wait(timeout)
-        if finished and self._thread is not None:
-            self._thread.join()
+        finished = self.done.wait(timeout)
+        if finished and self.thread is not None:
+            self.thread.join()
         return finished
 
-    def _grab_data(self):
+    def grab_data_impl(self):
         data = []
 
         try:
-            bounds = self._api.get_bounds(self._zone_home)
-            flights = self._api.get_flights(bounds=bounds)
+            bounds = self.api.get_bounds(self.zone_home)
+            flights = self.api.get_flights(bounds=bounds)
 
-            min_alt_ft = self._min_altitude / 0.3048
-            max_alt_ft = self._max_altitude / 0.3048
+            min_alt_ft = self.min_altitude / 0.3048
+            max_alt_ft = self.max_altitude / 0.3048
 
             flights = [
                 f
@@ -127,25 +127,25 @@ class Overhead:
 
             flights = sorted(
                 flights,
-                key=lambda f: distance_from_flight_to_home(f, self._location_home),
+                key=lambda f: distance_from_flight_to_home(f, self.location_home),
             )
 
-            for flight in flights[: self._max_flight_lookup]:
+            for flight in flights[: self.max_flight_lookup]:
                 retries = RETRIES
                 while retries:
                     sleep(RATE_LIMIT_DELAY)
                     try:
-                        details = self._api.get_flight_details(flight)
+                        details = self.api.get_flight_details(flight)
 
                         try:
                             plane = details["aircraft"]["model"]["text"]
                         except (KeyError, TypeError):
                             plane = ""
-                        plane = _clean_field(plane)
+                        plane = clean_field(plane)
 
-                        origin = _clean_field(flight.origin_airport_iata)
-                        destination = _clean_field(flight.destination_airport_iata)
-                        callsign = _clean_field(flight.callsign)
+                        origin = clean_field(flight.origin_airport_iata)
+                        destination = clean_field(flight.destination_airport_iata)
+                        callsign = clean_field(flight.callsign)
 
                         # Full airport names from detail lookup
                         try:
@@ -190,11 +190,11 @@ class Overhead:
                     except (KeyError, AttributeError, TypeError):
                         retries -= 1
 
-            with self._lock:
+            with self.lock:
                 print(data)
-                self._data = data
-                self._new_data = True
-                self._error = None
+                self.data_store = data
+                self.new_data_store = True
+                self.error_store = None
 
         except (
             RequestException,
@@ -206,40 +206,40 @@ class Overhead:
             TypeError,
             ValueError,
         ) as e:
-            with self._lock:
-                self._new_data = False
-                self._error = e
+            with self.lock:
+                self.new_data_store = False
+                self.error_store = e
 
         finally:
-            with self._lock:
-                self._processing = False
-            self._done.set()
+            with self.lock:
+                self.processing_store = False
+            self.done.set()
 
     @property
     def new_data(self):
-        with self._lock:
-            return self._new_data
+        with self.lock:
+            return self.new_data_store
 
     @property
     def processing(self):
-        with self._lock:
-            return self._processing
+        with self.lock:
+            return self.processing_store
 
     @property
     def error(self):
-        with self._lock:
-            return self._error
+        with self.lock:
+            return self.error_store
 
     @property
     def data(self):
-        with self._lock:
-            self._new_data = False
-            return list(self._data)
+        with self.lock:
+            self.new_data_store = False
+            return list(self.data_store)
 
     @property
     def data_is_empty(self):
-        with self._lock:
-            return len(self._data) == 0
+        with self.lock:
+            return len(self.data_store) == 0
 
 
 if __name__ == "__main__":

@@ -16,15 +16,15 @@ AMPM_POSITION = (44, 5)  # top-right, only shown in 12hr mode
 class ClockScene(object):
     def __init__(self):
         super().__init__()
-        self._last_time = None
+        self.last_time = None
 
-    def _now_local(self):
+    def now_local(self):
         return datetime.now()
 
-    def _time_string(self) -> tuple[str, str | None]:
+    def time_string(self) -> tuple[str, str | None]:
         """Returns (time_str, ampm_str_or_None)."""
         cfg = Config.instance()
-        now = self._now_local()
+        now = self.now_local()
         if cfg.clock_24hr:
             return now.strftime("%H:%M"), None
         hour_str = now.strftime("%-I:%M")
@@ -33,25 +33,25 @@ class ClockScene(object):
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 1)
     def clock(self, count):
-        if len(self._data):
-            self._last_time = None
+        if len(self.data):
+            self.last_time = None
             return
 
-        time_str, ampm_str = self._time_string()
+        time_str, ampm_str = self.time_string()
         current_time = time_str + (ampm_str or "")
 
-        if self._last_time == current_time:
+        if self.last_time == current_time:
             return
 
         # Undraw old
-        if self._last_time is not None:
+        if self.last_time is not None:
             graphics.DrawText(
                 self.canvas,
                 CLOCK_FONT,
                 CLOCK_POSITION[0],
                 CLOCK_POSITION[1],
                 TC(THEME_BG),
-                self._last_time[:5],
+                self.last_time[:5],
             )  # just the HH:MM part
             if ampm_str:
                 graphics.DrawText(
@@ -60,10 +60,10 @@ class ClockScene(object):
                     AMPM_POSITION[0],
                     AMPM_POSITION[1],
                     TC(THEME_BG),
-                    "AM" if "AM" in self._last_time else "PM",
+                    "AM" if "AM" in self.last_time else "PM",
                 )
 
-        self._last_time = current_time
+        self.last_time = current_time
 
         # Draw new
         graphics.DrawText(

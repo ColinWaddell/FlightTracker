@@ -12,20 +12,20 @@ from setup.configuration import Config
 try:
     import RPi.GPIO as GPIO
 
-    _GPIO_AVAILABLE = True
+    GPIO_AVAILABLE = True
 except ImportError:
-    _GPIO_AVAILABLE = False
+    GPIO_AVAILABLE = False
 
 
 class LoadingLEDIndicator:
     def __init__(self, canvas, overhead):
         # canvas is accepted for API symmetry with LoadingPulseIndicator but not used
-        self._overhead = overhead
-        self._setup_complete = False
-        self._setup()
+        self.overhead = overhead
+        self.setup_complete = False
+        self.setup_gpio()
 
-    def _setup(self) -> None:
-        if not _GPIO_AVAILABLE:
+    def setup_gpio(self) -> None:
+        if not GPIO_AVAILABLE:
             return
         try:
             pin = Config.instance().loading_led_gpio_pin
@@ -35,7 +35,7 @@ class LoadingLEDIndicator:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.HIGH)
-            self._setup_complete = True
+            self.setup_complete = True
         except Exception:
             print("Error initializing GPIO", file=sys.stderr)
 
@@ -44,16 +44,16 @@ class LoadingLEDIndicator:
         if frame % 4:
             return
 
-        if not self._setup_complete:
-            self._setup()
-        if not self._setup_complete:
+        if not self.setup_complete:
+            self.setup_gpio()
+        if not self.setup_complete:
             return
 
         pin = Config.instance().loading_led_gpio_pin
         if not pin:
             return
 
-        if self._overhead.processing:
+        if self.overhead.processing:
             count = (frame // 4) % 2
             GPIO.output(pin, GPIO.HIGH if count else GPIO.LOW)
         else:

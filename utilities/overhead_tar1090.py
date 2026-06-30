@@ -16,27 +16,27 @@ BLANK_FIELDS = ["", "N/A", "NONE"]
 # Airport name lookup (bundled airports.json)
 # ---------------------------------------------------------------------------
 
-_airports: dict[str, str] = {}
-_airports_loaded = False
+airports_cache: dict[str, str] = {}
+airports_loaded = False
 
 
-def _load_airports():
-    global _airports, _airports_loaded
-    if _airports_loaded:
+def load_airports():
+    global airports_cache, airports_loaded
+    if airports_loaded:
         return
     path = Path(__file__).parent.parent / "assets" / "airports.json"
     if path.exists():
         try:
             with open(path) as fh:
-                _airports = json.load(fh)
+                airports_cache = json.load(fh)
         except Exception:
-            _airports = {}
-    _airports_loaded = True
+            airports_cache = {}
+    airports_loaded = True
 
 
 def airport_name(iata: str) -> str:
-    _load_airports()
-    return _airports.get(iata.upper(), "")
+    load_airports()
+    return airports_cache.get(iata.upper(), "")
 
 
 # ---------------------------------------------------------------------------
@@ -62,11 +62,11 @@ def lookup_route(callsign: str, lat=None, lng=None) -> dict | None:
 # ---------------------------------------------------------------------------
 
 
-def _in_zone(lat, lon, zone):
+def in_zone(lat, lon, zone):
     return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
 
 
-def _distance_from_home(lat, lon, alt_ft, home):
+def distance_from_home(lat, lon, alt_ft, home):
     def polar_to_cartesian(lat, lon, alt):
         deg2rad = math.pi / 180
         return [
@@ -90,58 +90,58 @@ class Overhead:
     def __init__(self):
         from setup.configuration import Config
 
-        _cfg = Config.instance()
-        self._tar1090_url = _cfg.tar1090_url
-        self._zone_home = _cfg.zone_home
-        self._min_altitude = _cfg.flight_min_altitude
-        self._max_altitude = _cfg.flight_max_altitude
-        self._location_home = _cfg.location_home
-        self._max_flight_lookup = _cfg.max_flight_lookup
-        self._route_cache: dict[str, tuple] = {}
-        self._lock = Lock()
-        self._done = Event()
+        cfg = Config.instance()
+        self.tar1090_url = cfg.tar1090_url
+        self.zone_home = cfg.zone_home
+        self.min_altitude = cfg.flight_min_altitude
+        self.max_altitude = cfg.flight_max_altitude
+        self.location_home = cfg.location_home
+        self.max_flight_lookup = cfg.max_flight_lookup
+        self.route_cache: dict[str, tuple] = {}
+        self.lock = Lock()
+        self.done = Event()
 
-        self._thread = None
-        self._data = []
-        self._new_data = False
-        self._processing = False
-        self._error = None
+        self.thread = None
+        self.data_store = []
+        self.new_data_store = False
+        self.processing_store = False
+        self.error_store = None
 
     def grab_data(self):
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-            self._thread = Thread(
-                target=self._grab_data, name="overhead-tar1090-grabber"
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+            self.thread = Thread(
+                target=self.grab_data_impl, name="overhead-tar1090-grabber"
             )
-        self._thread.start()
+        self.thread.start()
         return True
 
     def refresh(self):
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-        self._grab_data()
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+        self.grab_data_impl()
         return True
 
     def wait(self, timeout=None):
-        finished = self._done.wait(timeout)
-        if finished and self._thread is not None:
-            self._thread.join()
+        finished = self.done.wait(timeout)
+        if finished and self.thread is not None:
+            self.thread.join()
         return finished
 
-    def _get_route(self, callsign, lat=None, lng=None):
+    def get_route(self, callsign, lat=None, lng=None):
         now = time()
-        with self._lock:
-            cached = self._route_cache.get(callsign)
+        with self.lock:
+            cached = self.route_cache.get(callsign)
         if cached is not None:
             origin, dest, ts = cached
             if now - ts < ROUTE_CACHE_TTL:
@@ -161,23 +161,23 @@ class Overhead:
         except (RequestException, ValueError, KeyError, AttributeError, TypeError):
             pass
 
-        with self._lock:
-            self._route_cache[callsign] = (origin, dest, time())
+        with self.lock:
+            self.route_cache[callsign] = (origin, dest, time())
         return origin, dest
 
-    def _grab_data(self):
+    def grab_data_impl(self):
         data = []
 
         try:
-            response = requests.get(self._tar1090_url, timeout=10)
+            response = requests.get(self.tar1090_url, timeout=10)
             response.raise_for_status()
 
             aircraft_list = response.json().get("aircraft", [])
 
-            min_alt_ft = self._min_altitude / 0.3048
-            max_alt_ft = self._max_altitude / 0.3048
-            zone = self._zone_home
-            home = self._location_home
+            min_alt_ft = self.min_altitude / 0.3048
+            max_alt_ft = self.max_altitude / 0.3048
+            zone = self.zone_home
+            home = self.location_home
 
             candidates = []
             for ac in aircraft_list:
@@ -191,17 +191,17 @@ class Overhead:
                     continue
                 if not (min_alt_ft < alt < max_alt_ft):
                     continue
-                if not _in_zone(lat, lon, zone):
+                if not in_zone(lat, lon, zone):
                     continue
                 candidates.append(ac)
 
             candidates.sort(
-                key=lambda ac: _distance_from_home(
+                key=lambda ac: distance_from_home(
                     ac["lat"], ac["lon"], ac["alt_baro"], home
                 )
             )
 
-            for ac in candidates[: self._max_flight_lookup]:
+            for ac in candidates[: self.max_flight_lookup]:
                 try:
                     callsign = (ac.get("flight") or "").strip()
                     if callsign.upper() in BLANK_FIELDS:
@@ -212,7 +212,7 @@ class Overhead:
                         plane = ""
 
                     if callsign:
-                        origin, destination = self._get_route(
+                        origin, destination = self.get_route(
                             callsign, ac.get("lat"), ac.get("lon")
                         )
                     else:
@@ -251,43 +251,43 @@ class Overhead:
                 except (KeyError, AttributeError, TypeError):
                     continue
 
-            with self._lock:
-                self._data = data
-                self._new_data = True
-                self._error = None
+            with self.lock:
+                self.data_store = data
+                self.new_data_store = True
+                self.error_store = None
 
         except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
-            with self._lock:
-                self._new_data = False
-                self._error = e
+            with self.lock:
+                self.new_data_store = False
+                self.error_store = e
 
         finally:
-            with self._lock:
-                self._processing = False
-            self._done.set()
+            with self.lock:
+                self.processing_store = False
+            self.done.set()
 
     @property
     def new_data(self):
-        with self._lock:
-            return self._new_data
+        with self.lock:
+            return self.new_data_store
 
     @property
     def processing(self):
-        with self._lock:
-            return self._processing
+        with self.lock:
+            return self.processing_store
 
     @property
     def error(self):
-        with self._lock:
-            return self._error
+        with self.lock:
+            return self.error_store
 
     @property
     def data(self):
-        with self._lock:
-            self._new_data = False
-            return list(self._data)
+        with self.lock:
+            self.new_data_store = False
+            return list(self.data_store)
 
     @property
     def data_is_empty(self):
-        with self._lock:
-            return len(self._data) == 0
+        with self.lock:
+            return len(self.data_store) == 0

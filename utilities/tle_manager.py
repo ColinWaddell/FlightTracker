@@ -28,7 +28,7 @@ TLE_CACHE_TTL = 86400  # 24 hours
 TLE_CACHE_PATH = CONFIG_PATH.parent / "tle_cache.json"
 HTTP_TIMEOUT = 15
 
-_GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
+GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
 
 
 # ---------------------------------------------------------------------------
@@ -36,9 +36,9 @@ _GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
 # ---------------------------------------------------------------------------
 
 
-def _fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
+def fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
     """Fetch a single TLE by NORAD catalog number. Returns (name, l1, l2) or None."""
-    url = _GP_URL.format(catnr=norad_id)
+    url = GP_URL.format(catnr=norad_id)
     try:
         req = urllib.request.Request(
             url,
@@ -63,7 +63,7 @@ def _fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
 # ---------------------------------------------------------------------------
 
 
-def _load_cache() -> dict | None:
+def load_cache() -> dict | None:
     try:
         data = json.loads(TLE_CACHE_PATH.read_text())
         if isinstance(data, dict) and "timestamp" in data and "tles" in data:
@@ -73,10 +73,12 @@ def _load_cache() -> dict | None:
     return None
 
 
-def _save_cache(tles: list[tuple[str, str, str]]) -> None:
+def save_cache(tles: list[tuple[str, str, str]]) -> None:
     try:
         TLE_CACHE_PATH.write_text(
-            json.dumps({"timestamp": time.time(), "tles": [list(t) for t in tles]}, indent=2)
+            json.dumps(
+                {"timestamp": time.time(), "tles": [list(t) for t in tles]}, indent=2
+            )
         )
     except Exception as exc:
         print(f"[tle] cache write failed: {exc}")
@@ -98,61 +100,61 @@ class TLEManager:
     """
 
     def __init__(self):
-        self._lock = threading.Lock()
-        self._tles: list[tuple[str, str, str]] = []
-        self._fetched_at: float = 0.0
-        self._ready = threading.Event()
+        self.lock = threading.Lock()
+        self.tles: list[tuple[str, str, str]] = []
+        self.fetched_at: float = 0.0
+        self.ready = threading.Event()
 
     def start(self) -> None:
-        threading.Thread(target=self._run, daemon=True, name="tle-manager").start()
+        threading.Thread(target=self.run_loop, daemon=True, name="tle-manager").start()
 
     def get(self, timeout: float = 30.0) -> list[tuple[str, str, str]]:
         """Block until first fetch completes, then return cached TLE list."""
-        self._ready.wait(timeout=timeout)
-        with self._lock:
-            return list(self._tles)
+        self.ready.wait(timeout=timeout)
+        with self.lock:
+            return list(self.tles)
 
     def invalidate(self) -> None:
         """Force a refresh on next cycle (e.g. after config change)."""
-        with self._lock:
-            self._fetched_at = 0.0
-        self._ready.clear()
+        with self.lock:
+            self.fetched_at = 0.0
+        self.ready.clear()
 
-    def _run(self) -> None:
+    def run_loop(self) -> None:
         # Serve from disk cache immediately if still fresh
-        cached = _load_cache()
+        cached = load_cache()
         if cached and (time.time() - cached["timestamp"]) < TLE_CACHE_TTL:
-            with self._lock:
-                self._tles = [tuple(t) for t in cached["tles"]]
-                self._fetched_at = cached["timestamp"]
-            self._ready.set()
+            with self.lock:
+                self.tles = [tuple(t) for t in cached["tles"]]
+                self.fetched_at = cached["timestamp"]
+            self.ready.set()
 
         while True:
-            with self._lock:
-                age = time.time() - self._fetched_at
+            with self.lock:
+                age = time.time() - self.fetched_at
             if age >= TLE_CACHE_TTL:
-                self._do_fetch()
+                self.do_fetch()
             time.sleep(300)  # check every 5 minutes
 
-    def _do_fetch(self) -> None:
+    def do_fetch(self) -> None:
         norad_ids = Config.instance().satellite_norad_ids
         if not norad_ids:
-            self._ready.set()
+            self.ready.set()
             return
 
         results: list[tuple[str, str, str]] = []
         for norad_id in norad_ids:
-            tle = _fetch_tle(norad_id)
+            tle = fetch_tle(norad_id)
             if tle:
                 print(f"[tle] fetched {tle[0]} (NORAD {norad_id})")
                 results.append(tle)
 
         if results:
-            _save_cache(results)
-            with self._lock:
-                self._tles = results
-                self._fetched_at = time.time()
+            save_cache(results)
+            with self.lock:
+                self.tles = results
+                self.fetched_at = time.time()
         else:
             print("[tle] fetch returned no results — keeping existing cache")
 
-        self._ready.set()
+        self.ready.set()

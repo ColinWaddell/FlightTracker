@@ -6,10 +6,10 @@ Shown whenever no flight data is available. Always has_data() → True
 so it never blocks the draw loop.
 
 Merges the four former mixin scenes:
-    ClockScene  →  _draw_clock()
-    DateScene   →  _draw_date()
-    DayScene    →  _draw_day()
-    WeatherScene → _draw_weather()
+    ClockScene  →  draw_clock()
+    DateScene   →  draw_date()
+    DayScene    →  draw_day()
+    WeatherScene → draw_weather()
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ AMPM_POSITION = (44, 5)
 # Date
 DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
-_DATE_FORMATS = [
+DATE_FORMATS = [
     "%Y-%m-%d",  # 0 = YYYY-MM-DD
     "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
     "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
@@ -67,7 +67,7 @@ DAY_POSITION = (2, 23)
 
 # Weather — shared constants also referenced by FlightScene for the
 # temperature-to-colour mapping used in the rainfall graph.
-_WEATHERAPI_URL = (
+WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
     "?key={key}&q={lat},{lng}&days=2&aqi=no&alerts=no"
 )
@@ -84,7 +84,7 @@ TEMPERATURE_FONT = fonts.extrasmall
 TEMPERATURE_FONT_HEIGHT = 5
 TEMPERATURE_POSITION = (48, TEMPERATURE_FONT_HEIGHT + 1)
 
-_TEMPERATURE_THRESHOLDS = [
+TEMPERATURE_THRESHOLDS = [
     (0, THEME_WEATHER_00C),
     (1, THEME_WEATHER_01C),
     (10, THEME_WEATHER_10C),
@@ -102,13 +102,13 @@ _TEMPERATURE_THRESHOLDS = [
 
 def temperature_to_colour(temp_c: float) -> graphics.Color:
     """Map a temperature in °C to an interpolated theme colour."""
-    lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[0]
-    hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[1]
+    lo_temp, lo_key = TEMPERATURE_THRESHOLDS[0]
+    hi_temp, hi_key = TEMPERATURE_THRESHOLDS[1]
 
-    for i in range(1, len(_TEMPERATURE_THRESHOLDS) - 1):
-        if temp_c > _TEMPERATURE_THRESHOLDS[i][0]:
-            lo_temp, lo_key = _TEMPERATURE_THRESHOLDS[i]
-            hi_temp, hi_key = _TEMPERATURE_THRESHOLDS[i + 1]
+    for i in range(1, len(TEMPERATURE_THRESHOLDS) - 1):
+        if temp_c > TEMPERATURE_THRESHOLDS[i][0]:
+            lo_temp, lo_key = TEMPERATURE_THRESHOLDS[i]
+            hi_temp, hi_key = TEMPERATURE_THRESHOLDS[i + 1]
 
     c_lo = TC(lo_key)
     c_hi = TC(hi_key)
@@ -132,7 +132,7 @@ def temperature_to_colour(temp_c: float) -> graphics.Color:
 # ---------------------------------------------------------------------------
 
 
-class _WeatherFetcher(threading.Thread):
+class WeatherFetcher(threading.Thread):
     """
     Daemon thread that fetches from weatherapi.com on startup and then
     every WEATHER_REFRESH_SECONDS thereafter.  Thread-safe via a lock.
@@ -140,20 +140,20 @@ class _WeatherFetcher(threading.Thread):
 
     def __init__(self):
         super().__init__(daemon=True, name="weather-fetch")
-        self._lock = threading.Lock()
-        self._data: dict | None = None
-        self._stop = threading.Event()
+        self.lock = threading.Lock()
+        self.weather_data: dict | None = None
+        self.stop_event = threading.Event()
 
     def run(self) -> None:
-        self._do_fetch()  # immediate fetch on start
-        while not self._stop.wait(WEATHER_REFRESH_SECONDS):
-            self._do_fetch()
+        self.do_fetch()  # immediate fetch on start
+        while not self.stop_event.wait(WEATHER_REFRESH_SECONDS):
+            self.do_fetch()
 
-    def _do_fetch(self) -> None:
+    def do_fetch(self) -> None:
         cfg = Config.instance()
         if not cfg.weatherapi_key:
             return
-        url = _WEATHERAPI_URL.format(
+        url = WEATHERAPI_URL.format(
             key=cfg.weatherapi_key,
             lat=cfg.flight_lat,
             lng=cfg.flight_lng,
@@ -171,18 +171,18 @@ class _WeatherFetcher(threading.Thread):
                         for h in day["hour"]
                     ],
                 }
-                with self._lock:
-                    self._data = parsed
+                with self.lock:
+                    self.weather_data = parsed
                 return
             except Exception:
                 pass  # retry
 
     def get(self) -> dict | None:
-        with self._lock:
-            return self._data
+        with self.lock:
+            return self.weather_data
 
     def stop(self) -> None:
-        self._stop.set()
+        self.stop_event.set()
 
 
 # ---------------------------------------------------------------------------
@@ -206,32 +206,32 @@ class IdleScene:
         self.draw_square = draw_square
 
         # Scene frame counter
-        self._frame: int = 0
+        self.frame: int = 0
 
         # Clock
-        self._last_time: str | None = None
+        self.last_time: str | None = None
 
         # Date
-        self._last_date: str | None = None
+        self.last_date: str | None = None
 
         # Day
-        self._last_day: str | None = None
+        self.last_day: str | None = None
 
         # Weather
-        self._last_temp_str: str | None = None
-        self._last_temp_c: float | None = None
-        self._last_rain_data: list | None = None
+        self.last_temp_str: str | None = None
+        self.last_temp_c: float | None = None
+        self.last_rain_data: list | None = None
 
         # Start background weather fetch immediately.
-        self._weather = _WeatherFetcher()
-        self._weather.start()
+        self.weather = WeatherFetcher()
+        self.weather.start()
 
     # ------------------------------------------------------------------
     # Scene protocol
     # ------------------------------------------------------------------
 
     def poll(self) -> None:
-        pass  # weather is handled by the background _WeatherFetcher thread
+        pass  # weather is handled by the background WeatherFetcher thread
 
     def has_data(self) -> bool:
         return True  # always the guaranteed fallback
@@ -246,31 +246,31 @@ class IdleScene:
 
     def reset(self) -> None:
         """Clear cached draw state so everything redraws on next tick."""
-        self._frame = 0
-        self._last_time = None
-        self._last_date = None
-        self._last_day = None
-        self._last_temp_str = None
-        self._last_temp_c = None
-        self._last_rain_data = None
+        self.frame = 0
+        self.last_time = None
+        self.last_date = None
+        self.last_day = None
+        self.last_temp_str = None
+        self.last_temp_c = None
+        self.last_rain_data = None
 
     def draw(self) -> None:
         """Called every frame.  Updates at ~1 fps."""
-        self._frame += 1
-        if self._frame % int(frames.PER_SECOND):
+        self.frame += 1
+        if self.frame % int(frames.PER_SECOND):
             return
 
-        count = self._frame // int(frames.PER_SECOND)
-        self._draw_clock()
-        self._draw_date()
-        self._draw_day()
-        self._draw_weather(count)
+        count = self.frame // int(frames.PER_SECOND)
+        self.draw_clock()
+        self.draw_date()
+        self.draw_day()
+        self.draw_weather(count)
 
     # ------------------------------------------------------------------
     # Clock
     # ------------------------------------------------------------------
 
-    def _draw_clock(self) -> None:
+    def draw_clock(self) -> None:
         cfg = Config.instance()
         now = datetime.datetime.now()
         if cfg.clock_24hr:
@@ -281,21 +281,21 @@ class IdleScene:
             ampm_str = now.strftime("%p")
 
         current_time = time_str + (ampm_str or "")
-        if self._last_time == current_time:
+        if self.last_time == current_time:
             return
 
         # Undraw old value
-        if self._last_time is not None:
+        if self.last_time is not None:
             graphics.DrawText(
                 self.canvas,
                 CLOCK_FONT,
                 CLOCK_POSITION[0],
                 CLOCK_POSITION[1],
                 TC(THEME_BG),
-                self._last_time[:5],
+                self.last_time[:5],
             )
             if ampm_str:
-                old_ampm = "AM" if "AM" in self._last_time else "PM"
+                old_ampm = "AM" if "AM" in self.last_time else "PM"
                 graphics.DrawText(
                     self.canvas,
                     CLOCK_AMPM_FONT,
@@ -305,7 +305,7 @@ class IdleScene:
                     old_ampm,
                 )
 
-        self._last_time = current_time
+        self.last_time = current_time
 
         graphics.DrawText(
             self.canvas,
@@ -329,27 +329,27 @@ class IdleScene:
     # Date
     # ------------------------------------------------------------------
 
-    def _draw_date(self) -> None:
+    def draw_date(self) -> None:
         cfg = Config.instance()
         fmt = (
-            _DATE_FORMATS[cfg.date_format]
-            if cfg.date_format < len(_DATE_FORMATS)
-            else _DATE_FORMATS[0]
+            DATE_FORMATS[cfg.date_format]
+            if cfg.date_format < len(DATE_FORMATS)
+            else DATE_FORMATS[0]
         )
         current_date = datetime.datetime.now().strftime(fmt)
-        if self._last_date == current_date:
+        if self.last_date == current_date:
             return
 
-        if self._last_date is not None:
+        if self.last_date is not None:
             graphics.DrawText(
                 self.canvas,
                 DATE_FONT,
                 DATE_POSITION[0],
                 DATE_POSITION[1],
                 TC(THEME_BG),
-                self._last_date,
+                self.last_date,
             )
-        self._last_date = current_date
+        self.last_date = current_date
         graphics.DrawText(
             self.canvas,
             DATE_FONT,
@@ -363,21 +363,21 @@ class IdleScene:
     # Day of week
     # ------------------------------------------------------------------
 
-    def _draw_day(self) -> None:
+    def draw_day(self) -> None:
         current_day = datetime.datetime.now().strftime("%A")
-        if self._last_day == current_day:
+        if self.last_day == current_day:
             return
 
-        if self._last_day is not None:
+        if self.last_day is not None:
             graphics.DrawText(
                 self.canvas,
                 DAY_FONT,
                 DAY_POSITION[0],
                 DAY_POSITION[1],
                 TC(THEME_BG),
-                self._last_day,
+                self.last_day,
             )
-        self._last_day = current_day
+        self.last_day = current_day
         graphics.DrawText(
             self.canvas,
             DAY_FONT,
@@ -391,36 +391,36 @@ class IdleScene:
     # Weather
     # ------------------------------------------------------------------
 
-    def _draw_weather(self, count: int) -> None:
+    def draw_weather(self, count: int) -> None:
         cfg = Config.instance()
-        weather = self._weather.get()
+        weather = self.weather.get()
 
         # --- Temperature ---
         if cfg.weather_mode < 1:
             # Mode disabled: erase if previously drawn
-            if self._last_temp_str is not None:
+            if self.last_temp_str is not None:
                 graphics.DrawText(
                     self.canvas,
                     TEMPERATURE_FONT,
                     TEMPERATURE_POSITION[0],
                     TEMPERATURE_POSITION[1],
                     TC(THEME_BG),
-                    self._last_temp_str,
+                    self.last_temp_str,
                 )
-                self._last_temp_str = None
+                self.last_temp_str = None
         else:
             temp_c = weather["temp_c"] if weather else None
             # Erase old value first
-            if self._last_temp_str is not None:
+            if self.last_temp_str is not None:
                 graphics.DrawText(
                     self.canvas,
                     TEMPERATURE_FONT,
                     TEMPERATURE_POSITION[0],
                     TEMPERATURE_POSITION[1],
                     TC(THEME_BG),
-                    self._last_temp_str,
+                    self.last_temp_str,
                 )
-                self._last_temp_str = None
+                self.last_temp_str = None
             if temp_c is not None:
                 display_temp = temp_c * 9.0 / 5.0 + 32 if cfg.units == "i" else temp_c
                 unit_char = "F" if cfg.units == "i" else "C"
@@ -433,28 +433,28 @@ class IdleScene:
                     temperature_to_colour(temp_c),
                     temp_str,
                 )
-                self._last_temp_c = temp_c
-                self._last_temp_str = temp_str
+                self.last_temp_c = temp_c
+                self.last_temp_str = temp_str
 
         # --- Rainfall graph ---
         if cfg.weather_mode < 2:
-            if self._last_rain_data is not None:
-                self._draw_rainfall_graph(self._last_rain_data, TC(THEME_BG))
-                self._last_rain_data = None
+            if self.last_rain_data is not None:
+                self.draw_rainfall_graph(self.last_rain_data, TC(THEME_BG))
+                self.last_rain_data = None
             return
 
-        rain_data = self._rainfall_data(weather)
+        rain_data = self.rainfall_data(weather)
 
         # Erase stale graph when data changes
-        if self._last_rain_data is not None and self._last_rain_data != rain_data:
-            self._draw_rainfall_graph(self._last_rain_data, TC(THEME_BG))
+        if self.last_rain_data is not None and self.last_rain_data != rain_data:
+            self.draw_rainfall_graph(self.last_rain_data, TC(THEME_BG))
 
         if rain_data:
             flash_enabled = RAINFALL_OVERSPILL_FLASH_ENABLED and bool(count % 2)
-            self._draw_rainfall_graph(rain_data, flash_enabled=flash_enabled)
-            self._last_rain_data = list(rain_data)
+            self.draw_rainfall_graph(rain_data, flash_enabled=flash_enabled)
+            self.last_rain_data = list(rain_data)
 
-    def _rainfall_data(self, weather: dict | None) -> list | None:
+    def rainfall_data(self, weather: dict | None) -> list | None:
         if weather is None:
             return None
         forecast = weather["forecast"]
@@ -465,7 +465,7 @@ class IdleScene:
             for i, (temp, precip) in enumerate(slice_)
         ]
 
-    def _draw_rainfall_graph(
+    def draw_rainfall_graph(
         self, rain_data: list, graph_colour=None, flash_enabled: bool = False
     ) -> None:
         columns = range(

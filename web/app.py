@@ -36,15 +36,15 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 # ---------------------------------------------------------------------------
 
 
-def _hash_password(password: str) -> str:
+def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-def _check_password(password: str) -> bool:
-    return _hash_password(password) == Config.instance().web_password_hash
+def check_password(password: str) -> bool:
+    return hash_password(password) == Config.instance().web_password_hash
 
 
-def _csrf_token() -> str:
+def csrf_token() -> str:
     token = session.get("csrf_token")
     if not token:
         token = secrets.token_hex(16)
@@ -52,7 +52,7 @@ def _csrf_token() -> str:
     return token
 
 
-def _validate_csrf(form) -> bool:
+def validate_csrf(form) -> bool:
     return str(form.get("csrf_token", "")) == session.get("csrf_token")
 
 
@@ -71,25 +71,25 @@ def login_required(f):
 # ---------------------------------------------------------------------------
 
 
-def _str(v, default="") -> str:
+def str_val(v, default="") -> str:
     return str(v) if v is not None else default
 
 
-def _int(v, default=0) -> int:
+def int_val(v, default=0) -> int:
     try:
         return int(v)
     except (TypeError, ValueError):
         return default
 
 
-def _float(v, default=0.0) -> float:
+def float_val(v, default=0.0) -> float:
     try:
         return float(v)
     except (TypeError, ValueError):
         return default
 
 
-def _bool(v) -> bool:
+def bool_val(v) -> bool:
     """HTML checkboxes send 'on' when checked, nothing when unchecked."""
     if isinstance(v, bool):
         return v
@@ -101,17 +101,17 @@ def _bool(v) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _restart_after(delay: float = 1.0):
+def restart_after(delay: float = 1.0):
     """Schedule os.execv after `delay` seconds on a daemon thread."""
 
-    def _do_restart():
+    def do_restart():
         import time
 
         time.sleep(delay)
         print(f"[web] Restarting process: {sys.executable} {sys.argv}", flush=True)
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
-    threading.Thread(target=_do_restart, daemon=True, name="restart").start()
+    threading.Thread(target=do_restart, daemon=True, name="restart").start()
 
 
 # ---------------------------------------------------------------------------
@@ -136,12 +136,12 @@ def login():
 
     error = None
     if request.method == "POST":
-        if not _validate_csrf(request.form):
+        if not validate_csrf(request.form):
             error = "Invalid request."
         else:
             password = request.form.get("password", "")
             print(f"[web] Login attempt", flush=True)
-            if _check_password(password):
+            if check_password(password):
                 session["authenticated"] = True
                 print("[web] Login successful", flush=True)
                 next_url = request.args.get("next") or url_for("settings")
@@ -154,7 +154,7 @@ def login():
     return render_template(
         "login.html",
         error=error,
-        csrf_token=_csrf_token(),
+        csrf_token=csrf_token(),
         using_default_password=using_default_password,
     )
 
@@ -176,74 +176,90 @@ def settings():
         print(f"[web] Raw form keys: {list(form.keys())}", flush=True)
 
         try:
-            if not _validate_csrf(form):
+            if not validate_csrf(form):
                 raise ValueError("Invalid CSRF token.")
 
             new_data = {
                 # Location / flight zone
-                "flight_lat": _float(form.get("flight_lat"), cfg.flight_lat),
-                "flight_lng": _float(form.get("flight_lng"), cfg.flight_lng),
-                "flight_radius": _float(form.get("flight_radius"), cfg.flight_radius),
-                "flight_min_altitude": _float(
+                "flight_lat": float_val(form.get("flight_lat"), cfg.flight_lat),
+                "flight_lng": float_val(form.get("flight_lng"), cfg.flight_lng),
+                "flight_radius": float_val(
+                    form.get("flight_radius"), cfg.flight_radius
+                ),
+                "flight_min_altitude": float_val(
                     form.get("flight_min_altitude"), cfg.flight_min_altitude
                 ),
-                "flight_max_altitude": _float(
+                "flight_max_altitude": float_val(
                     form.get("flight_max_altitude"), cfg.flight_max_altitude
                 ),
                 # Airport display
-                "home_airport_code": _str(form.get("home_airport_code")).upper()[:4],
-                "full_airport_name": _bool(form.get("full_airport_name")),
-                "abbreviate_name": _bool(form.get("abbreviate_name")),
-                "journey_blank_filler": _str(form.get("journey_blank_filler"), " ? "),
-                # Plane info row
-                "details": _int(form.get("details"), 0),
-                # Weather
-                "weatherapi_key": _str(form.get("weatherapi_key"), cfg.weatherapi_key),
-                "weather_mode": _int(form.get("weather_mode"), 0),
-                "units": _str(form.get("units"), "m"),
-                # Display
-                "theme": _int(form.get("theme"), 0),
-                "screen_brightness": max(
-                    1, min(5, _int(form.get("screen_brightness"), 3))
+                "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],
+                "full_airport_name": bool_val(form.get("full_airport_name")),
+                "abbreviate_name": bool_val(form.get("abbreviate_name")),
+                "journey_blank_filler": str_val(
+                    form.get("journey_blank_filler"), " ? "
                 ),
-                "screen_rotate": _bool(form.get("screen_rotate")),
+                # Plane info row
+                "details": int_val(form.get("details"), 0),
+                # Weather
+                "weatherapi_key": str_val(
+                    form.get("weatherapi_key"), cfg.weatherapi_key
+                ),
+                "weather_mode": int_val(form.get("weather_mode"), 0),
+                "units": str_val(form.get("units"), "m"),
+                # Display
+                "theme": int_val(form.get("theme"), 0),
+                "screen_brightness": max(
+                    1, min(5, int_val(form.get("screen_brightness"), 3))
+                ),
+                "screen_rotate": bool_val(form.get("screen_rotate")),
                 # Brightness schedule
-                "screen_schedule_enabled": _bool(form.get("screen_schedule_enabled")),
-                "screen_schedule_auto": _bool(form.get("screen_schedule_auto")),
-                "screen_schedule_start": _str(
+                "screen_schedule_enabled": bool_val(
+                    form.get("screen_schedule_enabled")
+                ),
+                "screen_schedule_auto": bool_val(form.get("screen_schedule_auto")),
+                "screen_schedule_start": str_val(
                     form.get("screen_schedule_start"), "22:00"
                 ),
-                "screen_schedule_end": _str(form.get("screen_schedule_end"), "07:00"),
+                "screen_schedule_end": str_val(
+                    form.get("screen_schedule_end"), "07:00"
+                ),
                 "screen_schedule_brightness": max(
-                    0, min(5, _int(form.get("screen_schedule_brightness"), 0))
+                    0, min(5, int_val(form.get("screen_schedule_brightness"), 0))
                 ),
                 # Clock / date
-                "clock_24hr": _bool(form.get("clock_24hr")),
-                "date_format": _int(form.get("date_format"), 0),
+                "clock_24hr": bool_val(form.get("clock_24hr")),
+                "date_format": int_val(form.get("date_format"), 0),
                 # Web interface
-                "web_interface_enabled": _bool(form.get("web_interface_enabled")),
+                "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
                 # Hardware
-                "gpio_slowdown": max(1, min(4, _int(form.get("gpio_slowdown"), 1))),
-                "hat_pwm_enabled": _bool(form.get("hat_pwm_enabled")),
-                "loading_led_enabled": _bool(form.get("loading_led_enabled")),
-                "loading_led_gpio_pin": _int(form.get("loading_led_gpio_pin"), 25),
+                "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
+                "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
+                "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
+                "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
                 # Data source
                 "data_source": (
                     "tar1090"
-                    if _str(form.get("data_source"), "fr24").lower() == "tar1090"
+                    if str_val(form.get("data_source"), "fr24").lower() == "tar1090"
                     else "fr24"
                 ),
-                "tar1090_url": _str(form.get("tar1090_url"), ""),
-                "max_flight_lookup": max(1, _int(form.get("max_flight_lookup"), 5)),
+                "tar1090_url": str_val(form.get("tar1090_url"), ""),
+                "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
                 # Satellite tracking
-                "satellite_tracking_enabled": _bool(form.get("satellite_tracking_enabled")),
+                "satellite_tracking_enabled": bool_val(
+                    form.get("satellite_tracking_enabled")
+                ),
                 "satellite_norad_ids": [
                     int(n.strip())
                     for n in form.get("satellite_norad_ids", "").splitlines()
                     if n.strip().isdigit()
                 ],
-                "satellite_min_elevation": max(0, min(90, _int(form.get("satellite_min_elevation"), 20))),
-                "satellite_max_count": max(1, min(10, _int(form.get("satellite_max_count"), 5))),
+                "satellite_min_elevation": max(
+                    0, min(90, int_val(form.get("satellite_min_elevation"), 20))
+                ),
+                "satellite_max_count": max(
+                    1, min(10, int_val(form.get("satellite_max_count"), 5))
+                ),
             }
 
             # Password change - only update if a new password was supplied
@@ -252,7 +268,7 @@ def settings():
             if new_password:
                 if new_password != confirm_password:
                     raise ValueError("New passwords do not match.")
-                new_data["web_password_hash"] = _hash_password(new_password)
+                new_data["web_password_hash"] = hash_password(new_password)
                 print("[web] Password updated", flush=True)
             else:
                 # Preserve existing hash
@@ -273,48 +289,48 @@ def settings():
                 render_template(
                     "settings.html",
                     cfg=cfg.as_dict(),
-                    airports_json=_airports_json(),
+                    airports_json=airports_json(),
                     error=str(exc),
-                    csrf_token=_csrf_token(),
+                    csrf_token=csrf_token(),
                     in_schedule=cfg.is_in_brightness_schedule(),
                 ),
                 400,
             )
 
-        _restart_after(delay=1.0)
+        restart_after(delay=1.0)
         return render_template("restarting.html")
 
     return render_template(
         "settings.html",
         cfg=cfg.as_dict(),
-        airports_json=_airports_json(),
-        csrf_token=_csrf_token(),
+        airports_json=airports_json(),
+        csrf_token=csrf_token(),
         in_schedule=cfg.is_in_brightness_schedule(),
     )
 
 
-_AIRPORTS_JSON: str | None = None
+AIRPORTS_JSON: str | None = None
 
 
-def _load_airports_json() -> str:
-    global _AIRPORTS_JSON
-    if _AIRPORTS_JSON is None:
+def load_airports_json() -> str:
+    global AIRPORTS_JSON
+    if AIRPORTS_JSON is None:
         airports_path = Path(__file__).parent.parent / "assets" / "airports.json"
         try:
             with open(airports_path) as fh:
-                _AIRPORTS_JSON = fh.read()
+                AIRPORTS_JSON = fh.read()
         except Exception:
-            _AIRPORTS_JSON = "{}"
-    return _AIRPORTS_JSON
+            AIRPORTS_JSON = "{}"
+    return AIRPORTS_JSON
 
 
-def _airports_json() -> str:
-    return _load_airports_json()
+def airports_json() -> str:
+    return load_airports_json()
 
 
 # Keys that may contain sensitive information and should be stripped from
 # the debug config export.
-_SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash"}
+SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash"}
 
 
 @app.route("/debug-config")
@@ -329,7 +345,7 @@ def debug_config():
 
     cfg = Config.instance()
     safe = {
-        k: ("***REDACTED***" if k in _SENSITIVE_KEYS and v else v)
+        k: ("***REDACTED***" if k in SENSITIVE_KEYS and v else v)
         for k, v in cfg.as_dict().items()
     }
     payload = json.dumps(safe, indent=2, sort_keys=True)
