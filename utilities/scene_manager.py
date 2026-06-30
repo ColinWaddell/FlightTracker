@@ -49,8 +49,6 @@ class SceneManager:
         for scene in self._scenes:
             scene.poll()
 
-        self.poll_all()
-
         fallback = self._scenes[0]
         non_fallback = self._scenes[1:]
 
