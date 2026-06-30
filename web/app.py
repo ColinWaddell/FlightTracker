@@ -237,10 +237,10 @@ def settings():
                 "max_flight_lookup": max(1, _int(form.get("max_flight_lookup"), 5)),
                 # Satellite tracking
                 "satellite_tracking_enabled": _bool(form.get("satellite_tracking_enabled")),
-                "satellite_names": [
-                    n.strip()
-                    for n in form.get("satellite_names", "").splitlines()
-                    if n.strip()
+                "satellite_norad_ids": [
+                    int(n.strip())
+                    for n in form.get("satellite_norad_ids", "").splitlines()
+                    if n.strip().isdigit()
                 ],
                 "satellite_min_elevation": max(0, min(90, _int(form.get("satellite_min_elevation"), 20))),
                 "satellite_max_count": max(1, min(10, _int(form.get("satellite_max_count"), 5))),

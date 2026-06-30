@@ -11,6 +11,7 @@ markdown-it-py==4.2.0
 mdurl==0.1.2
 pycparser==3.0
 Pygments==2.20.0
+satellitetle>=0.18.0
 sgp4>=2.22
 qrcode[pil]>=7.4.2
 requests==2.32.4

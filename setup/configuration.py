@@ -145,7 +145,7 @@ DEFAULTS: dict[str, Any] = {
     "max_flight_lookup": 5,  # how many nearby flights to track at once
     # Satellite tracking
     "satellite_tracking_enabled": True,
-    "satellite_names": ["ISS (ZARYA)"],  # display names as listed on CelesTrak
+    "satellite_norad_ids": [25544],  # ISS (ZARYA) = 25544; look up others at celestrak.org
     "satellite_min_elevation": 20,  # degrees — passes peaking below this are ignored
     "satellite_max_count": 5,  # max simultaneous satellites to plot
 }
@@ -508,11 +508,17 @@ class Config:
         return bool(self._data.get("satellite_tracking_enabled", True))
 
     @property
-    def satellite_names(self) -> list:
-        val = self._data.get("satellite_names", ["ISS (ZARYA)"])
+    def satellite_norad_ids(self) -> list[int]:
+        val = self._data.get("satellite_norad_ids", [25544])
         if isinstance(val, list):
-            return [str(n) for n in val if str(n).strip()]
-        return ["ISS (ZARYA)"]
+            ids = []
+            for n in val:
+                try:
+                    ids.append(int(n))
+                except (TypeError, ValueError):
+                    pass
+            return ids
+        return [25544]
 
     @property
     def satellite_min_elevation(self) -> int:

@@ -250,11 +250,11 @@
           <div id="satellite_fields" style="display:{% if cfg.satellite_tracking_enabled %}block{% else %}none{% endif %}">
 
             <div class="mb-3">
-              <label class="form-label small" for="satellite_names">Satellites to track</label>
-              <textarea class="form-control form-control-sm font-monospace" id="satellite_names"
-                        name="satellite_names" rows="4"
-                        placeholder="ISS (ZARYA)">{{ cfg.satellite_names | join('\n') }}</textarea>
-              <div class="form-text text-muted small">One satellite name per line, exactly as listed on <a href="https://celestrak.org/SATCAT/search.php" target="_blank" rel="noopener noreferrer">CelesTrak</a>. TLEs are fetched automatically and refreshed every 24 hours.</div>
+              <label class="form-label small" for="satellite_norad_ids">Satellites to track</label>
+              <textarea class="form-control form-control-sm font-monospace" id="satellite_norad_ids"
+                        name="satellite_norad_ids" rows="4"
+                        placeholder="25544">{{ cfg.satellite_norad_ids | join('\n') }}</textarea>
+              <div class="form-text text-muted small">One NORAD catalog ID per line. ISS&nbsp;=&nbsp;25544. Look up IDs on <a href="https://celestrak.org/SATCAT/search.php" target="_blank" rel="noopener noreferrer">CelesTrak</a>. TLEs are fetched automatically and cached for 24 hours.</div>
             </div>
 
             <div class="row g-2 mb-2">
