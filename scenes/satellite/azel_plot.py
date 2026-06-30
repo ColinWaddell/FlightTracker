@@ -5,7 +5,7 @@ Converts (azimuth, elevation) coordinates to pixel positions on a circular
 polar plot and provides routines for drawing the circle, north notch,
 trajectory arcs, and current-position dots.
 
-Layout (within the left 32×32 region of the 64×32 canvas):
+Layout (within the left 32x32 region of the 64x32 canvas):
     Centre  : (PLOT_CX, PLOT_CY)
     Radius  : PLOT_RADIUS  (horizon ring)
     Azimuth : 0° = North = top of circle, increases clockwise
@@ -22,12 +22,9 @@ from rgbmatrix import graphics
 # Plot geometry
 # ---------------------------------------------------------------------------
 
-PLOT_CX = 15        # centre x within the canvas
-PLOT_CY = 16        # centre y within the canvas
-PLOT_RADIUS = 13    # pixels from centre to horizon ring
-
-# North notch: a gap of ±NOTCH_HALF_DEG either side of 0° (North)
-NOTCH_HALF_DEG = 12
+PLOT_CX = 48  # centre x within the canvas
+PLOT_CY = 19  # centre y within the canvas
+PLOT_RADIUS = 12  # pixels from centre to horizon ring
 
 # ---------------------------------------------------------------------------
 # Colour palette — one slot per satellite (index 0..4)
@@ -37,31 +34,31 @@ NOTCH_HALF_DEG = 12
 # ---------------------------------------------------------------------------
 
 _PALETTE_BRIGHT = [
-    graphics.Color(255, 220,   0),   # 0 amber
-    graphics.Color(  0, 200, 255),   # 1 cyan
-    graphics.Color(180,   0, 255),   # 2 violet
-    graphics.Color(  0, 255, 100),   # 3 green
-    graphics.Color(255,  60,  60),   # 4 red
+    graphics.Color(255, 220, 0),  # 0 amber
+    graphics.Color(0, 200, 255),  # 1 cyan
+    graphics.Color(180, 0, 255),  # 2 violet
+    graphics.Color(0, 255, 100),  # 3 green
+    graphics.Color(255, 60, 60),  # 4 red
 ]
 
 _PALETTE_DIM = [
-    graphics.Color( 80,  60,   0),   # 0 amber dim
-    graphics.Color(  0,  60,  80),   # 1 cyan dim
-    graphics.Color( 55,   0,  80),   # 2 violet dim
-    graphics.Color(  0,  80,  30),   # 3 green dim
-    graphics.Color( 80,  20,  20),   # 4 red dim
+    graphics.Color(80, 60, 0),  # 0 amber dim
+    graphics.Color(0, 60, 80),  # 1 cyan dim
+    graphics.Color(55, 0, 80),  # 2 violet dim
+    graphics.Color(0, 80, 30),  # 3 green dim
+    graphics.Color(80, 20, 20),  # 4 red dim
 ]
 
 _PALETTE_DIMMER = [
-    graphics.Color( 30,  25,   0),   # 0 amber dimmer
-    graphics.Color(  0,  25,  30),   # 1 cyan dimmer
-    graphics.Color( 20,   0,  30),   # 2 violet dimmer
-    graphics.Color(  0,  30,  12),   # 3 green dimmer
-    graphics.Color( 30,   8,   8),   # 4 red dimmer
+    graphics.Color(30, 25, 0),  # 0 amber dimmer
+    graphics.Color(0, 25, 30),  # 1 cyan dimmer
+    graphics.Color(20, 0, 30),  # 2 violet dimmer
+    graphics.Color(0, 30, 12),  # 3 green dimmer
+    graphics.Color(30, 8, 8),  # 4 red dimmer
 ]
 
-_RING_COLOUR  = graphics.Color( 40,  40,  40)
-_NOTCH_COLOUR = graphics.Color(  0,   0,   0)   # black = erase ring pixels
+_RING_COLOUR = graphics.Color(80, 80, 80)
+_NOTCH_COLOUR = graphics.Color(200, 200, 200)
 
 
 def sat_colour_bright(tle_index: int) -> graphics.Color:
@@ -79,6 +76,7 @@ def sat_colour_dimmer(tle_index: int) -> graphics.Color:
 # ---------------------------------------------------------------------------
 # Coordinate conversion
 # ---------------------------------------------------------------------------
+
 
 def azel_to_xy(az_deg: float, el_deg: float) -> tuple[int, int]:
     """
@@ -100,31 +98,22 @@ def azel_to_xy(az_deg: float, el_deg: float) -> tuple[int, int]:
 # Drawing routines
 # ---------------------------------------------------------------------------
 
+
 def draw_horizon_ring(canvas) -> None:
-    """
-    Draw the horizon circle with a notch at North.
-    Should be called once per frame (or once on scene entry).
-    """
-    notch_lo = (360 - NOTCH_HALF_DEG) % 360
-    notch_hi = NOTCH_HALF_DEG
-
-    for az in range(360):
-        # Skip the north notch
-        if az >= notch_lo or az <= notch_hi:
-            continue
-        x, y = azel_to_xy(az, 0.0)
-        canvas.SetPixel(x, y, _RING_COLOUR.red, _RING_COLOUR.green, _RING_COLOUR.blue)
-
-    # Explicitly blank the notch pixels so redraw over prior content is clean
-    for az in range(notch_lo, 360):
-        x, y = azel_to_xy(az, 0.0)
-        canvas.SetPixel(x, y, 0, 0, 0)
-    for az in range(0, notch_hi + 1):
-        x, y = azel_to_xy(az, 0.0)
-        canvas.SetPixel(x, y, 0, 0, 0)
+    graphics.DrawCircle(canvas, PLOT_CX, PLOT_CY, PLOT_RADIUS, _RING_COLOUR)
+    graphics.DrawLine(
+        canvas,
+        PLOT_CX,
+        PLOT_CY - PLOT_RADIUS,
+        PLOT_CX,
+        PLOT_CY - PLOT_RADIUS - 1,
+        _NOTCH_COLOUR,
+    )
 
 
-def draw_trajectory(canvas, trajectory: list[tuple[float, float]], tle_index: int) -> None:
+def draw_trajectory(
+    canvas, trajectory: list[tuple[float, float]], tle_index: int
+) -> None:
     """
     Paint the full pass trajectory as dimmer pixels (predicted path).
 

@@ -23,8 +23,8 @@ from sgp4.api import Satrec, jday as sgp4_jday
 # ---------------------------------------------------------------------------
 
 LOOKAHEAD_HOURS = 24
-SAMPLE_INTERVAL_S = 10      # trajectory pre-bake resolution
-SCAN_INTERVAL_S = 30        # coarser step used while hunting for pass windows
+SAMPLE_INTERVAL_S = 10  # trajectory pre-bake resolution
+SCAN_INTERVAL_S = 30  # coarser step used while hunting for pass windows
 EARTH_R_KM = 6378.137
 
 # ---------------------------------------------------------------------------
@@ -38,15 +38,19 @@ DEBUG_FAKE_PASS = True
 # Data types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PassWindow:
     """A single overhead pass for one satellite."""
+
     name: str
     tle_index: int
     aos: datetime.datetime
     los: datetime.datetime
     max_el: float
-    trajectory: List[Tuple[float, float, float, datetime.datetime]] = field(default_factory=list)
+    trajectory: List[Tuple[float, float, float, datetime.datetime]] = field(
+        default_factory=list
+    )
     # Each entry: (azimuth_deg, elevation_deg, range_km, utc_time)
 
 
@@ -54,11 +58,15 @@ class PassWindow:
 # Coordinate math (no external deps)
 # ---------------------------------------------------------------------------
 
+
 def _jday_from_dt(dt: datetime.datetime) -> tuple[float, float]:
     """Convert a UTC datetime to (jd, fr) for sgp4."""
     return sgp4_jday(
-        dt.year, dt.month, dt.day,
-        dt.hour, dt.minute,
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
         dt.second + dt.microsecond * 1e-6,
     )
 
@@ -88,7 +96,7 @@ def _teme_to_azel(
     Returns (azimuth_deg, elevation_deg).
     Azimuth: 0° = North, increases clockwise.
     """
-    # TEME → ECEF via GMST rotation (sufficient accuracy for a 64×32 display)
+    # TEME → ECEF via GMST rotation (sufficient accuracy for a 64x32 display)
     theta = _gmst_rad(jd, fr)
     cos_t, sin_t = math.cos(theta), math.sin(theta)
     sx = r_teme[0] * cos_t + r_teme[1] * sin_t
@@ -106,13 +114,17 @@ def _teme_to_azel(
     dx, dy, dz = sx - ox, sy - oy, sz - oz
 
     # Rotate into topocentric South-East-Zenith frame
-    s = (  math.sin(lat) * math.cos(lon) * dx
-         + math.sin(lat) * math.sin(lon) * dy
-         - math.cos(lat) * dz)
+    s = (
+        math.sin(lat) * math.cos(lon) * dx
+        + math.sin(lat) * math.sin(lon) * dy
+        - math.cos(lat) * dz
+    )
     e = -math.sin(lon) * dx + math.cos(lon) * dy
-    z = (  math.cos(lat) * math.cos(lon) * dx
-         + math.cos(lat) * math.sin(lon) * dy
-         + math.sin(lat) * dz)
+    z = (
+        math.cos(lat) * math.cos(lon) * dx
+        + math.cos(lat) * math.sin(lon) * dy
+        + math.sin(lat) * dz
+    )
 
     rng = math.sqrt(s * s + e * e + z * z)
     if rng < 1e-6:
@@ -124,7 +136,9 @@ def _teme_to_azel(
     return az, el
 
 
-def _propagate(sat: Satrec, dt: datetime.datetime) -> tuple[list[float], list[float]] | None:
+def _propagate(
+    sat: Satrec, dt: datetime.datetime
+) -> tuple[list[float], list[float]] | None:
     """Propagate sat to dt; returns (r_teme_km, v_teme_km_s) or None on error."""
     jd, fr = _jday_from_dt(dt)
     err, r, v = sat.sgp4(jd, fr)
@@ -152,11 +166,17 @@ def _elevation_at(
 # Debug helper
 # ---------------------------------------------------------------------------
 
+
 def _fake_pass_window() -> PassWindow:
     """
     Synthetic pass for DEBUG_FAKE_PASS mode.
     Always active: AOS = 1 min ago, LOS = 5 min from now.
-    Traces a south-to-north arc peaking near zenith.
+    Traces a south-east-to-north-east arc peaking at moderate elevation.
+
+    Uses a sinusoidal azimuth profile so the angular rate is fastest near
+    the peak (mimicking real orbital mechanics where the satellite is
+    closest to the observer at max elevation).  This avoids the "seagull"
+    artifact that a linear azimuth sweep produces on the polar plot.
     """
     now = datetime.datetime.utcnow()
     aos = now - datetime.timedelta(minutes=1)
@@ -167,8 +187,15 @@ def _fake_pass_window() -> PassWindow:
     for i in range(0, total_seconds, SAMPLE_INTERVAL_S):
         frac = i / total_seconds
         t = aos + datetime.timedelta(seconds=i)
-        az = 180.0 - frac * 180.0
-        el = 85.0 * (1.0 - (2.0 * frac - 1.0) ** 2)
+
+        # Azimuth: 160° → 20° (SSE → NNE), sinusoidal rate
+        # sin(π·frac - π/2) maps [0,1] → [-1,1], then scale to [0,1]
+        az_frac = (math.sin(math.pi * frac - math.pi / 2) + 1.0) / 2.0
+        az = 160.0 - az_frac * 140.0
+
+        # Elevation: parabolic, peak at frac=0.5
+        el = 55.0 * (1.0 - (2.0 * frac - 1.0) ** 2)
+
         trajectory.append((az, el, 408.0, t))
 
     return PassWindow(
@@ -176,7 +203,7 @@ def _fake_pass_window() -> PassWindow:
         tle_index=0,
         aos=aos,
         los=los,
-        max_el=85.0,
+        max_el=55.0,
         trajectory=trajectory,
     )
 
@@ -184,6 +211,7 @@ def _fake_pass_window() -> PassWindow:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def compute_passes(
     tles: list[tuple[str, str, str]],
@@ -226,7 +254,9 @@ def compute_passes(
                 el_back = _elevation_at(sat, back, lat, lng)
                 if el_back is not None and el_back <= 0.0:
                     # Found the rising edge; refine from here
-                    window = _refine_pass(sat, name, idx, back, end, lat, lng, min_elevation)
+                    window = _refine_pass(
+                        sat, name, idx, back, end, lat, lng, min_elevation
+                    )
                     if window is not None:
                         windows.append(window)
                     break
@@ -250,7 +280,9 @@ def compute_passes(
             # Rising edge: satellite crossed above horizon
             if prev_el <= 0.0 < el:
                 aos_approx = t - step
-                window = _refine_pass(sat, name, idx, aos_approx, end, lat, lng, min_elevation)
+                window = _refine_pass(
+                    sat, name, idx, aos_approx, end, lat, lng, min_elevation
+                )
                 if window is not None:
                     windows.append(window)
                     # Skip past the LOS of this pass to avoid duplicates

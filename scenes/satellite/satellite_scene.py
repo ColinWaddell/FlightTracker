@@ -5,7 +5,7 @@ Shown when one or more tracked satellites are currently above the configured
 minimum elevation.  Priority 2 (beats FlightScene at 1 and IdleScene at 0).
 
 Display layout:
-    Left  32×32  Az-El circular plot (horizon ring, north notch, trajectory
+    Left  32x32  Az-El circular plot (horizon ring, north notch, trajectory
                  arcs, bright current-position dots).
     Right 32 col Cycling name + telemetry (speed / altitude), each satellite
                  rendered in its matching palette colour.
@@ -23,6 +23,7 @@ import datetime
 from rgbmatrix import graphics
 
 from setup import fonts, frames, screen
+from setup.colours import PEACH, WHITE, PINK, YELLOW
 from setup.configuration import Config
 from scenes.satellite import passes as passes_mod
 from scenes.satellite import azel_plot
@@ -32,18 +33,14 @@ PRIORITY = 2
 # How long (in seconds) to display each satellite's telemetry before cycling
 CYCLE_INTERVAL_S = 4
 
-# Right-column text positions
-TEXT_COL_X = 33
-NAME_Y = 8
-SPEED_LABEL_Y = 18
-SPEED_VALUE_Y = 24
-ALT_LABEL_Y = 30  # bottom row
-
-# Divider line x between plot and text area
-DIVIDER_X = 31
-
-_DIM_WHITE = graphics.Color(120, 120, 120)
-_GREY = graphics.Color(60, 60, 60)
+# Right-column text positions (extrasmall 4×6 font, 6 lines)
+TEXT_COL_X = 0
+NAME_Y = 6  # satellite name (yellow)
+# blank line at y=6
+LINE1_Y = 14  # "Speed" label
+LINE2_Y = 20  # speed value + unit
+LINE3_Y = 26  # "Altitude" label (purple)
+LINE4_Y = 32  # altitude value + unit
 
 
 class SatelliteScene:
@@ -131,8 +128,7 @@ class SatelliteScene:
         # Draw ring once (persists across frames)
         if not self._ring_drawn:
             # Clear plot area before redrawing ring + trajectories
-            self.draw_square(0, 0, DIVIDER_X, screen.HEIGHT, graphics.Color(0, 0, 0))
-            self._draw_divider()
+            self.draw_square(0, 0, 31, screen.HEIGHT, graphics.Color(0, 0, 0))
             azel_plot.draw_horizon_ring(self.canvas)
             self._draw_trajectories(active)
             self._ring_drawn = True
@@ -166,11 +162,6 @@ class SatelliteScene:
             self._last_positions = {}
         except Exception as exc:
             print(f"[satellite] pass computation failed: {exc}")
-
-    def _draw_divider(self) -> None:
-        """Faint vertical line separating the plot from the text area."""
-        for y in range(screen.HEIGHT):
-            self.canvas.SetPixel(DIVIDER_X, y, _GREY.red, _GREY.green, _GREY.blue)
 
     def _draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
         """Paint dim trajectory arcs for all currently active passes."""
@@ -221,10 +212,18 @@ class SatelliteScene:
 
     def _update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
         """
-        Render the currently cycled satellite's name and telemetry in the
-        right panel.  Uses a stash-and-erase strategy: old text is redrawn
-        in black before new text is drawn on top, so only changed pixels
-        are touched.
+        Render the currently cycled satellite's name and telemetry.
+
+        Layout (extrasmall 4×6 font, x=0):
+            Line 1: "ISS (ZARYA)"  (yellow name)
+            Line 2: (blank)
+            Line 3: "Speed"        (purple label)
+            Line 4: "27420km/h"    (white value + pink unit)
+            Line 5: "Altitude"     (purple label)
+            Line 6: "408km"        (white value + pink unit)
+
+        Uses a stash-and-erase strategy: old text is redrawn in black
+        before new text is drawn on top, so only changed pixels are touched.
         """
         now_s = datetime.datetime.utcnow().timestamp()
 
@@ -234,10 +233,6 @@ class SatelliteScene:
             self._last_cycle_second = now_s
 
         window = active[self._cycle_index % len(active)]
-        colour = azel_plot.sat_colour_bright(window.tle_index)
-
-        # Satellite name (truncate to fit ~8 chars at small font)
-        name = window.name[:10]
 
         # Telemetry: speed and altitude from current position
         pos = passes_mod.current_position(window)
@@ -249,26 +244,48 @@ class SatelliteScene:
             if telemetry is not None:
                 speed_kmh, alt_km = telemetry
                 if cfg.units == "i":
-                    speed_str = f"{int(speed_kmh * 0.621371)}mph"
-                    alt_str   = f"{int(alt_km * 3280.84)}ft"
+                    speed_val = f"{int(speed_kmh * 0.621371)}"
+                    speed_unit = "mph"
+                    alt_val = f"{int(alt_km * 0.621371)}"
+                    alt_unit = "mi"
                 else:
-                    speed_str = f"{int(speed_kmh)}kph"
-                    alt_str   = f"{int(alt_km)}km"
+                    speed_val = f"{int(speed_kmh)}"
+                    speed_unit = "km/h"
+                    alt_val = f"{int(alt_km)}"
+                    alt_unit = "km"
             else:
-                speed_str = "--"
-                alt_str = "--"
+                speed_val, speed_unit = "--", ""
+                alt_val, alt_unit = "--", ""
         else:
-            speed_str = "--"
-            alt_str = "--"
+            speed_val, speed_unit = "--", ""
+            alt_val, alt_unit = "--", ""
 
         # Build the set of text elements for this frame.
         # Each entry: (text, x, y, colour, font)
         new_texts: dict[str, tuple[str, int, int, graphics.Color, object]] = {
-            "name":      (name,      TEXT_COL_X, NAME_Y,         colour,     fonts.small),
-            "spd_label": ("spd",     TEXT_COL_X, SPEED_LABEL_Y,  _DIM_WHITE, fonts.extrasmall),
-            "spd_value": (speed_str, TEXT_COL_X, SPEED_VALUE_Y,  colour,     fonts.extrasmall),
-            "alt":       (alt_str,   TEXT_COL_X, ALT_LABEL_Y,    colour,     fonts.extrasmall),
+            "name": (window.name, TEXT_COL_X, NAME_Y, YELLOW, fonts.extrasmall),
+            "spd_label": ("Speed", TEXT_COL_X, LINE1_Y, PEACH, fonts.extrasmall),
+            "spd_value": (speed_val, TEXT_COL_X, LINE2_Y, WHITE, fonts.extrasmall),
+            "spd_unit": (speed_unit, 0, LINE2_Y, PINK, fonts.extrasmall),
+            "alt_label": (
+                "Altitude",
+                TEXT_COL_X,
+                LINE3_Y,
+                PEACH,
+                fonts.extrasmall,
+            ),
+            "alt_value": (alt_val, TEXT_COL_X, LINE4_Y, WHITE, fonts.extrasmall),
+            "alt_unit": (alt_unit, 0, LINE4_Y, PINK, fonts.extrasmall),
         }
+
+        # Compute unit x-positions (right after the value text)
+        for key in ("spd_unit", "alt_unit"):
+            val_key = key.replace("_unit", "_value")
+            val_text, val_x, val_y, _, _ = new_texts[val_key]
+            unit_text, _, unit_y, unit_col, unit_font = new_texts[key]
+            # Width of value text in pixels (4px per char for extrasmall)
+            val_width = len(val_text) * 4
+            new_texts[key] = (unit_text, val_x + val_width, unit_y, unit_col, unit_font)
 
         black = graphics.Color(0, 0, 0)
 
@@ -278,7 +295,9 @@ class SatelliteScene:
                 old_text, old_x, old_y, _, old_font = old
                 # Only erase if something changed (text, position, or font)
                 if (old_text, old_x, old_y, old_font) != (text, x, y, font):
-                    graphics.DrawText(self.canvas, old_font, old_x, old_y, black, old_text)
+                    graphics.DrawText(
+                        self.canvas, old_font, old_x, old_y, black, old_text
+                    )
             graphics.DrawText(self.canvas, font, x, y, col, text)
 
         self._last_text = new_texts
@@ -287,6 +306,7 @@ class SatelliteScene:
 # ---------------------------------------------------------------------------
 # Telemetry helpers
 # ---------------------------------------------------------------------------
+
 
 def _compute_telemetry(
     window: passes_mod.PassWindow,
@@ -329,13 +349,8 @@ def _compute_telemetry(
                 # Slant range from observer: solve triangle Earth–observer–satellite
                 EARTH_R = 6371.0
                 el_rad = math.radians(max(1.0, (el0 + el1) / 2))
-                slant_km = (
-                    -EARTH_R * math.sin(el_rad)
-                    + math.sqrt(
-                        (EARTH_R * math.sin(el_rad)) ** 2
-                        + 2 * EARTH_R * alt_km
-                        + alt_km ** 2
-                    )
+                slant_km = -EARTH_R * math.sin(el_rad) + math.sqrt(
+                    (EARTH_R * math.sin(el_rad)) ** 2 + 2 * EARTH_R * alt_km + alt_km**2
                 )
 
                 speed_kmh = math.radians(ang_speed_deg_s) * slant_km * 3600
