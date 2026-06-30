@@ -23,17 +23,56 @@ LOOKAHEAD_HOURS = 24
 # Trajectory sample interval (seconds)
 SAMPLE_INTERVAL_S = 10
 
+# ---------------------------------------------------------------------------
+# Debug flag — flip to True to inject a fake always-active pass for testing.
+# Remove once satellite scene has been validated on real hardware.
+# ---------------------------------------------------------------------------
+DEBUG_FAKE_PASS = True
+
 
 @dataclass
 class PassWindow:
     """A single overhead pass for one satellite."""
-    name: str           # Satellite display name
-    tle_index: int      # Index into the TLE list (determines plot colour)
-    aos: datetime.datetime   # Acquisition of Signal (rises above horizon)
-    los: datetime.datetime   # Loss of Signal (drops below horizon)
-    max_el: float            # Peak elevation in degrees
-    trajectory: List[Tuple[float, float, datetime.datetime]] = field(default_factory=list)
+
+    name: str  # Satellite display name
+    tle_index: int  # Index into the TLE list (determines plot colour)
+    aos: datetime.datetime  # Acquisition of Signal (rises above horizon)
+    los: datetime.datetime  # Loss of Signal (drops below horizon)
+    max_el: float  # Peak elevation in degrees
+    trajectory: List[Tuple[float, float, datetime.datetime]] = field(
+        default_factory=list
+    )
     # Each trajectory entry: (azimuth_deg, elevation_deg, utc_time)
+
+
+def _fake_pass_window() -> PassWindow:
+    """
+    Synthetic pass for DEBUG_FAKE_PASS mode.
+    Always active: AOS = 1 min ago, LOS = 5 min from now.
+    Traces a south-to-north arc peaking near zenith.
+    """
+    now = datetime.datetime.utcnow()
+    aos = now - datetime.timedelta(minutes=1)
+    los = now + datetime.timedelta(minutes=5)
+    total_seconds = int((los - aos).total_seconds())
+
+    trajectory = []
+    for i in range(0, total_seconds, SAMPLE_INTERVAL_S):
+        frac = i / total_seconds  # 0.0 → 1.0 over the pass
+        t = aos + datetime.timedelta(seconds=i)
+        # Arc: rise from S (az=180), peak overhead (el≈85), set toward N (az=0/360)
+        az = 180.0 - frac * 180.0  # 180 → 0 (S → N)
+        el = 85.0 * (1.0 - (2.0 * frac - 1.0) ** 2)  # parabola peaking at midpoint
+        trajectory.append((az, el, t))
+
+    return PassWindow(
+        name="ISS (DEBUG)",
+        tle_index=0,
+        aos=aos,
+        los=los,
+        max_el=85.0,
+        trajectory=trajectory,
+    )
 
 
 def compute_passes(
@@ -58,6 +97,9 @@ def compute_passes(
     Returns a list of PassWindows sorted by AOS, covering the next
     lookahead_hours from now.
     """
+    if DEBUG_FAKE_PASS:
+        return [_fake_pass_window()]
+
     now_utc = datetime.datetime.utcnow()
     windows: list[PassWindow] = []
 
@@ -69,9 +111,9 @@ def compute_passes(
             raw_passes = orb.get_next_passes(
                 now_utc,
                 lookahead_hours,
-                lng,   # pyorbital uses (lng, lat) order
+                lng,  # pyorbital uses (lng, lat) order
                 lat,
-                0.0,   # observer altitude in km (sea level)
+                0.0,  # observer altitude in km (sea level)
                 horizon=0.0,  # find all passes that clear the horizon
             )
         except Exception as exc:
