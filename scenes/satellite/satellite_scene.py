@@ -71,6 +71,9 @@ class SatelliteScene:
         # name → (px, py, tle_index)
         self._last_positions: dict[str, tuple[int, int, int]] = {}
 
+        # Stash previous text draws so we can erase only what changed
+        self._last_text: dict[str, tuple[str, int, int, graphics.Color]] = {}
+
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
         self._ring_drawn: bool = False
 
@@ -111,6 +114,7 @@ class SatelliteScene:
         self._cycle_index = 0
         self._last_cycle_second = 0.0
         self._last_positions = {}
+        self._last_text = {}
         self._ring_drawn = False
 
     def draw(self) -> None:
@@ -217,8 +221,10 @@ class SatelliteScene:
 
     def _update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
         """
-        Clear the right panel and render the currently cycled satellite's
-        name and telemetry.
+        Render the currently cycled satellite's name and telemetry in the
+        right panel.  Uses a stash-and-erase strategy: old text is redrawn
+        in black before new text is drawn on top, so only changed pixels
+        are touched.
         """
         now_s = datetime.datetime.utcnow().timestamp()
 
@@ -230,12 +236,8 @@ class SatelliteScene:
         window = active[self._cycle_index % len(active)]
         colour = azel_plot.sat_colour_bright(window.tle_index)
 
-        # Clear text area
-        self.draw_square(TEXT_COL_X, 0, screen.WIDTH, screen.HEIGHT, graphics.Color(0, 0, 0))
-
         # Satellite name (truncate to fit ~8 chars at small font)
         name = window.name[:10]
-        graphics.DrawText(self.canvas, fonts.small, TEXT_COL_X, NAME_Y, colour, name)
 
         # Telemetry: speed and altitude from current position
         pos = passes_mod.current_position(window)
@@ -255,19 +257,31 @@ class SatelliteScene:
             else:
                 speed_str = "--"
                 alt_str = "--"
+        else:
+            speed_str = "--"
+            alt_str = "--"
 
-            graphics.DrawText(
-                self.canvas, fonts.extrasmall, TEXT_COL_X, SPEED_LABEL_Y,
-                _DIM_WHITE, "spd"
-            )
-            graphics.DrawText(
-                self.canvas, fonts.extrasmall, TEXT_COL_X, SPEED_VALUE_Y,
-                colour, speed_str
-            )
-            graphics.DrawText(
-                self.canvas, fonts.extrasmall, TEXT_COL_X, ALT_LABEL_Y,
-                colour, alt_str
-            )
+        # Build the set of text elements for this frame.
+        # Each entry: (text, x, y, colour, font)
+        new_texts: dict[str, tuple[str, int, int, graphics.Color, object]] = {
+            "name":      (name,      TEXT_COL_X, NAME_Y,         colour,     fonts.small),
+            "spd_label": ("spd",     TEXT_COL_X, SPEED_LABEL_Y,  _DIM_WHITE, fonts.extrasmall),
+            "spd_value": (speed_str, TEXT_COL_X, SPEED_VALUE_Y,  colour,     fonts.extrasmall),
+            "alt":       (alt_str,   TEXT_COL_X, ALT_LABEL_Y,    colour,     fonts.extrasmall),
+        }
+
+        black = graphics.Color(0, 0, 0)
+
+        for key, (text, x, y, col, font) in new_texts.items():
+            old = self._last_text.get(key)
+            if old is not None:
+                old_text, old_x, old_y, _, old_font = old
+                # Only erase if something changed (text, position, or font)
+                if (old_text, old_x, old_y, old_font) != (text, x, y, font):
+                    graphics.DrawText(self.canvas, old_font, old_x, old_y, black, old_text)
+            graphics.DrawText(self.canvas, font, x, y, col, text)
+
+        self._last_text = new_texts
 
 
 # ---------------------------------------------------------------------------
