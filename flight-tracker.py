@@ -69,7 +69,7 @@ def _render_splash(
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
         dim = graphics.Color(180, 180, 180)
-        graphics.DrawText(canvas, loading_font, 1, 18, dim, "loading...")
+        graphics.DrawText(canvas, loading_font, 1, 20, dim, "loading...")
 
     matrix.SwapOnVSync(canvas)
 
