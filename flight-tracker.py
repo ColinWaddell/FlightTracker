@@ -140,13 +140,21 @@ def display_load(matrix, canvas, result: dict):
 
 def build_matrix_options(cfg: Config) -> RGBMatrixOptions:
     options = RGBMatrixOptions()
-    options.rows = cfg.matrix_rows
-    options.cols = cfg.matrix_cols
-    options.chain_length = cfg.matrix_chain_length
-    options.parallel = cfg.matrix_parallel
-    options.hardware_mapping = cfg.matrix_hardware_mapping
-    options.gpio_slowdown = cfg.matrix_gpio_slowdown
-    options.brightness = cfg.matrix_brightness
+    options.rows = 32
+    options.cols = 64
+    options.chain_length = 1
+    options.parallel = 1
+    options.row_address_type = 0
+    options.multiplexing = 0
+    options.pwm_bits = 11
+    options.brightness = cfg.brightness_percent
+    options.pwm_lsb_nanoseconds = 130
+    options.led_rgb_sequence = "RGB"
+    options.pixel_mapper_config = "Rotate:180" if cfg.screen_rotate else ""
+    options.show_refresh_rate = 0
+    options.gpio_slowdown = cfg.gpio_slowdown
+    options.disable_hardware_pulsing = True
+    options.drop_privileges = True
     return options
 
 
