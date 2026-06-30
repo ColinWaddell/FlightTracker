@@ -46,8 +46,8 @@ class PassWindow:
     aos: datetime.datetime
     los: datetime.datetime
     max_el: float
-    trajectory: List[Tuple[float, float, datetime.datetime]] = field(default_factory=list)
-    # Each entry: (azimuth_deg, elevation_deg, utc_time)
+    trajectory: List[Tuple[float, float, float, datetime.datetime]] = field(default_factory=list)
+    # Each entry: (azimuth_deg, elevation_deg, range_km, utc_time)
 
 
 # ---------------------------------------------------------------------------
@@ -119,8 +119,8 @@ def _teme_to_azel(
         return 0.0, 90.0
 
     el = math.degrees(math.asin(z / rng))
-    # atan2(-e, s) gives azimuth from North, clockwise
-    az = math.degrees(math.atan2(-e, s)) % 360.0
+    # atan2(e, -s) gives azimuth from North, clockwise
+    az = math.degrees(math.atan2(e, -s)) % 360.0
     return az, el
 
 
@@ -142,7 +142,7 @@ def _elevation_at(
     """Return elevation in degrees at dt, or None on propagation error."""
     jd, fr = _jday_from_dt(dt)
     err, r, _ = sat.sgp4(jd, fr)
-    if err != 0 or r[0] == 0:
+    if err != 0:
         return None
     az, el = _teme_to_azel(r, lat, lng, jd, fr)
     return el
@@ -169,7 +169,7 @@ def _fake_pass_window() -> PassWindow:
         t = aos + datetime.timedelta(seconds=i)
         az = 180.0 - frac * 180.0
         el = 85.0 * (1.0 - (2.0 * frac - 1.0) ** 2)
-        trajectory.append((az, el, t))
+        trajectory.append((az, el, 408.0, t))
 
     return PassWindow(
         name="ISS (DEBUG)",
@@ -216,6 +216,29 @@ def compute_passes(
         t = now
         step = datetime.timedelta(seconds=SCAN_INTERVAL_S)
         prev_el = _elevation_at(sat, t, lat, lng)
+
+        # If the satellite is already above the horizon right now, walk
+        # backward to find the actual AOS so we don't miss in-progress passes.
+        if prev_el is not None and prev_el > 0.0:
+            back = now
+            while back > now - datetime.timedelta(hours=6):
+                back -= step
+                el_back = _elevation_at(sat, back, lat, lng)
+                if el_back is not None and el_back <= 0.0:
+                    # Found the rising edge; refine from here
+                    window = _refine_pass(sat, name, idx, back, end, lat, lng, min_elevation)
+                    if window is not None:
+                        windows.append(window)
+                    break
+            else:
+                # No horizon crossing found in the past 6 hours — the sat may
+                # have been above the horizon for a very long time.  Refine
+                # from now anyway so we at least get the remainder of the pass.
+                window = _refine_pass(sat, name, idx, now, end, lat, lng, min_elevation)
+                if window is not None:
+                    windows.append(window)
+            # Skip the forward scan — we already handled this satellite
+            continue
 
         while t < end:
             t += step
@@ -268,7 +291,7 @@ def _refine_pass(
     aos = t
 
     # Walk forward collecting trajectory until elevation drops back below 0
-    trajectory: list[tuple[float, float, datetime.datetime]] = []
+    trajectory: list[tuple[float, float, float, datetime.datetime]] = []
     max_el = 0.0
     t = aos
 
@@ -281,7 +304,8 @@ def _refine_pass(
         if el < 0.0 and trajectory:
             break
         if el >= 0.0:
-            trajectory.append((az, el, t))
+            rng = math.sqrt(r[0] ** 2 + r[1] ** 2 + r[2] ** 2) - EARTH_R_KM
+            trajectory.append((az, el, rng, t))
             if el > max_el:
                 max_el = el
         t += fine
@@ -289,7 +313,7 @@ def _refine_pass(
     if not trajectory or max_el < min_elevation:
         return None
 
-    los = trajectory[-1][2]
+    los = trajectory[-1][3]
     return PassWindow(
         name=name,
         tle_index=idx,
@@ -317,11 +341,11 @@ def current_position(window: PassWindow) -> tuple[float, float] | None:
     now = datetime.datetime.utcnow()
 
     for i in range(len(window.trajectory) - 1):
-        _, _, t0 = window.trajectory[i]
-        _, _, t1 = window.trajectory[i + 1]
+        _, _, _, t0 = window.trajectory[i]
+        _, _, _, t1 = window.trajectory[i + 1]
         if t0 <= now <= t1:
-            az0, el0, _ = window.trajectory[i]
-            az1, el1, _ = window.trajectory[i + 1]
+            az0, el0, _, _ = window.trajectory[i]
+            az1, el1, _, _ = window.trajectory[i + 1]
             span = (t1 - t0).total_seconds()
             if span <= 0:
                 return az0, el0
@@ -331,5 +355,5 @@ def current_position(window: PassWindow) -> tuple[float, float] | None:
             el = el0 + (el1 - el0) * frac
             return az, el
 
-    az, el, _ = window.trajectory[-1]
+    az, el, _, _ = window.trajectory[-1]
     return az, el

@@ -31,7 +31,9 @@ NOTCH_HALF_DEG = 12
 
 # ---------------------------------------------------------------------------
 # Colour palette — one slot per satellite (index 0..4)
-# Bright versions for the current-position dot; dim for trajectory arcs.
+# Bright  = current-position dot
+# Dim     = previous-position dot (trail)
+# Dimmer  = predicted trajectory arc (light grey, uniform across satellites)
 # ---------------------------------------------------------------------------
 
 _PALETTE_BRIGHT = [
@@ -50,6 +52,14 @@ _PALETTE_DIM = [
     graphics.Color( 80,  20,  20),   # 4 red dim
 ]
 
+_PALETTE_DIMMER = [
+    graphics.Color( 30,  25,   0),   # 0 amber dimmer
+    graphics.Color(  0,  25,  30),   # 1 cyan dimmer
+    graphics.Color( 20,   0,  30),   # 2 violet dimmer
+    graphics.Color(  0,  30,  12),   # 3 green dimmer
+    graphics.Color( 30,   8,   8),   # 4 red dimmer
+]
+
 _RING_COLOUR  = graphics.Color( 40,  40,  40)
 _NOTCH_COLOUR = graphics.Color(  0,   0,   0)   # black = erase ring pixels
 
@@ -60,6 +70,10 @@ def sat_colour_bright(tle_index: int) -> graphics.Color:
 
 def sat_colour_dim(tle_index: int) -> graphics.Color:
     return _PALETTE_DIM[tle_index % len(_PALETTE_DIM)]
+
+
+def sat_colour_dimmer(tle_index: int) -> graphics.Color:
+    return _PALETTE_DIMMER[tle_index % len(_PALETTE_DIMMER)]
 
 
 # ---------------------------------------------------------------------------
@@ -112,16 +126,29 @@ def draw_horizon_ring(canvas) -> None:
 
 def draw_trajectory(canvas, trajectory: list[tuple[float, float]], tle_index: int) -> None:
     """
-    Paint the full pass trajectory as dim pixels.
+    Paint the full pass trajectory as dimmer pixels (predicted path).
 
     Args:
         trajectory: list of (az_deg, el_deg) pairs for the pass
-        tle_index : used to pick the dim palette colour
+        tle_index : used to pick the dimmer palette colour
     """
-    colour = sat_colour_dim(tle_index)
+    colour = sat_colour_dimmer(tle_index)
     for az, el in trajectory:
         x, y = azel_to_xy(az, el)
         canvas.SetPixel(x, y, colour.red, colour.green, colour.blue)
+
+
+def draw_trail(canvas, az_deg: float, el_deg: float, tle_index: int) -> None:
+    """Draw the previous-position pixel in the dim palette colour."""
+    colour = sat_colour_dim(tle_index)
+    x, y = azel_to_xy(az_deg, el_deg)
+    canvas.SetPixel(x, y, colour.red, colour.green, colour.blue)
+
+
+def draw_trail_pixel(canvas, px: int, py: int, tle_index: int) -> None:
+    """Draw the previous-position pixel at given canvas coords in dim colour."""
+    colour = sat_colour_dim(tle_index)
+    canvas.SetPixel(px, py, colour.red, colour.green, colour.blue)
 
 
 def erase_trajectory(canvas, trajectory: list[tuple[float, float]]) -> None:
