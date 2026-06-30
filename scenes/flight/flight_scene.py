@@ -48,6 +48,11 @@ from setup.configuration import Config
 
 PRIORITY = 1
 
+# Seconds to wait before retrying after a failed overhead fetch.
+# Prevents log spam and rapid reconnection attempts when the data
+# source is unreachable.
+ERROR_BACKOFF_S = 60
+
 # ---------------------------------------------------------------------------
 # Data update helpers
 # ---------------------------------------------------------------------------
@@ -250,23 +255,43 @@ class FlightScene:
         self._last_index_drawn: int | None = None
         self._last_flight_count_drawn: int | None = None
 
+        # Error backoff — log once, hold off before retrying
+        self._error_logged: bool = False
+        self._retry_at: float = 0.0
+
     # ------------------------------------------------------------------
     # Data ownership
     # ------------------------------------------------------------------
 
     def poll(self) -> None:
         """
-        Called every frame by SceneManager.poll_all().
+        Called every frame by SceneManager.kick().
         Consumes new overhead data and triggers fresh fetches on interval.
+        Errors are logged once and suppressed until the backoff expires.
         """
+        now = time.time()
+
         if self._overhead.error is not None:
-            print(f"overhead data grab failed: {self._overhead.error}")
+            if not self._error_logged:
+                print(f"[overhead] fetch failed: {self._overhead.error}")
+                print(f"[overhead] retrying in {ERROR_BACKOFF_S}s")
+                self._error_logged = True
+                self._retry_at = now + ERROR_BACKOFF_S
+            if now >= self._retry_at:
+                # Backoff expired — clear state and kick a fresh grab.
+                # grab_data() resets the error flag internally.
+                self._error_logged = False
+                self._overhead.grab_data()
+                self._last_grab_time = now
             return
+
+        # Successful state — clear any lingering backoff flags.
+        self._error_logged = False
+        self._retry_at = 0.0
 
         if self._overhead.new_data:
             self.on_data(self._overhead.data)  # accessing .data clears new_data flag
 
-        now = time.time()
         if (
             now - self._last_grab_time >= self._refresh_interval
             and not self._overhead.processing
