@@ -67,8 +67,9 @@ class SatelliteScene:
         self._cycle_index: int = 0
         self._last_cycle_second: float = 0.0
 
-        # Track drawn positions so we can erase them cleanly next frame
-        self._last_positions: dict[str, tuple[int, int]] = {}  # name → (px, py)
+        # Track drawn positions so we can update only when the pixel changes.
+        # name → (px, py, tle_index)
+        self._last_positions: dict[str, tuple[int, int, int]] = {}
 
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
         self._ring_drawn: bool = False
@@ -82,10 +83,13 @@ class SatelliteScene:
         cfg = Config.instance()
         now_ts = datetime.datetime.utcnow().timestamp()
 
-        # Recompute if windows haven't been built yet or are all expired
+        # Recompute if windows haven't been built yet, are all expired,
+        # or are older than 1 hour (to catch new passes that overlap
+        # with currently active ones).
         needs_refresh = (
             not self._pass_windows
             or all(w.los.timestamp() < now_ts for w in self._pass_windows)
+            or (now_ts - self._windows_computed_at) > 3600
         )
 
         if needs_refresh:
@@ -122,6 +126,8 @@ class SatelliteScene:
 
         # Draw ring once (persists across frames)
         if not self._ring_drawn:
+            # Clear plot area before redrawing ring + trajectories
+            self.draw_square(0, 0, DIVIDER_X, screen.HEIGHT, graphics.Color(0, 0, 0))
             self._draw_divider()
             azel_plot.draw_horizon_ring(self.canvas)
             self._draw_trajectories(active)
@@ -151,6 +157,9 @@ class SatelliteScene:
                 cfg.satellite_max_count,
             )
             self._windows_computed_at = datetime.datetime.utcnow().timestamp()
+            # Force redraw of ring + trajectories on next draw()
+            self._ring_drawn = False
+            self._last_positions = {}
         except Exception as exc:
             print(f"[satellite] pass computation failed: {exc}")
 
@@ -162,33 +171,49 @@ class SatelliteScene:
     def _draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
         """Paint dim trajectory arcs for all currently active passes."""
         for window in active:
-            traj_2d = [(az, el) for az, el, _ in window.trajectory]
+            traj_2d = [(az, el) for az, el, _, _ in window.trajectory]
             azel_plot.draw_trajectory(self.canvas, traj_2d, window.tle_index)
 
     def _draw_positions(self, active: list[passes_mod.PassWindow]) -> None:
-        """Erase previous position dots and draw updated ones."""
-        # Erase old dots
-        for name, (px, py) in self._last_positions.items():
-            self.canvas.SetPixel(px, py, 0, 0, 0)
+        """
+        Update satellite position dots using a pixel-change-only strategy.
 
-        self._last_positions = {}
+        On each frame the current Az/El is converted to a pixel.  If the
+        pixel is the same as last frame nothing happens.  When the pixel
+        *does* change:
+          - the old pixel is repainted in the DIM (trail) colour
+          - the new pixel is painted in the BRIGHT (current) colour
+
+        This avoids redrawing the entire trajectory every frame and
+        eliminates flicker.
+        """
+        new_positions: dict[str, tuple[int, int, int]] = {}
+
         for window in active:
             pos = passes_mod.current_position(window)
             if pos is None:
                 continue
             az, el = pos
-            azel_plot.draw_position(self.canvas, az, el, window.tle_index)
             px, py = azel_plot.azel_to_xy(az, el)
-            self._last_positions[window.name] = (px, py)
+            new_positions[window.name] = (px, py, window.tle_index)
 
-        # Re-draw trajectories behind the dots (dots may have erased arc pixels)
-        self._draw_trajectories(active)
-        # Re-draw dots on top
-        for window in active:
-            pos = passes_mod.current_position(window)
-            if pos is None:
-                continue
-            azel_plot.draw_position(self.canvas, pos[0], pos[1], window.tle_index)
+            old = self._last_positions.get(window.name)
+            if old is None:
+                # First frame for this satellite — just draw the bright dot
+                azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+            else:
+                old_px, old_py, old_idx = old
+                if (px, py) != (old_px, old_py):
+                    # Pixel changed: dim the old, brighten the new
+                    azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+                    azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+
+        # Dim any satellites that were active last frame but aren't now
+        for name, (old_px, old_py, old_idx) in self._last_positions.items():
+            if name not in new_positions:
+                azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+
+        self._last_positions = new_positions
 
     def _update_text_panel(self, active: list[passes_mod.PassWindow]) -> None:
         """
@@ -216,15 +241,20 @@ class SatelliteScene:
         pos = passes_mod.current_position(window)
         if pos is not None:
             az, el = pos
-            speed_kmh, alt_km = _compute_telemetry(window, az, el)
+            telemetry = _compute_telemetry(window, az, el)
 
             cfg = Config.instance()
-            if cfg.units == "i":
-                speed_str = f"{int(speed_kmh * 0.621371)}mph"
-                alt_str   = f"{int(alt_km * 3280.84)}ft"
+            if telemetry is not None:
+                speed_kmh, alt_km = telemetry
+                if cfg.units == "i":
+                    speed_str = f"{int(speed_kmh * 0.621371)}mph"
+                    alt_str   = f"{int(alt_km * 3280.84)}ft"
+                else:
+                    speed_str = f"{int(speed_kmh)}kph"
+                    alt_str   = f"{int(alt_km)}km"
             else:
-                speed_str = f"{int(speed_kmh)}kph"
-                alt_str   = f"{int(alt_km)}km"
+                speed_str = "--"
+                alt_str = "--"
 
             graphics.DrawText(
                 self.canvas, fonts.extrasmall, TEXT_COL_X, SPEED_LABEL_Y,
@@ -248,14 +278,14 @@ def _compute_telemetry(
     window: passes_mod.PassWindow,
     az_deg: float,
     el_deg: float,
-) -> tuple[float, float]:
+) -> tuple[float, float] | None:
     """
     Estimate orbital speed and altitude from the pass trajectory.
 
     Uses consecutive trajectory samples to derive instantaneous speed,
-    and elevation angle + range geometry to estimate altitude.
+    and reads altitude directly from pre-baked trajectory range data.
 
-    Returns (speed_kmh, altitude_km).
+    Returns (speed_kmh, altitude_km), or None if unavailable.
     """
     import math
 
@@ -264,37 +294,39 @@ def _compute_telemetry(
     traj = window.trajectory
 
     for i in range(len(traj) - 1):
-        _, _, t0 = traj[i]
-        _, _, t1 = traj[i + 1]
+        _, _, _, t0 = traj[i]
+        _, _, _, t1 = traj[i + 1]
         if t0 <= now <= t1:
-            az0, el0, _ = traj[i]
-            az1, el1, _ = traj[i + 1]
+            az0, el0, rng0, _ = traj[i]
+            az1, el1, rng1, _ = traj[i + 1]
 
-            # Angular speed (degrees/second) in the sky → rough ground speed
             dt = (t1 - t0).total_seconds()
             if dt > 0:
-                # Great-circle angle between the two Az/El positions
-                daz = math.radians(az1 - az0)
+                # Azimuth delta with wrap-around handling
+                daz = math.radians(((az1 - az0 + 180) % 360) - 180)
                 del_ = math.radians(el1 - el0)
+                # Approximate angular speed (small-angle approx, fine for 10 s steps)
                 ang_speed_deg_s = math.sqrt(daz**2 + del_**2) * (180 / math.pi) / dt
 
-                # Rough slant range via elevation angle (flat-Earth approx)
-                # For LEO at ~400 km, range at el=0 ≈ 2300 km
+                # Interpolate altitude at current time
+                frac = (now - t0).total_seconds() / dt
+                alt_km = rng0 + (rng1 - rng0) * frac
+
+                # Slant range from observer: solve triangle Earth–observer–satellite
                 EARTH_R = 6371.0
-                AVG_ALT = 400.0  # km, reasonable default
-                el_rad = math.radians(max(1.0, el_deg))
+                el_rad = math.radians(max(1.0, (el0 + el1) / 2))
                 slant_km = (
                     -EARTH_R * math.sin(el_rad)
                     + math.sqrt(
                         (EARTH_R * math.sin(el_rad)) ** 2
-                        + 2 * EARTH_R * AVG_ALT
-                        + AVG_ALT ** 2
+                        + 2 * EARTH_R * alt_km
+                        + alt_km ** 2
                     )
                 )
+
                 speed_kmh = math.radians(ang_speed_deg_s) * slant_km * 3600
-                return speed_kmh, AVG_ALT
+                return speed_kmh, alt_km
 
             break
 
-    # Fallback: canonical ISS-like values
-    return 27600.0, 408.0
+    return None
