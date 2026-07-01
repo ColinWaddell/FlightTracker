@@ -128,7 +128,8 @@
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-shield-lock me-2"></i>Admin</div>
           <nav class="nav flex-column">
-            <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
+              <a class="nav-link" href="#group-logging"><i class="bi bi-terminal me-2"></i>Logging</a>
+              <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
           </nav>
         </div>
       </div>
@@ -372,7 +373,8 @@
             <div class="alert alert-warning small mt-2 mb-0 py-2">
               <i class="bi bi-exclamation-triangle me-1"></i>
               The brightness schedule is currently active - changes to the default brightness
-              will not take effect until the scheduled period ends.
+              will not take effect until the scheduled period ends
+              {% if cfg.screen_schedule_auto %}({{ schedule_window[0].strftime('%H:%M') }} - {{ schedule_window[1].strftime('%H:%M') }}){% endif %}.
             </div>
             {% endif %}
           </div>
@@ -444,18 +446,6 @@
             <input type="number" min="1" max="65535" class="form-control form-control-sm"
                    name="web_port" value="{{ cfg.web_port }}" style="max-width:120px" />
             <div class="form-text text-muted small">TCP port for the Flask config server. Change requires a restart.</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small">Log level</label>
-            <select class="form-select form-select-sm" name="log_level" style="max-width:200px">
-              <option value="DEBUG" {% if cfg.log_level == 'DEBUG' %}selected{% endif %}>Debug (verbose)</option>
-              <option value="INFO" {% if cfg.log_level == 'INFO' %}selected{% endif %}>Info (default)</option>
-              <option value="WARNING" {% if cfg.log_level == 'WARNING' %}selected{% endif %}>Warning</option>
-              <option value="ERROR" {% if cfg.log_level == 'ERROR' %}selected{% endif %}>Error</option>
-              <option value="CRITICAL" {% if cfg.log_level == 'CRITICAL' %}selected{% endif %}>Critical</option>
-            </select>
-            <div class="form-text text-muted small">Controls how much detail is captured for the <a href="{{ url_for('logs') }}">log viewer</a>. Change requires a restart.</div>
           </div>
 
           <hr class="my-3" />
@@ -582,6 +572,22 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- ====== Logging ====== -->
+        <div id="group-logging" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-terminal me-2"></i>Logging</p>
+          <div class="mb-3">
+            <label class="form-label small">Log level</label>
+            <select class="form-select form-select-sm" name="log_level" style="max-width:200px">
+              <option value="DEBUG" {% if cfg.log_level == 'DEBUG' %}selected{% endif %}>Debug (verbose)</option>
+              <option value="INFO" {% if cfg.log_level == 'INFO' %}selected{% endif %}>Info (default)</option>
+              <option value="WARNING" {% if cfg.log_level == 'WARNING' %}selected{% endif %}>Warning</option>
+              <option value="ERROR" {% if cfg.log_level == 'ERROR' %}selected{% endif %}>Error</option>
+              <option value="CRITICAL" {% if cfg.log_level == 'CRITICAL' %}selected{% endif %}>Critical</option>
+            </select>
+            <div class="form-text text-muted small">Controls how much detail is captured for the <a href="{{ url_for('logs') }}">log viewer</a>. Change requires a restart.</div>
+          </div>
         </div>
 
         <!-- ====== Change Password ====== -->

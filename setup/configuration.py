@@ -548,13 +548,22 @@ class Config:
 
     def is_in_brightness_schedule(self) -> bool:
         """True if the current time falls within the configured brightness schedule."""
-        if not self.screen_schedule_enabled:
-            return False
+        start, end = self.brightness_schedule_window
+        return self.screen_schedule_enabled and time_in_window(start, end)
+
+    @property
+    def brightness_schedule_window(self) -> tuple[time, time]:
+        """Return the (start, end) times for the active brightness schedule.
+
+        The schedule dims the screen at night, so the window runs from the
+        dim-start time to the brighten time.  In auto mode that is
+        (sunset, sunrise); in manual mode it is the user-configured times.
+        Returns (00:00, 00:00) when the schedule is disabled.
+        """
         if self.screen_schedule_auto:
-            start, end = approx_sunrise_sunset(self.flight_lat, self.flight_lng)
-        else:
-            start, end = self.screen_schedule_start, self.screen_schedule_end
-        return time_in_window(start, end)
+            sunrise, sunset = approx_sunrise_sunset(self.flight_lat, self.flight_lng)
+            return sunset, sunrise
+        return self.screen_schedule_start, self.screen_schedule_end
 
     @property
     def clock_24hr(self) -> bool:

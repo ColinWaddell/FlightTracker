@@ -301,6 +301,7 @@ def settings():
                     error=str(exc),
                     csrf_token=csrf_token(),
                     in_schedule=cfg.is_in_brightness_schedule(),
+                    schedule_window=cfg.brightness_schedule_window,
                 ),
                 400,
             )
@@ -314,6 +315,7 @@ def settings():
         airports_json=airports_json(),
         csrf_token=csrf_token(),
         in_schedule=cfg.is_in_brightness_schedule(),
+        schedule_window=cfg.brightness_schedule_window,
     )
 
 
