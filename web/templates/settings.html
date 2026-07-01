@@ -442,8 +442,8 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small">Web interface port (1-65535)</label>
-            <input type="number" min="1" max="65535" class="form-control form-control-sm"
+            <label class="form-label small">Web interface port (1024-65535)</label>
+            <input type="number" min="1024" max="65535" class="form-control form-control-sm"
                    name="web_port" value="{{ cfg.web_port }}" style="max-width:120px" />
             <div class="form-text text-muted small">TCP port for the Flask config server. Change requires a restart.</div>
           </div>
