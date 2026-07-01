@@ -390,3 +390,28 @@ def logs():
         for r in records
     ]
     return render_template("logs.html", rows=rows)
+
+
+@app.route("/logs/download")
+@login_required
+def logs_download():
+    """Return the full in-memory log buffer as a plain-text download.
+
+    Intended for users to easily share their logs when requesting help.
+    """
+    import datetime as _dt
+
+    records = get_buffer().records()
+    lines = [
+        f"{ _dt.datetime.fromtimestamp(r['time']).strftime('%Y-%m-%d %H:%M:%S') } "
+        f"{ r['level']:<8} { r['source']:<20} { r['message'] }"
+        for r in records
+    ]
+    payload = "\n".join(lines)
+    return Response(
+        payload,
+        mimetype="text/plain",
+        headers={
+            "Content-Disposition": "attachment; filename=flighttracker-logs.txt"
+        },
+    )
