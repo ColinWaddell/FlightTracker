@@ -45,7 +45,7 @@ PRIORITY = 0
 CLOCK_FONT = fonts.regular
 CLOCK_AMPM_FONT = fonts.extrasmall
 CLOCK_POSITION = (1, 8)
-AMPM_POSITION_Y = 5
+AMPM_POSITION_Y = 6
 
 # Date
 DATE_FONT = fonts.small
@@ -313,8 +313,8 @@ class IdleScene:
                 graphics.DrawText(
                     self.canvas,
                     CLOCK_AMPM_FONT,
+                    ampm_position_x + 1,
                     AMPM_POSITION_Y,
-                    ampm_position_x,
                     TC(THEME_BG),
                     old_ampm,
                 )
@@ -330,11 +330,12 @@ class IdleScene:
             time_str,
         )
         if ampm_str:
+            ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
             graphics.DrawText(
                 self.canvas,
                 CLOCK_AMPM_FONT,
-                AMPM_POSITION[0],
-                AMPM_POSITION[1],
+                ampm_position_x + 1,
+                AMPM_POSITION_Y,
                 TC(THEME_TIME_AMPM),
                 ampm_str,
             )
