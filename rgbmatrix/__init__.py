@@ -11,6 +11,9 @@ Only the API surface actually used by this codebase is implemented.
 
 from __future__ import annotations
 
+import os
+from datetime import datetime
+
 from . import graphics
 
 # ---------------------------------------------------------------------------
@@ -23,6 +26,12 @@ _LED_SIZE = _PIXEL_SIZE - _GAP
 _BG_COLOUR = (15, 15, 15)  # gap / off-LED colour
 _OFF_LED_LEVEL = 8  # brightness of the dim circle shown for off-LEDs
 _ANTIALIAS = True  # anti-alias circle edges in the mask
+BRIGHTNESS = 1.1  # global brightness boost multiplier (1.0 = no boost)
+
+# Captures (photos & video frame sequences) are saved here
+_CAPTURE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "captures"
+)
 
 _screen = None
 _pygame_ready = False
@@ -30,6 +39,11 @@ _small_buf = None  # tiny cols×rows Surface (rebuilt per frame)
 _mask_surface = None  # full-window multiply mask (built once)
 _off_overlay = None  # full-window dim-circle overlay (built once)
 _mask_dims = (0, 0)  # (cols, rows) the mask was built for
+
+# Recording state
+_recording = False
+_rec_dir = None  # folder for the current recording session
+_rec_frame = 0  # frame counter within the current recording
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +148,16 @@ def _ensure_pygame(cols: int, rows: int) -> None:
     pygame.display.set_caption("RGB Matrix — desktop preview")
     _pygame_ready = True
 
+    print(
+        "\n"
+        "┌──────────────────────────────────────────────────┐\n"
+        "│  RGB Matrix simulator — capture keys             │\n"
+        "│                                                  │\n"
+        "│  P  — save a photo to captures/                  │\n"
+        "│  R  — toggle video recording on/off              │\n"
+        "└──────────────────────────────────────────────────┘\n"
+    )
+
 
 def _build_mask(cols: int, rows: int) -> None:
     """Build the multiply mask and off-LED overlay (done once at startup)."""
@@ -178,6 +202,58 @@ def _build_mask(cols: int, rows: int) -> None:
     _mask_dims = (cols, rows)
 
 
+# ---------------------------------------------------------------------------
+# Captures — photos and video frame sequences
+# ---------------------------------------------------------------------------
+
+
+def _timestamp() -> str:
+    """Compact sortable timestamp for filenames."""
+    return datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+
+def _save_photo() -> None:
+    """Save the current screen contents as a single PNG."""
+    import pygame
+
+    if _screen is None:
+        return
+    os.makedirs(_CAPTURE_DIR, exist_ok=True)
+    path = os.path.join(_CAPTURE_DIR, f"{_timestamp()}.png")
+    pygame.image.save(_screen, path)
+    print(f"📷  Photo saved: {path}")
+
+
+def _toggle_recording() -> None:
+    """Start or stop a video frame sequence recording."""
+    global _recording, _rec_dir, _rec_frame
+
+    if not _recording:
+        os.makedirs(_CAPTURE_DIR, exist_ok=True)
+        _rec_dir = os.path.join(_CAPTURE_DIR, _timestamp())
+        os.makedirs(_rec_dir, exist_ok=True)
+        _rec_frame = 0
+        _recording = True
+        print(f"⏺  Recording started: {_rec_dir}/")
+    else:
+        print(f"⏹  Recording stopped: {_rec_frame} frames in {_rec_dir}/")
+        _recording = False
+        _rec_dir = None
+        _rec_frame = 0
+
+
+def _save_video_frame() -> None:
+    """Save the current frame as part of an ongoing recording."""
+    global _rec_frame
+    import pygame
+
+    if not _recording or _screen is None:
+        return
+    _rec_frame += 1
+    path = os.path.join(_rec_dir, f"frame_{_rec_frame:05d}.png")
+    pygame.image.save(_screen, path)
+
+
 def _render(canvas: FrameCanvas, brightness: int) -> None:
     global _small_buf
     import pygame
@@ -185,16 +261,21 @@ def _render(canvas: FrameCanvas, brightness: int) -> None:
 
     _ensure_pygame(canvas._cols, canvas._rows)
 
-    # Drain event queue — handle window close
+    # Drain event queue — handle window close and capture keys
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit(0)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                _save_photo()
+            elif event.key == pygame.K_r:
+                _toggle_recording()
 
     cols = canvas._cols
     rows = canvas._rows
     buf = canvas._buf
-    scale = brightness / 100.0
+    scale = brightness / 100.0 * BRIGHTNESS
 
     # --- 1. Write LED colours into a tiny cols×rows surface -------------
     if (
@@ -204,8 +285,9 @@ def _render(canvas: FrameCanvas, brightness: int) -> None:
     ):
         _small_buf = pygame.Surface((cols, rows))
     pa = pygame.PixelArray(_small_buf)
+    clamp = lambda v: 255 if v > 255 else (0 if v < 0 else int(v))
     for i, (r, g, b) in enumerate(buf):
-        pa[i % cols, i // cols] = (int(r * scale), int(g * scale), int(b * scale))
+        pa[i % cols, i // cols] = (clamp(r * scale), clamp(g * scale), clamp(b * scale))
     del pa  # release PixelArray lock on the surface
 
     # --- 2. Scale up to full window size (nearest-neighbour) -------------
@@ -220,3 +302,7 @@ def _render(canvas: FrameCanvas, brightness: int) -> None:
     _screen.blit(_off_overlay, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
 
     pygame.display.flip()
+
+    # --- 5. Capture frame if recording ---------------------------------
+    if _recording:
+        _save_video_frame()
