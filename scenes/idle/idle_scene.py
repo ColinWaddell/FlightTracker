@@ -72,7 +72,7 @@ RAINFALL_12HR_MARKERS = True
 RAINFALL_GRAPH_ORIGIN = (39, 15)
 RAINFALL_COLUMN_WIDTH = 1
 RAINFALL_GRAPH_HEIGHT = 8
-RAINFALL_MAX_VALUE = 3  # mm - columns taller than this flash
+_RAINFALL_SENSITIVITY_LEVELS = (1, 3, 9)  # mm full-scale per sensitivity level (Egypt/UK/Singapore)
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_FONT = fonts.extrasmall
@@ -478,8 +478,9 @@ class IdleScene:
             0, RAINFALL_HOURS * RAINFALL_COLUMN_WIDTH, RAINFALL_COLUMN_WIDTH
         )
         for data, column_x in zip(rain_data, columns):
+            rainfall_max = _RAINFALL_SENSITIVITY_LEVELS[Config.instance().rain_sensitivity]
             rain_height = int(
-                ceil(data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / RAINFALL_MAX_VALUE))
+                ceil(data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / rainfall_max))
             )
             if rain_height > RAINFALL_GRAPH_HEIGHT:
                 flash_height = min(

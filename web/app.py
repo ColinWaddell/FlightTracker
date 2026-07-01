@@ -147,6 +147,7 @@ def parse_settings_form(form, cfg) -> dict:
         # Weather
         "weatherapi_key": str_val(form.get("weatherapi_key"), cfg.weatherapi_key),
         "weather_mode": int_val(form.get("weather_mode"), 0),
+        "rain_sensitivity": max(0, min(2, int_val(form.get("rain_sensitivity"), 1))),
         "units": str_val(form.get("units"), "m"),
         # Display
         "theme": int_val(form.get("theme"), 0),

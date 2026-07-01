@@ -44,6 +44,7 @@ DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
 DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
+DEFAULT_RAIN_SENSITIVITY = 1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
 DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
 
 # Display
@@ -104,6 +105,7 @@ DEFAULTS: dict[str, Any] = {
     # Weather
     "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
     "weather_mode": DEFAULT_WEATHER_MODE,
+    "rain_sensitivity": DEFAULT_RAIN_SENSITIVITY,
     "units": DEFAULT_UNITS,
     # Display
     "theme": DEFAULT_THEME,
@@ -467,6 +469,13 @@ class Config:
         """0 = off, 1 = temperature only, 2 = temperature + rainfall graph."""
         return max(
             0, min(2, int(self.data_store.get("weather_mode", DEFAULT_WEATHER_MODE)))
+        )
+
+    @property
+    def rain_sensitivity(self) -> int:
+        """Graph full-scale mm/hr: 0 = 1mm (dry), 1 = 3mm (moderate), 2 = 9mm (wet)."""
+        return max(
+            0, min(2, int(self.data_store.get("rain_sensitivity", DEFAULT_RAIN_SENSITIVITY)))
         )
 
     @property
