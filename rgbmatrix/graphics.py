@@ -123,6 +123,12 @@ class Font:
         except Exception as exc:
             print(f"[rgbmatrix.Font] failed to load {path!r}: {exc}")
 
+    def CharacterWidth(self, codepoint: int) -> int:
+        """Return the advance width of a character by Unicode code point.
+        Returns 0 if the character is not present in the font."""
+        glyph = self._glyphs.get(codepoint)
+        return glyph.dwidth if glyph else 0
+
     def _glyph(self, char: str) -> _Glyph | None:
         cp = ord(char)
         return self._glyphs.get(cp) or self._glyphs.get(ord("?"))
