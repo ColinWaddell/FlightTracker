@@ -149,6 +149,7 @@ def display_load(matrix, canvas, result: dict):
 
 def build_matrix_options(cfg: Config) -> RGBMatrixOptions:
     options = RGBMatrixOptions()
+    options.hardware_mapping = "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
     options.rows = 32
     options.cols = 64
     options.chain_length = 1
