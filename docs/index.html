@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FlightTracker — Live flight tracking on an RGB LED matrix</title>
+  <meta name="description" content="A Raspberry Pi-powered RGB LED matrix that shows live aircraft data on your fridge. Track flights, satellites, weather, and more." />
+  <link rel="icon" type="image/png" href="images/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ==========================================================================
+     Nav
+     ========================================================================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <img src="images/favicon.png" alt="FlightTracker" />
+      FlightTracker
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#build">The Build</a>
+      <a href="#getting-started">Get Started</a>
+      <a href="https://github.com/ColinWaddell/FlightTracker" class="nav-cta">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==========================================================================
+     Hero
+     ========================================================================== -->
+<section class="hero fade-in">
+  <div class="container">
+    <div class="hero-badge"><span class="led-dot"></span> Now with themes, web UI &amp; satellite tracking</div>
+    <h1>What planes are flying<br><span class="gradient">over my house?</span></h1>
+    <p>A Raspberry Pi-powered RGB LED matrix that sits on your fridge and shows you exactly what aircraft are overhead — in real time.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/ColinWaddell/FlightTracker" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#getting-started" class="btn btn-secondary">Build Your Own</a>
+    </div>
+    <div class="hero-image">
+      <img src="images/blog/screen-flight.jpg" alt="FlightTracker showing a live flight on the LED matrix" />
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     What's New
+     ========================================================================== -->
+<section id="features" style="padding-top: 40px;">
+  <div class="container">
+    <div class="section-tag">What's New</div>
+    <h2 class="section-title">A new &amp; improved system</h2>
+    <p class="section-sub">The FlightTracker has been completely rebuilt from the ground up. The original fridge gadget you loved is now a full-featured display platform with a web interface, theming, and multiple data sources.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(124,92,255,.15); color: var(--accent);">🎨</div>
+        <h3>Themes</h3>
+        <p>Three built-in colour themes — Default, Monochrome, and Pastel. Every element of the display is themed, from flight data to weather gradients. Switch instantly from the web UI.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(0,212,170,.15); color: var(--accent-2);">⚙️</div>
+        <h3>Web Interface</h3>
+        <p>A built-in Flask web server lets you configure everything from your phone or laptop. Set your location on an interactive map, pick a theme, adjust brightness, and view live logs — no SSH required.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(255,107,107,.15); color: var(--accent-3);">📡</div>
+        <h3>Multiple Display Modes</h3>
+        <p>Choose how flight data is shown: aircraft make &amp; model, or live telemetry (altitude, speed, heading). Full airport names or abbreviations. It's all configurable.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(124,92,255,.15); color: var(--accent);">🛰️</div>
+        <h3>tar1090 Integration</h3>
+        <p>Got your own ADS-B receiver? Point the tracker at your local tar1090 or dump1090 instance and bypass FlightRadar24 entirely. No API keys, no rate limits — your data, your rules.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(0,212,170,.15); color: var(--accent-2);">🌌</div>
+        <h3>Satellite Tracking</h3>
+        <p>Track the ISS and other satellites on an Az-El polar plot. TLE data is fetched from CelesTrak and cached locally. Satellite passes appear automatically when they're above your horizon.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background: rgba(255,107,107,.15); color: var(--accent-3);">🌡️</div>
+        <h3>Weather &amp; Rainfall</h3>
+        <p>When no flights are overhead, the display shows the time, date, and temperature. With an OpenWeather API key, you can also display a rainfall chart. Temperature is colour-coded by gradient.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Gallery
+     ========================================================================== -->
+<section id="gallery">
+  <div class="container">
+    <div class="section-tag">Gallery</div>
+    <h2 class="section-title">The build, in pictures</h2>
+    <p class="section-sub">From a daft idea to a finished unit on the fridge. Here's how it came together.</p>
+
+    <div class="gallery">
+      <div class="gallery-item">
+        <img src="images/blog/tracker-on-fridge.jpg" alt="Finished FlightTracker mounted on fridge" loading="lazy" />
+        <div class="gallery-caption">Finished unit on the fridge — exactly as imagined</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/fridge-flight-tracker.gif" alt="FlightTracker in action" loading="lazy" />
+        <div class="gallery-caption">Live in action — detecting and displaying overhead flights</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/Plane-Tracker-Model-Assembled.png" alt="3D model of the assembled case" loading="lazy" />
+        <div class="gallery-caption">Case design — laser-cut interlocking birch</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/Plane-Tracker-Stack-Diagram.png" alt="Stack diagram showing layers" loading="lazy" />
+        <div class="gallery-caption">Stack diagram — how everything fits together</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/internals-in-case.jpg" alt="Electronics inside the case" loading="lazy" />
+        <div class="gallery-caption">Internals — Pi Zero W and RGB matrix bonnet nestled in</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/lemo-connector.jpg" alt="Custom Lemo connector cable" loading="lazy" />
+        <div class="gallery-caption">Lemo 0B push-pull connector — totally the wrong choice, but gorgeous</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/switch.jpg" alt="Power toggle switch with LED" loading="lazy" />
+        <div class="gallery-caption">Power toggle — NKK switch with a tiny red LED</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/internals.jpg" alt="Veroboard wiring internals" loading="lazy" />
+        <div class="gallery-caption">Veroboard power distribution and wiring</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/screen-time.jpg" alt="Idle screen showing time and temperature" loading="lazy" />
+        <div class="gallery-caption">Idle screen — time, date, and temperature when no flights are overhead</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/blog/flight-path.png" alt="Flight path over Glasgow" loading="lazy" />
+        <div class="gallery-caption">Glasgow airport flight path — right over the house</div>
+      </div>
+
+      <!-- Placeholders for screenshots we don't have yet -->
+      <div class="gallery-placeholder">
+        <div class="ph-icon">⚙️</div>
+        <strong>Web Config UI</strong><br>
+        Screenshot of the settings page coming soon
+      </div>
+      <div class="gallery-placeholder">
+        <div class="ph-icon">🛰️</div>
+        <strong>Satellite Tracking</strong><br>
+        Screenshot of the Az-El polar plot coming soon
+      </div>
+      <div class="gallery-placeholder">
+        <div class="ph-icon">🌡️</div>
+        <strong>Rainfall Chart</strong><br>
+        Screenshot of the weather chart coming soon
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Build Story
+     ========================================================================== -->
+<section id="build">
+  <div class="container">
+    <div class="section-tag">The Build</div>
+    <h2 class="section-title">From daft idea to fridge fixture</h2>
+
+    <div class="narrative">
+      <p>It started with the realisation that the serene neighbourhood we'd moved into was <strong>directly on the flight path for Glasgow airport</strong>. Close enough to notice the difference in how each plane sounds, far enough that the windows don't always shake.</p>
+
+      <p class="quote">"How cool would it be to say, 'that sounds like an Engine Alliance GP7000, must be an Airbus A380'? Not very, but that didn't put me off building something to tell me what aircraft are nearby."</p>
+
+      <p>The plan was simple: a wooden box with a dot matrix screen, driven by a Raspberry Pi, showing live flight data from FlightRadar24. Big magnets on the back so it mounts to the fridge. As close to a featureless box as possible — just the screen and a single fancy cable.</p>
+
+      <div class="narrative-images">
+        <img src="images/blog/Plane-Tracker-Model-Disassembled.png" alt="Disassembled case model" loading="lazy" />
+        <img src="images/blog/switch-light.jpg" alt="Switch with LED lit" loading="lazy" />
+      </div>
+
+      <p><strong>The case</strong> was designed in Illustrator and brought to life by <a href="https://www.instagram.com/turnbulldesignengineering/">Lee Turnbull</a> — an engineer and fantastic joiner. Interlocking laser-cut birch, with neodymium magnets embedded in the back for fridge mounting and neoprene to stop it slipping.</p>
+
+      <p><strong>The electronics</strong> centre on a <strong>Pi Zero W</strong> and the <a href="https://shop.pimoroni.com/products/adafruit-rgb-matrix-bonnet-for-raspberry-pi">Adafruit RGB Matrix Bonnet</a> driving a 64×32 LED panel. Power comes through a 5V LED strip supply brick, but the cable was swapped for a <strong>Lemo 0B push-pull connector</strong> — totally the wrong kind of connector for the job, but gorgeous. Purple braiding, heat-shrink strain relief, the works.</p>
+
+      <p><strong>The software</strong> started as an excuse to brush up on C++, but CMake quickly dissuaded that notion. The Python bindings for <a href="https://github.com/hzeller/rpi-rgb-led-matrix">rpi-rgb-led-matrix</a> did the job beautifully. A custom animation engine drives the display frame-by-frame — each element (callsign, journey, scrolling text, loading pixel) runs on its own keyframe schedule.</p>
+
+      <p>And now, it's grown up. The new version adds a full web configuration UI, theme system, satellite tracking, and support for your own ADS-B receiver. The original daft idea has become a proper platform.</p>
+
+      <p style="margin-top: 32px;">
+        <a href="https://colinwaddell.com/articles/flight-tracker" class="btn btn-secondary">Read the full blog post →</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Theme preview
+     ========================================================================== -->
+<section style="padding-top: 0;">
+  <div class="container">
+    <div class="section-tag">Customisation</div>
+    <h2 class="section-title">Pick your vibe</h2>
+    <p class="section-sub">Three built-in themes, switchable from the web UI. Every colour on the display is themed.</p>
+
+    <div class="theme-row">
+      <div class="theme-swatch">
+        <h4>Default</h4>
+        <div class="theme-colours">
+          <div class="theme-colour" style="background: #7c5cff;" title="Plane"></div>
+          <div class="theme-colour" style="background: #4a9eff;" title="Flight number"></div>
+          <div class="theme-colour" style="background: #00d4aa;" title="Dividing bar"></div>
+          <div class="theme-colour" style="background: #ff6b6b;" title="Arrow"></div>
+          <div class="theme-colour" style="background: #ffd700;" title="Origin"></div>
+        </div>
+      </div>
+      <div class="theme-swatch">
+        <h4>Monochrome</h4>
+        <div class="theme-colours">
+          <div class="theme-colour" style="background: #f5f5f5;" title="Plane"></div>
+          <div class="theme-colour" style="background: #ffffff;" title="Flight number"></div>
+          <div class="theme-colour" style="background: #faebd7;" title="Dividing bar"></div>
+          <div class="theme-colour" style="background: #f5f5f5;" title="Arrow"></div>
+          <div class="theme-colour" style="background: #ffffff;" title="Origin"></div>
+        </div>
+      </div>
+      <div class="theme-swatch">
+        <h4>Pastel</h4>
+        <div class="theme-colours">
+          <div class="theme-colour" style="background: #ff69b4;" title="Plane"></div>
+          <div class="theme-colour" style="background: #87ceeb;" title="Flight number"></div>
+          <div class="theme-colour" style="background: #afeeee;" title="Dividing bar"></div>
+          <div class="theme-colour" style="background: #ffa07a;" title="Arrow"></div>
+          <div class="theme-colour" style="background: #ffdab9;" title="Origin"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Getting Started
+     ========================================================================== -->
+<section id="getting-started">
+  <div class="container">
+    <div class="section-tag">Build Your Own</div>
+    <h2 class="section-title">Get started in four steps</h2>
+    <p class="section-sub">You'll need a Raspberry Pi, an RGB LED matrix, and a couple of hours. Full instructions are in the repo.</p>
+
+    <div class="getting-started">
+      <h3>Hardware you'll need</h3>
+      <div class="hardware-list">
+        <div class="hardware-item">
+          <strong>Raspberry Pi</strong>
+          <span>Any model, Pi Zero W or Pi 4 recommended</span>
+        </div>
+        <div class="hardware-item">
+          <strong>RGB LED Matrix</strong>
+          <span>64×32 panel (Adafruit/Waveshare or compatible)</span>
+        </div>
+        <div class="hardware-item">
+          <strong>RGB Matrix Bonnet</strong>
+          <span>Adafruit bonnet + ribbon cable</span>
+        </div>
+        <div class="hardware-item">
+          <strong>5V Power Supply</strong>
+          <span>With barrel jack, 2A+ recommended</span>
+        </div>
+        <div class="hardware-item">
+          <strong>MicroSD Card</strong>
+          <span>Raspberry Pi OS (Debian Bookworm)</span>
+        </div>
+        <div class="hardware-item">
+          <strong>A case (optional)</strong>
+          <span>Make your own or go raw — up to you</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 32px;">Quick install</h3>
+      <ol>
+        <li>Set up your Pi with Raspberry Pi OS (Debian Bookworm) and install the <a href="https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview">RGB Matrix Bonnet</a></li>
+        <li>Install the rpi-rgb-led-matrix library:
+          <div class="code-block"><span class="cmt"># Install the RGB matrix driver</span><br>cd /home/pi<br>curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/main/rgb-matrix.sh > /tmp/rgb-matrix.sh<br>sudo bash /tmp/rgb-matrix.sh</div>
+        </li>
+        <li>Clone and set up FlightTracker:
+          <div class="code-block"><span class="cmt"># Clone the repo</span><br>cd /home/pi<br>git clone https://github.com/ColinWaddell/FlightTracker<br>cd FlightTracker<br>python3 -m venv env<br>source env/bin/activate<br>pip install -r requirements.txt<br><br><span class="cmt"># Install RGB matrix Python bindings</span><br>cd /home/pi/rpi-rgb-led-matrix/bindings/python<br>pip install .</div>
+        </li>
+        <li>Run it:
+          <div class="code-block">cd /home/pi/FlightTracker<br>env/bin/python3 flight-tracker.py</div>
+          On first boot, a QR code appears on the display pointing to the web config UI. Scan it with your phone to set your location, pick a theme, and start tracking.
+        </li>
+      </ol>
+
+      <p style="margin-top: 24px;">
+        <a href="https://github.com/ColinWaddell/FlightTracker/blob/feature/feature-upgrade/INSTALL.md" class="btn btn-secondary">Full install guide →</a>
+        <a href="https://github.com/ColinWaddell/FlightTracker#configuration-file-details" class="btn btn-secondary" style="margin-left: 12px;">Config reference →</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Timeline
+     ========================================================================== -->
+<section style="padding-top: 0;">
+  <div class="container">
+    <div class="section-tag">Timeline</div>
+    <h2 class="section-title">Five years of tinkering</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-date">July 2021</div>
+        <div class="timeline-title">Project begins</div>
+        <div class="timeline-desc">First commits — basic flight radar scraping, display animation engine, and the original fridge mount build.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">November 2021</div>
+        <div class="timeline-title">Blog post published</div>
+        <div class="timeline-desc">"Fridge Flight Tracker" goes live on colinwaddell.com. 35,000+ views and counting.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2021–2025</div>
+        <div class="timeline-title">Community builds &amp; improvements</div>
+        <div class="timeline-desc">Builders worldwide create their own trackers. Community feedback drives improvements to the code and install instructions.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">April 2025</div>
+        <div class="timeline-title">GPL v3 License</div>
+        <div class="timeline-desc">License added to protect the project and ensure attribution. Open-source projects are our CVs.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2025–2026</div>
+        <div class="timeline-title">The big rewrite</div>
+        <div class="timeline-desc">Complete codebase modernisation — scene manager, web config UI, theme system, tar1090/ADS-B support, satellite tracking with TLE data from CelesTrak, config.json migration, and logging.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Now</div>
+        <div class="timeline-title">382 commits and counting</div>
+        <div class="timeline-desc">Still improving. The animation will probably never be "finished" — and that's fine.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     Footer
+     ========================================================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/ColinWaddell/FlightTracker">GitHub</a>
+      <a href="https://colinwaddell.com/articles/flight-tracker">Blog Post</a>
+      <a href="https://github.com/ColinWaddell/FlightTracker/blob/feature/feature-upgrade/INSTALL.md">Install Guide</a>
+      <a href="https://github.com/ColinWaddell/FlightTracker/blob/feature/feature-upgrade/LICENSE">GPL v3 License</a>
+    </div>
+    <p>Built by <a href="https://colinwaddell.com" style="color: var(--text-dim);">Colin Waddell</a> · Released under <a href="https://www.gnu.org/licenses/gpl-3.0.html" style="color: var(--text-dim);">GNU GPL v3.0</a></p>
+    <p style="margin-top: 8px; font-size: .8rem;">Open-source projects like this are our CVs. Build one yourself — it's really not that hard.</p>
+  </div>
+</footer>
+
+</body>
+</html>
