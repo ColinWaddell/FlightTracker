@@ -26,7 +26,7 @@ _LED_SIZE = _PIXEL_SIZE - _GAP
 _BG_COLOUR = (15, 15, 15)  # gap / off-LED colour
 _OFF_LED_LEVEL = 8  # brightness of the dim circle shown for off-LEDs
 _ANTIALIAS = True  # anti-alias circle edges in the mask
-BRIGHTNESS = 1.1  # global brightness boost multiplier (1.0 = no boost)
+BRIGHTNESS = 1.5  # global brightness boost multiplier (1.0 = no boost)
 
 # Captures (photos & video frame sequences) are saved here
 _CAPTURE_DIR = os.path.join(
