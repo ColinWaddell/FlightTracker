@@ -40,10 +40,10 @@ CYCLE_INTERVAL_S = 4
 TEXT_COL_X = 0
 NAME_Y = 5  # satellite name (yellow)
 # blank line at y=6
-LINE1_Y = 14  # "Speed" label
-LINE2_Y = 20  # speed value + unit
-LINE3_Y = 26  # "Altitude" label (purple)
-LINE4_Y = 32  # altitude value + unit
+LINE1_Y = 13  # "Speed" label
+LINE2_Y = 19  # speed value + unit
+LINE3_Y = 25  # "Altitude" label (purple)
+LINE4_Y = 31  # altitude value + unit
 
 
 class SatelliteScene:
