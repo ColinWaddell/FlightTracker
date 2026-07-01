@@ -24,6 +24,8 @@ except ImportError:
     qrcode = None
     ERROR_CORRECT_L = None
 
+SPLASH_TIMEOUT = 2  # seconds to show the splash screen before switching to display
+
 
 def local_ip() -> str:
     try:
@@ -149,7 +151,9 @@ def display_load(matrix, canvas, result: dict):
 
 def build_matrix_options(cfg: Config) -> RGBMatrixOptions:
     options = RGBMatrixOptions()
-    options.hardware_mapping = "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
+    options.hardware_mapping = (
+        "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
+    )
     options.rows = 32
     options.cols = 64
     options.chain_length = 1
@@ -209,7 +213,7 @@ def load_full_interface(matrix, canvas, cfg: Config):
         )
 
     cfg_existed = CONFIG_PATH.exists()
-    deadline = time.time() + 8
+    deadline = time.time() + SPLASH_TIMEOUT
     while True:
         time.sleep(0.5)
         if time.time() >= deadline and (cfg_existed or CONFIG_PATH.exists()):
