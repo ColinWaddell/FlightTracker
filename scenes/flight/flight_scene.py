@@ -544,8 +544,8 @@ class FlightScene:
             origin_name = abbreviate(origin_name)
             dest_name = abbreviate(dest_name)
 
-        self.origin_name = origin_name or "Unknown"
-        self.dest_name = dest_name or "Unknown"
+        self.origin_name = (origin_name or "Unknown") + " "
+        self.dest_name = (dest_name or "Unknown") + " "
 
         for scroller, iata, name, arrow in (
             (self.origin_scroll, origin, self.origin_name, ">"),
@@ -665,7 +665,7 @@ class FlightScene:
 
         self.draw_square(
             0,
-            PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT,
+            PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT + 1,
             screen.WIDTH,
             screen.HEIGHT,
             TC(THEME_BG),
