@@ -24,7 +24,7 @@ except ImportError:
     qrcode = None
     ERROR_CORRECT_L = None
 
-SPLASH_TIMEOUT = 2  # seconds to show the splash screen before switching to display
+SPLASH_TIMEOUT = 10  # seconds to show the splash screen before switching to display
 
 
 def local_ip() -> str:
