@@ -6,6 +6,7 @@ config.py
 config.json
 tle_cache.json
 captures/
+_junk/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

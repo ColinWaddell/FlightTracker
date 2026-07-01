@@ -202,7 +202,7 @@ def fake_pass_window() -> PassWindow:
         trajectory.append((az, el, 408.0, t))
 
     return PassWindow(
-        name="ISS (DEBUG)",
+        name="ISS (Zayara)",
         tle_index=0,
         aos=aos,
         los=los,
