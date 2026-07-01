@@ -17,18 +17,25 @@ from . import graphics
 # Display constants
 # ---------------------------------------------------------------------------
 
-_PIXEL_SIZE = 10   # each LED cell occupies this many screen pixels
-_GAP = 1           # dark gap between LED cells (pixels)
+_PIXEL_SIZE = 10  # each LED cell occupies this many screen pixels
+_GAP = 1  # dark gap between LED cells (pixels)
 _LED_SIZE = _PIXEL_SIZE - _GAP
-_BG_COLOUR = (15, 15, 15)   # gap / off-LED colour
+_BG_COLOUR = (15, 15, 15)  # gap / off-LED colour
+_OFF_LED_LEVEL = 8  # brightness of the dim circle shown for off-LEDs
+_ANTIALIAS = True  # anti-alias circle edges in the mask
 
 _screen = None
 _pygame_ready = False
+_small_buf = None  # tiny cols×rows Surface (rebuilt per frame)
+_mask_surface = None  # full-window multiply mask (built once)
+_off_overlay = None  # full-window dim-circle overlay (built once)
+_mask_dims = (0, 0)  # (cols, rows) the mask was built for
 
 
 # ---------------------------------------------------------------------------
 # Options (attribute bag — all values are accepted, most are ignored)
 # ---------------------------------------------------------------------------
+
 
 class RGBMatrixOptions:
     def __init__(self):
@@ -53,6 +60,7 @@ class RGBMatrixOptions:
 # ---------------------------------------------------------------------------
 # Canvas
 # ---------------------------------------------------------------------------
+
 
 class FrameCanvas:
     """In-memory pixel buffer matching the 64×32 LED grid."""
@@ -83,6 +91,7 @@ class FrameCanvas:
 # Matrix
 # ---------------------------------------------------------------------------
 
+
 class RGBMatrix:
     def __init__(self, options: RGBMatrixOptions = None):
         if options is None:
@@ -108,14 +117,16 @@ class RGBMatrix:
 
 
 # ---------------------------------------------------------------------------
-# pygame renderer
+# pygame renderer — small-buffer → scale → multiply-mask pipeline
 # ---------------------------------------------------------------------------
+
 
 def _ensure_pygame(cols: int, rows: int) -> None:
     global _screen, _pygame_ready
     if _pygame_ready:
         return
     import pygame
+
     pygame.init()
     w = cols * _PIXEL_SIZE
     h = rows * _PIXEL_SIZE
@@ -124,7 +135,51 @@ def _ensure_pygame(cols: int, rows: int) -> None:
     _pygame_ready = True
 
 
+def _build_mask(cols: int, rows: int) -> None:
+    """Build the multiply mask and off-LED overlay (done once at startup)."""
+    global _mask_surface, _off_overlay, _mask_dims
+    import pygame
+    import pygame.gfxdraw
+
+    w = cols * _PIXEL_SIZE
+    h = rows * _PIXEL_SIZE
+
+    # Multiply mask: white circle per cell on black.  When multiplied with
+    # the scaled colour image, circle areas keep their colour and gaps go
+    # black.
+    mask = pygame.Surface((w, h))
+    mask.fill((0, 0, 0))
+
+    # Off-LED overlay: dim circle per cell.  Added after the multiply so that
+    # off-LEDs (which are black after multiply) still show a faint circle.
+    overlay = pygame.Surface((w, h))
+    overlay.fill((0, 0, 0))
+
+    radius = _LED_SIZE / 2
+    off = _OFF_LED_LEVEL
+
+    for y in range(rows):
+        cy = int(y * _PIXEL_SIZE + _PIXEL_SIZE / 2)
+        for x in range(cols):
+            cx = int(x * _PIXEL_SIZE + _PIXEL_SIZE / 2)
+            if _ANTIALIAS:
+                pygame.gfxdraw.aacircle(mask, cx, cy, int(radius), (255, 255, 255))
+                pygame.gfxdraw.filled_circle(mask, cx, cy, int(radius), (255, 255, 255))
+                pygame.gfxdraw.aacircle(overlay, cx, cy, int(radius), (off, off, off))
+                pygame.gfxdraw.filled_circle(
+                    overlay, cx, cy, int(radius), (off, off, off)
+                )
+            else:
+                pygame.draw.circle(mask, (255, 255, 255), (cx, cy), radius)
+                pygame.draw.circle(overlay, (off, off, off), (cx, cy), radius)
+
+    _mask_surface = mask
+    _off_overlay = overlay
+    _mask_dims = (cols, rows)
+
+
 def _render(canvas: FrameCanvas, brightness: int) -> None:
+    global _small_buf
     import pygame
     import sys
 
@@ -136,20 +191,32 @@ def _render(canvas: FrameCanvas, brightness: int) -> None:
             pygame.quit()
             sys.exit(0)
 
-    scale = brightness / 100.0
-    _screen.fill(_BG_COLOUR)
-
     cols = canvas._cols
+    rows = canvas._rows
     buf = canvas._buf
-    for y in range(canvas._rows):
-        row_base = y * cols
-        py = y * _PIXEL_SIZE
-        for x in range(cols):
-            r, g, b = buf[row_base + x]
-            if r or g or b:
-                colour = (int(r * scale), int(g * scale), int(b * scale))
-            else:
-                colour = (4, 4, 4)   # very dim off-pixel so grid is visible
-            pygame.draw.rect(_screen, colour, (x * _PIXEL_SIZE, py, _LED_SIZE, _LED_SIZE))
+    scale = brightness / 100.0
+
+    # --- 1. Write LED colours into a tiny cols×rows surface -------------
+    if (
+        _small_buf is None
+        or _small_buf.get_width() != cols
+        or _small_buf.get_height() != rows
+    ):
+        _small_buf = pygame.Surface((cols, rows))
+    pa = pygame.PixelArray(_small_buf)
+    for i, (r, g, b) in enumerate(buf):
+        pa[i % cols, i // cols] = (int(r * scale), int(g * scale), int(b * scale))
+    del pa  # release PixelArray lock on the surface
+
+    # --- 2. Scale up to full window size (nearest-neighbour) -------------
+    pygame.transform.scale(_small_buf, _screen.get_size(), _screen)
+
+    # --- 3. Apply circular multiply mask (built once) -------------------
+    if _mask_dims != (cols, rows):
+        _build_mask(cols, rows)
+    _screen.blit(_mask_surface, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+
+    # --- 4. Add dim off-LED circles so the grid is visible ---------------
+    _screen.blit(_off_overlay, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
 
     pygame.display.flip()
