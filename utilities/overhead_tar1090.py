@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import requests
 
@@ -7,6 +8,8 @@ from time import time
 from pathlib import Path
 
 from requests.exceptions import RequestException
+
+logger = logging.getLogger(__name__)
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
 EARTH_RADIUS_KM = 6371
@@ -273,11 +276,13 @@ class Overhead:
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
+            logger.debug("tar1090 fetch complete - %d flight(s) tracked", len(data))
 
         except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
             with self.lock:
                 self.new_data_store = False
                 self.error_store = e
+            logger.warning("tar1090 fetch failed: %s", e)
 
         finally:
             with self.lock:

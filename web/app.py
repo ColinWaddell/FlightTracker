@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
+import logging
 import os
 import secrets
 import sys
@@ -24,12 +25,15 @@ from pathlib import Path
 from flask import Flask, Response, redirect, render_template, request, session, url_for
 
 from setup.configuration import Config, CONFIG_PATH
+from setup.logging import get_buffer
 
 # Port is read from config.json via Config.web_port (default 8584).
 FLASK_PORT = Config.instance().web_port
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+
+logger = logging.getLogger("web")
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +113,7 @@ def restart_after(delay: float = 1.0):
         import time
 
         time.sleep(delay)
-        print(f"[web] Restarting process: {sys.executable} {sys.argv}", flush=True)
+        logger.info("Restarting process: %s %s", sys.executable, sys.argv)
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
     threading.Thread(target=do_restart, daemon=True, name="restart").start()
@@ -162,6 +166,12 @@ def parse_settings_form(form, cfg) -> dict:
         # Web interface
         "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
         "web_port": max(1024, min(65535, int_val(form.get("web_port"), cfg.web_port))),
+        "log_level": (
+            str_val(form.get("log_level"), cfg.log_level).upper()
+            if str_val(form.get("log_level"), cfg.log_level).upper()
+            in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+            else cfg.log_level
+        ),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
@@ -198,7 +208,7 @@ def handle_password_change(form, cfg) -> str:
     if new_password:
         if new_password != confirm_password:
             raise ValueError("New passwords do not match.")
-        print("[web] Password updated", flush=True)
+        logger.info("Web password updated")
         return hash_password(new_password)
     # Preserve existing hash
     return cfg.web_password_hash
@@ -230,14 +240,14 @@ def login():
             error = "Invalid request."
         else:
             password = request.form.get("password", "")
-            print(f"[web] Login attempt", flush=True)
+            logger.info("Login attempt")
             if check_password(password):
                 session["authenticated"] = True
-                print("[web] Login successful", flush=True)
+                logger.info("Login successful")
                 next_url = request.args.get("next") or url_for("settings")
                 return redirect(next_url)
             else:
-                print("[web] Login failed - wrong password", flush=True)
+                logger.warning("Login failed - wrong password")
                 error = "Incorrect password."
 
     using_default_password = not bool(Config.instance().get("web_password_hash"))
@@ -262,8 +272,8 @@ def settings():
 
     if request.method == "POST":
         form = request.form
-        print("[web] POST /settings received", flush=True)
-        print(f"[web] Raw form keys: {list(form.keys())}", flush=True)
+        logger.info("POST /settings received")
+        logger.debug("Raw form keys: %s", list(form.keys()))
 
         try:
             if not validate_csrf(form):
@@ -272,14 +282,14 @@ def settings():
             new_data = parse_settings_form(form, cfg)
             new_data["web_password_hash"] = handle_password_change(form, cfg)
 
-            print(f"[web] Parsed settings: {new_data}", flush=True)
+            logger.debug("Parsed settings: %s", new_data)
 
             cfg.update(new_data)
             cfg.save()
-            print(f"[web] Config saved to {CONFIG_PATH}", flush=True)
+            logger.info("Config saved to %s", CONFIG_PATH)
 
         except Exception as exc:
-            print(f"[web] ERROR processing form: {exc}", flush=True)
+            logger.error("Error processing settings form: %s", exc)
             import traceback
 
             traceback.print_exc()
@@ -354,3 +364,27 @@ def debug_config():
             "Content-Disposition": "attachment; filename=flighttracker-debug-config.json"
         },
     )
+
+
+@app.route("/logs")
+@login_required
+def logs():
+    """Show the most recent in-memory log entries (newest-first).
+
+    Refresh the page to see new entries.  The buffer is capped at
+    BUFFER_SIZE records and cleared on restart.
+    """
+    import datetime as _dt
+
+    records = get_buffer().records()
+    # Format the epoch timestamp into something readable once, server-side.
+    rows = [
+        {
+            "time": _dt.datetime.fromtimestamp(r["time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "level": r["level"],
+            "source": r["source"],
+            "message": r["message"],
+        }
+        for r in records
+    ]
+    return render_template("logs.html", rows=rows)

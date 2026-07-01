@@ -13,12 +13,15 @@ seconds.  Thread-safe.
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 import urllib.request
 from pathlib import Path
 
 from setup.configuration import Config, CONFIG_PATH
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -47,14 +50,14 @@ def fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
         with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
             body = resp.read().decode("utf-8", errors="replace")
     except Exception as exc:
-        print(f"[tle] HTTP error for NORAD {norad_id}: {exc}")
+        logger.error("HTTP error fetching TLE for NORAD %d: %s", norad_id, exc)
         return None
 
     lines = [l.rstrip() for l in body.splitlines() if l.strip()]
     if len(lines) >= 3 and lines[1].startswith("1 ") and lines[2].startswith("2 "):
         return lines[0].strip(), lines[1], lines[2]
 
-    print(f"[tle] no valid TLE in response for NORAD {norad_id}")
+    logger.warning("No valid TLE in response for NORAD %d", norad_id)
     return None
 
 
@@ -81,7 +84,7 @@ def save_cache(tles: list[tuple[str, str, str]]) -> None:
             )
         )
     except Exception as exc:
-        print(f"[tle] cache write failed: {exc}")
+        logger.warning("TLE cache write failed: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -142,11 +145,12 @@ class TLEManager:
             self.ready.set()
             return
 
+        logger.debug("TLE refresh starting for %d satellite(s)", len(norad_ids))
         results: list[tuple[str, str, str]] = []
         for norad_id in norad_ids:
             tle = fetch_tle(norad_id)
             if tle:
-                print(f"[tle] fetched {tle[0]} (NORAD {norad_id})")
+                logger.debug("TLE fetched: %s (NORAD %d)", tle[0], norad_id)
                 results.append(tle)
 
         if results:
@@ -154,7 +158,12 @@ class TLEManager:
             with self.lock:
                 self.tles = results
                 self.fetched_at = time.time()
+            logger.info(
+                "TLE refresh complete - %d/%d satellite(s) updated",
+                len(results),
+                len(norad_ids),
+            )
         else:
-            print("[tle] fetch returned no results - keeping existing cache")
+            logger.warning("TLE refresh returned no results - keeping existing cache")
 
         self.ready.set()

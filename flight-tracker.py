@@ -3,8 +3,10 @@ import socket
 import sys
 import threading
 import time
+import logging
 
 from setup.configuration import Config, CONFIG_PATH
+from setup.logging import setup_logging
 
 # -- Phase 1: Minimal imports for the splash screen -----------------------
 # Only rgbmatrix + PIL + qrcode are needed here.  Imported before the
@@ -98,6 +100,10 @@ def flask_load(ready_event: threading.Event, result: dict):
         # if the process is restarted via os.execv.
         server.socket.set_inheritable(False)
 
+        logging.getLogger("startup").info(
+            "Flask config server bound on port %d", FLASK_PORT
+        )
+
         # Port is bound - signal the main thread to show the QR code.
         ready_event.set()
 
@@ -111,6 +117,7 @@ def flask_load(ready_event: threading.Event, result: dict):
 
     except Exception as exc:
         result["flask_error"] = exc
+        logging.getLogger("startup").error("Flask startup failed: %s", exc)
         import traceback
 
         traceback.print_exc(file=sys.stderr)
@@ -130,9 +137,11 @@ def display_load(matrix, canvas, result: dict):
         DisplayClass = get_display_class()
         display = DisplayClass(matrix=matrix, canvas=canvas)
         result["display"] = display
+        logging.getLogger("startup").info("Display class built successfully")
 
     except Exception as exc:
         result["error"] = exc
+        logging.getLogger("startup").error("Display build failed: %s", exc)
         import traceback
 
         traceback.print_exc(file=sys.stderr)
@@ -224,12 +233,22 @@ def load_minimum_interface(matrix, canvas, cfg: Config):
 
 
 if __name__ == "__main__":
+    setup_logging()
+    logger = logging.getLogger("startup")
+
     cfg = Config.instance()
+    logger.info("FlightTracker starting (log level: %s)", cfg.log_level)
 
     options = build_matrix_options(cfg)
     matrix = RGBMatrix(options=options)
     canvas = matrix.CreateFrameCanvas()
     canvas.Clear()
+    logger.info(
+        "RGB matrix initialised (%dx%d, brightness %d%%)",
+        options.rows,
+        options.cols,
+        cfg.brightness_percent,
+    )
 
     # -- Phase 2: Show splash (loading state, no QR) --------------------------
     render_splash(matrix, canvas, Image, graphics, loading_font)
@@ -237,16 +256,20 @@ if __name__ == "__main__":
     result = {}
 
     if cfg.web_interface_enabled:
+        logger.info("Web interface enabled - starting full interface")
         load_full_interface(matrix, canvas, cfg)
 
     else:
+        logger.info("Web interface disabled - starting minimum interface")
         load_minimum_interface(matrix, canvas, cfg)
 
     if "error" in result:
+        logger.error("Display build failed: %s", result["error"])
         print(f"[startup] Display build failed: {result['error']}", file=sys.stderr)
         sys.exit(1)
 
     display = result["display"]
+    logger.info("Display built - entering main loop")
 
     # -- Phase 5: Run the main display loop -----------------------------------
     display.run()

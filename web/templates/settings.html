@@ -446,6 +446,18 @@
             <div class="form-text text-muted small">TCP port for the Flask config server. Change requires a restart.</div>
           </div>
 
+          <div class="mb-3">
+            <label class="form-label small">Log level</label>
+            <select class="form-select form-select-sm" name="log_level" style="max-width:200px">
+              <option value="DEBUG" {% if cfg.log_level == 'DEBUG' %}selected{% endif %}>Debug (verbose)</option>
+              <option value="INFO" {% if cfg.log_level == 'INFO' %}selected{% endif %}>Info (default)</option>
+              <option value="WARNING" {% if cfg.log_level == 'WARNING' %}selected{% endif %}>Warning</option>
+              <option value="ERROR" {% if cfg.log_level == 'ERROR' %}selected{% endif %}>Error</option>
+              <option value="CRITICAL" {% if cfg.log_level == 'CRITICAL' %}selected{% endif %}>Critical</option>
+            </select>
+            <div class="form-text text-muted small">Controls how much detail is captured for the <a href="{{ url_for('logs') }}">log viewer</a>. Change requires a restart.</div>
+          </div>
+
           <hr class="my-3" />
 
           <div class="mb-2 form-check">
@@ -614,6 +626,9 @@
       </p>
       <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-download me-1"></i>Download debug config
+      </a>
+      <a href="{{ url_for('logs') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-terminal me-1"></i>View logs
       </a>
     </div>
   </footer>

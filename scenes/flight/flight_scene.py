@@ -20,6 +20,7 @@ Screen layout:
 
 from __future__ import annotations
 
+import logging
 import time
 from enum import Enum, auto
 
@@ -45,6 +46,8 @@ from setup.themes import (
     THEME_LOCATION_DESTINATION_ARROW,
 )
 from setup.configuration import Config
+
+logger = logging.getLogger(__name__)
 
 PRIORITY = 1
 
@@ -273,8 +276,11 @@ class FlightScene:
 
         if self.overhead.error is not None:
             if not self.error_logged:
-                print(f"[overhead] fetch failed: {self.overhead.error}")
-                print(f"[overhead] retrying in {ERROR_BACKOFF_S}s")
+                logger.warning(
+                    "Overhead fetch failed: %s - retrying in %ds",
+                    self.overhead.error,
+                    ERROR_BACKOFF_S,
+                )
                 self.error_logged = True
                 self.retry_at = now + ERROR_BACKOFF_S
             if now >= self.retry_at:

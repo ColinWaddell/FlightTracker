@@ -12,11 +12,14 @@ samples so draw() never has to do orbital math during the frame loop.
 from __future__ import annotations
 
 import datetime
+import logging
 import math
 from dataclasses import dataclass, field
 from typing import List, Tuple
 
 from sgp4.api import Satrec, jday as sgp4_jday
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -237,7 +240,7 @@ def compute_passes(
         try:
             sat = Satrec.twoline2rv(line1, line2)
         except Exception as exc:
-            print(f"[passes] TLE parse failed for '{name}': {exc}")
+            logger.warning("TLE parse failed for '%s': %s", name, exc)
             continue
 
         # Scan at coarse resolution to find horizon crossings

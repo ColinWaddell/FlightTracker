@@ -19,6 +19,7 @@ Data flow:
 from __future__ import annotations
 
 import datetime
+import logging
 
 from rgbmatrix import graphics
 
@@ -27,6 +28,8 @@ from setup.colours import PEACH, WHITE, PINK, YELLOW
 from setup.configuration import Config
 from scenes.satellite import passes as passes_mod
 from scenes.satellite import azel_plot
+
+logger = logging.getLogger(__name__)
 
 PRIORITY = 2
 
@@ -153,6 +156,7 @@ class SatelliteScene:
     def recompute_passes(self, cfg) -> None:
         tles = self.tle_manager.get(timeout=5.0)
         if not tles:
+            logger.warning("Satellite pass computation skipped - no TLE data available")
             return
         try:
             self.pass_windows = passes_mod.compute_passes(
@@ -166,8 +170,15 @@ class SatelliteScene:
             # Force redraw of ring + trajectories on next draw()
             self.ring_drawn = False
             self.last_positions = {}
+            logger.debug(
+                "Pass computation complete - %d pass window(s) for %d satellite(s) "
+                "(min elevation %d°)",
+                len(self.pass_windows),
+                len(tles),
+                cfg.satellite_min_elevation,
+            )
         except Exception as exc:
-            print(f"[satellite] pass computation failed: {exc}")
+            logger.error("Satellite pass computation failed: %s", exc)
 
     def draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
         """Paint dim trajectory arcs for all currently active passes."""

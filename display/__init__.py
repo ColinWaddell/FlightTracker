@@ -13,6 +13,7 @@ def build_display_class():
     from setup.configuration import Config
     from setup import frames
     from setup.themes import theme_set
+    import logging
 
     from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 
@@ -24,15 +25,22 @@ def build_display_class():
 
     cfg = Config.instance()
     theme_set(cfg.theme)
+    logger = logging.getLogger("display")
 
     if cfg.use_tar1090:
         from utilities.overhead_tar1090 import Overhead
 
         REFRESH_INTERVAL = 10
+        logger.info(
+            "Data source: tar1090 (%s), refresh every %ds",
+            cfg.tar1090_url or "<unset>",
+            REFRESH_INTERVAL,
+        )
     else:
         from utilities.overhead_fr24 import Overhead
 
         REFRESH_INTERVAL = 30
+        logger.info("Data source: FlightRadar24, refresh every %ds", REFRESH_INTERVAL)
 
     if cfg.loading_led_enabled:
         from scenes.loadingled import LoadingLEDIndicator as IndicatorClass
@@ -84,6 +92,7 @@ def build_display_class():
             self.scene_manager.register(
                 FlightScene(self.canvas, draw_square, overhead, REFRESH_INTERVAL)
             )
+            logger.info("Registered scenes: Idle, Flight")
 
             if cfg.satellite_tracking_enabled:
                 tle_manager = TLEManager()
@@ -91,6 +100,13 @@ def build_display_class():
                 self.scene_manager.register(
                     SatelliteScene(self.canvas, draw_square, tle_manager)
                 )
+                logger.info(
+                    "Satellite tracking enabled - registered Satellite scene "
+                    "(NORAD ids: %s)",
+                    cfg.satellite_norad_ids,
+                )
+            else:
+                logger.info("Satellite tracking disabled")
 
             self.loading = IndicatorClass(self.canvas, overhead)
             self.frames = frames

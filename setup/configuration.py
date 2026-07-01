@@ -84,6 +84,9 @@ DEFAULT_SATELLITE_NORAD_IDS = [25544]  # ISS (ZARYA) = 25544; celestrak.org for 
 DEFAULT_SATELLITE_MIN_ELEVATION = 20  # degrees - passes peaking below this are ignored
 DEFAULT_SATELLITE_MAX_COUNT = 5  # max simultaneous satellites to plot
 
+# Logging
+DEFAULT_LOG_LEVEL = "INFO"  # DEBUG / INFO / WARNING / ERROR / CRITICAL
+
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
     "flight_lat": DEFAULT_FLIGHT_LAT,
@@ -133,6 +136,8 @@ DEFAULTS: dict[str, Any] = {
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
     "satellite_min_elevation": DEFAULT_SATELLITE_MIN_ELEVATION,
     "satellite_max_count": DEFAULT_SATELLITE_MAX_COUNT,
+    # Logging
+    "log_level": DEFAULT_LOG_LEVEL,
 }
 
 
@@ -687,6 +692,25 @@ class Config:
             )
         except (TypeError, ValueError):
             return DEFAULT_SATELLITE_MAX_COUNT
+
+    @property
+    def log_level(self) -> str:
+        """Configured logging level name (DEBUG / INFO / WARNING / ERROR / CRITICAL).
+
+        Stored as an uppercase string in config.json; coerced to one of the
+        five valid names, falling back to the default on anything unknown.
+        """
+        import logging
+
+        val = str(self.data_store.get("log_level", DEFAULT_LOG_LEVEL)).upper()
+        valid = {
+            logging.getLevelName(logging.DEBUG),
+            logging.getLevelName(logging.INFO),
+            logging.getLevelName(logging.WARNING),
+            logging.getLevelName(logging.ERROR),
+            logging.getLevelName(logging.CRITICAL),
+        }
+        return val if val in valid else DEFAULT_LOG_LEVEL
 
     # Derived: zone bounding box (same algorithm as DotboxServer)
     @property

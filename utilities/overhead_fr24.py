@@ -1,8 +1,11 @@
 from threading import Thread, Lock, Event
 from time import sleep
+import logging
 
 from requests.exceptions import RequestException, ConnectionError
 from urllib3.exceptions import NewConnectionError, MaxRetryError
+
+logger = logging.getLogger(__name__)
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
@@ -191,10 +194,10 @@ class Overhead:
                         retries -= 1
 
             with self.lock:
-                print(data)
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
+            logger.debug("FR24 fetch complete - %d flight(s) tracked", len(data))
 
         except (
             RequestException,
@@ -209,6 +212,7 @@ class Overhead:
             with self.lock:
                 self.new_data_store = False
                 self.error_store = e
+            logger.warning("FR24 fetch failed: %s", e)
 
         finally:
             with self.lock:
