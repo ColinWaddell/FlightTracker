@@ -45,7 +45,7 @@ PRIORITY = 0
 CLOCK_FONT = fonts.regular
 CLOCK_AMPM_FONT = fonts.extrasmall
 CLOCK_POSITION = (1, 8)
-AMPM_POSITION = (44, 5)
+AMPM_POSITION_Y = 5
 
 # Date
 DATE_FONT = fonts.small
@@ -72,7 +72,11 @@ RAINFALL_12HR_MARKERS = True
 RAINFALL_GRAPH_ORIGIN = (39, 15)
 RAINFALL_COLUMN_WIDTH = 1
 RAINFALL_GRAPH_HEIGHT = 8
-_RAINFALL_SENSITIVITY_LEVELS = (1, 3, 9)  # mm full-scale per sensitivity level (Egypt/UK/Singapore)
+_RAINFALL_SENSITIVITY_LEVELS = (
+    1,
+    3,
+    9,
+)  # mm full-scale per sensitivity level (Egypt/UK/Singapore)
 RAINFALL_OVERSPILL_FLASH_ENABLED = True
 
 TEMPERATURE_FONT = fonts.extrasmall
@@ -193,6 +197,10 @@ class WeatherFetcher(threading.Thread):
 # ---------------------------------------------------------------------------
 
 
+def font_text_width(font, text: str) -> int:
+    return sum(font.CharacterWidth(ord(c)) for c in text)
+
+
 class IdleScene:
     """
     Priority-0 fallback scene.  Draws clock, date, day-of-week and
@@ -299,11 +307,14 @@ class IdleScene:
             )
             if ampm_str:
                 old_ampm = "AM" if "AM" in self.last_time else "PM"
+                ampm_position_x = CLOCK_POSITION[0] + font_text_width(
+                    CLOCK_FONT, self.last_time[:5]
+                )
                 graphics.DrawText(
                     self.canvas,
                     CLOCK_AMPM_FONT,
-                    AMPM_POSITION[0],
-                    AMPM_POSITION[1],
+                    AMPM_POSITION_Y,
+                    ampm_position_x,
                     TC(THEME_BG),
                     old_ampm,
                 )
@@ -478,7 +489,9 @@ class IdleScene:
             0, RAINFALL_HOURS * RAINFALL_COLUMN_WIDTH, RAINFALL_COLUMN_WIDTH
         )
         for data, column_x in zip(rain_data, columns):
-            rainfall_max = _RAINFALL_SENSITIVITY_LEVELS[Config.instance().rain_sensitivity]
+            rainfall_max = _RAINFALL_SENSITIVITY_LEVELS[
+                Config.instance().rain_sensitivity
+            ]
             rain_height = int(
                 ceil(data["precip_mm"] * (RAINFALL_GRAPH_HEIGHT / rainfall_max))
             )
