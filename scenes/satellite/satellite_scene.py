@@ -380,7 +380,7 @@ def compute_telemetry(
                 frac = (now - t0).total_seconds() / dt
                 alt_km = rng0 + (rng1 - rng0) * frac
 
-                # Slant range from observer: solve triangle Earth–observer–satellite
+                # Slant range from observer: solve triangle Earth-observer-satellite
                 EARTH_R = 6371.0
                 el_rad = math.radians(max(1.0, (el0 + el1) / 2))
                 slant_km = -EARTH_R * math.sin(el_rad) + math.sqrt(
