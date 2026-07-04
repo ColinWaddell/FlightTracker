@@ -55,7 +55,7 @@ This will take a while on a fresh device as it picks up all its updates.
 
 ```
 cd /home/pi
-curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/main/rgb-matrix.sh > /tmp/rgb-matrix.sh
+curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/refs/heads/main/converted_shell_scripts/rgb-matrix.sh > /tmp/rgb-matrix.sh
 sudo bash /tmp/rgb-matrix.sh
 ```
 
