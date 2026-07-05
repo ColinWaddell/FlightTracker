@@ -7,9 +7,10 @@ from time import time
 from requests.exceptions import RequestException
 
 try:
-    from config import MIN_ALTITUDE
+    from config import MIN_ALTITUDE, MAX_ALTITUDE
 except (ModuleNotFoundError, NameError, ImportError):
     MIN_ALTITUDE = 0  # feet
+    MAX_ALTITUDE = 10000 # feet
 
 try:
     from config import ZONE_HOME, LOCATION_HOME
@@ -28,7 +29,6 @@ except (ModuleNotFoundError, NameError, ImportError):
 
 ROUTE_CACHE_TTL = 28800  # 8 hours
 MAX_FLIGHT_LOOKUP = 5
-MAX_ALTITUDE = 10000  # feet
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
