@@ -1,0 +1,15 @@
+{
+  "name": "flighttracker-website",
+  "version": "1.0.0",
+  "description": "Marketing and getting-started site for FlightTracker - built with Eleventy.",
+  "private": true,
+  "scripts": {
+    "serve": "eleventy --serve --port=8080",
+    "build": "eleventy",
+    "clean": "rm -rf _site",
+    "debug": "DEBUG=Eleventy* eleventy --serve"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  }
+}

@@ -1,0 +1,13 @@
+{# Renders the theme swatch row from themes.json #}
+<div class="theme-row">
+  {%- for theme in themes -%}
+    <div class="theme-swatch">
+      <h4>{{ theme.name }}</h4>
+      <div class="theme-colours">
+        {%- for colour in theme.colours -%}
+          <div class="theme-colour" style="background: {{ colour.hex }};" title="{{ colour.label }}"></div>
+        {%- endfor -%}
+      </div>
+    </div>
+  {%- endfor -%}
+</div>

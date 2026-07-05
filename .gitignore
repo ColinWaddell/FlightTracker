@@ -1,2 +1,17 @@
-.vscode
-.dev
+# Dependencies
+node_modules/
+
+# Eleventy build output
+_site/
+
+# Local dev environment
+.dev/
+.vscode/
+
+# OS / editor cruft
+.DS_Store
+*.log
+npm-debug.log*
+
+# Scratch / reference material
+_junk/

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Default",
+    "colours": [
+      { "hex": "#7c5cff", "label": "Plane" },
+      { "hex": "#4a9eff", "label": "Flight number" },
+      { "hex": "#00d4aa", "label": "Dividing bar" },
+      { "hex": "#ff6b6b", "label": "Arrow" },
+      { "hex": "#ffd700", "label": "Origin" }
+    ]
+  },
+  {
+    "name": "Monochrome",
+    "colours": [
+      { "hex": "#888888", "label": "Plane" },
+      { "hex": "#ffffff", "label": "Flight number" },
+      { "hex": "#faebd7", "label": "Dividing bar" },
+      { "hex": "#aaaaaa", "label": "Arrow" },
+      { "hex": "#eeeeee", "label": "Origin" }
+    ]
+  },
+  {
+    "name": "Pastel",
+    "colours": [
+      { "hex": "#ff69b4", "label": "Plane" },
+      { "hex": "#87ceeb", "label": "Flight number" },
+      { "hex": "#afeeee", "label": "Dividing bar" },
+      { "hex": "#ffa07a", "label": "Arrow" },
+      { "hex": "#ffdab9", "label": "Origin" }
+    ]
+  }
+]

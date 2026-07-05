@@ -1,0 +1,15 @@
+{# Renders the feature pictogram grid from features.json #}
+<div class="feature-list row g-0 border border-2">
+  {%- for item in features -%}
+    <div class="feature-row-item col-12 col-md-6 col-lg-4 d-flex align-items-center gap-3">
+      <div class="feature-tile"
+        {%- if item.tile == 'blue' %} style="background: var(--blue); color: #fff;"
+        {%- elif item.tile == 'danger' %} style="background: var(--danger); color: #fff;"
+        {%- endif -%}
+      >{{ item.icon }}</div>
+      <div>
+        <h3>{{ item.title }}</h3>
+      </div>
+    </div>
+  {%- endfor -%}
+</div>

@@ -1,0 +1,12 @@
+{# Renders the hardware shopping grid from hardware.json.
+   Pass `essentialOnly=true` to show only essential items. #}
+<div class="hardware-grid row g-0 border border-2">
+  {%- for item in hardware -%}
+    {%- if (not essentialOnly) or item.essential -%}
+      <div class="hardware-item col-12 col-sm-6 col-lg-4">
+        <strong>{{ item.name }}</strong>
+        <span>{{ item.detail }}</span>
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+</div>

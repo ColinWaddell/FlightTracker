@@ -1,0 +1,23 @@
+{# Info panel with a yellow header and body slot.
+   Usage:
+   {% infoPanel "Step 1 - Do the thing" %}
+     Body content goes here.
+   {% endinfoPanel %}
+#}
+{%- macro infoPanel(header) -%}
+  <div class="info-panel">
+    <div class="info-panel-header">{{ header }}</div>
+    <div class="info-panel-body">
+      {{ caller() | safe }}
+    </div>
+  </div>
+{%- endmacro -%}
+
+{%- macro infoPanelBody(header) -%}
+  <div class="info-panel">
+    <div class="info-panel-header">{{ header }}</div>
+    <div class="info-panel-body">
+      {{ caller() | safe }}
+    </div>
+  </div>
+{%- endmacro -%}

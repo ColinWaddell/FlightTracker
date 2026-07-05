@@ -1,0 +1,22 @@
+[
+  {
+    "label": "Full airport names + aircraft type",
+    "src": "images/captures/full names and plane type.webm",
+    "type": "video"
+  },
+  {
+    "label": "Full airport names + telemetry",
+    "src": "images/captures/full names and tlm.webm",
+    "type": "video"
+  },
+  {
+    "label": "Short airport codes + aircraft type",
+    "src": "images/captures/short names and plane type.webm",
+    "type": "video"
+  },
+  {
+    "label": "Short airport codes + telemetry",
+    "src": "images/captures/short names and tlm.webm",
+    "type": "video"
+  }
+]

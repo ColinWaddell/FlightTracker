@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Raspberry Pi",
+    "detail": "Pi Zero W or Pi 4 both work well",
+    "essential": true,
+    "buyUrl": "https://shop.pimoroni.com/products/raspberry-pi-zero-w"
+  },
+  {
+    "name": "RGB LED Matrix",
+    "detail": "64×32 panel",
+    "essential": true,
+    "buyUrl": "https://shop.pimoroni.com/products/rgb-led-matrix-panel"
+  },
+  {
+    "name": "Matrix Bonnet",
+    "detail": "Adafruit RGB Matrix Bonnet or equivalent",
+    "essential": true,
+    "buyUrl": "https://shop.pimoroni.com/products/adafruit-rgb-matrix-bonnet-for-raspberry-pi"
+  },
+  {
+    "name": "5V Power Supply",
+    "detail": "2A or better recommended",
+    "essential": true,
+    "buyUrl": "https://www.amazon.co.uk/gp/product/B01DPXDB04/"
+  },
+  {
+    "name": "MicroSD Card",
+    "detail": "Raspberry Pi OS Bookworm",
+    "essential": true,
+    "buyUrl": null
+  },
+  {
+    "name": "Case",
+    "detail": "Optional, but nice",
+    "essential": false,
+    "buyUrl": null
+  },
+  {
+    "name": "Lemo 0B Connector",
+    "detail": "Totally the wrong connector for the job, but gorgeous",
+    "essential": false,
+    "buyUrl": "https://uk.farnell.com/lemo/fgg-0b-302-clad52z/plug-free-0b-2way/dp/3817222"
+  },
+  {
+    "name": "Power Toggle Switch",
+    "detail": "NKK SPDT with a little red LED - looks like a tiny antenna",
+    "essential": false,
+    "buyUrl": "https://uk.farnell.com/nkk-switches/m2112tcw01/toggle-switch-1pole-red-led/dp/1187767"
+  }
+]

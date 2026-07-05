@@ -1,0 +1,18 @@
+<nav class="nav">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="/" class="nav-brand d-flex align-items-center gap-2">
+      <img src="/images/favicon.png" alt="{{ site.name }}" />
+      {{ site.name }}
+    </a>
+    <div class="nav-links d-flex align-items-center">
+      {%- for item in nav -%}
+        {%- set cleanHref = item.href | replace("/index.html", "/") | replace(".html", "/") -%}
+        {%- set cleanUrl = page.url | replace("/index.html", "/") -%}
+        <a href="{{ item.href }}"
+        {%- if not item.cta and cleanHref == cleanUrl %} aria-current="page"{% endif -%}
+        {%- if item.cta %} class="nav-cta"{% endif -%}
+        >{{ item.label }}</a>
+      {%- endfor -%}
+    </div>
+  </div>
+</nav>

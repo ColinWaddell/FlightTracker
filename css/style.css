@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FlightTracker — Airport Wayfinding Theme
+   FlightTracker - Airport Wayfinding Theme
    High-contrast international signage aesthetic.
    Helvetica-style type, flat panels, bold arrows, strict alignment.
    ========================================================================== */
@@ -10,10 +10,10 @@
   --panel-2:  #ececec;
   --text:     #0b0b0b;
   --muted:    #555555;
-  --accent:   #ffd200;       /* yellow — primary accent, like airport signs */
-  --blue:     #005eb8;       /* blue — information / services */
-  --danger:   #d71920;       /* red — alerts / warnings */
-  --green:    #00843d;       /* green — go / active / success */
+  --accent:   #ffd200;       /* yellow - primary accent, like airport signs */
+  --blue:     #005eb8;       /* blue - information / services */
+  --danger:   #d71920;       /* red - alerts / warnings */
+  --green:    #00843d;       /* green - go / active / success */
   --border:   #cccccc;
   --border-strong: #999999;
 
@@ -34,20 +34,9 @@
   margin-bottom: 20px;
 }
 
-.hero-content {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-  flex-wrap: wrap;
-}
 .hero-text {
   flex: 1;
   min-width: 280px;
-}
-.hero-content .hero-logo {
-  width: 140px;
-  margin: 0;
-  flex-shrink: 0;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,20 +53,20 @@ body {
 }
 
 a {
-  color: var(--accent);
+  color: #dd972c;
   text-decoration: none;
   transition: color .15s;
 }
 a:hover { color: #000; }
 
+/* Bootstrap's .container handles the max-width and centering now.
+   We just constrain it to match the original 960px design. */
 .container {
   max-width: 960px;
-  margin: 0 auto;
-  padding: 0 32px;
 }
 
 /* ---------------------------------------------------------------------------
-   Nav — heavy yellow bar, like an airport sign
+   Nav - heavy yellow bar, like an airport sign
    --------------------------------------------------------------------------- */
 .nav {
   background: var(--accent);
@@ -86,19 +75,10 @@ a:hover { color: #000; }
   top: 0;
   z-index: 100;
 }
-.nav-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  max-width: 960px;
-  margin: 0 auto;
-  height: 56px;
-}
+/* Bootstrap's .container + d-flex utilities handle the nav layout.
+   We just set the height and visual treatment. */
+.nav > .container { height: 56px; }
 .nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   font-weight: 800;
   font-size: 1rem;
   color: #000;
@@ -106,11 +86,7 @@ a:hover { color: #000; }
   letter-spacing: 0.04em;
 }
 .nav-brand img { width: 28px; height: 28px; }
-.nav-links {
-  display: flex;
-  gap: 0;
-  align-items: center;
-}
+/* Bootstrap's d-flex handles the nav-links layout. */
 .nav-links a {
   color: #000;
   font-weight: 700;
@@ -138,77 +114,21 @@ a:hover { color: #000; }
 }
 
 /* ---------------------------------------------------------------------------
-   Walkway lines — thick guide lines like airport floor markings
-   --------------------------------------------------------------------------- */
-.walkway {
-  position: relative;
-  height: 6px;
-  background: var(--accent);
-  width: 100%;
-}
-.walkway.dashed {
-  background: repeating-linear-gradient(
-    90deg,
-    var(--accent) 0,
-    var(--accent) 40px,
-    transparent 40px,
-    transparent 80px
-  );
-}
-.walkway.thick {
-  height: 12px;
-}
-.walkway.mid {
-  height: 8px;
-}
-
-/* Arrow trail — like "follow this line to Gate 27" */
-.arrow-trail {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin: 40px 0;
-}
-.arrow-trail .trail-line {
-  flex: 1;
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--accent) 0,
-    var(--accent) 24px,
-    transparent 24px,
-    transparent 36px
-  );
-}
-.arrow-trail .trail-arrow {
-  width: 0;
-  height: 0;
-  border-left: 20px solid var(--accent);
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  flex-shrink: 0;
-}
-
-/* Runway threshold markings — the big painted blocks */
-.runway-markings {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  padding: 0;
-}
-.runway-markings .stripe {
-  width: 12px;
-  height: 48px;
-  background: var(--accent);
-}
-
-/* ---------------------------------------------------------------------------
    Hero
    --------------------------------------------------------------------------- */
 .hero {
   background: var(--bg);
   padding: 64px 0 48px;
   border-bottom: 2px solid var(--border);
+}
+/* Bootstrap's row/col-lg-6 handles the hero layout. */
+.hero-image {
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+.hero-image img {
+  width: 100%;
+  display: block;
 }
 .hero-label {
   font-weight: 800;
@@ -238,9 +158,8 @@ a:hover { color: #000; }
 }
 .hero h1 .yellow { color: var(--accent); }
 .hero p {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   color: var(--muted);
-  max-width: 560px;
   margin-bottom: 36px;
 }
 .hero-actions {
@@ -280,21 +199,10 @@ a:hover { color: #000; }
 .btn-blue:hover { background: #0078d4; }
 .btn + .btn { margin-left: -2px; }
 
-.hero-image {
-  margin-top: 40px;
-  border: 2px solid var(--border);
-  overflow: hidden;
-  max-width: 700px;
-}
-.hero-image img {
-  width: 100%;
-  display: block;
-}
-
 /* ---------------------------------------------------------------------------
-   Section structure — airport signage coded labels
+   Section structure - airport signage coded labels
    --------------------------------------------------------------------------- */
-section { padding: 64px 0; }
+section { padding: 20px 0; }
 .section-code {
   font-weight: 800;
   font-size: .8rem;
@@ -321,23 +229,14 @@ section { padding: 64px 0; }
 .section-sub {
   color: var(--muted);
   font-size: 1.05rem;
-  max-width: 640px;
   margin-bottom: 40px;
 }
 
 /* ---------------------------------------------------------------------------
-   Feature list — inline items with pictogram tiles
+   Feature list - inline items with pictogram tiles
+   Bootstrap's row/col handles the grid; we keep the visual treatment.
    --------------------------------------------------------------------------- */
-.feature-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0;
-  border: 2px solid var(--border);
-}
 .feature-row-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   padding: 16px 20px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -355,12 +254,6 @@ section { padding: 64px 0; }
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-@media (min-width: 769px) {
-  .feature-list > .feature-row-item:nth-child(3n) { border-right: none; }
-}
-@media (max-width: 768px) {
-  .feature-row-item { border-right: none; }
-}
 
 /* Config list */
 .config-list {
@@ -377,7 +270,7 @@ section { padding: 64px 0; }
 .config-list li:last-child { border-bottom: none; }
 
 /* ---------------------------------------------------------------------------
-   Feature grid — flat panels, hard edges, pictogram tiles
+   Feature grid - flat panels, hard edges, pictogram tiles
    --------------------------------------------------------------------------- */
 .feature-grid {
   display: grid;
@@ -434,14 +327,8 @@ section { padding: 64px 0; }
 }
 
 /* ---------------------------------------------------------------------------
-   Gallery
+   Gallery - Bootstrap's row/col handles the grid; we keep the visual treatment
    --------------------------------------------------------------------------- */
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0;
-  border: 2px solid var(--border);
-}
 .gallery-item {
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -567,7 +454,7 @@ section { padding: 64px 0; }
 }
 
 /* ---------------------------------------------------------------------------
-   Getting started — panel with code blocks
+   Getting started - panel with code blocks
    --------------------------------------------------------------------------- */
 .info-panel {
   background: var(--panel);
@@ -621,13 +508,8 @@ section { padding: 64px 0; }
 .code-block .str { color: #6ab0f3; }
 
 /* Hardware list */
-.hardware-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0;
-  border: 2px solid var(--border);
-  margin-bottom: 24px;
-}
+/* Bootstrap's row/col handles the hardware grid layout. */
+.hardware-grid { margin-bottom: 24px; }
 .hardware-item {
   background: var(--panel);
   padding: 16px 20px;
@@ -685,7 +567,7 @@ section { padding: 64px 0; }
 }
 
 /* ---------------------------------------------------------------------------
-   Status bar — like an airport info display
+   Status bar - like an airport info display
    --------------------------------------------------------------------------- */
 .status-bar {
   background: var(--panel);
@@ -724,15 +606,11 @@ section { padding: 64px 0; }
   padding: 48px 0;
   text-align: center;
 }
+/* Bootstrap's d-flex handles the footer-links layout. */
 .footer-links {
-  display: flex;
-  gap: 0;
-  justify-content: center;
   margin-bottom: 20px;
   border: 2px solid var(--border);
   max-width: 480px;
-  margin-left: auto;
-  margin-right: auto;
 }
 .footer-links a {
   color: var(--muted);
@@ -773,28 +651,15 @@ section { padding: 64px 0; }
   .hero h1 { font-size: 2.2rem; }
   .hero p { font-size: 1rem; }
   .section-title { font-size: 1.6rem; }
-  .container { padding: 0 20px; }
-  .nav-inner { padding: 0 20px; }
 }
 
 /* ---------------------------------------------------------------------------
-   Screen captures — looping video displays presented as animated screenshots
+   Screen captures - Bootstrap's row/col handles the grid; we keep the visuals
    --------------------------------------------------------------------------- */
-.capture-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 0;
-  border: 2px solid var(--border);
-  margin-top: 32px;
-}
 .capture-item {
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background: var(--panel);
-}
-.capture-item:nth-last-child(-n+1) { border-bottom: none; }
-@media (min-width: 281px) {
-  /* auto-fit handles wrapping; remove trailing borders via JS if needed */
 }
 .capture-screen {
   background: #0b0b0b;
@@ -844,4 +709,49 @@ section { padding: 64px 0; }
   width: 100%;
   height: auto;
   image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------------------
+   Utility classes - replacements for the inline styles in the original HTML
+   --------------------------------------------------------------------------- */
+.section-sub--flush { margin-bottom: 0; }
+.section-sub--tight { margin-top: 32px; margin-bottom: 0; }
+.narrative--tight { margin-bottom: 32px; }
+.capture-screen--light { background: #fff; }
+
+/* Inline code used inside narrative prose */
+.inline-code {
+  font-family: var(--mono);
+  background: var(--panel-2);
+  padding: 2px 6px;
+  font-size: .85em;
+}
+
+/* Active nav link */
+.nav-links a[aria-current="page"] {
+  background: rgba(0,0,0,.1);
+}
+
+/* ---------------------------------------------------------------------------
+   Info-panel body text helpers — used in the data-sources section
+   --------------------------------------------------------------------------- */
+.info-panel-body p {
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.info-panel-body p:last-child {
+  margin-bottom: 0;
+}
+.info-panel-body .panel-punchline {
+  color: var(--text);
+  font-weight: 700;
+  margin-top: 16px;
+}
+.info-panel + .info-panel {
+  margin-top: 24px;
+}
+.info-panel-body code {
+  font-family: var(--mono);
+  background: var(--panel-2);
+  padding: 2px 6px;
 }

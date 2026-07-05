@@ -1,0 +1,5 @@
+[
+  { "label": "Hardware // Build", "href": "/build/" },
+  { "label": "Software // Install", "href": "/install/" },
+  { "label": "GitHub // Source Code", "href": "https://github.com/ColinWaddell/FlightTracker", "cta": true }
+]

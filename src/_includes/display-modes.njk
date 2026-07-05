@@ -1,0 +1,17 @@
+{# Renders the display modes capture grid from displayModes.json #}
+<div class="capture-grid row g-0 border border-2 mt-3">
+  {%- for item in displayModes -%}
+    <div class="capture-item col-12 col-md-6">
+      <div class="capture-screen">
+        {%- if item.type == "video" -%}
+          <video autoplay loop muted playsinline preload="metadata">
+            <source src="{{ item.src }}" type="video/webm" />
+          </video>
+        {%- else -%}
+          <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
+        {%- endif -%}
+      </div>
+      <div class="capture-label">{{ item.label }}</div>
+    </div>
+  {%- endfor -%}
+</div>

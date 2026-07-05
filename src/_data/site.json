@@ -1,0 +1,13 @@
+{
+  "name": "FlightTracker",
+  "tagline": "Raspberry Pi-powered Flight Tracker for RGB LED matrix displays",
+  "version": "2.0",
+  "license": "GPL v3.0",
+  "repo": "https://github.com/ColinWaddell/FlightTracker",
+  "blog": "https://colinwaddell.com/articles/flight-tracker",
+  "author": "Colin Waddell",
+  "authorUrl": "https://colinwaddell.com",
+  "status": "System operational",
+  "commitCount": "382",
+  "description": "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead."
+}
