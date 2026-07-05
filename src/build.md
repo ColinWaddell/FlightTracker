@@ -8,48 +8,74 @@ permalink: "/build/"
 <section>
   <div class="container">
     <h2 class="section-title">What to buy</h2>
-    <p class="section-sub">You do not need anything exotic. Here's the lot.</p>
 
     <div class="narrative">
-      <p>The core of FlightTracker is a Raspberry Pi, an RGB LED matrix, and the Adafruit bonnet that wires them together. Beyond that, it's a power supply and a microSD card - and optionally a case, a fancy connector, and a switch that looks like a tiny antenna.</p>
-
-      <p>The links below are to the UK suppliers I used. The same parts are available from Adafruit, Amazon, and Raspberry Pi stockists worldwide.</p>
+      <p>If you're considering building one of these then there's some must-have's and some optional extras.</p>
+      <p>How you put it in a case I'll leave up to you.</p>
     </div>
-
-    <div class="info-panel" style="margin-bottom: 24px;">
-      <div class="info-panel-header">The essentials</div>
-      <div class="info-panel-body">
-        {% include "hardware-grid.njk" %}
-        <p style="color: var(--muted); margin-top: 16px; margin-bottom: 0;">These are the parts you actually need to run FlightTracker. The case and the fancy connector are optional - nice, but not required.</p>
-      </div>
-    </div>
-
-    <!-- TODO: Write the "where to buy outside the UK" note - point readers to Adafruit (US), Pimoroni (UK/EU), The Pi Hut, and local Raspberry Pi stockists. Mention that the matrix panels are widely available under a few brand names. -->
-
-    <!-- TODO: Write the "what you don't need" callout - no soldering iron strictly required (the bonnet comes pre-assembled), no 3D printer required, no special tools beyond a microSD card writer. Note the optional solder bridge on the bonnet for cleaner PWM. -->
-  </div>
-</section>
-
-<section>
-  <div class="container">
-    <h2 class="section-title">The nice-to-haves</h2>
+    
+    <h3>Minimum shopping list</h3>
     <div class="narrative">
-      <p>None of these are required. They are the parts that made <em>my</em> build feel finished - the Lemo connector because it's gorgeous, the switch because it looks like a tiny antenna, the case because a bare matrix on the fridge is a bit sad.</p>
-      <p>Skip them all if you just want it working. Come back to them later if you catch the bug.</p>
+      <p>There are cheaper alternatives to be found on the likes of Ali-Express for most things here, but if you want something to work first time I recommend going to a reputable retailer</p>
+      
+        <ul>
+            <li>
+                <a href="https://shop.pimoroni.com/products/rgb-led-matrix-panel?variant=42312764298">
+                    RGB LED Matrix Panel - 32x64
+                </a>
+            </li>
+            <li>
+                <a href="https://shop.pimoroni.com/products/adafruit-rgb-matrix-bonnet-for-raspberry-pi?variant=2257849155594">
+                    Adafruit RGB Matrix Bonnet for Raspberry Pi
+                </a>
+            </li>
+            <li>
+                <a href="https://www.amazon.co.uk/gp/product/B01DPXDB04/">
+                    Power supply (5V 8A)
+                </a>
+            </li>
+        </ul>
+
+        <p>
+            Plug everything together and you'll be ready to get the code running.
+
+        </p>
+
+        <div class="card">
+          <div class="card-header">Connecting the bonnet to the Raspberry Pi</div>
+          <div class="card-body p-2 bg-black">
+            <img src="/images/bonnet_connection.jpg" alt="Connecting the RGB matrix bonnet to the Raspberry Pi" loading="lazy" class="w-100 d-block">
+          </div>
+          <div class="card-footer text-muted small">Image courtesy of <a href="https://shop.pimoroni.com/">Pimoroni</a></div>
+        </div>
     </div>
 
-    <!-- TODO: Write a short paragraph per optional extra explaining why you might want it and where to get it. Pull from the build page and the _junk blog post. -->
-  </div>
-</section>
 
-<section>
-  <div class="container">
-    <h2 class="section-title">Ready to build?</h2>
+    <h3>Optional Extras</h3>
     <div class="narrative">
-      <p>Once you've got the parts, head to the <a href="/install/">install guide</a> to get FlightTracker running on your Pi.</p>
+        <p>
+            When you put the device in a case it's nice to have a power switch on the side to toggle the device on and off. Additionally the code supports a blinking LED to indicate when the device is searching for overhead data.
+        </p>
+        <ul>
+            <li>
+                <a href="https://uk.farnell.com/nkk-switches/m2112tcw01/toggle-switch-1pole-red-led/dp/1187767">
+                    Toggle switch with LED
+                </a>
+            </li>
+        </ul>
+        <p>I recommend driving the LED indirectly via a transisitor to avoid asking too much of the GPIO output</p>
+
+        <div class="card">
+          <div class="card-header">Driving an LED indirectly via a transistor</div>
+          <div class="card-body p-2 bg-black">
+            <img src="/images/led_driver.png" alt="Circuit diagram showing how to drive an LED indirectly via a transistor" loading="lazy" class="w-100 d-block">
+          </div>
+        </div>
+
+        <div class="narrative mb-4">
+            <p><em>Looking for a way to contribute? I'd love some better illustrations of the various ways to wire up a FlightTracking box.</em>
+        </p>
+</div>
     </div>
-    <p style="margin-top: 32px;">
-      <a href="/install/" class="btn btn-yellow">How to install →</a>
-    </p>
   </div>
 </section>
