@@ -63,7 +63,31 @@ permalink: "/build/"
                 </a>
             </li>
         </ul>
-        <p>I recommend driving the LED indirectly via a transisitor to avoid asking too much of the GPIO output</p>
+
+        <h4>Simple Wiring</h4>
+        <p>The simple version is to write power via the switch and hook the 5v directly to the LED. This is how it was originally wired in these pictures</p>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header">Simple switch and LED wiring</div>
+              <div class="card-body p-2 bg-black">
+                <img src="/images/simple_wiring.jpg" alt="Simple wiring of a power switch and LED directly to the 5v supply" loading="lazy" class="w-100 d-block">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header">Internals in the case</div>
+              <div class="card-body p-2 bg-black">
+                <img src="/images/internals-in-case.jpg" alt="The FlightTracker electronics fitted inside the case" loading="lazy" class="w-100 d-block">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h4>Blinky LED</h4> 
+        <p>If you want that LED to blink when the device is searching for flights I recommend driving the LED indirectly via a transisitor to avoid asking too much of the GPIO output</p>
 
         <div class="card">
           <div class="card-header">Driving an LED indirectly via a transistor</div>
