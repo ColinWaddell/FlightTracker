@@ -118,6 +118,7 @@ WEATHER_LOCATION = "Glasgow"
 OPENWEATHER_API_KEY = "" # Get an API key from https://openweathermap.org/price
 TEMPERATURE_UNITS = "metric"
 MIN_ALTITUDE = 100
+MAX_ALTITUDE = 30000
 BRIGHTNESS = 50
 GPIO_SLOWDOWN = 2
 JOURNEY_CODE_SELECTED = "GLA"
@@ -139,6 +140,7 @@ In reality you'll want to customise `config.py` for your own purposes.
 | `OPENWEATHER_API_KEY`    | If provided, enables OpenWeather API. [Get a free key here](https://openweathermap.org/price). *(Optional)* |
 | `TEMPERATURE_UNITS`      | One of `"metric"` or `"imperial"`. Defaults to `"metric"`. |
 | `MIN_ALTITUDE`           | Removes planes below this altitude (in feet). Useful for filtering out planes on the tarmac. |
+| `MAX_ALTITUDE`           | Removes planes above this altitude (in feet). Useful for reducing plane noise if location close to a flight path  |
 | `BRIGHTNESS`             | Range 0–100. Adjusts brightness of the display. |
 | `GPIO_SLOWDOWN`          | Range 0–4. Higher values help reduce flickering on faster hardware (e.g., `2` for Pi Zero 2 W). |
 | `JOURNEY_CODE_SELECTED`  | Three-letter airport code of a local airport to display in **bold**. *(Optional)* |
