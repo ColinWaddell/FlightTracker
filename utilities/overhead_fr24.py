@@ -8,15 +8,15 @@ from requests.exceptions import RequestException, ConnectionError
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 try:
-    from config import MIN_ALTITUDE
+    from config import MIN_ALTITUDE, MAX_ALTITUDE
 except (ModuleNotFoundError, NameError, ImportError):
     MIN_ALTITUDE = 0  # feet
+    MAX_ALTITUDE = 10000  # feet
 
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
 MAX_FLIGHT_LOOKUP = 5
-MAX_ALTITUDE = 10000  # feet
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
