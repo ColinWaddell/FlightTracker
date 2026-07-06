@@ -4,10 +4,22 @@
 # For Raspberry Pi (3B, 4B, Zero 2 W, Zero W) running Raspbian Trixie
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh -o install.sh && bash install.sh
+#
+# Note: Do NOT pipe directly to bash (curl ... | bash) — this script is
+# interactive and needs terminal access for user prompts.
 #
 
 set -e
+
+# If stdin is not a terminal (e.g. curl | bash), the script content is being
+# piped in. Interactive prompts need terminal access, so we save ourselves
+# to a temp file and re-exec with stdin connected to /dev/tty.
+if [ ! -t 0 ]; then
+    TMP_SCRIPT=$(mktemp /tmp/flighttracker-install.XXXXXX.sh)
+    cat > "$TMP_SCRIPT"
+    exec bash "$TMP_SCRIPT" < /dev/tty
+fi
 
 # ============================================================================
 # CONFIGURATION
@@ -38,10 +50,10 @@ confirm() {
     local default="${2:-y}"
     local reply
     if [ "$default" = "y" ]; then
-        read -p "${prompt} [Y/n] " reply < /dev/tty
+        read -p "${prompt} [Y/n] " reply
         reply=${reply:-y}
     else
-        read -p "${prompt} [y/N] " reply < /dev/tty
+        read -p "${prompt} [y/N] " reply
         reply=${reply:-n}
     fi
     [[ "$reply" =~ ^[Yy]$ ]]
