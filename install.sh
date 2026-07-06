@@ -242,6 +242,10 @@ echo ""
 echo "At the end, the installer will ask if you want to reboot."
 echo -e "${BOLD}Say NO to the reboot prompt${NC} — this script will handle the reboot."
 echo ""
+warn "This step takes a while — especially on Pi Zero W."
+warn "You will see compiler warnings that look like errors. These are normal"
+warn "and can be ignored as long as compilation continues and finishes."
+echo ""
 
 if ! confirm "Ready to run the Adafruit installer?"; then
     warn "Skipping RGB Matrix driver installation. The FlightTracker won't work without it."
@@ -356,6 +360,8 @@ mkdir -p "$PIP_TMPDIR"
 info "Using build directory: ${PIP_TMPDIR} (avoids /tmp RAM disk space issues)"
 
 info "Installing Python dependencies (this may take a while)..."
+warn "As above, compiler warnings may appear during package builds. These are normal."
+echo ""
 TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
 TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
 
