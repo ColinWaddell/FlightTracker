@@ -60,6 +60,36 @@ confirm() {
     [[ "$reply" =~ ^[Yy]$ ]]
 }
 
+# Run a long command quietly, showing dots while it works.
+# If the command fails, dump the last 30 lines of output for debugging.
+# Usage: run_quiet "message" command args...
+run_quiet() {
+    local msg="$1"
+    shift
+    local log
+    log=$(mktemp /tmp/flighttracker-log.XXXXXX)
+    echo -ne "${BLUE}[INFO]${NC} ${msg}"
+    "$@" > "$log" 2>&1 &
+    local pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+        echo -n "."
+        sleep 3
+    done
+    wait "$pid"
+    local rc=$?
+    echo ""
+    if [ $rc -ne 0 ]; then
+        error "Command failed (exit code ${rc}). Last 30 lines of output:"
+        echo ""
+        tail -30 "$log"
+        echo ""
+        rm -f "$log"
+        return $rc
+    fi
+    rm -f "$log"
+    success "${msg} done."
+}
+
 # Given a list of strings representing options, display each option
 # preceded by a number (1 to N), display a prompt, check input until
 # a valid number within the selection range is entered.
@@ -256,10 +286,10 @@ echo ""
 
 info "Updating system packages. This may take a while, especially on Pi Zero W..."
 sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 
 info "Installing required packages..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
     curl \
     python3 \
@@ -373,9 +403,7 @@ echo ""
 echo -e "${BOLD}--- Step 3: Clone FlightTracker ---${NC}"
 echo ""
 
-info "Cloning FlightTracker (branch: ${BRANCH})..."
-cd "$CURRENT_HOME"
-git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker
+run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker
 
 if [ ! -d "$INSTALL_DIR" ]; then
     error "Failed to clone FlightTracker repository."
@@ -393,7 +421,7 @@ echo ""
 
 info "Downloading RGB matrix library (pinned commit ${RGB_MATRIX_COMMIT})..."
 cd "$CURRENT_HOME"
-curl -L "${RGB_MATRIX_REPO}/archive/${RGB_MATRIX_COMMIT}.zip" -o "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
+run_quiet "Downloading RGB matrix library" curl -L "${RGB_MATRIX_REPO}/archive/${RGB_MATRIX_COMMIT}.zip" -o "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
 unzip -q "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
 rm "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
 mv "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}" "rpi-rgb-led-matrix"
@@ -406,8 +434,6 @@ success "RGB matrix library downloaded."
 
 info "Building RGB matrix library..."
 warn "This takes a while — especially on Pi Zero W."
-warn "You will see compiler warnings that look like errors. These are normal"
-warn "and can be ignored as long as compilation continues and finishes."
 echo ""
 
 cd "$RGB_MATRIX_DIR"
@@ -418,10 +444,8 @@ if [ "$QUALITY_MOD" -eq 1 ]; then
     USER_DEFINES+=" -DDISABLE_HARDWARE_PULSES"
 fi
 
-make clean
-make build-python USER_DEFINES="$USER_DEFINES"
-
-success "RGB matrix library built."
+run_quiet "Building RGB matrix library" make clean
+run_quiet "Compiling RGB matrix library" make build-python USER_DEFINES="$USER_DEFINES"
 
 # ============================================================================
 # STEP 5: Install Python Dependencies
@@ -448,14 +472,14 @@ mkdir -p "$PIP_TMPDIR"
 info "Using build directory: ${PIP_TMPDIR} (avoids /tmp RAM disk space issues)"
 
 info "Installing Python dependencies (this may take a while)..."
-warn "As above, compiler warnings may appear during package builds. These are normal."
 echo ""
-TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
+
+run_quiet "Upgrading pip" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
+run_quiet "Installing Python requirements" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
 
 info "Installing RGB Matrix Python bindings from local library..."
 cd "${RGB_MATRIX_DIR}/bindings/python"
-TMPDIR="$PIP_TMPDIR" "${INSTALL_DIR}/env/bin/pip" install .
+run_quiet "Installing RGB Matrix Python bindings" TMPDIR="$PIP_TMPDIR" "${INSTALL_DIR}/env/bin/pip" install .
 
 # Clean up build temp
 rm -rf "$PIP_TMPDIR"
