@@ -477,9 +477,20 @@ echo ""
 run_quiet "Upgrading pip" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
 run_quiet "Installing Python requirements" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
 
-info "Installing RGB Matrix Python bindings from local library..."
-cd "${RGB_MATRIX_DIR}/bindings/python"
-run_quiet "Installing RGB Matrix Python bindings" TMPDIR="$PIP_TMPDIR" "${INSTALL_DIR}/env/bin/pip" install .
+# Install RGB Matrix Python bindings by copying the pre-built .so files
+# directly into the venv's site-packages. The setup.py uses distutils which
+# was removed in Python 3.12+, so pip install . fails on Trixie (Python 3.13).
+# The `make build-python` step already compiled the .so files, so we just
+# copy the package directory.
+info "Installing RGB Matrix Python bindings..."
+SITE_PACKAGES="${INSTALL_DIR}/env/lib/python$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/site-packages"
+cp -r "${RGB_MATRIX_DIR}/bindings/python/rgbmatrix" "${SITE_PACKAGES}/"
+
+# Verify the import works
+if ! "${INSTALL_DIR}/env/bin/python" -c 'from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics' 2>/dev/null; then
+    error "Failed to import rgbmatrix. The build may have failed."
+    exit 1
+fi
 
 # Clean up build temp
 rm -rf "$PIP_TMPDIR"
