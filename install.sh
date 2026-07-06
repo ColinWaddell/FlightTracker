@@ -465,17 +465,23 @@ info "Creating Python virtual environment..."
 cd "$INSTALL_DIR"
 python3 -m venv env
 
-# Use TMPDIR on disk for pip builds — /tmp is tmpfs (RAM) on Raspberry Pi
-# and can be too small for building packages like curl_cffi on Pi Zero W
+# /tmp is tmpfs (RAM) on Raspberry Pi and defaults to ~200MB on Pi Zero W.
+# This is too small for building packages like curl_cffi. Resize the tmpfs
+# to give more headroom. This is temporary (until reboot) and only increases
+# the size — it doesn't consume RAM until actually used.
+TMP_SIZE="512M"
+info "Resizing /tmp tmpfs to ${TMP_SIZE} (needed for pip builds)..."
+sudo mount -o remount,size=${TMP_SIZE} /tmp
+
+# Also set TMPDIR to disk as a secondary measure
 PIP_TMPDIR="${CURRENT_HOME}/.pip-tmp"
 mkdir -p "$PIP_TMPDIR"
-info "Using build directory: ${PIP_TMPDIR} (avoids /tmp RAM disk space issues)"
 
 info "Installing Python dependencies (this may take a while)..."
 echo ""
 
-run_quiet "Upgrading pip" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-run_quiet "Installing Python requirements" TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
+run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
+run_quiet "Installing Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
 
 # Install RGB Matrix Python bindings by copying the pre-built .so files
 # directly into the venv's site-packages. The setup.py uses distutils which
