@@ -4,10 +4,7 @@
 # For Raspberry Pi (3B, 4B, Zero 2 W, Zero W) running Raspbian Trixie
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh -o install.sh && bash install.sh
-#
-# Note: Do NOT pipe directly to bash (curl ... | bash) — this script is
-# interactive and needs terminal access for user prompts.
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash
 #
 
 set -e
@@ -27,6 +24,10 @@ fi
 
 # Git branch to clone (change to "master" when merged)
 BRANCH="feature/feature-upgrade"
+
+# Pinned commit of hzeller/rpi-rgb-led-matrix (same as Adafruit installer)
+RGB_MATRIX_REPO="https://github.com/hzeller/rpi-rgb-led-matrix"
+RGB_MATRIX_COMMIT="7a503494378a67f3baa4ac680cecbae2703cc58f"
 
 # ============================================================================
 # HELPERS
@@ -59,6 +60,39 @@ confirm() {
     [[ "$reply" =~ ^[Yy]$ ]]
 }
 
+# Given a list of strings representing options, display each option
+# preceded by a number (1 to N), display a prompt, check input until
+# a valid number within the selection range is entered.
+selectN() {
+    local args=("$@")
+    local i
+    for ((i=0; i<${#args[@]}; i++)); do
+        echo "  $((i+1)). ${args[$i]}"
+    done
+    echo ""
+    local reply=""
+    local last=${#args[@]}
+    while :; do
+        read -p "SELECT 1-$last: " reply
+        if [[ "$reply" =~ ^[0-9]+$ ]] && [ "$reply" -ge 1 ] && [ "$reply" -le "$last" ]; then
+            return $((reply - 1))
+        fi
+    done
+}
+
+# Given a filename, a regex pattern to match and a replacement string,
+# perform replacement if found, else append replacement to end of file.
+reconfig() {
+    # $1 = filename, $2 = pattern to match, $3 = replacement
+    if grep "$2" "$1" >/dev/null 2>&1; then
+        # Pattern found; replace in file
+        sudo sed -i "s/$2/$3/g" "$1" >/dev/null
+    else
+        # Not found; append
+        echo "$3" | sudo tee -a "$1" >/dev/null
+    fi
+}
+
 # ============================================================================
 # PRE-FLIGHT CHECKS
 # ============================================================================
@@ -82,6 +116,9 @@ if [ ! -f /proc/device-tree/model ]; then
 fi
 PI_MODEL=$(cat /proc/device-tree/model | tr -d '\0')
 info "Detected: ${PI_MODEL}"
+
+# Detect number of CPU cores
+NUM_CORES=$(nproc --all)
 
 # Warn Pi Zero W users about long compile times
 if echo "$PI_MODEL" | grep -q "Zero W" && ! echo "$PI_MODEL" | grep -q "Zero 2"; then
@@ -155,8 +192,24 @@ if [ -d "$INSTALL_DIR" ] || [ -d "$RGB_MATRIX_DIR" ]; then
             fi
         fi
 
-        warn "Some system-level changes from the Adafruit RGB Matrix installer may remain"
-        warn "in /boot/firmware/config.txt, /boot/firmware/cmdline.txt, and installed apt packages."
+        # Remove sound blacklist (our install creates it)
+        if [ -f /etc/modprobe.d/blacklist-rgb-matrix.conf ]; then
+            sudo rm -f /etc/modprobe.d/blacklist-rgb-matrix.conf
+            success "Removed sound blacklist"
+        fi
+
+        # Remove isolcpus from cmdline.txt (best effort)
+        CMDLINE_FILE=/boot/firmware/cmdline.txt
+        if [ ! -f "$CMDLINE_FILE" ]; then
+            CMDLINE_FILE=/boot/cmdline.txt
+        fi
+        if [ -f "$CMDLINE_FILE" ]; then
+            sudo sed -i -E -e 's/(^| )isolcpus=[0-9]+( |$)/\1\2/g' -e 's/  +/ /g' -e 's/ $//' "$CMDLINE_FILE" 2>/dev/null || true
+            success "Removed isolcpus from cmdline (if present)"
+        fi
+
+        warn "Some system-level changes may remain in /boot/firmware/config.txt"
+        warn "and installed apt packages."
         echo ""
         success "Uninstall complete. Re-run this script to perform a fresh install."
         exit 0
@@ -212,111 +265,104 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3 \
     python3-venv \
     python3-pip \
-    libcap2-bin
+    python3-dev \
+    python3-pillow \
+    cython3 \
+    python3-setuptools \
+    libcap2-bin \
+    unzip
 
 success "System update complete."
 
 # ============================================================================
-# STEP 2: Install RGB Matrix Driver
+# STEP 2: RGB Matrix Hardware Configuration
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 2: Install RGB Matrix Driver ---${NC}"
+echo -e "${BOLD}--- Step 2: RGB Matrix Hardware Configuration ---${NC}"
 echo ""
 
-info "Downloading Adafruit RGB Matrix installer..."
-curl -sSL "https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/refs/heads/main/converted_shell_scripts/rgb-matrix.sh" > /tmp/rgb-matrix.sh
-
-echo ""
-echo -e "${BOLD}The Adafruit installer is about to run.${NC}"
-echo ""
-echo "It will ask you some questions about your hardware setup:"
-echo "  - Which interface board you're using (Adafruit RGB Matrix Bonnet or HAT+RTC)"
-echo "  - If HAT: whether you have an RTC connected"
-echo "  - Quality vs Convenience mode (Quality disables sound and requires"
-echo "    a solder bridge between GPIO4 and GPIO18 on the Bonnet)"
-echo ""
-echo "If you have a multi-core Pi (3B, 4B, Zero 2 W), it may also ask about"
-echo "isolating a core for the matrix driver."
-echo ""
-echo "At the end, the installer will ask if you want to reboot."
-echo ""
-echo -e "${RED}${BOLD}IMPORTANT: When the installer asks 'REBOOT NOW?' — say NO!${NC}"
-echo -e "${RED}${BOLD}This script still has more steps to complete before rebooting.${NC}"
-echo ""
-warn "This step takes a while — especially on Pi Zero W."
-warn "You will see compiler warnings that look like errors. These are normal"
-warn "and can be ignored as long as compilation continues and finishes."
+echo "You need to configure the RGB Matrix driver for your hardware."
 echo ""
 
-if ! confirm "Ready to run the Adafruit installer?"; then
-    warn "Skipping RGB Matrix driver installation. The FlightTracker won't work without it."
-    exit 1
-fi
+# Interface type
+INTERFACES=(
+    "Adafruit RGB Matrix Bonnet"
+    "Adafruit RGB Matrix HAT + RTC"
+)
+echo "Select interface board type:"
+selectN "${INTERFACES[@]}"
+INTERFACE_TYPE=$?
 
-# Run interactively
-sudo bash /tmp/rgb-matrix.sh
-
-echo ""
-if ! confirm "Did the Adafruit installer complete successfully?"; then
-    warn "The Adafruit installer may not have completed properly."
-    if confirm "Would you like to try running it again?"; then
-        sudo bash /tmp/rgb-matrix.sh
-        echo ""
-        if ! confirm "Did it complete successfully this time?"; then
-            error "Adafruit installer failed twice. Please check your hardware setup and try again."
-            exit 1
-        fi
-    else
-        error "Cannot continue without the RGB Matrix driver."
-        exit 1
-    fi
-fi
-
-# Verify install
-if [ ! -d "$RGB_MATRIX_DIR" ]; then
-    error "RGB Matrix library not found at ${RGB_MATRIX_DIR}"
-    error "The Adafruit installer may have used a different path or failed."
-    exit 1
-fi
-success "RGB Matrix library installed at ${RGB_MATRIX_DIR}"
-
-# Fix ownership — Adafruit installer runs as root, files end up root-owned
-info "Fixing file ownership..."
-sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$RGB_MATRIX_DIR"
-success "Ownership set to ${CURRENT_USER}"
-
-# Run demo to verify screen
-echo ""
-echo -e "${BOLD}Testing the RGB Matrix display...${NC}"
-echo ""
-echo "A demo pattern should now appear on your RGB Matrix screen."
-echo "If you see something, the screen is working correctly."
-echo ""
-
-if confirm "Ready to run the demo test?"; then
-    cd "${RGB_MATRIX_DIR}/examples-api-use"
-    sudo ./demo --led-rows=32 --led-cols=64 -D0 || true
+# RTC setup (only for HAT)
+INSTALL_RTC=0
+if [ "$INTERFACE_TYPE" -eq 1 ]; then
     echo ""
-    if ! confirm "Did you see something on the screen?"; then
-        warn "The screen test didn't show output. This could be a wiring issue."
-        if confirm "Would you like to re-run the Adafruit installer?"; then
-            sudo bash /tmp/rgb-matrix.sh
-            echo ""
-            if confirm "Did the installer complete successfully?"; then
-                sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$RGB_MATRIX_DIR"
-                success "OK, continuing."
-            else
-                error "Unable to get the RGB Matrix working. Please check your hardware."
-                exit 1
-            fi
-        else
-            warn "Continuing without a confirmed working screen. You can test manually later."
-        fi
-    else
-        success "Screen is working!"
+    if confirm "Install realtime clock support?"; then
+        INSTALL_RTC=1
     fi
-    cd "$CURRENT_HOME"
+fi
+
+# Quality vs Convenience
+QUALITY_OPTS=(
+    "Quality (disables sound, requires soldering on single matrix Bonnet/HAT)"
+    "Convenience (sound on, no soldering)"
+)
+echo ""
+echo "Now you must choose between QUALITY and CONVENIENCE."
+echo ""
+echo "QUALITY: best output from the LED matrix requires commandeering hardware"
+echo "normally used for sound, plus some soldering on the single matrix Bonnet/HAT."
+echo "If you choose this option, there will be NO sound from the audio jack or"
+echo "HDMI (USB audio adapters will work and sound best anyway), AND you must"
+echo "SOLDER a wire between GPIO4 and GPIO18 on the single matrix Bonnet or HAT"
+echo "board. For the Triple LED Matrix Bonnet choose QUALITY, and no soldering"
+echo "is required."
+echo ""
+echo "CONVENIENCE: sound works normally, no extra soldering. Images on the LED"
+echo "matrix are not quite as steady, but maybe OK for most uses. If eager to"
+echo "get started, use CONVENIENCE for now, you can make the change and reinstall"
+echo "later!"
+echo ""
+echo "What is thy bidding?"
+selectN "${QUALITY_OPTS[@]}"
+QUALITY_MOD=$?
+
+# CPU isolation (only on multi-core)
+ISOL_CPU=0
+if [ "$NUM_CORES" -ge 2 ]; then
+    ISOLCPUS_OPTS=(
+        "Do not reserve a core for driving the display"
+        "Reserve a core for driving the display (recommended)"
+    )
+    echo ""
+    echo "Your Pi has ${NUM_CORES} CPU cores. You can dedicate one to driving the"
+    echo "display. This reduces flicker when the system is busy with other work,"
+    echo "at the cost of one core being unavailable for general use. This is the"
+    echo "upstream recommendation from hzeller/rpi-rgb-led-matrix."
+    selectN "${ISOLCPUS_OPTS[@]}"
+    ISOL_CPU=$?
+fi
+
+# Verify selections
+echo ""
+echo -e "${BOLD}Configuration summary:${NC}"
+echo "  Interface: ${INTERFACES[$INTERFACE_TYPE]}"
+if [ "$INTERFACE_TYPE" -eq 1 ]; then
+    echo "  RTC support: $([ "$INSTALL_RTC" -eq 1 ] && echo 'Yes' || echo 'No')"
+fi
+echo "  Optimize: ${QUALITY_OPTS[$QUALITY_MOD]}"
+if [ "$QUALITY_MOD" -eq 0 ]; then
+    warn "  Reminder: you must SOLDER a wire between GPIO4 and GPIO18, and internal sound is DISABLED!"
+fi
+if [ "$NUM_CORES" -ge 2 ]; then
+    echo "  Isolate CPU for display driving: ${ISOLCPUS_OPTS[$ISOL_CPU]}"
+fi
+echo ""
+
+if ! confirm "Continue with these settings?"; then
+    info "Aborted by user."
+    exit 0
 fi
 
 # ============================================================================
@@ -338,11 +384,51 @@ fi
 success "FlightTracker cloned to ${INSTALL_DIR}"
 
 # ============================================================================
-# STEP 4: Create Virtual Environment & Install Dependencies
+# STEP 4: Download & Build RGB Matrix Library
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 4: Install Python Dependencies ---${NC}"
+echo -e "${BOLD}--- Step 4: Build RGB Matrix Driver ---${NC}"
+echo ""
+
+info "Downloading RGB matrix library (pinned commit ${RGB_MATRIX_COMMIT})..."
+cd "$CURRENT_HOME"
+curl -L "${RGB_MATRIX_REPO}/archive/${RGB_MATRIX_COMMIT}.zip" -o "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
+unzip -q "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
+rm "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
+mv "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}" "rpi-rgb-led-matrix"
+
+if [ ! -d "$RGB_MATRIX_DIR" ]; then
+    error "Failed to download RGB matrix library."
+    exit 1
+fi
+success "RGB matrix library downloaded."
+
+info "Building RGB matrix library..."
+warn "This takes a while — especially on Pi Zero W."
+warn "You will see compiler warnings that look like errors. These are normal"
+warn "and can be ignored as long as compilation continues and finishes."
+echo ""
+
+cd "$RGB_MATRIX_DIR"
+
+# Build with Quality mode flag if selected
+USER_DEFINES=""
+if [ "$QUALITY_MOD" -eq 1 ]; then
+    USER_DEFINES+=" -DDISABLE_HARDWARE_PULSES"
+fi
+
+make clean
+make build-python USER_DEFINES="$USER_DEFINES"
+
+success "RGB matrix library built."
+
+# ============================================================================
+# STEP 5: Install Python Dependencies
+# ============================================================================
+
+echo ""
+echo -e "${BOLD}--- Step 5: Install Python Dependencies ---${NC}"
 echo ""
 
 # Detect Python binary path dynamically
@@ -376,11 +462,11 @@ rm -rf "$PIP_TMPDIR"
 success "Python dependencies installed."
 
 # ============================================================================
-# STEP 5: Configure setcap
+# STEP 6: Configure setcap
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 5: Configure Permissions ---${NC}"
+echo -e "${BOLD}--- Step 6: Configure Permissions ---${NC}"
 echo ""
 
 info "Python binary: ${PYTHON_BIN}"
@@ -397,11 +483,11 @@ sudo "$SETCAP_BIN" 'cap_sys_nice=eip' "$PYTHON_BIN"
 success "Real-time scheduling permissions configured."
 
 # ============================================================================
-# STEP 6: Install systemd Service
+# STEP 7: Install systemd Service
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 6: Install System Service ---${NC}"
+echo -e "${BOLD}--- Step 7: Install System Service ---${NC}"
 echo ""
 
 SERVICE_TEMPLATE="${INSTALL_DIR}/assets/FlightTracker.service"
@@ -426,7 +512,54 @@ sudo systemctl enable FlightTracker.service
 success "Service installed and enabled."
 
 # ============================================================================
-# STEP 7: Reboot
+# STEP 8: Apply Boot Configuration
+# ============================================================================
+
+echo ""
+echo -e "${BOLD}--- Step 8: Apply Boot Configuration ---${NC}"
+echo ""
+
+# Boot config locations. Trixie and later use /boot/firmware/;
+# older releases use /boot/.
+CMDLINE_FILE=/boot/firmware/cmdline.txt
+if [ ! -f "$CMDLINE_FILE" ]; then
+    CMDLINE_FILE=/boot/cmdline.txt
+fi
+
+# RTC setup (for HAT + RTC)
+if [ "$INSTALL_RTC" -ne 0 ]; then
+    info "Enabling I2C for RTC..."
+    sudo raspi-config nonint do_i2c 0
+    reconfig /boot/firmware/config.txt "^.*dtoverlay=i2c-rtc.*$" "dtoverlay=i2c-rtc,ds1307"
+    sudo apt-get -y remove fake-hwclock 2>/dev/null || true
+    sudo update-rc.d -f fake-hwclock remove 2>/dev/null || true
+    sudo sed --in-place '/if \[ -e \/run\/systemd\/system \] ; then/,+2 s/^#*/#/' /lib/udev/hwclock-set 2>/dev/null || true
+    success "RTC support configured."
+fi
+
+# Sound blacklist (Quality mode disables sound)
+if [ "$QUALITY_MOD" -eq 0 ]; then
+    info "Disabling internal sound (Quality mode)..."
+    echo "blacklist snd_bcm2835" | sudo tee /etc/modprobe.d/blacklist-rgb-matrix.conf >/dev/null
+    success "Sound blacklisted."
+else
+    # Remove blacklist if it exists (Convenience mode)
+    sudo rm -f /etc/modprobe.d/blacklist-rgb-matrix.conf 2>/dev/null || true
+fi
+
+# CPU isolation (only on multi-core, if selected)
+if [ "$NUM_CORES" -ge 2 ] && [ "$ISOL_CPU" -eq 1 ]; then
+    info "Reserving CPU core for display driving..."
+    ISOLCPU_CMD="isolcpus=$((NUM_CORES - 1))"
+    # Strip any previously-added isolcpus=N token first (idempotent)
+    sudo sed -i -E -e 's/(^| )isolcpus=[0-9]+( |$)/\1\2/g' -e 's/  +/ /g' -e 's/ $//' "$CMDLINE_FILE"
+    # Append isolcpus token
+    sudo sed -i "s/$/ ${ISOLCPU_CMD}/" "$CMDLINE_FILE"
+    success "CPU core reserved (isolcpus=$((NUM_CORES - 1)))."
+fi
+
+# ============================================================================
+# STEP 9: Reboot
 # ============================================================================
 
 # Get the Pi's IP address
@@ -467,9 +600,6 @@ else
     echo "To start the service now without rebooting:"
     echo "  sudo systemctl start FlightTracker.service"
 fi
-
-# Clean up
-rm -f /tmp/rgb-matrix.sh
 
 echo ""
 info "Done!"
