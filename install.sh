@@ -38,10 +38,10 @@ confirm() {
     local default="${2:-y}"
     local reply
     if [ "$default" = "y" ]; then
-        read -p "${prompt} [Y/n] " reply
+        read -p "${prompt} [Y/n] " reply < /dev/tty
         reply=${reply:-y}
     else
-        read -p "${prompt} [y/N] " reply
+        read -p "${prompt} [y/N] " reply < /dev/tty
         reply=${reply:-n}
     fi
     [[ "$reply" =~ ^[Yy]$ ]]
@@ -68,7 +68,7 @@ if [ ! -f /proc/device-tree/model ]; then
     error "This doesn't appear to be a Raspberry Pi (no /proc/device-tree/model)."
     exit 1
 fi
-PI_MODEL=$(cat /proc/device-tree/model)
+PI_MODEL=$(cat /proc/device-tree/model | tr -d '\0')
 info "Detected: ${PI_MODEL}"
 
 # Warn Pi Zero W users about long compile times
