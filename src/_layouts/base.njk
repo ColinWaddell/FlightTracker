@@ -17,13 +17,21 @@
 <body>
 
 {% include "nav.njk" %}
-{% include "status-bar.njk" %}
 
 <main>
 {{ content | safe }}
 </main>
 
 {% include "footer.njk" %}
+
+<script>
+  function copyCode(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+  }
+</script>
 
 </body>
 </html>
