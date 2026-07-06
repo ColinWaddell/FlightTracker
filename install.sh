@@ -240,7 +240,9 @@ echo "If you have a multi-core Pi (3B, 4B, Zero 2 W), it may also ask about"
 echo "isolating a core for the matrix driver."
 echo ""
 echo "At the end, the installer will ask if you want to reboot."
-echo -e "${BOLD}Say NO to the reboot prompt${NC} — this script will handle the reboot."
+echo ""
+echo -e "${RED}${BOLD}IMPORTANT: When the installer asks 'REBOOT NOW?' — say NO!${NC}"
+echo -e "${RED}${BOLD}This script still has more steps to complete before rebooting.${NC}"
 echo ""
 warn "This step takes a while — especially on Pi Zero W."
 warn "You will see compiler warnings that look like errors. These are normal"
@@ -427,52 +429,43 @@ success "Service installed and enabled."
 # STEP 7: Reboot
 # ============================================================================
 
-echo ""
-echo -e "${BOLD}========================================${NC}"
-echo -e "${BOLD}  Installation Complete!${NC}"
-echo -e "${BOLD}========================================${NC}"
-echo ""
-
 # Get the Pi's IP address
 PI_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+echo ""
+echo -e "${GREEN}${BOLD}========================================${NC}"
+echo -e "${GREEN}${BOLD}  Everything installed successfully!${NC}"
+echo -e "${GREEN}${BOLD}========================================${NC}"
+echo ""
 
 echo "The RGB Matrix driver needs a reboot to take effect — sound blacklist,"
 echo "boot config changes, etc."
 echo ""
+echo "After reboot, the FlightTracker service will start automatically."
+echo "You can access the web interface at:"
+if [ -n "$PI_IP" ]; then
+    echo -e "  ${BOLD}http://${PI_IP}:8584/${NC}"
+else
+    echo -e "  ${BOLD}http://<your-pi-ip>:8584/${NC}"
+fi
+echo ""
+warn "It may take a few minutes after reboot before the web interface loads."
+warn "Be patient — the Pi needs time to boot and start the service."
+echo ""
+echo "Check service logs with:"
+echo "  journalctl -u FlightTracker.service -f"
+echo ""
 
-if confirm "Reboot now? (The FlightTracker service will start automatically on boot)"; then
-    success "Rebooting..."
-    echo ""
-    echo "After the Pi reboots, configure your FlightTracker via the web interface:"
-    if [ -n "$PI_IP" ]; then
-        echo "  http://${PI_IP}:8584/"
-    else
-        echo "  http://<your-pi-ip>:8584/"
-    fi
-    echo ""
-    echo "Check service logs with:"
-    echo "  journalctl -u FlightTracker.service -f"
-    echo ""
+if confirm "Reboot now?"; then
     sync
+    success "Rebooting..."
     sudo reboot
 else
     echo ""
-    info "You can reboot later with: sudo reboot"
+    info "Reboot later with: sudo reboot"
     echo ""
-    echo "After reboot, configure your FlightTracker via the web interface:"
-    if [ -n "$PI_IP" ]; then
-        echo "  http://${PI_IP}:8584/"
-    else
-        echo "  http://<your-pi-ip>:8584/"
-    fi
-    echo ""
-    echo "The service is enabled and will start automatically on boot."
-    echo ""
-    echo "To start it manually without rebooting:"
+    echo "To start the service now without rebooting:"
     echo "  sudo systemctl start FlightTracker.service"
-    echo ""
-    echo "Check service logs with:"
-    echo "  journalctl -u FlightTracker.service -f"
 fi
 
 # Clean up
