@@ -124,7 +124,7 @@ reconfig() {
 }
 
 # ============================================================================
-# PRE-FLIGHT CHECKS
+# SYSTEM DETECTION
 # ============================================================================
 
 echo ""
@@ -150,14 +150,6 @@ info "Detected: ${PI_MODEL}"
 # Detect number of CPU cores
 NUM_CORES=$(nproc --all)
 
-# Warn Pi Zero W users about long compile times
-if echo "$PI_MODEL" | grep -q "Zero W" && ! echo "$PI_MODEL" | grep -q "Zero 2"; then
-    warn "Pi Zero W detected. Compilation steps will be slow (single-core ARMv6)."
-    warn "If running over SSH, the connection may drop during long builds."
-    warn "Consider using screen/tmux, or just re-run the script if this happens."
-    echo ""
-fi
-
 # Check we're on Raspbian
 if [ ! -f /etc/os-release ]; then
     error "Cannot determine OS (no /etc/os-release)."
@@ -173,11 +165,40 @@ if [ "$ID" != "raspbian" ]; then
     fi
 fi
 
-# Check for existing installation
+# Warn Pi Zero W users about long compile times
+if echo "$PI_MODEL" | grep -q "Zero W" && ! echo "$PI_MODEL" | grep -q "Zero 2"; then
+    echo ""
+    warn "Pi Zero W detected. Compilation steps will be slow (single-core ARMv6)."
+    warn "If running over SSH, the connection may drop during long builds."
+    warn "Consider using screen/tmux, or just re-run the script if this happens."
+fi
+
+# Check internet connectivity
+if ! ping -c 1 -W 5 github.com >/dev/null 2>&1; then
+    error "Cannot reach github.com. Check your internet connection."
+    exit 1
+fi
+info "Internet connectivity: OK"
+
+# Check sudo access
+if ! sudo -n true 2>/dev/null; then
+    if ! sudo true 2>/dev/null; then
+        error "This script requires sudo access."
+        exit 1
+    fi
+fi
+info "Sudo access: OK"
+
+# Paths
 INSTALL_DIR="${CURRENT_HOME}/FlightTracker"
 RGB_MATRIX_DIR="${CURRENT_HOME}/rpi-rgb-led-matrix"
 
+# ============================================================================
+# EXISTING INSTALLATION CHECK
+# ============================================================================
+
 if [ -d "$INSTALL_DIR" ] || [ -d "$RGB_MATRIX_DIR" ]; then
+    echo ""
     warn "An existing FlightTracker installation was detected."
     [ -d "$INSTALL_DIR" ] && echo "  - ${INSTALL_DIR}"
     [ -d "$RGB_MATRIX_DIR" ] && echo "  - ${RGB_MATRIX_DIR}"
@@ -249,24 +270,16 @@ if [ -d "$INSTALL_DIR" ] || [ -d "$RGB_MATRIX_DIR" ]; then
     fi
 fi
 
-# Check internet connectivity
-if ! ping -c 1 -W 5 github.com >/dev/null 2>&1; then
-    error "Cannot reach github.com. Check your internet connection."
-    exit 1
-fi
-info "Internet connectivity: OK"
+# ============================================================================
+# ALL QUESTIONS — Answer these, then walk away
+# ============================================================================
 
-# Check sudo access
-if ! sudo -n true 2>/dev/null; then
-    if ! sudo true 2>/dev/null; then
-        error "This script requires sudo access."
-        exit 1
-    fi
-fi
-info "Sudo access: OK"
-
-# Fresh install warning
 echo ""
+echo -e "${BOLD}========================================${NC}"
+echo -e "${BOLD}  Configuration${NC}"
+echo -e "${BOLD}========================================${NC}"
+echo ""
+
 warn "This script is designed for fresh Raspbian installs."
 warn "No responsibility is taken for installed software on deployed hardware."
 echo ""
@@ -276,42 +289,7 @@ if ! confirm "Ready to begin installation?"; then
     exit 0
 fi
 
-# ============================================================================
-# STEP 1: System Update
-# ============================================================================
-
 echo ""
-echo -e "${BOLD}--- Step 1: System Update ---${NC}"
-echo ""
-
-info "Updating system packages. This may take a while, especially on Pi Zero W..."
-sudo apt-get update
-run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
-
-info "Installing required packages..."
-run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    git \
-    curl \
-    python3 \
-    python3-venv \
-    python3-pip \
-    python3-dev \
-    python3-pillow \
-    cython3 \
-    python3-setuptools \
-    libcap2-bin \
-    unzip
-
-success "System update complete."
-
-# ============================================================================
-# STEP 2: RGB Matrix Hardware Configuration
-# ============================================================================
-
-echo ""
-echo -e "${BOLD}--- Step 2: RGB Matrix Hardware Configuration ---${NC}"
-echo ""
-
 echo "You need to configure the RGB Matrix driver for your hardware."
 echo ""
 
@@ -395,12 +373,45 @@ if ! confirm "Continue with these settings?"; then
     exit 0
 fi
 
+echo ""
+echo -e "${BOLD}========================================${NC}"
+echo -e "${BOLD}  Installation — you can walk away now${NC}"
+echo -e "${BOLD}========================================${NC}"
+echo ""
+
 # ============================================================================
-# STEP 3: Clone FlightTracker Repo
+# STEP 1: System Update
+# ============================================================================
+
+echo -e "${BOLD}--- Step 1: System Update ---${NC}"
+echo ""
+
+info "Updating system packages. This may take a while, especially on Pi Zero W..."
+sudo apt-get update
+run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+
+info "Installing required packages..."
+run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    git \
+    curl \
+    python3 \
+    python3-venv \
+    python3-pip \
+    python3-dev \
+    python3-pillow \
+    cython3 \
+    python3-setuptools \
+    libcap2-bin \
+    unzip
+
+success "System update complete."
+
+# ============================================================================
+# STEP 2: Clone FlightTracker Repo
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 3: Clone FlightTracker ---${NC}"
+echo -e "${BOLD}--- Step 2: Clone FlightTracker ---${NC}"
 echo ""
 
 run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker
@@ -412,11 +423,11 @@ fi
 success "FlightTracker cloned to ${INSTALL_DIR}"
 
 # ============================================================================
-# STEP 4: Download & Build RGB Matrix Library
+# STEP 3: Download & Build RGB Matrix Library
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 4: Build RGB Matrix Driver ---${NC}"
+echo -e "${BOLD}--- Step 3: Build RGB Matrix Driver ---${NC}"
 echo ""
 
 info "Downloading RGB matrix library (pinned commit ${RGB_MATRIX_COMMIT})..."
@@ -448,11 +459,11 @@ run_quiet "Building RGB matrix library" make clean
 run_quiet "Compiling RGB matrix library" make build-python USER_DEFINES="$USER_DEFINES"
 
 # ============================================================================
-# STEP 5: Install Python Dependencies
+# STEP 4: Install Python Dependencies
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 5: Install Python Dependencies ---${NC}"
+echo -e "${BOLD}--- Step 4: Install Python Dependencies ---${NC}"
 echo ""
 
 # Detect Python binary path dynamically
@@ -503,11 +514,11 @@ rm -rf "$PIP_TMPDIR"
 success "Python dependencies installed."
 
 # ============================================================================
-# STEP 6: Configure setcap
+# STEP 5: Configure setcap
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 6: Configure Permissions ---${NC}"
+echo -e "${BOLD}--- Step 5: Configure Permissions ---${NC}"
 echo ""
 
 info "Python binary: ${PYTHON_BIN}"
@@ -524,11 +535,11 @@ sudo "$SETCAP_BIN" 'cap_sys_nice=eip' "$PYTHON_BIN"
 success "Real-time scheduling permissions configured."
 
 # ============================================================================
-# STEP 7: Install systemd Service
+# STEP 6: Install systemd Service
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 7: Install System Service ---${NC}"
+echo -e "${BOLD}--- Step 6: Install System Service ---${NC}"
 echo ""
 
 SERVICE_TEMPLATE="${INSTALL_DIR}/assets/FlightTracker.service"
@@ -553,11 +564,11 @@ sudo systemctl enable FlightTracker.service
 success "Service installed and enabled."
 
 # ============================================================================
-# STEP 8: Apply Boot Configuration
+# STEP 7: Apply Boot Configuration
 # ============================================================================
 
 echo ""
-echo -e "${BOLD}--- Step 8: Apply Boot Configuration ---${NC}"
+echo -e "${BOLD}--- Step 7: Apply Boot Configuration ---${NC}"
 echo ""
 
 # Boot config locations. Trixie and later use /boot/firmware/;
@@ -600,7 +611,7 @@ if [ "$NUM_CORES" -ge 2 ] && [ "$ISOL_CPU" -eq 1 ]; then
 fi
 
 # ============================================================================
-# STEP 9: Reboot
+# STEP 8: Reboot
 # ============================================================================
 
 # Get the Pi's IP address
