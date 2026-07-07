@@ -7,7 +7,7 @@
   },
   {
     "name": "RGB LED Matrix",
-    "detail": "64×32 panel",
+    "detail": "64x32 panel",
     "essential": true,
     "buyUrl": "https://shop.pimoroni.com/products/rgb-led-matrix-panel"
   },

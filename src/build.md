@@ -15,13 +15,13 @@ permalink: "/build/"
     
     <h3>Minimum shopping list</h3>
     <div class="narrative">
-      <p>A Raspberry PI. Currently the FlightTracker code supports:</p>
+      <p>A Raspberry Pi. FlightTracker supports:</p>
         <ul>
             <li>RPi 3B</li>
             <li>RPi 4B</li>
             <li>RPi Zero 2</li>
             <li>RPi Zero W</li>
-            <li><s>RPi 5</s> - Supported in theory but untested</li> 
+            <li>RPi 5</li>
         </ul>
 
       <p>And the following bits for the display:</p>

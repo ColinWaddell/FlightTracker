@@ -5,6 +5,13 @@ description: "Install FlightTracker on your Raspberry Pi in one line."
 permalink: "/install/"
 ---
 
+<div class="status-bar">
+  <div class="status-item"><a href="#quick-install" class="text-black">Quick Install</a></div>
+  <div class="status-item"><a href="#full-install" class="text-black">Full Install</a></div>
+  <div class="status-item"><a href="#upgrading" class="text-black">Upgrading</a></div>
+  <div class="status-item"><a href="#manual-install" class="text-black">Manual Install</a></div>
+</div>
+
 <section>
   <div class="container">
     <h2 class="section-title">Getting started</h2>
@@ -15,34 +22,44 @@ permalink: "/install/"
   </div>
 </section>
 
-<section>
+<section id="quick-install">
   <div class="container">
     <h2 class="section-title">Quick install</h2>
 
     <div class="narrative">
         <div class="alert alert-warning border-warning border-2" role="alert">
-            <p class="mb-0"><strong>If you know what you're doing</strong> and you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you can skip the rest of this page and just run:</p>
+            <p class="mb-0"><strong>If you know what you're doing</strong> and you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you can skip the rest of this page. Pick the script for your hardware and run it:</p>
         </div>
     </div>
 
     <div class="code-card">
       <div class="code-card-header">
-        <span>One-line installer</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash')">Copy</button>
+        <span>Raspberry Pi 3 / 4 / Zero</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash</code></pre>
+      </div>
+    </div>
+
+    <div class="code-card mt-2">
+      <div class="code-card-header">
+        <span>Raspberry Pi 5</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash')">Copy</button>
+      </div>
+      <div class="code-card-body">
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="narrative mt-3">
-      <p>The script installs the RGB matrix driver, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. You can <a href="https://github.com/ColinWaddell/FlightTracker/blob/feature/feature-upgrade/install.sh">read the script on GitHub</a> before you run it.</p>
+      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/master/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/master/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
   </div>
 </section>
 
-<section>
+<section id="full-install">
   <div class="container">
     <h2 class="section-title">Preparing the SD card</h2>
 
@@ -168,20 +185,30 @@ permalink: "/install/"
 
     <div class="code-card">
       <div class="code-card-header">
-        <span>One-line installer</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash')">Copy</button>
+        <span>Raspberry Pi 3 / 4 / Zero</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash</code></pre>
+      </div>
+    </div>
+
+    <div class="code-card mt-2">
+      <div class="code-card-header">
+        <span>Raspberry Pi 5</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash')">Copy</button>
+      </div>
+      <div class="code-card-body">
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="narrative">
-      <p>The script will walk through the whole install: the RGB matrix driver, the FlightTracker code, the Python environment, and a systemd service so it starts automatically on boot. This can take any where from a few minutes on newer systems to half an hour or so on older models of Pi</p>
+      <p>The script walks through the whole install: the RGB matrix driver appropriate for your hardware, the FlightTracker code, the Python environment, and a systemd service so it starts automatically on boot. This can take anywhere from a few minutes on newer systems to half an hour or so on older Pi models.</p>
 
-      <p>When it's done, the Pi will reboot and FlightTracker will start up. The first time this boots it can take a few minutes before everything is running. If you're concerned something isn't right you can ssh in and execute <code>sudo systemctl status FlightTracker.service</code> to see what's going on.</p>
+      <p>When it's done, the Pi will reboot and FlightTracker will start up. The first boot can take a few minutes before everything is running. If you're concerned something isn't right, SSH in and run <code>sudo systemctl status FlightTracker.service</code> to see what's going on.</p>
 
-      <p>On boot he FlightTracker shows a QR code on the matrix - you can scan it with your phone to open the web configuration UI. You can also access the settings directly in a browser at <code>http://flighttracker.local:8584</code> (using the hostname you set in the Imager) or <code>http://&lt;your-pi-ip&gt;:8584</code> (using the Pi's IP address). From there you can setup your device.</p>
+      <p>On boot, FlightTracker shows a QR code on the matrix - scan it with your phone to open the web configuration UI. You can also access the settings directly in a browser at <code>http://flighttracker.local:8584</code> (using the hostname you set in the Imager) or <code>http://&lt;your-pi-ip&gt;:8584</code>.</p>
 
       <div class="card">
         <div class="card-body p-2 bg-black">
@@ -190,7 +217,135 @@ permalink: "/install/"
        <div class="card-header">First boot - scan to configure</div>
       </div>
 
-      <p>If anything goes wrong, the full manual install steps are in the <a href="https://github.com/ColinWaddell/FlightTracker#installation">README on GitHub</a>, and you can <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+      <p>If anything goes wrong, the full manual install steps are in the <a href="https://github.com/ColinWaddell/FlightTracker/tree/master/platforms">platforms folder on GitHub</a>, and you can <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
     </div>
+
+
+    <div class="narrative">
+        <hr />
+      <h2 class="section-title" id="upgrading">Upgrading from FlightTracker v1 to v2</h2>
+
+      <p>
+        I'd recommend a clean-install by wiping your SD card and starting from scratch. If that's not an option
+        then you should be able to stop the the current code from running and swapping out the source code
+        for the latest version.
+      </p> 
+
+      <p>
+        If you've customized the code you're trying to update path you're probably going to have a bad to
+        as a huge amount has been rewritten between v1 and v2.
+      </p>
+
+      <p>
+        If you've got a clear path to upgrade then the code will port across your <code>config.py</code>
+        to a <code>config.json</code> automatically on the first boot.
+      </p>
+
+      <p>Before proceeding make sure you stop the FlightTracker from running:</p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Stop the running service</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'sudo systemctl stop FlightTracker.service')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>sudo systemctl stop FlightTracker.service</code></pre>
+        </div>
+      </div>
+
+      <h3>You installed the original from a zip file</h3>
+
+      <p>
+        If you originally downloaded FlightTracker as a zip file from GitHub and extracted it into
+        <code>/home/pi/FlightTracker</code>, the folder won't be a git repository so you can't pull
+        updates. The cleanest approach is to remove the old source code and clone the latest version
+        in its place.
+      </p>
+
+      <p>
+        Since the folder isn't a git repository you can't pull updates, but you can swap out the
+        source code by hand while keeping your existing virtual environment and settings. Back up
+        your <code>config.py</code>, clear out everything except the <code>env</code> directory,
+        drop in the latest source from GitHub, refresh the dependencies, restore your config and
+        restart the service:
+      </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Update from a zip download, preserving settings</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'cp /home/pi/FlightTracker/config.py /tmp/config.py.backup\n\ncd /home/pi/FlightTracker\nfind . -maxdepth 1 -not -name \'env\' -not -name \'.\' -exec rm -rf {} +\n\ncurl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/master.zip -o /tmp/FlightTracker.zip\nunzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src\ncp -r /tmp/FlightTracker-src/*/* /home/pi/FlightTracker/\n\nsource env/bin/activate\npip install -r requirements.txt\n\ncp /tmp/config.py.backup /home/pi/FlightTracker/config.py\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>cp /home/pi/FlightTracker/config.py /tmp/config.py.backup
+
+cd /home/pi/FlightTracker
+find . -maxdepth 1 -not -name 'env' -not -name '.' -exec rm -rf {} +
+
+curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/master.zip -o /tmp/FlightTracker.zip
+unzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src
+cp -r /tmp/FlightTracker-src/*/* /home/pi/FlightTracker/
+
+source env/bin/activate
+pip install -r requirements.txt
+
+cp /tmp/config.py.backup /home/pi/FlightTracker/config.py
+
+sudo systemctl restart FlightTracker.service</code></pre>
+        </div>
+      </div>
+
+      <p>
+        On first boot the new code will port your <code>config.py</code> across to a
+        <code>config.json</code> automatically.
+      </p>
+
+      <h3>You installed the original using git-clone</h3>
+
+      <p>
+        If you originally cloned the repository with <code>git clone</code>, upgrading is
+        straightforward. Move into your existing checkout and pull down the latest changes:
+      </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Pull the latest code</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit fetch --all\ngit checkout master\ngit pull')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>cd /home/pi/FlightTracker
+git fetch --all
+git checkout master
+git pull</code></pre>
+        </div>
+      </div>
+
+      <p>
+        If you have local modifications, the <code>git pull</code> may complain about conflicts. Stash
+        your changes first, pull, then decide whether you still need them - remember a huge amount has
+        been rewritten between v1 and v2:
+      </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Stash local changes before pulling</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit stash\ngit checkout master\ngit pull')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>cd /home/pi/FlightTracker
+git stash
+git checkout master
+git pull</code></pre>
+        </div>
+      </div>
+
+      <p>
+        Your existing <code>config.py</code> sits at the top level of the checkout and won't be
+        touched by the pull. Once the new code is in place, run the one-line installer to refresh the
+        Python dependencies and reinstall the systemd service. On first boot your
+        <code>config.py</code> will be migrated to <code>config.json</code> automatically.
+      </p>
+
+    </div>
+
   </div>
 </section>
