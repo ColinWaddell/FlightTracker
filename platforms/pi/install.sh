@@ -410,6 +410,7 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     cython3 \
     python3-setuptools \
     libcap2-bin \
+    libffi-dev \
     unzip
 
 success "System update complete."
