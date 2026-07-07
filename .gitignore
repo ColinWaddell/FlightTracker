@@ -5,6 +5,7 @@ _crap/
 config.py
 config.json
 tle_cache.json
+routes_cache.json
 captures/
 _junk/
 

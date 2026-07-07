@@ -18,8 +18,8 @@ except ImportError:
 
 
 class LoadingLEDIndicator:
-    def __init__(self, canvas, overhead):
-        # canvas is accepted for API symmetry with LoadingPulseIndicator but not used
+    def __init__(self, canvas, panel, overhead):
+        # canvas and panel are accepted for API symmetry with LoadingPulseIndicator but not used
         self.overhead = overhead
         self.setup_complete = False
         self.setup_gpio()

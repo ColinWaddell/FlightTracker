@@ -2,7 +2,7 @@ import sys
 from time import perf_counter, sleep
 
 # ---------------------------------------------------------------------------
-# Lazy class construction - defers rgbmatrix, font, and overhead imports
+# Lazy class construction - defers panel, font, and overhead imports
 # until first access so the boot screen and web interface start cheaply.
 # ---------------------------------------------------------------------------
 
@@ -15,8 +15,7 @@ def build_display_class():
     from setup.themes import theme_set
     import logging
 
-    from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
-
+    from display.panel_factory import get_panel
     from utilities.scene_manager import SceneManager
     from utilities.tle_manager import TLEManager
     from scenes.idle.idle_scene import IdleScene
@@ -52,45 +51,30 @@ def build_display_class():
             cfg = Config.instance()
 
             if matrix is not None:
-                self.matrix = matrix
+                # Came from splash screen — reuse the already-initialised panel
+                self.panel = get_panel()
                 self.canvas = canvas
                 self.from_splash = True
             else:
-                options = RGBMatrixOptions()
-                options.hardware_mapping = (
-                    "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
+                self.panel = get_panel()
+                self.panel.init_matrix(
+                    width=64,
+                    height=32,
+                    brightness=cfg.brightness_percent,
+                    rotation=180 if cfg.screen_rotate else 0,
+                    hat_pwm=cfg.hat_pwm_enabled,
+                    gpio_slowdown=cfg.gpio_slowdown,
                 )
-                options.rows = 32
-                options.cols = 64
-                options.chain_length = 1
-                options.parallel = 1
-                options.row_address_type = 0
-                options.multiplexing = 0
-                options.pwm_bits = 11
-                options.brightness = cfg.brightness_percent
-                options.pwm_lsb_nanoseconds = 130
-                options.led_rgb_sequence = "RGB"
-                options.pixel_mapper_config = "Rotate:180" if cfg.screen_rotate else ""
-                options.show_refresh_rate = 0
-                options.gpio_slowdown = cfg.gpio_slowdown
-                options.disable_hardware_pulsing = True
-                options.drop_privileges = True
-
-                self.matrix = RGBMatrix(options=options)
-                self.canvas = self.matrix.CreateFrameCanvas()
-                self.canvas.Clear()
+                self.canvas = self.panel.create_canvas()
+                self.panel.clear(self.canvas)
                 self.from_splash = False
-
-            def draw_square(x0, y0, x1, y1, colour):
-                for x in range(x0, x1):
-                    graphics.DrawLine(self.canvas, x, y0, x, y1, colour)
 
             overhead = Overhead()
 
             self.scene_manager = SceneManager()
-            self.scene_manager.register(IdleScene(self.canvas, draw_square))
+            self.scene_manager.register(IdleScene(self.canvas, self.panel))
             self.scene_manager.register(
-                FlightScene(self.canvas, draw_square, overhead, REFRESH_INTERVAL)
+                FlightScene(self.canvas, self.panel, overhead, REFRESH_INTERVAL)
             )
             logger.info("Registered scenes: Idle, Flight")
 
@@ -98,7 +82,7 @@ def build_display_class():
                 tle_manager = TLEManager()
                 tle_manager.start()
                 self.scene_manager.register(
-                    SatelliteScene(self.canvas, draw_square, tle_manager)
+                    SatelliteScene(self.canvas, self.panel, tle_manager)
                 )
                 logger.info(
                     "Satellite tracking enabled - registered Satellite scene "
@@ -108,24 +92,24 @@ def build_display_class():
             else:
                 logger.info("Satellite tracking disabled")
 
-            self.loading = IndicatorClass(self.canvas, overhead)
+            self.loading = IndicatorClass(self.canvas, self.panel, overhead)
             self.frames = frames
 
         def update_brightness(self):
             cfg = Config.instance()
             if cfg.is_in_brightness_schedule():
-                self.matrix.brightness = cfg.schedule_brightness_percent
+                self.panel.set_brightness(cfg.schedule_brightness_percent)
             else:
-                self.matrix.brightness = cfg.brightness_percent
+                self.panel.set_brightness(cfg.brightness_percent)
 
         def run(self):
             print("Press CTRL-C to stop")
 
             if self.from_splash:
-                self.canvas.Clear()
-                self.matrix.SwapOnVSync(self.canvas)
+                self.panel.clear(self.canvas)
+                self.panel.swap(self.canvas)
 
-            self.canvas.Clear()
+            self.panel.clear(self.canvas)
 
             frame = 0
             try:
@@ -139,7 +123,7 @@ def build_display_class():
 
                     self.loading.tick(frame)
 
-                    self.matrix.SwapOnVSync(self.canvas)
+                    self.panel.swap(self.canvas)
 
                     frame += 1
 

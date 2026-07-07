@@ -15,8 +15,7 @@ import threading
 import urllib.request
 from math import ceil
 
-from rgbmatrix import graphics
-
+from display.rgbpanel import Colour
 from setup import fonts, frames, screen
 from setup.themes import TC
 from setup.themes import (
@@ -99,7 +98,7 @@ TEMPERATURE_THRESHOLDS = [
 # ---------------------------------------------------------------------------
 
 
-def temperature_to_colour(temp_c: float) -> graphics.Color:
+def temperature_to_colour(temp_c: float) -> Colour:
     """Map a temperature in C to an interpolated theme colour."""
     lo_temp, lo_key = TEMPERATURE_THRESHOLDS[0]
     hi_temp, hi_key = TEMPERATURE_THRESHOLDS[1]
@@ -119,7 +118,7 @@ def temperature_to_colour(temp_c: float) -> graphics.Color:
     else:
         ratio = 0.0
 
-    return graphics.Color(
+    return Colour(
         int(c_lo.red + (c_hi.red - c_lo.red) * ratio),
         int(c_lo.green + (c_hi.green - c_lo.green) * ratio),
         int(c_lo.blue + (c_hi.blue - c_lo.blue) * ratio),
@@ -212,9 +211,9 @@ class IdleScene:
 
     priority = PRIORITY
 
-    def __init__(self, canvas, draw_square):
+    def __init__(self, canvas, panel):
         self.canvas = canvas
-        self.draw_square = draw_square
+        self.panel = panel
 
         # Scene frame counter
         self.frame: int = 0
@@ -252,7 +251,7 @@ class IdleScene:
 
     def on_enter(self) -> None:
         """Called by SceneManager on scene transition. Clears canvas then resets."""
-        self.canvas.Clear()
+        self.panel.clear(self.canvas)
         self.reset()
 
     def reset(self) -> None:
@@ -297,7 +296,7 @@ class IdleScene:
 
         # Undraw old value
         if self.last_time is not None:
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 CLOCK_FONT,
                 CLOCK_POSITION[0],
@@ -310,7 +309,7 @@ class IdleScene:
                 ampm_position_x = CLOCK_POSITION[0] + font_text_width(
                     CLOCK_FONT, self.last_time[:5]
                 )
-                graphics.DrawText(
+                self.panel.draw_text(
                     self.canvas,
                     CLOCK_AMPM_FONT,
                     ampm_position_x + 1,
@@ -321,7 +320,7 @@ class IdleScene:
 
         self.last_time = current_time
 
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             CLOCK_FONT,
             CLOCK_POSITION[0],
@@ -331,7 +330,7 @@ class IdleScene:
         )
         if ampm_str:
             ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 CLOCK_AMPM_FONT,
                 ampm_position_x + 1,
@@ -356,7 +355,7 @@ class IdleScene:
             return
 
         if self.last_date is not None:
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
                 DATE_POSITION[0],
@@ -365,7 +364,7 @@ class IdleScene:
                 self.last_date,
             )
         self.last_date = current_date
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             DATE_FONT,
             DATE_POSITION[0],
@@ -384,7 +383,7 @@ class IdleScene:
             return
 
         if self.last_day is not None:
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 DAY_FONT,
                 DAY_POSITION[0],
@@ -393,7 +392,7 @@ class IdleScene:
                 self.last_day,
             )
         self.last_day = current_day
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             DAY_FONT,
             DAY_POSITION[0],
@@ -409,7 +408,7 @@ class IdleScene:
     def erase_temperature(self) -> None:
         """Erase the previously-drawn temperature string, if any."""
         if self.last_temp_str is not None:
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 TEMPERATURE_FONT,
                 TEMPERATURE_POSITION[0],
@@ -425,7 +424,7 @@ class IdleScene:
         display_temp = temp_c * 9.0 / 5.0 + 32 if cfg.units == "i" else temp_c
         unit_char = "F" if cfg.units == "i" else "C"
         temp_str = f"{round(display_temp)}°{unit_char}".rjust(5)
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             TEMPERATURE_FONT,
             TEMPERATURE_POSITION[0],
@@ -515,10 +514,11 @@ class IdleScene:
                 if graph_colour is not None
                 else temperature_to_colour(data["temp_c"])
             )
-            self.draw_square(x1, y1, x2, y2, colour)
+            self.panel.draw_square(self.canvas, x1, y1, x2, y2, colour)
 
             if flash_height and flash_enabled and graph_colour is None:
-                self.draw_square(
+                self.panel.draw_square(
+                    self.canvas,
                     x1,
                     RAINFALL_GRAPH_ORIGIN[1] - RAINFALL_GRAPH_HEIGHT,
                     x2,

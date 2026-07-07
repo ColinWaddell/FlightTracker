@@ -3,12 +3,19 @@ from time import sleep
 import logging
 
 from requests.exceptions import RequestException, ConnectionError
+from utilities import routes_cache
 from urllib3.exceptions import NewConnectionError, MaxRetryError
+
+try:
+    from curl_cffi.requests.exceptions import Timeout as CurlTimeout
+except ImportError:
+    CurlTimeout = None
 
 logger = logging.getLogger(__name__)
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
+FR24_TIMEOUT = 60  # seconds — default 30 is too short for Pi on slow networks
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
@@ -64,7 +71,7 @@ class Overhead:
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
 
-        self.api = FlightRadar24API()
+        self.api = FlightRadar24API(timeout=FR24_TIMEOUT)
         self.lock = Lock()
         self.done = Event()
 
@@ -115,6 +122,13 @@ class Overhead:
         data = []
 
         try:
+            # Clear cookies before each fetch to avoid FR24 rate-limiting
+            # on subsequent calls (stale cookies cause empty results)
+            try:
+                self.api._FlightRadar24API__client.clear_cookies()
+            except Exception:
+                pass
+
             bounds = self.api.get_bounds(self.zone_home)
             flights = self.api.get_flights(bounds=bounds)
 
@@ -134,12 +148,36 @@ class Overhead:
             )
 
             for flight in flights[: self.max_flight_lookup]:
-                retries = RETRIES
-                while retries:
-                    sleep(RATE_LIMIT_DELAY)
-                    try:
-                        details = self.api.get_flight_details(flight)
+                callsign = clean_field(flight.callsign)
 
+                # Check route cache first — avoids expensive API lookups
+                cached = routes_cache.get(callsign) if callsign else None
+
+                if cached is not None:
+                    plane = cached.get("plane", "")
+                    origin = cached.get("origin", "")
+                    destination = cached.get("destination", "")
+                    origin_name = cached.get("origin_name", "")
+                    destination_name = cached.get("destination_name", "")
+                else:
+                    # Cache miss — fetch details from FR24 API
+                    retries = RETRIES
+                    details = None
+                    while retries:
+                        sleep(RATE_LIMIT_DELAY)
+                        try:
+                            details = self.api.get_flight_details(flight)
+                            break
+                        except (KeyError, AttributeError, TypeError, Exception) as e:
+                            if CurlTimeout and isinstance(e, CurlTimeout):
+                                logger.debug("FR24 flight detail timeout, retrying (%d left)", retries - 1)
+                            elif isinstance(e, (KeyError, AttributeError, TypeError)):
+                                pass
+                            else:
+                                logger.debug("FR24 flight detail error: %s", e)
+                            retries -= 1
+
+                    if details is not None:
                         try:
                             plane = details["aircraft"]["model"]["text"]
                         except (KeyError, TypeError):
@@ -148,9 +186,7 @@ class Overhead:
 
                         origin = clean_field(flight.origin_airport_iata)
                         destination = clean_field(flight.destination_airport_iata)
-                        callsign = clean_field(flight.callsign)
 
-                        # Full airport names from detail lookup
                         try:
                             origin_name = details["airport"]["origin"]["name"] or ""
                         except (KeyError, TypeError):
@@ -163,35 +199,48 @@ class Overhead:
                         except (KeyError, TypeError):
                             destination_name = ""
 
-                        # Telemetry
-                        try:
-                            ground_speed = int(flight.ground_speed)
-                        except (TypeError, ValueError):
-                            ground_speed = 0
-
-                        try:
-                            heading = int(flight.heading)
-                        except (TypeError, ValueError):
-                            heading = 0
-
-                        data.append(
-                            {
+                        # Cache the route info for 24 hours
+                        if callsign:
+                            routes_cache.put(callsign, {
                                 "plane": plane,
                                 "origin": origin,
                                 "destination": destination,
                                 "origin_name": origin_name[:80],
                                 "destination_name": destination_name[:80],
-                                "vertical_speed": flight.vertical_speed,
-                                "altitude": flight.altitude,
-                                "ground_speed": ground_speed,
-                                "heading": heading,
-                                "callsign": callsign,
-                            }
-                        )
-                        break
+                            })
+                    else:
+                        # All retries failed — use what we have from the flight object
+                        plane = ""
+                        origin = clean_field(flight.origin_airport_iata)
+                        destination = clean_field(flight.destination_airport_iata)
+                        origin_name = ""
+                        destination_name = ""
 
-                    except (KeyError, AttributeError, TypeError):
-                        retries -= 1
+                # Telemetry (always from live flight object, not cached)
+                try:
+                    ground_speed = int(flight.ground_speed)
+                except (TypeError, ValueError):
+                    ground_speed = 0
+
+                try:
+                    heading = int(flight.heading)
+                except (TypeError, ValueError):
+                    heading = 0
+
+                data.append(
+                    {
+                        "plane": plane,
+                        "origin": origin,
+                        "destination": destination,
+                        "origin_name": origin_name[:80],
+                        "destination_name": destination_name[:80],
+                        "vertical_speed": flight.vertical_speed,
+                        "altitude": flight.altitude,
+                        "ground_speed": ground_speed,
+                        "heading": heading,
+                        "callsign": callsign,
+                    }
+                )
 
             with self.lock:
                 self.data_store = data
@@ -199,16 +248,10 @@ class Overhead:
                 self.error_store = None
             logger.debug("FR24 fetch complete - %d flight(s) tracked", len(data))
 
-        except (
-            RequestException,
-            ConnectionError,
-            NewConnectionError,
-            MaxRetryError,
-            KeyError,
-            AttributeError,
-            TypeError,
-            ValueError,
-        ) as e:
+        except Exception as e:
+            # Broad catch — curl_cffi raises its own Timeout/ConnectionError
+            # types that don't inherit from requests.exceptions, so listing
+            # them individually is fragile. Log and set error state gracefully.
             with self.lock:
                 self.new_data_store = False
                 self.error_store = e

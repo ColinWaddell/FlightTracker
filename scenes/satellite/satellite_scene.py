@@ -21,8 +21,7 @@ from __future__ import annotations
 import datetime
 import logging
 
-from rgbmatrix import graphics
-
+from display.rgbpanel import Colour
 from setup import fonts, frames, screen
 from setup.colours import PEACH, WHITE, PINK, YELLOW
 from setup.configuration import Config
@@ -54,9 +53,9 @@ class SatelliteScene:
 
     priority = PRIORITY
 
-    def __init__(self, canvas, draw_square, tle_manager):
+    def __init__(self, canvas, panel, tle_manager):
         self.canvas = canvas
-        self.draw_square = draw_square
+        self.panel = panel
         self.tle_manager = tle_manager
 
         self.frame: int = 0
@@ -76,7 +75,7 @@ class SatelliteScene:
         self.last_blink_on: bool = True
 
         # Stash previous text draws so we can erase only what changed
-        self.last_text: dict[str, tuple[str, int, int, graphics.Color]] = {}
+        self.last_text: dict[str, tuple[str, int, int, Colour]] = {}
 
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
         self.ring_drawn: bool = False
@@ -110,7 +109,7 @@ class SatelliteScene:
 
     def on_enter(self) -> None:
         """Called by SceneManager on scene transition."""
-        self.canvas.Clear()
+        self.panel.clear(self.canvas)
         self.reset()
 
     def reset(self) -> None:
@@ -137,8 +136,8 @@ class SatelliteScene:
         # Draw ring once (persists across frames)
         if not self.ring_drawn:
             # Clear plot area before redrawing ring + trajectories
-            self.draw_square(0, 0, 31, screen.HEIGHT, graphics.Color(0, 0, 0))
-            azel_plot.draw_horizon_ring(self.canvas)
+            self.panel.draw_square(self.canvas, 0, 0, 31, screen.HEIGHT, Colour(0, 0, 0))
+            azel_plot.draw_horizon_ring(self.panel, self.canvas)
             self.draw_trajectories(active)
             self.ring_drawn = True
 
@@ -184,7 +183,7 @@ class SatelliteScene:
         """Paint dim trajectory arcs for all currently active passes."""
         for window in active:
             traj_2d = [(az, el) for az, el, _, _ in window.trajectory]
-            azel_plot.draw_trajectory(self.canvas, traj_2d, window.tle_index)
+            azel_plot.draw_trajectory(self.panel, self.canvas, traj_2d, window.tle_index)
 
     def draw_positions(self, active: list[passes_mod.PassWindow]) -> None:
         """
@@ -219,27 +218,27 @@ class SatelliteScene:
                 # First frame or blink toggled - redraw
                 if old is not None:
                     old_px, old_py, old_idx = old
-                    azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+                    azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
                 if self.blink_on:
-                    azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+                    azel_plot.draw_position(self.panel, self.canvas, az, el, window.tle_index)
                 else:
-                    azel_plot.draw_trail_pixel(self.canvas, px, py, window.tle_index)
+                    azel_plot.draw_trail_pixel(self.panel, self.canvas, px, py, window.tle_index)
             else:
                 old_px, old_py, old_idx = old
                 if (px, py) != (old_px, old_py):
                     # Pixel changed: dim the old, draw the new (respecting blink)
-                    azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+                    azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
                     if self.blink_on:
-                        azel_plot.draw_position(self.canvas, az, el, window.tle_index)
+                        azel_plot.draw_position(self.panel, self.canvas, az, el, window.tle_index)
                     else:
                         azel_plot.draw_trail_pixel(
-                            self.canvas, px, py, window.tle_index
+                            self.panel, self.canvas, px, py, window.tle_index
                         )
 
         # Dim any satellites that were active last frame but aren't now
         for name, (old_px, old_py, old_idx) in self.last_positions.items():
             if name not in new_positions:
-                azel_plot.draw_trail_pixel(self.canvas, old_px, old_py, old_idx)
+                azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
 
         self.last_positions = new_positions
         self.last_blink_on = self.blink_on
@@ -296,7 +295,7 @@ class SatelliteScene:
 
         # Build the set of text elements for this frame.
         # Each entry: (text, x, y, colour, font)
-        new_texts: dict[str, tuple[str, int, int, graphics.Color, object]] = {
+        new_texts: dict[str, tuple[str, int, int, Colour, object]] = {
             "name": (window.name, TEXT_COL_X, NAME_Y, YELLOW, fonts.extrasmall),
             "spd_label": ("Speed", TEXT_COL_X, LINE1_Y, PEACH, fonts.extrasmall),
             "spd_value": (speed_val, TEXT_COL_X, LINE2_Y, WHITE, fonts.extrasmall),
@@ -321,7 +320,7 @@ class SatelliteScene:
             val_width = len(val_text) * 4
             new_texts[key] = (unit_text, val_x + val_width, unit_y, unit_col, unit_font)
 
-        black = graphics.Color(0, 0, 0)
+        black = Colour(0, 0, 0)
 
         for key, (text, x, y, col, font) in new_texts.items():
             old = self.last_text.get(key)
@@ -329,10 +328,10 @@ class SatelliteScene:
                 old_text, old_x, old_y, _, old_font = old
                 # Only erase if something changed (text, position, or font)
                 if (old_text, old_x, old_y, old_font) != (text, x, y, font):
-                    graphics.DrawText(
+                    self.panel.draw_text(
                         self.canvas, old_font, old_x, old_y, black, old_text
                     )
-            graphics.DrawText(self.canvas, font, x, y, col, text)
+            self.panel.draw_text(self.canvas, font, x, y, col, text)
 
         self.last_text = new_texts
 

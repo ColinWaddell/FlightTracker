@@ -9,13 +9,14 @@ from setup.configuration import Config, CONFIG_PATH
 from setup.logging import setup_logging
 
 # -- Phase 1: Minimal imports for the splash screen -----------------------
-# Only rgbmatrix + PIL + qrcode are needed here.  Imported before the
+# Only the panel factory + PIL + qrcode are needed here.  Imported before the
 # background threads start to avoid GIL contention with heavy imports.
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from display.panel_factory import get_panel
 from PIL import Image
 
-loading_font = graphics.Font()
-loading_font.LoadFont(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
+panel = get_panel()
+# Font loading doesn't require the matrix to be initialised
+loading_font = panel.load_font(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
 
 try:
     import qrcode
@@ -37,10 +38,9 @@ def local_ip() -> str:
 
 
 def render_splash(
-    matrix,
+    panel,
     canvas,
     Image,
-    graphics,
     loading_font,
     url=None,
     qrcode=None,
@@ -49,15 +49,14 @@ def render_splash(
     """
     Render the splash BMP to canvas and swap it onto the display.
     """
-    # canvas.SetImage() is broken with Pillow 10+ (unsafe_ptrs removed).
-    # Read raw bytes and set pixels manually instead.
+    # Read raw bytes and set pixels manually (works on both Pi 3/4 and Pi 5).
     splash_path = os.path.join(os.path.dirname(__file__), "assets", "splash.bmp")
     splash = Image.open(splash_path)
     pixels = splash.tobytes()
     for y in range(32):
         for x in range(64):
             i = (y * 64 + x) * 3
-            canvas.SetPixel(x, y, pixels[i], pixels[i + 1], pixels[i + 2])
+            panel.set_pixel(canvas, x, y, pixels[i], pixels[i + 1], pixels[i + 2])
 
     if url is not None and qrcode is not None:
         qr = qrcode.QRCode(
@@ -73,13 +72,14 @@ def render_splash(
                 px, py = qx, qy + 2
                 if 0 <= px < 64 and 0 <= py < 32:
                     v = 0 if cell else 255
-                    canvas.SetPixel(px, py, v, v, v)
+                    panel.set_pixel(canvas, px, py, v, v, v)
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
-        dim = graphics.Color(180, 180, 180)
-        graphics.DrawText(canvas, loading_font, 1, 20, dim, "Loading...")
+        from setup.colours import WHITE
+        dim = WHITE.__class__(180, 180, 180)  # Colour namedtuple
+        panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
 
-    matrix.SwapOnVSync(canvas)
+    panel.swap(canvas)
 
 
 def flask_load(ready_event: threading.Event, result: dict):
@@ -127,7 +127,7 @@ def flask_load(ready_event: threading.Event, result: dict):
         ready_event.set()
 
 
-def display_load(matrix, canvas, result: dict):
+def display_load(panel, canvas, result: dict):
     """
     Thread B: import and build the Display class (heavy: FR24 API, scenes, fonts).
 
@@ -137,7 +137,7 @@ def display_load(matrix, canvas, result: dict):
         from display import get_display_class
 
         DisplayClass = get_display_class()
-        display = DisplayClass(matrix=matrix, canvas=canvas)
+        display = DisplayClass(matrix=panel, canvas=canvas)
         result["display"] = display
         logging.getLogger("startup").info("Display class built successfully")
 
@@ -149,30 +149,7 @@ def display_load(matrix, canvas, result: dict):
         traceback.print_exc(file=sys.stderr)
 
 
-def build_matrix_options(cfg: Config) -> RGBMatrixOptions:
-    options = RGBMatrixOptions()
-    options.hardware_mapping = (
-        "adafruit-hat-pwm" if cfg.hat_pwm_enabled else "adafruit-hat"
-    )
-    options.rows = 32
-    options.cols = 64
-    options.chain_length = 1
-    options.parallel = 1
-    options.row_address_type = 0
-    options.multiplexing = 0
-    options.pwm_bits = 11
-    options.brightness = cfg.brightness_percent
-    options.pwm_lsb_nanoseconds = 130
-    options.led_rgb_sequence = "RGB"
-    options.pixel_mapper_config = "Rotate:180" if cfg.screen_rotate else ""
-    options.show_refresh_rate = 0
-    options.gpio_slowdown = cfg.gpio_slowdown
-    options.disable_hardware_pulsing = True
-    options.drop_privileges = True
-    return options
-
-
-def load_full_interface(matrix, canvas, cfg: Config):
+def load_full_interface(panel, canvas, cfg: Config):
     url = f"http://{local_ip()}:{cfg.web_port}/settings"
     print(f"[web] Config interface: {url}", flush=True)
 
@@ -188,7 +165,7 @@ def load_full_interface(matrix, canvas, cfg: Config):
     # Thread B: Display class (slow - FR24 API, scenes, fonts)
     display_thread = threading.Thread(
         target=display_load,
-        args=(matrix, canvas, result),
+        args=(panel, canvas, result),
         daemon=True,
         name="display-load",
     )
@@ -202,10 +179,9 @@ def load_full_interface(matrix, canvas, cfg: Config):
     flask_ready.wait()
     if "flask_error" not in result:
         render_splash(
-            matrix,
+            panel,
             canvas,
             Image,
-            graphics,
             loading_font,
             url,
             qrcode,
@@ -224,11 +200,11 @@ def load_full_interface(matrix, canvas, cfg: Config):
     flask_thread.join()
 
 
-def load_minimum_interface(matrix, canvas, cfg: Config):
+def load_minimum_interface(panel, canvas, cfg: Config):
     # No web UI - brief splash, then build display in the background.
     display_thread = threading.Thread(
         target=display_load,
-        args=(matrix, canvas, result),
+        args=(panel, canvas, result),
         daemon=True,
         name="display-load",
     )
@@ -244,29 +220,34 @@ if __name__ == "__main__":
     cfg = Config.instance()
     logger.info("FlightTracker starting (log level: %s)", cfg.log_level)
 
-    options = build_matrix_options(cfg)
-    matrix = RGBMatrix(options=options)
-    canvas = matrix.CreateFrameCanvas()
-    canvas.Clear()
+    # Initialise matrix once with full config values
+    panel.init_matrix(
+        width=64,
+        height=32,
+        brightness=cfg.brightness_percent,
+        rotation=180 if cfg.screen_rotate else 0,
+        hat_pwm=cfg.hat_pwm_enabled,
+        gpio_slowdown=cfg.gpio_slowdown,
+    )
+    canvas = panel.create_canvas()
+    panel.clear(canvas)
     logger.info(
-        "RGB matrix initialised (%dx%d, brightness %d%%)",
-        options.rows,
-        options.cols,
+        "RGB matrix initialised (64x32, brightness %d%%)",
         cfg.brightness_percent,
     )
 
     # -- Phase 2: Show splash (loading state, no QR) --------------------------
-    render_splash(matrix, canvas, Image, graphics, loading_font)
+    render_splash(panel, canvas, Image, loading_font)
 
     result = {}
 
     if cfg.web_interface_enabled:
         logger.info("Web interface enabled - starting full interface")
-        load_full_interface(matrix, canvas, cfg)
+        load_full_interface(panel, canvas, cfg)
 
     else:
         logger.info("Web interface disabled - starting minimum interface")
-        load_minimum_interface(matrix, canvas, cfg)
+        load_minimum_interface(panel, canvas, cfg)
 
     if "error" in result:
         logger.error("Display build failed: %s", result["error"])
