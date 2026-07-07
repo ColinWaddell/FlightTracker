@@ -16,18 +16,18 @@ The recent breakage affecting overhead flight data has now been resolved. If you
 
 Choose the guide for your platform:
 
-- **[Raspberry Pi 3 / 4 / Zero](platforms/pi/INSTALL.md)** — uses hzeller's rpi-rgb-led-matrix (C++ driver)
-- **[Raspberry Pi 5](platforms/pi5/INSTALL.md)** — uses Adafruit's piomatter library (PIO driver)
-- **[Desktop simulator](platforms/simulator/INSTALL.md)** — runs in a pygame window for development
+- **[Raspberry Pi 3 / 4 / Zero](platforms/pi/INSTALL.md)** - uses hzeller's rpi-rgb-led-matrix (C++ driver)
+- **[Raspberry Pi 5](platforms/pi5/INSTALL.md)** - uses Adafruit's piomatter library (PIO driver)
+- **[Desktop simulator](platforms/simulator/INSTALL.md)** - runs in a pygame window for development
 
 Or use the automated installers:
 
 ```bash
 # Pi 3 / 4 / Zero
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash
 
 # Pi 5
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash
 ```
 
 Each installer detects your hardware and redirects you to the correct one if needed.
@@ -130,9 +130,7 @@ sudo systemctl restart FlightTracker.service
 ```
 
 # License Update:
-As of April 2025, Flight Tracker is released under the GNU General Public License v3.0
+Flight Tracker is released under the GNU General Public License v3.0
 
 You're welcome to use, modify, and share the code-just keep it under the same license and include
 proper attribution (retain my copyright and license notice). See LICENSE for details.
-
-[I had to add this license as folks have started selling these online as their own with zero attribution](https://colinwaddell.com/articles/flight-radar-ripoff). Open-source projects like this are our CVs: they show peers and potential employers what we can do. Passing off someone else's work as your own robs us of our chance to promote ourselves.

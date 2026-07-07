@@ -1,8 +1,6 @@
-# Installation Guide — Desktop Simulator
+# Installation Guide - Desktop Simulator
 
-Runs FlightTracker in a pygame window on your desktop machine. No Raspberry Pi or LED hardware required — perfect for development and testing.
-
-The simulator renders the 64×32 LED grid as circular LEDs on a dark background, matching the look of the physical panel.
+Runs FlightTracker in a pygame window on your desktop machine. No Raspberry Pi or LED hardware required.
 
 ---
 
@@ -31,7 +29,7 @@ pip install -r platforms/simulator/requirements.txt
 env/bin/python3 flight-tracker.py
 ```
 
-A pygame window opens showing the simulated LED matrix. The app runs exactly as it would on a Pi — same scenes, same data sources, same config.
+A pygame window opens showing the simulated LED matrix. The app runs exactly as it would on a Pi.
 
 ---
 
@@ -58,17 +56,3 @@ ffmpeg -framerate 15 -i frame_%05d.png \
 ## Configuration
 
 The simulator uses the same `config.json` as the Pi versions. On first run, a web interface is available at `http://localhost:8584` for configuration. See the [main README](../../README.md) for the full settings reference.
-
----
-
-## Display tuning
-
-The simulator has tunable constants at the top of `display/rgbpanel_simulator.py`:
-
-| Constant | Default | Description |
-|----------|---------|-------------|
-| `_PIXEL_SIZE` | 10 | Size of each LED cell in screen pixels |
-| `_GAP` | 1 | Dark gap between LEDs |
-| `_ANTIALIAS` | True | Anti-alias circle edges |
-| `BRIGHTNESS` | 1.5 | Brightness boost multiplier (1.0 = no boost) |
-| `_OFF_LED_LEVEL` | 8 | Brightness of dim circles for off-LEDs |

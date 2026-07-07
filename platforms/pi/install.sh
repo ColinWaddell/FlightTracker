@@ -394,7 +394,7 @@ echo ""
 echo -e "${BOLD}--- Step 1: System Update ---${NC}"
 echo ""
 
-info "Updating system packages. This may take a while, especially on Pi Zero W..."
+info "Updating system packages. This may take a while..."
 sudo apt-get update
 run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 
@@ -452,7 +452,7 @@ fi
 success "RGB matrix library downloaded."
 
 info "Building RGB matrix library..."
-warn "This takes a while - especially on Pi Zero W."
+warn "This takes a while..."
 echo ""
 
 cd "$RGB_MATRIX_DIR"

@@ -1,6 +1,6 @@
-# Installation Guide — Raspberry Pi 5
+# Installation Guide - Raspberry Pi 5
 
-This guide covers installing FlightTracker on a Raspberry Pi 5 using Adafruit's `adafruit-blinka-raspberry-pi5-piomatter` library, which drives the RGB panel via the Pi 5's PIO subsystem — no C++ compilation needed.
+This guide covers installing FlightTracker on a Raspberry Pi 5 using Adafruit's `adafruit-blinka-raspberry-pi5-piomatter` library, which drives the RGB panel via the Pi 5's PIO subsystem - no C++ compilation needed.
 
 ---
 
@@ -116,4 +116,4 @@ sudo systemctl restart FlightTracker.service
 
 ## Using a local ADS-B receiver (tar1090)
 
-See the [main README](../../README.md) for tar1090 setup instructions — this is platform-independent.
+See the [main README](../../README.md) for tar1090 setup instructions - this is platform-independent.
