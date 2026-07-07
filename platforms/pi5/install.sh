@@ -267,7 +267,7 @@ sudo rpi-update -y || warn "rpi-update failed (non-fatal, continuing)"
 
 info "Updating system packages..."
 sudo apt-get update
-run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y || exit 1
 
 info "Installing required packages..."
 # No C++ build tools needed - piomatter is a pre-built wheel.
@@ -280,7 +280,7 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     python3 \
     python3-venv \
     python3-pip \
-    python3-dev
+    python3-dev || exit 1
 
 # Ensure PIO udev rule exists (allows non-root access to /dev/pio0)
 # On current Raspberry Pi OS, this is provided by raspberrypi-sys-mods
@@ -307,7 +307,7 @@ echo ""
 echo -e "${BOLD}--- Step 2: Clone FlightTracker ---${NC}"
 echo ""
 
-run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker
+run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker || exit 1
 
 if [ ! -d "$INSTALL_DIR" ]; then
     error "Failed to clone FlightTracker repository."
@@ -344,8 +344,8 @@ mkdir -p "$PIP_TMPDIR"
 info "Installing Python dependencies (this may take a few minutes)..."
 echo ""
 
-run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-run_quiet "Installing Pi 5 Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi5/requirements.txt
+run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip || exit 1
+run_quiet "Installing Pi 5 Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi5/requirements.txt || exit 1
 
 # Verify piomatter import works
 info "Verifying piomatter installation..."

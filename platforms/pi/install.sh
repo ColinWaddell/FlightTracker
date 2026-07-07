@@ -396,7 +396,7 @@ echo ""
 
 info "Updating system packages. This may take a while..."
 sudo apt-get update
-run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y || exit 1
 
 info "Installing required packages..."
 run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -410,7 +410,8 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     cython3 \
     python3-setuptools \
     libcap2-bin \
-    unzip
+    libffi-dev \
+    unzip || exit 1
 
 success "System update complete."
 
@@ -422,7 +423,7 @@ echo ""
 echo -e "${BOLD}--- Step 2: Clone FlightTracker ---${NC}"
 echo ""
 
-run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker
+run_quiet "Cloning FlightTracker (branch: ${BRANCH})" git clone --depth 1 --branch "${BRANCH}" https://github.com/ColinWaddell/FlightTracker || exit 1
 
 if [ ! -d "$INSTALL_DIR" ]; then
     error "Failed to clone FlightTracker repository."
@@ -440,7 +441,7 @@ echo ""
 
 info "Downloading RGB matrix library (pinned commit ${RGB_MATRIX_COMMIT})..."
 cd "$CURRENT_HOME"
-run_quiet "Downloading RGB matrix library" curl -L "${RGB_MATRIX_REPO}/archive/${RGB_MATRIX_COMMIT}.zip" -o "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
+run_quiet "Downloading RGB matrix library" curl -L "${RGB_MATRIX_REPO}/archive/${RGB_MATRIX_COMMIT}.zip" -o "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip" || exit 1
 unzip -q "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
 rm "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}.zip"
 mv "rpi-rgb-led-matrix-${RGB_MATRIX_COMMIT}" "rpi-rgb-led-matrix"
@@ -463,8 +464,8 @@ if [ "$QUALITY_MOD" -eq 1 ]; then
     USER_DEFINES+=" -DDISABLE_HARDWARE_PULSES"
 fi
 
-run_quiet "Building RGB matrix library" make clean
-run_quiet "Compiling RGB matrix library" make build-python USER_DEFINES="$USER_DEFINES"
+run_quiet "Building RGB matrix library" make clean || exit 1
+run_quiet "Compiling RGB matrix library" make build-python USER_DEFINES="$USER_DEFINES" || exit 1
 
 # ============================================================================
 # STEP 4: Install Python Dependencies
@@ -499,8 +500,8 @@ mkdir -p "$PIP_TMPDIR"
 info "Installing Python dependencies (this may take a while)..."
 echo ""
 
-run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-run_quiet "Installing Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi/requirements.txt
+run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip || exit 1
+run_quiet "Installing Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi/requirements.txt || exit 1
 
 # Install RGB Matrix Python bindings by copying the pre-built .so files
 # directly into the venv's site-packages. The setup.py uses distutils which
