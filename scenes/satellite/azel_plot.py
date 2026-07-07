@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import math
 
-from rgbmatrix import graphics
+from display.rgbpanel import Colour
 
 # ---------------------------------------------------------------------------
 # Plot geometry
@@ -34,42 +34,42 @@ PLOT_RADIUS = 12  # pixels from centre to horizon ring
 # ---------------------------------------------------------------------------
 
 PALETTE_BRIGHT = [
-    graphics.Color(255, 220, 0),  # 0 amber
-    graphics.Color(0, 200, 255),  # 1 cyan
-    graphics.Color(180, 0, 255),  # 2 violet
-    graphics.Color(0, 255, 100),  # 3 green
-    graphics.Color(255, 60, 60),  # 4 red
+    Colour(255, 220, 0),  # 0 amber
+    Colour(0, 200, 255),  # 1 cyan
+    Colour(180, 0, 255),  # 2 violet
+    Colour(0, 255, 100),  # 3 green
+    Colour(255, 60, 60),  # 4 red
 ]
 
 PALETTE_DIM = [
-    graphics.Color(80, 60, 0),  # 0 amber dim
-    graphics.Color(0, 60, 80),  # 1 cyan dim
-    graphics.Color(55, 0, 80),  # 2 violet dim
-    graphics.Color(0, 80, 30),  # 3 green dim
-    graphics.Color(80, 20, 20),  # 4 red dim
+    Colour(80, 60, 0),  # 0 amber dim
+    Colour(0, 60, 80),  # 1 cyan dim
+    Colour(55, 0, 80),  # 2 violet dim
+    Colour(0, 80, 30),  # 3 green dim
+    Colour(80, 20, 20),  # 4 red dim
 ]
 
 PALETTE_DIMMER = [
-    graphics.Color(30, 25, 0),  # 0 amber dimmer
-    graphics.Color(0, 25, 30),  # 1 cyan dimmer
-    graphics.Color(20, 0, 30),  # 2 violet dimmer
-    graphics.Color(0, 30, 12),  # 3 green dimmer
-    graphics.Color(30, 8, 8),  # 4 red dimmer
+    Colour(30, 25, 0),  # 0 amber dimmer
+    Colour(0, 25, 30),  # 1 cyan dimmer
+    Colour(20, 0, 30),  # 2 violet dimmer
+    Colour(0, 30, 12),  # 3 green dimmer
+    Colour(30, 8, 8),  # 4 red dimmer
 ]
 
-RING_COLOUR = graphics.Color(80, 80, 80)
-NOTCH_COLOUR = graphics.Color(200, 200, 200)
+RING_COLOUR = Colour(80, 80, 80)
+NOTCH_COLOUR = Colour(200, 200, 200)
 
 
-def sat_colour_bright(tle_index: int) -> graphics.Color:
+def sat_colour_bright(tle_index: int) -> Colour:
     return PALETTE_BRIGHT[tle_index % len(PALETTE_BRIGHT)]
 
 
-def sat_colour_dim(tle_index: int) -> graphics.Color:
+def sat_colour_dim(tle_index: int) -> Colour:
     return PALETTE_DIM[tle_index % len(PALETTE_DIM)]
 
 
-def sat_colour_dimmer(tle_index: int) -> graphics.Color:
+def sat_colour_dimmer(tle_index: int) -> Colour:
     return PALETTE_DIMMER[tle_index % len(PALETTE_DIMMER)]
 
 
@@ -99,9 +99,9 @@ def azel_to_xy(az_deg: float, el_deg: float) -> tuple[int, int]:
 # ---------------------------------------------------------------------------
 
 
-def draw_horizon_ring(canvas) -> None:
-    graphics.DrawCircle(canvas, PLOT_CX, PLOT_CY, PLOT_RADIUS, RING_COLOUR)
-    graphics.DrawLine(
+def draw_horizon_ring(panel, canvas) -> None:
+    panel.draw_circle(canvas, PLOT_CX, PLOT_CY, PLOT_RADIUS, RING_COLOUR)
+    panel.draw_line(
         canvas,
         PLOT_CX,
         PLOT_CY - PLOT_RADIUS,
@@ -112,7 +112,7 @@ def draw_horizon_ring(canvas) -> None:
 
 
 def draw_trajectory(
-    canvas, trajectory: list[tuple[float, float]], tle_index: int
+    panel, canvas, trajectory: list[tuple[float, float]], tle_index: int
 ) -> None:
     """
     Paint the full pass trajectory as dimmer pixels (predicted path).
@@ -124,31 +124,31 @@ def draw_trajectory(
     colour = sat_colour_dimmer(tle_index)
     for az, el in trajectory:
         x, y = azel_to_xy(az, el)
-        canvas.SetPixel(x, y, colour.red, colour.green, colour.blue)
+        panel.set_pixel(canvas, x, y, colour.red, colour.green, colour.blue)
 
 
-def draw_trail(canvas, az_deg: float, el_deg: float, tle_index: int) -> None:
+def draw_trail(panel, canvas, az_deg: float, el_deg: float, tle_index: int) -> None:
     """Draw the previous-position pixel in the dim palette colour."""
     colour = sat_colour_dim(tle_index)
     x, y = azel_to_xy(az_deg, el_deg)
-    canvas.SetPixel(x, y, colour.red, colour.green, colour.blue)
+    panel.set_pixel(canvas, x, y, colour.red, colour.green, colour.blue)
 
 
-def draw_trail_pixel(canvas, px: int, py: int, tle_index: int) -> None:
+def draw_trail_pixel(panel, canvas, px: int, py: int, tle_index: int) -> None:
     """Draw the previous-position pixel at given canvas coords in dim colour."""
     colour = sat_colour_dim(tle_index)
-    canvas.SetPixel(px, py, colour.red, colour.green, colour.blue)
+    panel.set_pixel(canvas, px, py, colour.red, colour.green, colour.blue)
 
 
-def erase_trajectory(canvas, trajectory: list[tuple[float, float]]) -> None:
+def erase_trajectory(panel, canvas, trajectory: list[tuple[float, float]]) -> None:
     """Clear trajectory pixels (paint black)."""
     for az, el in trajectory:
         x, y = azel_to_xy(az, el)
-        canvas.SetPixel(x, y, 0, 0, 0)
+        panel.set_pixel(canvas, x, y, 0, 0, 0)
 
 
-def draw_position(canvas, az_deg: float, el_deg: float, tle_index: int) -> None:
+def draw_position(panel, canvas, az_deg: float, el_deg: float, tle_index: int) -> None:
     """Draw the current-position dot in the bright palette colour."""
     colour = sat_colour_bright(tle_index)
     x, y = azel_to_xy(az_deg, el_deg)
-    canvas.SetPixel(x, y, colour.red, colour.green, colour.blue)
+    panel.set_pixel(canvas, x, y, colour.red, colour.green, colour.blue)

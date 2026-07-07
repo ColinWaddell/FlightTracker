@@ -24,8 +24,6 @@ import logging
 import time
 from enum import Enum, auto
 
-from rgbmatrix import graphics
-
 from setup import fonts, screen
 from setup.themes import TC
 from setup.themes import (
@@ -209,22 +207,22 @@ class FlightScene:
     Priority-1 scene.  Draws the full flight display when flights are present.
 
     Args:
-        canvas      : rgbmatrix FrameCanvas
-        draw_square : callable(x0, y0, x1, y1, colour)
+        canvas : panel canvas
+        panel  : RGBPanel instance for drawing operations
     """
 
     priority = PRIORITY
 
-    def __init__(self, canvas, draw_square, overhead, refresh_interval: float):
+    def __init__(self, canvas, panel, overhead, refresh_interval: float):
         """
         Args:
-            canvas           : rgbmatrix FrameCanvas
-            draw_square      : callable(x0, y0, x1, y1, colour)
+            canvas           : panel canvas
+            panel            : RGBPanel instance
             overhead         : Overhead instance (FR24 or tar1090)
             refresh_interval : seconds between data fetches
         """
         self.canvas = canvas
-        self.draw_square = draw_square
+        self.panel = panel
         self.overhead = overhead
         self.refresh_interval = refresh_interval
 
@@ -344,7 +342,7 @@ class FlightScene:
 
     def on_enter(self) -> None:
         """Called by SceneManager on scene transition. Clears canvas then resets."""
-        self.canvas.Clear()
+        self.panel.clear(self.canvas)
         self.reset()
 
     def reset(self) -> None:
@@ -389,7 +387,8 @@ class FlightScene:
         self.last_index_drawn = index
         self.last_flight_count_drawn = flight_count
 
-        self.draw_square(
+        self.panel.draw_square(
+            self.canvas,
             0,
             BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
             screen.WIDTH - 1,
@@ -399,7 +398,7 @@ class FlightScene:
         flight_no_text_length = 0
         if callsign and callsign != "N/A":
             for ch in callsign:
-                ch_length = graphics.DrawText(
+                ch_length = self.panel.draw_text(
                     self.canvas,
                     FLIGHT_NO_FONT,
                     FLIGHT_NO_POSITION[0] + flight_no_text_length,
@@ -414,14 +413,15 @@ class FlightScene:
                 flight_no_text_length += ch_length
 
         if flight_count > 1:
-            self.draw_square(
+            self.panel.draw_square(
+                self.canvas,
                 DATA_INDEX_POSITION[0] - BAR_PADDING,
                 BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
                 screen.WIDTH,
                 BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
                 TC(THEME_BG),
             )
-            graphics.DrawLine(
+            self.panel.draw_line(
                 self.canvas,
                 flight_no_text_length + BAR_PADDING,
                 BAR_STARTING_POSITION[1],
@@ -429,7 +429,7 @@ class FlightScene:
                 BAR_STARTING_POSITION[1],
                 TC(THEME_DIVIDING_BAR),
             )
-            graphics.DrawText(
+            self.panel.draw_text(
                 self.canvas,
                 DATA_INDEX_FONT,
                 DATA_INDEX_POSITION[0],
@@ -438,7 +438,7 @@ class FlightScene:
                 f"{index + 1}/{flight_count}",
             )
         else:
-            graphics.DrawLine(
+            self.panel.draw_line(
                 self.canvas,
                 flight_no_text_length + BAR_PADDING if flight_no_text_length else 0,
                 BAR_STARTING_POSITION[1],
@@ -474,7 +474,7 @@ class FlightScene:
         if self.journey_mode != "full" or self.journey_first_draw:
             self.journey_mode = "full"
             self.setup_full_mode(cfg, flight)
-            self.draw_square(0, 0, screen.WIDTH - 1, 16, TC(THEME_BG))
+            self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG))
             self.journey_first_draw = False
 
         for line_idx, scroller in enumerate((self.origin_scroll, self.dest_scroll)):
@@ -503,14 +503,14 @@ class FlightScene:
         destination = flight.get("destination", "") or cfg.journey_blank_filler
         home_code = cfg.home_airport_code
 
-        self.draw_square(0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
+        self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
 
         font = fonts.large_bold if origin == home_code else fonts.large
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas, font, IATA_ORIGIN_X, 12, TC(THEME_LOCATION_ORIGIN), origin
         )
         font = fonts.large_bold if destination == home_code else fonts.large
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             font,
             IATA_DESTINATION_X,
@@ -523,11 +523,12 @@ class FlightScene:
         x = ax - ARROW_WIDTH
         y1 = ay - (ARROW_HEIGHT // 2)
         y2 = ay + (ARROW_HEIGHT // 2)
-        self.canvas.SetPixel(
-            ax, ay, TC(THEME_ARROW).red, TC(THEME_ARROW).green, TC(THEME_ARROW).blue
+        self.panel.set_pixel(
+            self.canvas, ax, ay,
+            TC(THEME_ARROW).red, TC(THEME_ARROW).green, TC(THEME_ARROW).blue
         )
         for _ in range(ARROW_WIDTH):
-            graphics.DrawLine(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
+            self.panel.draw_line(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
             x += 1
             y1 += 1
             y2 -= 1
@@ -573,13 +574,13 @@ class FlightScene:
 
         y = FULL_LINE_Y[line_idx]
         x = x_offset
-        x += graphics.DrawText(
+        x += self.panel.draw_text(
             self.canvas, fonts.small_symbols, x, y, colour_code, iata
         )
-        x += graphics.DrawText(
+        x += self.panel.draw_text(
             self.canvas, fonts.small_symbols, x, y, colour_arrow, arrow
         )
-        graphics.DrawText(self.canvas, fonts.small_symbols, x, y, colour_name, name)
+        self.panel.draw_text(self.canvas, fonts.small_symbols, x, y, colour_name, name)
 
     def undraw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
         iata = (
@@ -589,7 +590,7 @@ class FlightScene:
         )
         name = self.origin_name if line_idx == 0 else self.dest_name
         arrow = ">" if line_idx == 0 else "<"
-        graphics.DrawText(
+        self.panel.draw_text(
             self.canvas,
             fonts.small_symbols,
             x_offset,
@@ -650,7 +651,7 @@ class FlightScene:
     def draw_spans(self, spans: list, x: int, y: int) -> int:
         start_x = x
         for colour, font, text in spans:
-            x += graphics.DrawText(self.canvas, font, x, y, colour, text)
+            x += self.panel.draw_text(self.canvas, font, x, y, colour, text)
         return x - start_x
 
     def draw_plane_details(self) -> None:
@@ -663,7 +664,8 @@ class FlightScene:
 
         spans = self.build_spans(cfg)
 
-        self.draw_square(
+        self.panel.draw_square(
+            self.canvas,
             0,
             PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT + 1,
             screen.WIDTH,
