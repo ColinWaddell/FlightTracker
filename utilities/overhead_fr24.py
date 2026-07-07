@@ -1,55 +1,40 @@
-from FlightRadar24.api import FlightRadar24API
-
 from threading import Thread, Lock, Event
 from time import sleep
-import math
+import logging
 
 from requests.exceptions import RequestException, ConnectionError
+from utilities import routes_cache
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 try:
-    from config import MIN_ALTITUDE, MAX_ALTITUDE
-except (ModuleNotFoundError, NameError, ImportError):
-    MIN_ALTITUDE = 0  # feet
-    MAX_ALTITUDE = 10000  # feet
+    from curl_cffi.requests.exceptions import Timeout as CurlTimeout
+except ImportError:
+    CurlTimeout = None
 
+logger = logging.getLogger(__name__)
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
-MAX_FLIGHT_LOOKUP = 5
+FR24_TIMEOUT = 60  # seconds — default 30 is too short for Pi on slow networks
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
 
-try:
-    from config import ZONE_HOME, LOCATION_HOME
-
-    ZONE_DEFAULT = ZONE_HOME
-    LOCATION_DEFAULT = LOCATION_HOME
-except (ModuleNotFoundError, NameError, ImportError):
-    ZONE_DEFAULT = {"tl_y": 62.61, "tl_x": -13.07, "br_y": 49.71, "br_x": 3.46}
-    LOCATION_DEFAULT = [51.509865, -0.118092, EARTH_RADIUS_KM]
-
-
-def _clean_field(value):
+def clean_field(value):
     if value is None:
         return ""
-
     try:
         value = value.strip()
     except AttributeError:
         value = str(value).strip()
-
-    if value.upper() in BLANK_FIELDS:
-        return ""
-
-    return value
+    return "" if value.upper() in BLANK_FIELDS else value
 
 
-def distance_from_flight_to_home(flight, home=LOCATION_DEFAULT):
+def distance_from_flight_to_home(flight, location_home):
+    import math
+
     def polar_to_cartesian(lat, lon, alt):
         deg2rad = math.pi / 180
-
         return [
             alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
             alt * math.sin(deg2rad * lat),
@@ -57,205 +42,256 @@ def distance_from_flight_to_home(flight, home=LOCATION_DEFAULT):
         ]
 
     def feet_to_km_plus_earth(altitude_ft):
-        altitude_km = 0.0003048 * altitude_ft
-        return altitude_km + EARTH_RADIUS_KM
+        return 0.0003048 * altitude_ft + EARTH_RADIUS_KM
 
+    home = location_home
     try:
         x0, y0, z0 = polar_to_cartesian(
             flight.latitude,
             flight.longitude,
             feet_to_km_plus_earth(flight.altitude),
         )
-
         x1, y1, z1 = polar_to_cartesian(*home)
-
         return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
-
     except (AttributeError, TypeError, ValueError):
         return 1e6
 
 
 class Overhead:
     def __init__(self):
-        self._api = FlightRadar24API()
-        self._lock = Lock()
-        self._done = Event()
+        # Lazy import - FlightRadar24API drags in curl_cffi + brotli (~4.7s on Pi)
+        from FlightRadar24.api import FlightRadar24API
 
-        self._thread = None
-        self._data = []
-        self._new_data = False
-        self._processing = False
-        self._error = None
+        from setup.configuration import Config
+
+        cfg = Config.instance()
+        self.zone_home = cfg.zone_home
+        self.min_altitude = cfg.flight_min_altitude
+        self.max_altitude = cfg.flight_max_altitude
+        self.location_home = cfg.location_home
+        self.max_flight_lookup = cfg.max_flight_lookup
+
+        self.api = FlightRadar24API(timeout=FR24_TIMEOUT)
+        self.lock = Lock()
+        self.done = Event()
+
+        self.thread = None
+        self.data_store = []
+        self.new_data_store = False
+        self.processing_store = False
+        self.error_store = None
+
+        # Configure FR24 to exclude ground traffic
+        flight_tracker = self.api.get_flight_tracker_config()
+        flight_tracker.gnd = 0
+        self.api.set_flight_tracker_config(flight_tracker)
 
     def grab_data(self):
-        """
-        Start a background data grab.
-
-        Returns:
-            True if a new worker was started.
-            False if one was already running.
-        """
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-
-            self._thread = Thread(
-                target=self._grab_data,
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+            self.thread = Thread(
+                target=self.grab_data_impl,
                 name="overhead-flightradar24-grabber",
             )
-
-        self._thread.start()
+        self.thread.start()
         return True
 
     def refresh(self):
-        """
-        Run the data grab synchronously.
-
-        Returns:
-            True if the refresh was started.
-            False if one was already running.
-        """
-        with self._lock:
-            if self._processing:
+        with self.lock:
+            if self.processing_store:
                 return False
-
-            self._processing = True
-            self._new_data = False
-            self._error = None
-            self._done.clear()
-
-        self._grab_data()
+            self.processing_store = True
+            self.new_data_store = False
+            self.error_store = None
+            self.done.clear()
+        self.grab_data_impl()
         return True
 
     def wait(self, timeout=None):
-        """
-        Wait for the background task to finish.
-
-        Returns:
-            True if the worker finished.
-            False if timeout expired.
-        """
-        finished = self._done.wait(timeout)
-
-        if finished:
-            thread = self._thread
-            if thread is not None:
-                thread.join()
-
+        finished = self.done.wait(timeout)
+        if finished and self.thread is not None:
+            self.thread.join()
         return finished
 
-    def _grab_data(self):
+    def grab_data_impl(self):
         data = []
 
         try:
-            bounds = self._api.get_bounds(ZONE_DEFAULT)
-            flights = self._api.get_flights(bounds=bounds)
+            # Clear cookies before each fetch to avoid FR24 rate-limiting
+            # on subsequent calls (stale cookies cause empty results)
+            try:
+                self.api._FlightRadar24API__client.clear_cookies()
+            except Exception:
+                pass
+
+            bounds = self.api.get_bounds(self.zone_home)
+            flights = self.api.get_flights(bounds=bounds)
+
+            min_alt_ft = self.min_altitude / 0.3048
+            max_alt_ft = self.max_altitude / 0.3048
 
             flights = [
-                flight
-                for flight in flights
-                if isinstance(flight.altitude, (int, float))
-                and MIN_ALTITUDE < flight.altitude < MAX_ALTITUDE
+                f
+                for f in flights
+                if isinstance(f.altitude, (int, float))
+                and min_alt_ft < f.altitude < max_alt_ft
             ]
 
-            flights = sorted(flights, key=distance_from_flight_to_home)
+            flights = sorted(
+                flights,
+                key=lambda f: distance_from_flight_to_home(f, self.location_home),
+            )
 
-            for flight in flights[:MAX_FLIGHT_LOOKUP]:
-                retries = RETRIES
+            for flight in flights[: self.max_flight_lookup]:
+                callsign = clean_field(flight.callsign)
 
-                while retries:
-                    sleep(RATE_LIMIT_DELAY)
+                # Check route cache first — avoids expensive API lookups
+                cached = routes_cache.get(callsign) if callsign else None
 
-                    try:
-                        details = self._api.get_flight_details(flight)
+                if cached is not None:
+                    plane = cached.get("plane", "")
+                    origin = cached.get("origin", "")
+                    destination = cached.get("destination", "")
+                    origin_name = cached.get("origin_name", "")
+                    destination_name = cached.get("destination_name", "")
+                else:
+                    # Cache miss — fetch details from FR24 API
+                    retries = RETRIES
+                    details = None
+                    while retries:
+                        sleep(RATE_LIMIT_DELAY)
+                        try:
+                            details = self.api.get_flight_details(flight)
+                            break
+                        except (KeyError, AttributeError, TypeError, Exception) as e:
+                            if CurlTimeout and isinstance(e, CurlTimeout):
+                                logger.debug("FR24 flight detail timeout, retrying (%d left)", retries - 1)
+                            elif isinstance(e, (KeyError, AttributeError, TypeError)):
+                                pass
+                            else:
+                                logger.debug("FR24 flight detail error: %s", e)
+                            retries -= 1
 
+                    if details is not None:
                         try:
                             plane = details["aircraft"]["model"]["text"]
                         except (KeyError, TypeError):
                             plane = ""
+                        plane = clean_field(plane)
 
-                        plane = _clean_field(plane)
-                        origin = _clean_field(flight.origin_airport_iata)
-                        destination = _clean_field(flight.destination_airport_iata)
-                        callsign = _clean_field(flight.callsign)
+                        origin = clean_field(flight.origin_airport_iata)
+                        destination = clean_field(flight.destination_airport_iata)
 
-                        data.append(
-                            {
+                        try:
+                            origin_name = details["airport"]["origin"]["name"] or ""
+                        except (KeyError, TypeError):
+                            origin_name = ""
+
+                        try:
+                            destination_name = (
+                                details["airport"]["destination"]["name"] or ""
+                            )
+                        except (KeyError, TypeError):
+                            destination_name = ""
+
+                        # Cache the route info for 24 hours
+                        if callsign:
+                            routes_cache.put(callsign, {
                                 "plane": plane,
                                 "origin": origin,
                                 "destination": destination,
-                                "vertical_speed": flight.vertical_speed,
-                                "altitude": flight.altitude,
-                                "callsign": callsign,
-                            }
-                        )
+                                "origin_name": origin_name[:80],
+                                "destination_name": destination_name[:80],
+                            })
+                    else:
+                        # All retries failed — use what we have from the flight object
+                        plane = ""
+                        origin = clean_field(flight.origin_airport_iata)
+                        destination = clean_field(flight.destination_airport_iata)
+                        origin_name = ""
+                        destination_name = ""
 
-                        break
+                # Telemetry (always from live flight object, not cached)
+                try:
+                    ground_speed = int(flight.ground_speed)
+                except (TypeError, ValueError):
+                    ground_speed = 0
 
-                    except (KeyError, AttributeError, TypeError):
-                        retries -= 1
+                try:
+                    heading = int(flight.heading)
+                except (TypeError, ValueError):
+                    heading = 0
 
-            with self._lock:
-                self._data = data
-                self._new_data = True
-                self._error = None
+                data.append(
+                    {
+                        "plane": plane,
+                        "origin": origin,
+                        "destination": destination,
+                        "origin_name": origin_name[:80],
+                        "destination_name": destination_name[:80],
+                        "vertical_speed": flight.vertical_speed,
+                        "altitude": flight.altitude,
+                        "ground_speed": ground_speed,
+                        "heading": heading,
+                        "callsign": callsign,
+                    }
+                )
 
-        except (
-            RequestException,
-            ConnectionError,
-            NewConnectionError,
-            MaxRetryError,
-            KeyError,
-            AttributeError,
-            TypeError,
-            ValueError,
-        ) as e:
-            with self._lock:
-                self._new_data = False
-                self._error = e
+            with self.lock:
+                self.data_store = data
+                self.new_data_store = True
+                self.error_store = None
+            logger.debug("FR24 fetch complete - %d flight(s) tracked", len(data))
+
+        except Exception as e:
+            # Broad catch — curl_cffi raises its own Timeout/ConnectionError
+            # types that don't inherit from requests.exceptions, so listing
+            # them individually is fragile. Log and set error state gracefully.
+            with self.lock:
+                self.new_data_store = False
+                self.error_store = e
+            logger.warning("FR24 fetch failed: %s", e)
 
         finally:
-            with self._lock:
-                self._processing = False
-
-            self._done.set()
+            with self.lock:
+                self.processing_store = False
+            self.done.set()
 
     @property
     def new_data(self):
-        with self._lock:
-            return self._new_data
+        with self.lock:
+            return self.new_data_store
 
     @property
     def processing(self):
-        with self._lock:
-            return self._processing
+        with self.lock:
+            return self.processing_store
 
     @property
     def error(self):
-        with self._lock:
-            return self._error
+        with self.lock:
+            return self.error_store
 
     @property
     def data(self):
-        with self._lock:
-            self._new_data = False
-            return list(self._data)
+        with self.lock:
+            self.new_data_store = False
+            return list(self.data_store)
 
     @property
     def data_is_empty(self):
-        with self._lock:
-            return len(self._data) == 0
+        with self.lock:
+            return len(self.data_store) == 0
 
 
 if __name__ == "__main__":
     o = Overhead()
     o.refresh()
-
     if o.error is not None:
         print(f"failed: {o.error}")
     else:
