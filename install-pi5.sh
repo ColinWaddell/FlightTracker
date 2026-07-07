@@ -259,6 +259,11 @@ echo ""
 echo -e "${BOLD}--- Step 1: System Update ---${NC}"
 echo ""
 
+info "Updating firmware (rpi-update)..."
+# rpi-update gets the latest firmware, important for Pi 5 PIO support
+# on older board revisions.
+sudo rpi-update -y || warn "rpi-update failed (non-fatal, continuing)"
+
 info "Updating system packages..."
 sudo apt-get update
 run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
@@ -275,6 +280,21 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     python3-venv \
     python3-pip \
     python3-dev
+
+# Ensure PIO udev rule exists (allows non-root access to /dev/pio0)
+# On current Raspberry Pi OS, this is provided by raspberrypi-sys-mods
+# in /lib/udev/rules.d/60-piolib.rules, but we ensure it as a safety net.
+PIO_RULE_FILE="/etc/udev/rules.d/99-com.rules"
+PIO_RULE='SUBSYSTEM=="*-pio", GROUP="gpio", MODE="0660"'
+if ! sudo grep -q '\*-pio' "$PIO_RULE_FILE" 2>/dev/null; then
+    info "Adding PIO udev rule to ${PIO_RULE_FILE}..."
+    echo "$PIO_RULE" | sudo tee -a "$PIO_RULE_FILE" > /dev/null
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+    success "PIO udev rule added."
+else
+    info "PIO udev rule already present."
+fi
 
 success "System update complete."
 
