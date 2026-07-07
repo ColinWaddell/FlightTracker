@@ -421,7 +421,7 @@ class SimulatorPanel(RGBPanel):
         buf = canvas.buf
         scale = self._brightness / 100.0 * BRIGHTNESS
 
-        # --- 1. Write LED colours into a tiny cols×rows surface ----------
+        # --- 1. Write LED colours into a tiny colsxrows surface ----------
         if (
             self._small_buf is None
             or self._small_buf.get_width() != cols

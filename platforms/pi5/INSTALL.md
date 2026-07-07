@@ -52,9 +52,7 @@ python3 -c "import adafruit_blinka_raspberry_pi5_piomatter; print('piomatter OK'
 
 ## Configuration
 
-### Option A - Web interface (recommended)
-
-On first boot, the display shows a QR code pointing to the config UI. If no `config.json` exists yet the QR code stays up until you save your settings. Otherwise it shows for 5 seconds before the main display starts.
+On first boot, the display shows a QR code pointing to the config UI. The QR code stays up until you save your settings for the first time, then shows briefly for 5 seconds on subsequent boots before the main display starts.
 
 Scan the QR code or open a browser on the same network and go to:
 
@@ -62,9 +60,9 @@ Scan the QR code or open a browser on the same network and go to:
 http://<pi-ip-address>:8584
 ```
 
-### Option B - Edit config.json directly
+The settings page covers everything: your location (with a map), flight filters, airport display, weather, display theme, brightness, clock, and hardware options. FlightTracker generates and manages the configuration file automatically.
 
-You can also create or edit `config.json` by hand in `/home/pi/FlightTracker/`. See the [main README](../../README.md) for the full settings reference.
+If you've disabled the web interface, see the [main README](../../README.md) for the full settings reference.
 
 ---
 

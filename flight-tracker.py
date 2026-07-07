@@ -25,7 +25,7 @@ except ImportError:
     qrcode = None
     ERROR_CORRECT_L = None
 
-SPLASH_TIMEOUT = 1  # seconds to show the splash screen before switching to display
+SPLASH_TIMEOUT = 5  # seconds to show the splash screen before switching to display
 
 
 def local_ip() -> str:
@@ -75,8 +75,7 @@ def render_splash(
                     panel.set_pixel(canvas, px, py, v, v, v)
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
-        from setup.colours import WHITE
-        dim = WHITE.__class__(180, 180, 180)  # Colour namedtuple
+        dim = panel.make_colour(180, 180, 180)
         panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
 
     panel.swap(canvas)

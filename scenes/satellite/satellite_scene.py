@@ -35,7 +35,7 @@ PRIORITY = 2
 # How long (in seconds) to display each satellite's telemetry before cycling
 CYCLE_INTERVAL_S = 4
 
-# Right-column text positions (extrasmall 4×6 font, 6 lines)
+# Right-column text positions (extrasmall 4x6 font, 6 lines)
 TEXT_COL_X = 0
 NAME_Y = 5  # satellite name (yellow)
 # blank line at y=6
@@ -247,7 +247,7 @@ class SatelliteScene:
         """
         Render the currently cycled satellite's name and telemetry.
 
-        Layout (extrasmall 4×6 font, x=0):
+        Layout (extrasmall 4x6 font, x=0):
             Line 1: "ISS (ZARYA)"  (yellow name)
             Line 2: (blank)
             Line 3: "Speed"        (purple label)

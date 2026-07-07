@@ -1,12 +1,22 @@
-# Installation Guide
+# Installation Guide - Raspberry Pi 3 / 4 / Zero
 
 This guide covers both fresh installs and upgrades from the previous version of FlightTracker.
 
 ---
 
+## Automated install (recommended)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash
+```
+
+The installer detects your hardware, clones the repo, creates a virtual environment, installs dependencies (including the hzeller rpi-rgb-led-matrix C++ driver), and sets up a systemd service.
+
+---
+
 ## Hardware
 
-- Raspberry Pi (any model - Pi 4 recommended)
+- Raspberry Pi (Tested with 3, 4 and Zero W. For Pi 5 see the guide at [platforms/pi5/INSTALL.md](../pi5/INSTALL.md))
 - [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview) + 64x32 RGB LED matrix
 - Optional: solder bridge on the HAT to enable PWM via the Pi's audio hardware (reduces flicker)
 
@@ -80,18 +90,16 @@ pip install .
 Grant Python permission to set real-time scheduling priorities (avoids running as root):
 
 ```bash
-sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.11
+sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.13
 ```
 
-Adjust `python3.11` to match the version in your virtual environment if different.
+Adjust `python3.13` to match the version in your virtual environment if different.
 
 ---
 
 ## Configuration
 
-### Option A - Web interface (recommended)
-
-On first boot, the display shows a QR code pointing to the config UI. If no `config.json` exists yet the QR code stays up until you save your settings. Otherwise it shows for 5 seconds before the main display starts.
+On first boot, the display shows a QR code pointing to the config UI. The QR code stays up until you save your settings for the first time, then shows briefly for 5 seconds on subsequent boots before the main display starts.
 
 Scan the QR code or open a browser on the same network and go to:
 
@@ -99,56 +107,9 @@ Scan the QR code or open a browser on the same network and go to:
 http://<pi-ip-address>:8584
 ```
 
-The settings page lets you configure everything: your location (with a map), flight filters, airport display, weather, display theme, brightness, clock, and hardware options. Saving the form writes `config.json` and restarts the tracker automatically.
+The settings page covers everything: your location (with a map), flight filters, airport display, weather, display theme, brightness, clock, and hardware options. FlightTracker generates and manages the configuration file automatically - there's no need to edit it by hand.
 
-### Option B - Edit config.json directly
-
-You can also create or edit `config.json` by hand in `/home/pi/FlightTracker/`. A minimal example:
-
-```json
-{
-  "flight_lat": 55.87,
-  "flight_lng": -4.25,
-  "flight_radius": 20,
-  "flight_min_altitude": 100,
-  "home_airport_code": "GLA",
-  "weatherapi_key": "your_key_here",
-  "weather_mode": 1,
-  "units": "m",
-  "screen_brightness": 3,
-  "gpio_slowdown": 2,
-  "hat_pwm_enabled": true,
-  "timezone": "Europe/London"
-}
-```
-
-Any key omitted will use the built-in default.
-
-### Key settings reference
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `flight_lat` / `flight_lng` | Centre of the flight search zone | `55.87` / `-4.25` |
-| `flight_radius` | Search radius in km | `20.0` |
-| `flight_min_altitude` | Ignore aircraft below this altitude (metres) | `100.0` |
-| `home_airport_code` | IATA code of your local airport - highlighted on display | `""` |
-| `full_airport_name` | Scroll the full airport name instead of just the IATA code | `false` |
-| `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Weather uses your flight location coordinates. Leave blank to disable weather entirely | `""` |
-| `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
-| `units` | `"m"` for metric (C / km), `"i"` for imperial (F / mi) | `"m"` |
-| `details` | Bottom row: `0` = aircraft make/model, `1` = altitude/speed/heading | `0` |
-| `theme` | `0` = Default, `1` = Monochrome, `2` = Pastel | `0` |
-| `screen_brightness` | 1 (dim) - 5 (full) | `3` |
-| `clock_24hr` | `true` for 24-hour clock | `true` |
-| `timezone` | IANA timezone name, e.g. `"America/New_York"` | `"Europe/London"` |
-| `date_format` | `0` = YYYY-MM-DD, `1` = DD-MM-YYYY, `2` = MM-DD-YYYY | `0` |
-| `web_interface_enabled` | Set to `false` to disable the config UI entirely - Flask will not start and no QR code will be shown on boot. Re-enable by editing `config.json` directly | `true` |
-| `web_port` | TCP port for the Flask config server (1024-65535). Change requires a restart | `8584` |
-| `gpio_slowdown` | 1-4; increase if display flickers. Pi 4 typically needs `4` | `1` |
-| `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires solder bridge) | `true` |
-| `loading_led_enabled` | Blink a GPIO LED while loading flight data | `false` |
-| `loading_led_gpio_pin` | GPIO pin number for the loading LED | `25` |
-| `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json`. When set, FlightRadar24 is not used | `""` |
+If you've disabled the web interface, see the [main README](../../README.md) for the full settings reference.
 
 ---
 
@@ -183,13 +144,9 @@ journalctl -u FlightTracker.service -f
 
 ## Using a local ADS-B receiver (tar1090)
 
-If you run your own receiver with [tar1090](https://github.com/wiedehopf/tar1090), dump1090-fa, or PiAware, you can use it instead of FlightRadar24. Set `tar1090_url` in the web UI or in `config.json`:
+If you run your own receiver with [tar1090](https://github.com/wiedehopf/tar1090), dump1090-fa, or PiAware, you can use it instead of FlightRadar24 - no API key required.
 
-```json
-"tar1090_url": "http://your-receiver/tar1090/data/aircraft.json"
-```
-
-Common URL patterns to try (replace `your-receiver` with the hostname or IP):
+First, find the right URL for your receiver. Try each of these in a browser, replacing `your-receiver` with the hostname or IP, until you get back a JSON response containing an `"aircraft"` array:
 
 ```
 http://your-receiver/tar1090/data/aircraft.json
@@ -198,4 +155,4 @@ http://your-receiver/dump1090-fa/data/aircraft.json
 http://your-receiver/skyaware/data/aircraft.json
 ```
 
-The response should be a JSON object containing an `"aircraft"` array. Once set, no API key or FlightRadar24 account is needed.
+Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings.
