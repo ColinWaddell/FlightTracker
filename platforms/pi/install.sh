@@ -23,7 +23,7 @@ fi
 # ============================================================================
 
 # Git branch to clone (change to "master" when merged)
-BRANCH="feature/feature-upgrade"
+BRANCH="release/v2"
 
 # Pinned commit of hzeller/rpi-rgb-led-matrix (same as Adafruit installer)
 RGB_MATRIX_REPO="https://github.com/hzeller/rpi-rgb-led-matrix"
