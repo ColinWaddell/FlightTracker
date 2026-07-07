@@ -157,7 +157,7 @@ class Overhead:
         if cached is not None:
             return cached.get("origin", ""), cached.get("destination", "")
 
-        # Cache miss — fetch from adsb.im
+        # Cache miss - fetch from adsb.im
         origin, dest = "", ""
         try:
             route = lookup_route(callsign, lat, lng)
@@ -178,13 +178,16 @@ class Overhead:
 
         # Cache the route info for 24 hours
         if callsign and (origin or dest):
-            routes_cache.put(callsign, {
-                "plane": "",
-                "origin": origin,
-                "destination": dest,
-                "origin_name": "",
-                "destination_name": "",
-            })
+            routes_cache.put(
+                callsign,
+                {
+                    "plane": "",
+                    "origin": origin,
+                    "destination": dest,
+                    "origin_name": "",
+                    "destination_name": "",
+                },
+            )
 
         return origin, dest
 

@@ -20,7 +20,7 @@ If you already have FlightTracker running with a `config.py`, this is all you ne
 cd /home/pi/FlightTracker
 git pull
 source env/bin/activate
-pip install -r requirements.txt
+pip install -r platforms/pi/requirements.txt
 ```
 
 Your `config.py` will be detected on first boot and automatically migrated to `config.json`. The old file is left untouched.
@@ -65,7 +65,7 @@ git clone https://github.com/ColinWaddell/FlightTracker
 cd FlightTracker
 python3 -m venv env
 source env/bin/activate
-pip install -r requirements.txt
+pip install -r platforms/pi/requirements.txt
 ```
 
 Then install the rgbmatrix Python bindings into the same environment:

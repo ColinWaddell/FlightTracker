@@ -533,9 +533,9 @@
             <div id="rain_sensitivity_fields" style="display:{% if cfg.weather_mode == 2 %}block{% else %}none{% endif %}">
               <label class="form-label small mt-2">Rainfall sensitivity</label>
               <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:260px">
-                <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Not very rainy — desert / arid (1 mm)</option>
-                <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Moderately rainy — UK / Europe (3 mm)</option>
-                <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>Very rainy — tropics / monsoon (9 mm)</option>
+                <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Not very rainy - desert / arid (1 mm)</option>
+                <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Moderately rainy - UK / Europe (3 mm)</option>
+                <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>Very rainy - tropics / monsoon (9 mm)</option>
               </select>
               <div class="form-text text-muted small">Sets the full-scale value of the graph. Increase if your bars are always full; decrease if they're always empty.</div>
             </div>

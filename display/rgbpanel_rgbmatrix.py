@@ -1,5 +1,5 @@
 """
-RGBMatrixPanel — RGBPanel implementation for Pi 3/4 using hzeller's rpi-rgb-led-matrix.
+RGBMatrixPanel - RGBPanel implementation for Pi 3/4 using hzeller's rpi-rgb-led-matrix.
 
 Wraps the rgbmatrix C++ Python bindings (RGBMatrix, RGBMatrixOptions, graphics)
 behind the unified RGBPanel interface.
@@ -20,8 +20,15 @@ class RGBMatrixPanel(RGBPanel):
     def is_pi5(self):
         return False
 
-    def init_matrix(self, width=64, height=32, brightness=50,
-                    rotation=0, hat_pwm=True, gpio_slowdown=1):
+    def init_matrix(
+        self,
+        width=64,
+        height=32,
+        brightness=50,
+        rotation=0,
+        hat_pwm=True,
+        gpio_slowdown=1,
+    ):
         options = RGBMatrixOptions()
         options.hardware_mapping = "adafruit-hat-pwm" if hat_pwm else "adafruit-hat"
         options.rows = height

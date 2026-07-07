@@ -4,7 +4,7 @@
 # For Raspberry Pi (3B, 4B, Zero 2 W, Zero W) running Raspbian Trixie
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi/install.sh | bash
 #
 
 set -e
@@ -147,6 +147,14 @@ fi
 PI_MODEL=$(cat /proc/device-tree/model | tr -d '\0')
 info "Detected: ${PI_MODEL}"
 
+# Redirect Pi 5 users to the Pi 5 installer
+if echo "$PI_MODEL" | grep -q "Raspberry Pi 5"; then
+    error "This script is for Pi 3/4/Zero. Detected: ${PI_MODEL}"
+    error "For Pi 5, use the Pi 5 installer instead:"
+    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash"
+    exit 1
+fi
+
 # Detect number of CPU cores
 NUM_CORES=$(nproc --all)
 
@@ -271,7 +279,7 @@ if [ -d "$INSTALL_DIR" ] || [ -d "$RGB_MATRIX_DIR" ]; then
 fi
 
 # ============================================================================
-# ALL QUESTIONS — Answer these, then walk away
+# ALL QUESTIONS - Answer these, then walk away
 # ============================================================================
 
 echo ""
@@ -375,7 +383,7 @@ fi
 
 echo ""
 echo -e "${BOLD}========================================${NC}"
-echo -e "${BOLD}  Installation — you can walk away now${NC}"
+echo -e "${BOLD}  Installation - you can walk away now${NC}"
 echo -e "${BOLD}========================================${NC}"
 echo ""
 
@@ -444,7 +452,7 @@ fi
 success "RGB matrix library downloaded."
 
 info "Building RGB matrix library..."
-warn "This takes a while — especially on Pi Zero W."
+warn "This takes a while - especially on Pi Zero W."
 echo ""
 
 cd "$RGB_MATRIX_DIR"
@@ -479,7 +487,7 @@ python3 -m venv env
 # /tmp is tmpfs (RAM) on Raspberry Pi and defaults to ~200MB on Pi Zero W.
 # This is too small for building packages like curl_cffi. Resize the tmpfs
 # to give more headroom. This is temporary (until reboot) and only increases
-# the size — it doesn't consume RAM until actually used.
+# the size - it doesn't consume RAM until actually used.
 TMP_SIZE="512M"
 info "Resizing /tmp tmpfs to ${TMP_SIZE} (needed for pip builds)..."
 sudo mount -o remount,size=${TMP_SIZE} /tmp
@@ -492,7 +500,7 @@ info "Installing Python dependencies (this may take a while)..."
 echo ""
 
 run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-run_quiet "Installing Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements.txt
+run_quiet "Installing Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi/requirements.txt
 
 # Install RGB Matrix Python bindings by copying the pre-built .so files
 # directly into the venv's site-packages. The setup.py uses distutils which
@@ -623,7 +631,7 @@ echo -e "${GREEN}${BOLD}  Everything installed successfully!${NC}"
 echo -e "${GREEN}${BOLD}========================================${NC}"
 echo ""
 
-echo "The RGB Matrix driver needs a reboot to take effect — sound blacklist,"
+echo "The RGB Matrix driver needs a reboot to take effect - sound blacklist,"
 echo "boot config changes, etc."
 echo ""
 echo "After reboot, the FlightTracker service will start automatically."
@@ -635,7 +643,7 @@ else
 fi
 echo ""
 warn "It may take a few minutes after reboot before the web interface loads."
-warn "Be patient — the Pi needs time to boot and start the service."
+warn "Be patient - the Pi needs time to boot and start the service."
 echo ""
 echo "Check service logs with:"
 echo "  journalctl -u FlightTracker.service -f"

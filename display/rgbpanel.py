@@ -1,5 +1,5 @@
 """
-RGBPanel — abstract base class for LED matrix panel drivers.
+RGBPanel - abstract base class for LED matrix panel drivers.
 
 Provides a unified interface so the rest of the codebase doesn't need
 to know whether it's running on a Pi 3/4 (rgbmatrix) or a Pi 5 (piomatter).
@@ -19,8 +19,15 @@ class RGBPanel(ABC):
     """Abstract LED matrix panel driver."""
 
     @abstractmethod
-    def init_matrix(self, width=64, height=32, brightness=50,
-                    rotation=0, hat_pwm=True, gpio_slowdown=1):
+    def init_matrix(
+        self,
+        width=64,
+        height=32,
+        brightness=50,
+        rotation=0,
+        hat_pwm=True,
+        gpio_slowdown=1,
+    ):
         """Initialise the matrix hardware. Called once at startup."""
         raise NotImplementedError
 

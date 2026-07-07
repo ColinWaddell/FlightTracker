@@ -51,7 +51,7 @@ def build_display_class():
             cfg = Config.instance()
 
             if matrix is not None:
-                # Came from splash screen — reuse the already-initialised panel
+                # Came from splash screen - reuse the already-initialised panel
                 self.panel = get_panel()
                 self.canvas = canvas
                 self.from_splash = True

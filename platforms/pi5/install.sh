@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# FlightTracker Install Script — Raspberry Pi 5 Edition
+# FlightTracker Install Script - Raspberry Pi 5 Edition
 # For Raspberry Pi 5 running Raspberry Pi OS (64-bit, Debian Trixie)
 #
 # This script uses Adafruit's Adafruit_Blinka_Raspberry_Pi5_Piomatter library
-# which drives the RGB panel via the Pi 5's PIO subsystem — no C++ compilation
+# which drives the RGB panel via the Pi 5's PIO subsystem - no C++ compilation
 # needed, unlike the Pi 3/4 installer which builds hzeller's rpi-rgb-led-matrix.
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/feature/feature-upgrade-pi5/install-pi5.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash
 #
 
 set -e
@@ -117,7 +117,8 @@ info "Detected: ${PI_MODEL}"
 # Verify it's a Pi 5
 if ! echo "$PI_MODEL" | grep -q "Raspberry Pi 5"; then
     error "This script is for Raspberry Pi 5 only. Detected: ${PI_MODEL}"
-    error "For Pi 3/4/Zero, use install.sh instead."
+    error "For Pi 3/4/Zero, use the Pi installer instead:"
+    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi/install.sh | bash"
     exit 1
 fi
 
@@ -162,7 +163,7 @@ info "PIO device: /dev/pio0 present"
 # Check user is in gpio group (needed for /dev/pio0 access)
 if ! groups "$CURRENT_USER" | grep -qw gpio; then
     warn "User '${CURRENT_USER}' is not in the 'gpio' group."
-    warn "Adding you now — you'll need to log out and back in for it to take effect."
+    warn "Adding you now - you'll need to log out and back in for it to take effect."
     sudo usermod -aG gpio "$CURRENT_USER"
     success "Added ${CURRENT_USER} to gpio group."
     NEEDS_RELOGIN=1
@@ -248,7 +249,7 @@ fi
 
 echo ""
 echo -e "${BOLD}========================================${NC}"
-echo -e "${BOLD}  Installation — you can walk away now${NC}"
+echo -e "${BOLD}  Installation - This will take a moment${NC}"
 echo -e "${BOLD}========================================${NC}"
 echo ""
 
@@ -269,9 +270,9 @@ sudo apt-get update
 run_quiet "Upgrading system packages" sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 
 info "Installing required packages..."
-# No C++ build tools needed — piomatter is a pre-built wheel.
+# No C++ build tools needed - piomatter is a pre-built wheel.
 # No cython3, python3-setuptools, or python3-pillow needed (those were for
-# building hzeller's C++ library). No libcap2-bin needed — piomatter uses
+# building hzeller's C++ library). No libcap2-bin needed - piomatter uses
 # the PIO hardware, not real-time scheduling.
 run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
@@ -344,7 +345,7 @@ info "Installing Python dependencies (this may take a few minutes)..."
 echo ""
 
 run_quiet "Upgrading pip" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install --upgrade pip
-run_quiet "Installing Pi 5 Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r requirements-pi5.txt
+run_quiet "Installing Pi 5 Python requirements" env TMPDIR="$PIP_TMPDIR" ./env/bin/pip install -r platforms/pi5/requirements.txt
 
 # Verify piomatter import works
 info "Verifying piomatter installation..."
@@ -408,7 +409,7 @@ else
 fi
 echo ""
 warn "It may take a few minutes after reboot before the web interface loads."
-warn "Be patient — the Pi needs time to boot and start the service."
+warn "Be patient - the Pi needs time to boot and start the service."
 echo ""
 echo "Check service logs with:"
 echo "  journalctl -u FlightTracker.service -f"
@@ -416,7 +417,7 @@ echo ""
 
 if [ "$NEEDS_RELOGIN" -eq 1 ]; then
     warn "You were added to the 'gpio' group. A reboot is required for this"
-    warn "to take effect — the service will still work (it runs as your user"
+    warn "to take effect - the service will still work (it runs as your user"
     warn "with the new group membership after reboot)."
     echo ""
 fi

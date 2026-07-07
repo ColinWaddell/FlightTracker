@@ -16,7 +16,7 @@ class BDFFont:
     """A parsed BDF font with glyph lookup by codepoint."""
 
     def __init__(self, path: str):
-        self.glyphs = {}          # codepoint -> glyph dict
+        self.glyphs = {}  # codepoint -> glyph dict
         self.bounding_box = (0, 0, 0, 0)  # width, height, x_offset, y_offset
         self.ascent = 0
         self.descent = 0
@@ -42,8 +42,10 @@ class BDFFont:
 
             if parts[0] == "FONTBOUNDINGBOX" and len(parts) >= 5:
                 self.bounding_box = (
-                    int(parts[1]), int(parts[2]),
-                    int(parts[3]), int(parts[4]),
+                    int(parts[1]),
+                    int(parts[2]),
+                    int(parts[3]),
+                    int(parts[4]),
                 )
 
             elif parts[0] == "FONT_ASCENT":
@@ -69,8 +71,10 @@ class BDFFont:
 
             elif parts[0] == "BBX" and current_glyph is not None:
                 current_glyph["bbx"] = (
-                    int(parts[1]), int(parts[2]),
-                    int(parts[3]), int(parts[4]),
+                    int(parts[1]),
+                    int(parts[2]),
+                    int(parts[3]),
+                    int(parts[4]),
                 )
 
             elif parts[0] == "BITMAP":
@@ -112,7 +116,7 @@ def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
         glyph = font.get_glyph(codepoint)
 
         if glyph is None:
-            # Missing glyph — skip by 1 pixel
+            # Missing glyph - skip by 1 pixel
             advance += 1
             continue
 
@@ -131,7 +135,7 @@ def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
 
             # Align to bbx_w bits (shift right to get the top bbx_w bits)
             if total_bits > bbx_w:
-                bits >>= (total_bits - bbx_w)
+                bits >>= total_bits - bbx_w
 
             for bit_idx in range(bbx_w):
                 if bits & (1 << (bbx_w - 1 - bit_idx)):

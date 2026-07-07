@@ -1,5 +1,5 @@
 """
-PiomatterPanel — RGBPanel implementation for Pi 5 using Adafruit's
+PiomatterPanel - RGBPanel implementation for Pi 5 using Adafruit's
 adafruit_blinka_raspberry_pi5_piomatter library.
 
 Uses PIL Image as the canvas and the custom BDF parser for font rendering.
@@ -32,9 +32,16 @@ class PiomatterPanel(RGBPanel):
     def is_pi5(self):
         return True
 
-    def init_matrix(self, width=64, height=32, brightness=50,
-                    rotation=0, hat_pwm=True, gpio_slowdown=1):
-        # hat_pwm and gpio_slowdown are ignored on Pi 5 — piomatter handles
+    def init_matrix(
+        self,
+        width=64,
+        height=32,
+        brightness=50,
+        rotation=0,
+        hat_pwm=True,
+        gpio_slowdown=1,
+    ):
+        # hat_pwm and gpio_slowdown are ignored on Pi 5 - piomatter handles
         # PWM and timing internally.
         self._width = width
         self._height = height

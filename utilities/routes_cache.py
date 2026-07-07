@@ -1,5 +1,5 @@
 """
-Persistent route cache — shared by overhead_fr24 and overhead_tar1090.
+Persistent route cache - shared by overhead_fr24 and overhead_tar1090.
 
 Stores route info (plane, origin, destination, airport names) keyed by
 callsign in a JSON file with a 24-hour TTL. This avoids repeated API
@@ -35,10 +35,11 @@ def _load():
         if CACHE_PATH.exists():
             with open(CACHE_PATH, "r") as f:
                 _cache = json.load(f)
-            logger.debug("Route cache loaded %d entries from %s",
-                         len(_cache), CACHE_PATH)
+            logger.debug(
+                "Route cache loaded %d entries from %s", len(_cache), CACHE_PATH
+            )
     except (json.JSONDecodeError, OSError) as e:
-        logger.warning("Route cache load failed: %s — starting fresh", e)
+        logger.warning("Route cache load failed: %s - starting fresh", e)
         _cache = {}
 
 
@@ -56,7 +57,7 @@ def get(callsign: str) -> dict | None:
     Return cached route info for *callsign* if it exists and is fresh.
 
     Returns a dict with keys: plane, origin, destination,
-    origin_name, destination_name — or None if not cached / expired.
+    origin_name, destination_name - or None if not cached / expired.
     """
     with _lock:
         _load()
@@ -64,7 +65,7 @@ def get(callsign: str) -> dict | None:
         if entry is None:
             return None
         if time.time() - entry.get("_ts", 0) > CACHE_TTL:
-            # Expired — remove and miss
+            # Expired - remove and miss
             del _cache[callsign]
             _save()
             return None

@@ -1,8 +1,11 @@
 """
-Panel factory — selects the appropriate RGBPanel driver at runtime.
+Panel factory - selects the appropriate RGBPanel driver at runtime.
 
 Tries to import the piomatter (Pi 5) driver first; if unavailable, falls back
 to the rgbmatrix (Pi 3/4) driver. The selected panel is cached as a singleton.
+
+On desktop machines where neither hardware driver is available, the pygame
+simulator is used as a final fallback so the app always runs.
 """
 
 import importlib
@@ -32,10 +35,19 @@ def get_panel():
     except ImportError:
         pass
 
+    # Final fallback: desktop pygame simulator
+    try:
+        mod = importlib.import_module("display.rgbpanel_simulator")
+        _panel = mod.SimulatorPanel()
+        return _panel
+    except ImportError:
+        pass
+
     raise ImportError(
         "No RGB panel driver available. "
-        "Install adafruit-blinka-raspberry-pi5-piomatter (Pi 5) "
-        "or rgbmatrix (Pi 3/4)."
+        "Install adafruit-blinka-raspberry-pi5-piomatter (Pi 5), "
+        "rgbmatrix (Pi 3/4), or pygame (desktop simulator). "
+        "See platforms/ for platform-specific requirements files."
     )
 
 

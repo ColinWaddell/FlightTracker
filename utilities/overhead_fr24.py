@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
-FR24_TIMEOUT = 60  # seconds — default 30 is too short for Pi on slow networks
+FR24_TIMEOUT = 60  # seconds - default 30 is too short for Pi on slow networks
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
@@ -150,7 +150,7 @@ class Overhead:
             for flight in flights[: self.max_flight_lookup]:
                 callsign = clean_field(flight.callsign)
 
-                # Check route cache first — avoids expensive API lookups
+                # Check route cache first - avoids expensive API lookups
                 cached = routes_cache.get(callsign) if callsign else None
 
                 if cached is not None:
@@ -160,7 +160,7 @@ class Overhead:
                     origin_name = cached.get("origin_name", "")
                     destination_name = cached.get("destination_name", "")
                 else:
-                    # Cache miss — fetch details from FR24 API
+                    # Cache miss - fetch details from FR24 API
                     retries = RETRIES
                     details = None
                     while retries:
@@ -170,7 +170,10 @@ class Overhead:
                             break
                         except (KeyError, AttributeError, TypeError, Exception) as e:
                             if CurlTimeout and isinstance(e, CurlTimeout):
-                                logger.debug("FR24 flight detail timeout, retrying (%d left)", retries - 1)
+                                logger.debug(
+                                    "FR24 flight detail timeout, retrying (%d left)",
+                                    retries - 1,
+                                )
                             elif isinstance(e, (KeyError, AttributeError, TypeError)):
                                 pass
                             else:
@@ -201,15 +204,18 @@ class Overhead:
 
                         # Cache the route info for 24 hours
                         if callsign:
-                            routes_cache.put(callsign, {
-                                "plane": plane,
-                                "origin": origin,
-                                "destination": destination,
-                                "origin_name": origin_name[:80],
-                                "destination_name": destination_name[:80],
-                            })
+                            routes_cache.put(
+                                callsign,
+                                {
+                                    "plane": plane,
+                                    "origin": origin,
+                                    "destination": destination,
+                                    "origin_name": origin_name[:80],
+                                    "destination_name": destination_name[:80],
+                                },
+                            )
                     else:
-                        # All retries failed — use what we have from the flight object
+                        # All retries failed - use what we have from the flight object
                         plane = ""
                         origin = clean_field(flight.origin_airport_iata)
                         destination = clean_field(flight.destination_airport_iata)
@@ -249,7 +255,7 @@ class Overhead:
             logger.debug("FR24 fetch complete - %d flight(s) tracked", len(data))
 
         except Exception as e:
-            # Broad catch — curl_cffi raises its own Timeout/ConnectionError
+            # Broad catch - curl_cffi raises its own Timeout/ConnectionError
             # types that don't inherit from requests.exceptions, so listing
             # them individually is fragile. Log and set error state gracefully.
             with self.lock:
