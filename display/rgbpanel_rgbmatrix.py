@@ -60,14 +60,20 @@ class RGBMatrixPanel(RGBPanel):
         font.LoadFont(path)
         return font
 
+    def _to_color(self, colour):
+        """Convert a Colour namedtuple to rgbmatrix graphics.Color if needed."""
+        if isinstance(colour, graphics.Color):
+            return colour
+        return graphics.Color(colour.red, colour.green, colour.blue)
+
     def draw_text(self, canvas, font, x, y, colour, text):
-        return graphics.DrawText(canvas, font, x, y, colour, text)
+        return graphics.DrawText(canvas, font, x, y, self._to_color(colour), text)
 
     def draw_line(self, canvas, x0, y0, x1, y1, colour):
-        graphics.DrawLine(canvas, x0, y0, x1, y1, colour)
+        graphics.DrawLine(canvas, x0, y0, x1, y1, self._to_color(colour))
 
     def draw_circle(self, canvas, cx, cy, radius, colour):
-        graphics.DrawCircle(canvas, cx, cy, radius, colour)
+        graphics.DrawCircle(canvas, cx, cy, radius, self._to_color(colour))
 
     def set_pixel(self, canvas, x, y, r, g, b):
         canvas.SetPixel(x, y, r, g, b)
@@ -86,8 +92,9 @@ class RGBMatrixPanel(RGBPanel):
         self._brightness = percent
 
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
+        c = self._to_color(colour)
         for x in range(x0, x1):
-            graphics.DrawLine(canvas, x, y0, x, y1, colour)
+            graphics.DrawLine(canvas, x, y0, x, y1, c)
 
     def make_colour(self, r, g, b):
         return graphics.Color(r, g, b)

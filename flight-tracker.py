@@ -75,7 +75,8 @@ def render_splash(
                     panel.set_pixel(canvas, px, py, v, v, v)
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
-        dim = panel.make_colour(180, 180, 180)
+        from setup.colours import WHITE
+        dim = WHITE.__class__(180, 180, 180)
         panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
 
     panel.swap(canvas)
