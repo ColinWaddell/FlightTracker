@@ -6,12 +6,12 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStartPre=/bin/sleep 20
-ExecStart=/home/pi/FlightTracker/env/bin/python /home/pi/FlightTracker/flight-tracker.py
-WorkingDirectory=/home/pi/FlightTracker
-StandardOutput=append:/home/pi/plane.log
-StandardError=append:/home/pi/plane.log
+ExecStart=__HOME__/FlightTracker/env/bin/python __HOME__/FlightTracker/flight-tracker.py
+WorkingDirectory=__HOME__/FlightTracker
+StandardOutput=append:__HOME__/plane.log
+StandardError=append:__HOME__/plane.log
 Restart=on-failure
-User=pi
+User=__USER__
 Environment=PYTHONUNBUFFERED=1
 Nice=-10
 IOSchedulingClass=realtime

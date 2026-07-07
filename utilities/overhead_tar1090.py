@@ -8,10 +8,10 @@ from time import time
 from pathlib import Path
 
 from requests.exceptions import RequestException
+from utilities import routes_cache
 
 logger = logging.getLogger(__name__)
 
-ROUTE_CACHE_TTL = 28800  # 8 hours
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
@@ -106,7 +106,6 @@ class Overhead:
         self.max_altitude = cfg.flight_max_altitude
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
-        self.route_cache: dict[str, tuple] = {}
         self.lock = Lock()
         self.done = Event()
 
@@ -153,15 +152,12 @@ class Overhead:
         return finished
 
     def get_route(self, callsign, lat=None, lng=None):
-        now = time()
-        with self.lock:
-            cached = self.route_cache.get(callsign)
-
+        # Check persistent cache first (24h TTL)
+        cached = routes_cache.get(callsign) if callsign else None
         if cached is not None:
-            origin, dest, ts = cached
-            if now - ts < ROUTE_CACHE_TTL:
-                return origin, dest
+            return cached.get("origin", ""), cached.get("destination", "")
 
+        # Cache miss — fetch from adsb.im
         origin, dest = "", ""
         try:
             route = lookup_route(callsign, lat, lng)
@@ -180,8 +176,15 @@ class Overhead:
         except (RequestException, ValueError, KeyError, AttributeError, TypeError):
             pass
 
-        with self.lock:
-            self.route_cache[callsign] = (origin, dest, time())
+        # Cache the route info for 24 hours
+        if callsign and (origin or dest):
+            routes_cache.put(callsign, {
+                "plane": "",
+                "origin": origin,
+                "destination": dest,
+                "origin_name": "",
+                "destination_name": "",
+            })
 
         return origin, dest
 
