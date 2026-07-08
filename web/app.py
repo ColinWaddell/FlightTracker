@@ -32,7 +32,7 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 
 from setup.configuration import Config, CONFIG_PATH
 from setup.logging import get_buffer
-from utilities.updater import get_update_info, perform_update
+from utilities.updater import get_update_info, perform_update, version_string
 from version import VERSION
 
 # Port is read from config.json via Config.web_port (default 8584).
@@ -311,6 +311,7 @@ def settings():
                     csrf_token=csrf_token(),
                     in_schedule=cfg.is_in_brightness_schedule(),
                     schedule_window=cfg.brightness_schedule_window,
+                    current_version=version_string(VERSION),
                 ),
                 400,
             )
@@ -325,6 +326,7 @@ def settings():
         csrf_token=csrf_token(),
         in_schedule=cfg.is_in_brightness_schedule(),
         schedule_window=cfg.brightness_schedule_window,
+        current_version=version_string(VERSION),
     )
 
 

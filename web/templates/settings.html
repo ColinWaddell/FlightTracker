@@ -130,7 +130,7 @@
           <nav class="nav flex-column">
               <a class="nav-link" href="#group-logging"><i class="bi bi-terminal me-2"></i>Logging</a>
               <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
-              <a class="nav-link" href="/update"><i class="bi bi-arrow-repeat me-2"></i>Update</a>
+              <a class="nav-link" href="#group-version"><i class="bi bi-info-circle me-2"></i>Version</a>
           </nav>
         </div>
       </div>
@@ -616,6 +616,20 @@
                      name="confirm_password" id="confirm_password" autocomplete="new-password"
                      placeholder="Repeat new password" />
             </div>
+          </div>
+        </div>
+
+        <!-- ====== Version ====== -->
+        <div id="group-version" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-info-circle me-2"></i>Version</p>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="text-muted small">Current version</div>
+              <div class="fs-5 fw-semibold">{{ current_version }}</div>
+            </div>
+            <a href="/update" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-repeat me-1"></i>Check for Updates
+            </a>
           </div>
         </div>
 
