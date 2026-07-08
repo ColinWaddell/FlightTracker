@@ -24,9 +24,9 @@ permalink: "/build/"
             <li>RPi Zero W</li>
             <li>RPi 5</li>
             <li><i>
-                If your device isn't on this list but you're
+                If your device isn't on this list and you're
                 feeling brave give it a shot and let me know
-                if it works and I'll add it.
+                if FlightTracker works.
             </i></li>
         </ul>
 

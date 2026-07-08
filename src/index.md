@@ -52,8 +52,8 @@ permalink: "/"
       <div class="col-lg-12">
         <div class="hero-text mt-3">
           <p>A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead.</p>
-          <p>It sits on your fridge, or a shelf, or wherever you decide to put it, and quietly answers the important question: <strong>"What's that plane?"</strong></p>
           <p>FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there is nothing overhead, it can show the time, weather, temperature, rainfall, or satellite passes.</p>
+          <p>This site will show you what you need to build your own and get the software installed.</p>
           <div class="hero-actions">
             <a href="/build/" class="btn btn-yellow mx-2">Hardware // Build your own</a>
             <a href="/install/" class="btn btn-dark mx-2">Software // Install and configure</a>
@@ -266,6 +266,14 @@ permalink: "/"
       <div class="info-panel-body">
         <p>FlightTracker can also fetch TLE data from CelesTrak and use it to show satellite passes.</p>
         <p>The ISS and other satellites in your tracking list appear automatically when they are above your horizon.</p>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <div class="info-panel-header">What next?</div>
+      <div class="info-panel-body">
+        <p>Thanks to the big <code>version 2.0.0</code> rewrite it's going to be simple to add boats, trains, and who knows what else.</p>
+        <p><a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">I'm open to suggestions</a></p>
       </div>
     </div>
 
