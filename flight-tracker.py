@@ -158,6 +158,7 @@ def load_full_interface(panel, canvas, cfg: Config):
     url = f"http://{local_ip()}:{cfg.web_port}/settings"
     print(f"[web] Config interface: {url}", flush=True)
 
+    result: dict = {}
     flask_ready = threading.Event()
 
     # Thread A: Flask (fast - just binds a port)
@@ -204,9 +205,12 @@ def load_full_interface(panel, canvas, cfg: Config):
     display_thread.join()
     flask_thread.join()
 
+    return result
+
 
 def load_minimum_interface(panel, canvas, cfg: Config):
     # No web UI - brief splash, then build display in the background.
+    result: dict = {}
     display_thread = threading.Thread(
         target=display_load,
         args=(panel, canvas, result),
@@ -216,6 +220,7 @@ def load_minimum_interface(panel, canvas, cfg: Config):
     display_thread.start()
     time.sleep(2)
     display_thread.join()
+    return result
 
 
 def run_flight_tracker():
@@ -248,11 +253,11 @@ def run_flight_tracker():
 
     if cfg.web_interface_enabled:
         logger.info("Web interface enabled - starting full interface")
-        load_full_interface(panel, canvas, cfg)
+        result = load_full_interface(panel, canvas, cfg)
 
     else:
         logger.info("Web interface disabled - starting minimum interface")
-        load_minimum_interface(panel, canvas, cfg)
+        result = load_minimum_interface(panel, canvas, cfg)
 
     if "error" in result:
         logger.error("Display build failed: %s", result["error"])
