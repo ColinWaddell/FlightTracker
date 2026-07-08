@@ -4,7 +4,7 @@
 # For Raspberry Pi (3B, 4B, Zero 2 W, Zero W) running Raspbian Trixie
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/release/v2/platforms/pi/install.sh | bash
 #
 
 set -e
@@ -151,7 +151,7 @@ info "Detected: ${PI_MODEL}"
 if echo "$PI_MODEL" | grep -q "Raspberry Pi 5"; then
     error "This script is for Pi 3/4/Zero. Detected: ${PI_MODEL}"
     error "For Pi 5, use the Pi 5 installer instead:"
-    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash"
+    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/release/v2/platforms/pi5/install.sh | bash"
     exit 1
 fi
 
