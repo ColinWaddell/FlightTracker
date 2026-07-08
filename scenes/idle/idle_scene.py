@@ -505,7 +505,7 @@ class IdleScene:
 
             hourly_marker = RAINFALL_12HR_MARKERS and data["hour"] in (0, 12)
             x1 = RAINFALL_GRAPH_ORIGIN[0] + column_x
-            x2 = (x1 + RAINFALL_COLUMN_WIDTH) if RAINFALL_COLUMN_WIDTH > 1 else x1
+            x2 = x1 + RAINFALL_COLUMN_WIDTH 
             y1 = RAINFALL_GRAPH_ORIGIN[1] + (1 if hourly_marker else 0)
             y2 = RAINFALL_GRAPH_ORIGIN[1] - rain_height
 
