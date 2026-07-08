@@ -273,6 +273,7 @@ def logout():
 @login_required
 def settings():
     cfg = Config.instance()
+    using_default_password = not bool(cfg.get("web_password_hash"))
 
     if request.method == "POST":
         form = request.form
@@ -284,6 +285,24 @@ def settings():
                 raise ValueError("Invalid CSRF token.")
 
             new_data = parse_settings_form(form, cfg)
+            new_password = form.get("new_password", "").strip()
+
+            if using_default_password and not new_password:
+                merged_cfg = {**cfg.as_dict(), **new_data}
+                return (
+                    render_template(
+                        "settings.html",
+                        cfg=merged_cfg,
+                        airports_json=airports_json(),
+                        error="A web password is required before saving. Please choose a new password to protect this interface.",
+                        csrf_token=csrf_token(),
+                        in_schedule=cfg.is_in_brightness_schedule(),
+                        schedule_window=cfg.brightness_schedule_window,
+                        current_version=version_string(VERSION),
+                    ),
+                    400,
+                )
+
             new_data["web_password_hash"] = handle_password_change(form, cfg)
 
             logger.debug("Parsed settings: %s", new_data)
@@ -300,7 +319,7 @@ def settings():
             return (
                 render_template(
                     "settings.html",
-                    cfg=cfg.as_dict(),
+                    cfg={**cfg.as_dict(), **new_data} if 'new_data' in locals() else cfg.as_dict(),
                     airports_json=airports_json(),
                     error=str(exc),
                     csrf_token=csrf_token(),
