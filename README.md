@@ -20,10 +20,10 @@ Choose the script for your hardware and run it over SSH on a fresh Raspberry Pi 
 
 ```bash
 # Raspberry Pi 3 / 4 / Zero
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash
 
 # Raspberry Pi 5
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash
 ```
 
 Each installer detects your hardware, clones the repo, sets up the Python environment, and configures a systemd service so FlightTracker starts on boot. Each script will redirect you to the correct one if it detects it's running on the wrong platform.
