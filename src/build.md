@@ -15,13 +15,18 @@ permalink: "/build/"
     
     <h3>Minimum shopping list</h3>
     <div class="narrative">
-      <p>A Raspberry Pi. FlightTracker supports:</p>
+      <p>A Raspberry Pi. FlightTracker has been tested on:</p>
         <ul>
             <li>RPi 3B</li>
             <li>RPi 4B</li>
             <li>RPi Zero 2</li>
             <li>RPi Zero W</li>
             <li>RPi 5</li>
+            <li><i>
+                If your device isn't on this list but you're
+                feeling brave give it a shot and let me know
+                if it works and I'll add it to the list.
+            </i></li>
         </ul>
 
       <p>And the following bits for the display:</p>

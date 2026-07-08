@@ -340,10 +340,24 @@ git pull</code></pre>
 
       <p>
         Your existing <code>config.py</code> sits at the top level of the checkout and won't be
-        touched by the pull. Once the new code is in place, run the one-line installer to refresh the
-        Python dependencies and reinstall the systemd service. On first boot your
-        <code>config.py</code> will be migrated to <code>config.json</code> automatically.
+        touched by the pull. Once the new code is in place, refresh the Python dependencies and
+        reinstall the systemd service. On first boot your <code>config.py</code> will be migrated to
+        <code>config.json</code> automatically.
       </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Refresh dependencies and reinstall the service</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\nsource env/bin/activate\npip install -r requirements.txt\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>cd /home/pi/FlightTracker
+source env/bin/activate
+pip install -r requirements.txt
+
+sudo systemctl restart FlightTracker.service</code></pre>
+        </div>
+      </div>
 
     </div>
 
