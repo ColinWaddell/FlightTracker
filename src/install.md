@@ -53,7 +53,7 @@ permalink: "/install/"
     </div>
 
     <div class="narrative mt-3">
-      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/master/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/master/platforms/pi5/install.sh">Pi 5</a>.</p>
+      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
   </div>
@@ -217,7 +217,7 @@ permalink: "/install/"
        <div class="card-header">First boot - scan to configure</div>
       </div>
 
-      <p>If anything goes wrong, the full manual install steps are in the <a href="https://github.com/ColinWaddell/FlightTracker/tree/master/platforms">platforms folder on GitHub</a>, and you can <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+      <p>If anything goes wrong, the full manual install steps are in the <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms">platforms folder on GitHub</a>, and you can <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
     </div>
 
 
