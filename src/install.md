@@ -348,7 +348,7 @@ git pull</code></pre>
       <div class="code-card">
         <div class="code-card-header">
           <span>Refresh dependencies and reinstall the service</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\nsource env/bin/activate\npip install -r requirements.txt\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\nsource env/bin/activate\npip install -r platforms/pi/requirements.txt\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cd /home/pi/FlightTracker
