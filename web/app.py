@@ -2,13 +2,19 @@
 FlightTracker web configuration interface.
 
 Runs as a Flask daemon thread on port 8584.
-GET  /           -> redirect to /settings
-GET  /login      -> login form
-POST /login      -> check password, set session
-GET  /logout     -> clear session, redirect to /login
-GET  /settings   -> settings form (requires login)
-POST /settings   -> save config.json, return restarting page, exec after 1 s
-GET  /ping       -> health-check used by the restarting page
+GET  /               -> redirect to /settings
+GET  /login          -> login form
+POST /login          -> check password, set session
+GET  /logout         -> clear session, redirect to /login
+GET  /settings       -> settings form (requires login)
+POST /settings       -> save config.json, return restarting page, exec after 1 s
+GET  /ping           -> health-check used by the restarting page
+GET  /update         -> update status page (requires login)
+POST /update/check   -> check for updates, return JSON (requires login)
+POST /update/apply   -> apply update via git + pip, then restart (requires login)
+GET  /debug-config   -> download config JSON with secrets redacted
+GET  /logs           -> view in-memory log buffer
+GET  /logs/download  -> download full log buffer as .txt
 """
 
 from __future__ import annotations
@@ -26,6 +32,8 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 
 from setup.configuration import Config, CONFIG_PATH
 from setup.logging import get_buffer
+from utilities.updater import get_update_info, perform_update
+from version import VERSION
 
 # Port is read from config.json via Config.web_port (default 8584).
 FLASK_PORT = Config.instance().web_port
@@ -416,3 +424,64 @@ def logs_download():
             "Content-Disposition": "attachment; filename=flighttracker-logs.txt"
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Update routes
+# ---------------------------------------------------------------------------
+
+
+@app.route("/update")
+@login_required
+def update():
+    """Show the update status page."""
+    info = get_update_info()
+    return render_template("update.html", info=info, csrf_token=csrf_token())
+
+
+@app.route("/update/check", methods=["POST"])
+@login_required
+def update_check():
+    """Check for updates and return JSON status."""
+    if not validate_csrf(request.form):
+        return {"error": "Invalid CSRF token."}, 403
+    info = get_update_info()
+    return info, 200
+
+
+@app.route("/update/apply", methods=["POST"])
+@login_required
+def update_apply():
+    """Apply an update by checking out the given tag and restarting."""
+    if not validate_csrf(request.form):
+        return render_template(
+            "update.html",
+            info=get_update_info(),
+            csrf_token=csrf_token(),
+            error="Invalid CSRF token.",
+        ), 403
+
+    tag = request.form.get("tag", "").strip()
+    if not tag:
+        return render_template(
+            "update.html",
+            info=get_update_info(),
+            csrf_token=csrf_token(),
+            error="No tag specified.",
+        ), 400
+
+    logger.info("Applying update to tag %s", tag)
+    success, message = perform_update(tag)
+
+    if not success:
+        logger.error("Update failed: %s", message)
+        return render_template(
+            "update.html",
+            info=get_update_info(),
+            csrf_token=csrf_token(),
+            error=message,
+        ), 500
+
+    logger.info("Update succeeded, restarting...")
+    restart_after(delay=2.0)
+    return render_template("restarting.html")
