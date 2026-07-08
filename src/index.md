@@ -55,7 +55,7 @@ permalink: "/"
           <p>It sits on your fridge, or a shelf, or wherever you decide to put it, and quietly answers the important question: <strong>"What's that plane?"</strong></p>
           <p>FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there is nothing overhead, it can show the time, weather, temperature, rainfall, or satellite passes.</p>
           <div class="hero-actions">
-            <a href="{{ site.repo }}" class="btn btn-yellow mx-2">Hardware // Build your own</a>
+            <a href="/build/" class="btn btn-yellow mx-2">Hardware // Build your own</a>
             <a href="/install/" class="btn btn-dark mx-2">Software // Install and configure</a>
           </div>
         </div>
