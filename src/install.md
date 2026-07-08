@@ -35,20 +35,20 @@ permalink: "/install/"
     <div class="code-card">
       <div class="code-card-header">
         <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="code-card mt-2">
       <div class="code-card-header">
         <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
@@ -186,20 +186,20 @@ permalink: "/install/"
     <div class="code-card">
       <div class="code-card-header">
         <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="code-card mt-2">
       <div class="code-card-header">
         <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
