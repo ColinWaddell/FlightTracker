@@ -233,11 +233,6 @@ def index():
     return redirect(url_for("settings"))
 
 
-@app.route("/ping")
-def ping():
-    return "ok", 200
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("authenticated"):
