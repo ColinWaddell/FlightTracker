@@ -5,6 +5,8 @@ import threading
 import time
 import logging
 
+from version import VERSION
+
 from setup.configuration import Config, CONFIG_PATH
 from setup.logging import setup_logging
 
@@ -78,6 +80,7 @@ def render_splash(
         from setup.colours import WHITE
         dim = WHITE.__class__(180, 180, 180)
         panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
+        panel.draw_text(canvas, loading_font, 1, 28, dim, f"v{'.'.join(map(str, VERSION))}")
 
     panel.swap(canvas)
 
