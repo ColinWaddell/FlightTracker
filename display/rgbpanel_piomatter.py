@@ -127,7 +127,11 @@ class PiomatterPanel(RGBPanel):
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
         draw = ImageDraw.Draw(canvas)
         cr, cg, cb = self._unpack_colour(colour)
-        draw.rectangle([x0, y0, x1, y1], fill=(cr, cg, cb))
+        # PIL's rectangle requires x1 >= x0 and y1 >= y0, so normalise
+        # the coordinates to allow drawing in either direction.
+        left, right = (x0, x1) if x0 <= x1 else (x1, x0)
+        top, bottom = (y0, y1) if y0 <= y1 else (y1, y0)
+        draw.rectangle([left, top, right, bottom], fill=(cr, cg, cb))
 
     def make_colour(self, r, g, b):
         return Colour(r, g, b)
