@@ -109,6 +109,12 @@ permalink: "/build/"
             </li>
         </ul>
 
+        <div class="card mb-3">
+          <div class="card-body p-2 bg-black">
+            <img src="/images/blog/switch-light.jpg" alt="Toggle switch with LED light" loading="lazy" class="w-100 d-block">
+          </div>
+        </div>
+
         <h4>Simple Wiring</h4>
         <p>The simple version is to write power via the switch and hook the 5v directly to the LED. This is how it was originally wired in these pictures. You'll need to put a current limiting resistor between the LED and the 5V line. I think I went with around <code>330R</code>.</p>
 
@@ -134,7 +140,16 @@ permalink: "/build/"
         <h4>Blinky LED</h4> 
         <p>If you want that LED to blink when the device is searching for flights I recommend driving the LED indirectly via a transisitor to avoid asking too much of the GPIO output</p>
 
-        <p>I've used a 330R resistor inline with a <a href="https://www.tindie.com/products/jeremycook/ez-fan2-tiny-raspberry-pi-fan-controller/">EZ Fan2 Tiny Raspberry Pi Fan Controller</a> by <a href="https://jeremyscook.com/">Jeremy Cook</a>. It provides something like the following circuit to light up the LED.</p>
+        <div class="card mb-3">
+        <div class="card-header">Wiring pin <code>25</code> of the Pi to the LED driver</div>
+          <div class="card-body p-2 bg-black">
+            <a href="/images/blog/blinky_wiring.jpeg">
+              <img src="/images/blog/blinky_wiring.jpeg" alt="Blinky LED wiring" loading="lazy" class="w-100 d-block">
+            </a>
+          </div>
+        </div>
+
+        <p>I've used that same <code>330R</code> resistor inline with a <a href="https://www.tindie.com/products/jeremycook/ez-fan2-tiny-raspberry-pi-fan-controller/">EZ Fan2 Tiny Raspberry Pi Fan Controller</a> by <a href="https://jeremyscook.com/">Jeremy Cook</a>. It provides something like the following circuit to light up the LED.</p>
 
         <div class="card">
           <div class="card-header">Driving an LED indirectly via a transistor</div>
