@@ -15,7 +15,8 @@ permalink: "/build/"
     
     <h3>Minimum shopping list</h3>
     <div class="narrative">
-      <p>A Raspberry Pi. FlightTracker has been tested on:</p>
+      <p class="lead">A Raspberry Pi.<a href="https://www.raspberrypi.com/" target="_blank"><img src="/images/Raspberry_Pi_Logo.svg" alt="Raspberry Pi logo" width="20" class="mx-2"></img></a></p>
+      <p>FlightTracker has been tested on:</p>
         <ul>
             <li>RPi 3B</li>
             <li>RPi 4B</li>
@@ -25,7 +26,7 @@ permalink: "/build/"
             <li><i>
                 If your device isn't on this list but you're
                 feeling brave give it a shot and let me know
-                if it works and I'll add it to the list.
+                if it works and I'll add it.
             </i></li>
         </ul>
 
@@ -64,11 +65,40 @@ permalink: "/build/"
         </div>
     </div>
 
-
-    <h3>Optional Extras</h3>
+    <h3>Getting the best performance from the screen</h3>
     <div class="narrative">
         <p>
-            When you put the device in a case it's nice to have a power switch on the side to toggle the device on and off. Additionally the code supports a blinking LED to indicate when the device is searching for overhead data.
+            If you're running the code on a Raspberry Pi 5 you can ignore this. For everyone else I recommend soldering a small bridge between the <code>4 (OE)</code> and <code>18</code> pin on the bonnet, <a href="https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/matrix-setup#configure-for-quality-slash-convenience-3201054" target="_blank">as per the guide.</a> 
+        </p>
+
+        <p>
+            When installing the software you will be asked whether you soldered this connection.
+        </p>
+
+        <div class="card">
+          <div class="card-header">Solder bridge location for best quality</div>
+          <div class="card-body p-2 bg-black">
+            <img src="/images/led_matrices_gpios.jpg" alt="Solder bridge location for best quality" loading="lazy" class="w-100 d-block">
+          </div>
+          <div class="card-footer text-muted small">Image courtesy of <a href="https://adafruit.com/">Adafruit</a></div>
+        </div>
+        
+    </div>
+
+   <div class="info-panel">
+      <div class="info-panel-header">Optional Extras</div>
+      <div class="info-panel-body">
+        <p>Everything after this point is in <b>no way needed</b> for you to go ahead and build this FlightTracker.</p>
+        <p>A couple of people I know have bought all the above and then got stuck as they wanted to make a "perfect version" of this.</p>
+        <p>What comes next is how I built mines; don't take it as a blue-print, it's just for insperation.</p>
+      </div>
+    </div>
+
+    <h3>Toggle switch and power LED</h3>
+    
+    <div class="narrative">
+        <p>
+            When you put the device in a case it's nice to have a power switch on the side to toggle the device on and off. I use the following switch which has a built in LED to show when the device is powered.
         </p>
         <ul>
             <li>
@@ -79,7 +109,7 @@ permalink: "/build/"
         </ul>
 
         <h4>Simple Wiring</h4>
-        <p>The simple version is to write power via the switch and hook the 5v directly to the LED. This is how it was originally wired in these pictures</p>
+        <p>The simple version is to write power via the switch and hook the 5v directly to the LED. This is how it was originally wired in these pictures. You'll need to put a current limiting resistor between the LED and the 5V line. I think I went with around <code>330R</code>.</p>
 
         <div class="row g-3">
           <div class="col-md-6">
