@@ -88,9 +88,9 @@ permalink: "/build/"
    <div class="info-panel">
       <div class="info-panel-header">Optional Extras</div>
       <div class="info-panel-body">
-        <p>Everything after this point is in <b>no way needed</b> for you to go ahead and build this FlightTracker.</p>
-        <p>A couple of people I know have bought all the above and then got stuck as they wanted to make a "perfect version" of this.</p>
-        <p>What comes next is how I built mines; don't take it as a blue-print, it's just for insperation.</p>
+        <p>Everything after this point is <b>not needed</b> if you just want to build your own FlightTracker.</p>
+        <p>A couple of people I know bought all the parts above, then got stuck because they wanted to make the "perfect" version of it.</p>
+        <p>What follows is how I built mine. Don't treat it as a blueprint; it's just here for inspiration.</p>
       </div>
     </div>
 
