@@ -68,7 +68,8 @@ permalink: "/build/"
     <h3>Getting the best performance from the screen</h3>
     <div class="narrative">
         <p>
-            If you're running the code on a Raspberry Pi 5 you can ignore this. For everyone else I recommend soldering a small bridge between the <code>4 (OE)</code> and <code>18</code> pin on the bonnet, <a href="https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/matrix-setup#configure-for-quality-slash-convenience-3201054" target="_blank">as per the guide.</a> 
+            If you're running the code on a Raspberry Pi 5 you can ignore this. For everyone else I recommend soldering a small bridge between the <code>4 (OE)</code> and <code>18</code> pin on the bonnet, <a href="https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/matrix-setup#configure-for-quality-slash-convenience-3201054" target="_blank">as per the guide.</a> It increases the quality by using the soundcard to perform some
+            of the data signalling, however this also means you can no longer use your soundcard whilst the bonnet is plugged in.
         </p>
 
         <p>
@@ -76,7 +77,7 @@ permalink: "/build/"
         </p>
 
         <div class="card">
-          <div class="card-header">Solder bridge location for best quality</div>
+          <div class="card-header">Solder bridge location for best display quality</div>
           <div class="card-body p-2 bg-black">
             <img src="/images/led_matrices_gpios.jpg" alt="Solder bridge location for best quality" loading="lazy" class="w-100 d-block">
           </div>
