@@ -1,10 +1,15 @@
-<nav class="nav">
+<nav class="nav" id="site-nav">
   <div class="container d-flex align-items-center justify-content-between">
     <a href="/" class="nav-brand d-flex align-items-center gap-2">
       <img src="/images/favicon.png" alt="{{ site.name }}" />
       {{ site.name }}
     </a>
-    <div class="nav-links d-flex align-items-center">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <div class="nav-links d-flex align-items-center" id="nav-links">
       {%- for item in nav -%}
         {%- set cleanHref = item.href | replace("/index.html", "/") | replace(".html", "/") -%}
         {%- set cleanUrl = page.url | replace("/index.html", "/") -%}
@@ -16,3 +21,14 @@
     </div>
   </div>
 </nav>
+<script>
+  (function () {
+    var nav = document.getElementById('site-nav');
+    var toggle = nav.querySelector('.nav-toggle');
+    var links = document.getElementById('nav-links');
+    toggle.addEventListener('click', function () {
+      var open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
+</script>

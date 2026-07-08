@@ -18,19 +18,44 @@ permalink: "/"
     </div>
     <div class="row align-items-center g-4">
       <div class="col-lg-12">
-        <div class="hero-image">
-          <img src="/images/blog/screen-flight.jpg" alt="FlightTracker showing a live flight on the LED matrix" />
+        <div class="hero-carousel" id="hero-carousel">
+          <div class="hero-carousel-slides">
+            <div class="hero-carousel-slide active" data-type="image">
+              <img src="/images/blog/screen-flight.jpg" alt="FlightTracker showing a live flight on the LED matrix" />
+            </div>
+            <div class="hero-carousel-slide" data-type="video">
+              <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+                <source src="images/captures/pass_preview.webm" type="video/webm">
+              </video>
+            </div>
+            <div class="hero-carousel-slide" data-type="image">
+              <img src="/images/blog/internals-in-case.jpg" alt="Inside the FlightTracker case showing the Raspberry Pi" />
+            </div>
+            <div class="hero-carousel-slide" data-type="video">
+              <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+                <source src="images/captures/Satellite pass.webm" type="video/webm">
+              </video>
+            </div>
+          </div>
+          <button class="hero-carousel-prev" aria-label="Previous slide">&lsaquo;</button>
+          <button class="hero-carousel-next" aria-label="Next slide">&rsaquo;</button>
+          <div class="hero-carousel-dots">
+            <button class="hero-carousel-dot active" aria-label="Go to slide 1"></button>
+            <button class="hero-carousel-dot" aria-label="Go to slide 2"></button>
+            <button class="hero-carousel-dot" aria-label="Go to slide 3"></button>
+            <button class="hero-carousel-dot" aria-label="Go to slide 4"></button>
+          </div>
         </div>
       </div>
     </div>
     <div class="row align-items-center g-4">
       <div class="col-lg-12">
         <div class="hero-text mt-3">
-          <p>A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead.</p>
+          <p>A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead.</p>
           <p>It sits on your fridge, or a shelf, or wherever you decide to put it, and quietly answers the important question: <strong>"What's that plane?"</strong></p>
           <p>FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there is nothing overhead, it can show the time, weather, temperature, rainfall, or satellite passes.</p>
           <div class="hero-actions">
-            <a href="{{ site.repo }}" class="btn btn-yellow ">Hardware // Build your own</a>
+            <a href="{{ site.repo }}" class="btn btn-yellow mx-2">Hardware // Build your own</a>
             <a href="/install/" class="btn btn-dark mx-2">Software // Install and configure</a>
           </div>
         </div>
@@ -247,3 +272,52 @@ permalink: "/"
     <!-- TODO: Write the "What's new in 2.0" callout summarising the rewrite - scene manager, web config UI, theme system, tar1090/ADS-B support, satellite tracking, config.json migration, logging. -->
   </div>
 </section>
+
+<script>
+  (function () {
+    var carousel = document.getElementById('hero-carousel');
+    if (!carousel) return;
+    var slides = carousel.querySelectorAll('.hero-carousel-slide');
+    var dots = carousel.querySelectorAll('.hero-carousel-dot');
+    var prev = carousel.querySelector('.hero-carousel-prev');
+    var next = carousel.querySelector('.hero-carousel-next');
+    var current = 0;
+    var autoTimer = null;
+    var AUTO_INTERVAL = 5000;
+
+    function show(index) {
+      // Pause any video in the outgoing slide
+      var oldVideo = slides[current].querySelector('video');
+      if (oldVideo) oldVideo.pause();
+
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+
+      // Play video if the new slide has one
+      var newVideo = slides[current].querySelector('video');
+      if (newVideo) {
+        newVideo.currentTime = 0;
+        newVideo.play().catch(function() {});
+      }
+    }
+
+    function nextSlide() { show(current + 1); }
+    function prevSlide() { show(current - 1); }
+
+    function restartAuto() {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(nextSlide, AUTO_INTERVAL);
+    }
+
+    prev.addEventListener('click', function () { prevSlide(); restartAuto(); });
+    next.addEventListener('click', function () { nextSlide(); restartAuto(); });
+    dots.forEach(function (dot, i) {
+      dot.addEventListener('click', function () { show(i); restartAuto(); });
+    });
+
+    restartAuto();
+  })();
+</script>

@@ -5,8 +5,12 @@
 // (https://colinwaddell.github.io/FlightTracker/). Locally it runs at the
 // root, so all URLs in the content are root-absolute ("/css/...", "/images/...").
 // This prefix is injected into the final HTML so the same source works in both
-// environments. Set to "" to disable.
-const PATH_PREFIX = "/FlightTracker";
+// environments.
+//
+// The prefix is read from the SITE_PATH_PREFIX environment variable, which the
+// GitHub Actions deploy workflow sets to "/FlightTracker". Locally the variable
+// is unset, so the prefix is "" and root-absolute URLs work as-is.
+const PATH_PREFIX = process.env.SITE_PATH_PREFIX || "";
 
 module.exports = function (eleventyConfig) {
   // Pass through static assets unchanged.

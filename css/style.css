@@ -76,8 +76,9 @@ a:hover { color: #000; }
   z-index: 100;
 }
 /* Bootstrap's .container + d-flex utilities handle the nav layout.
-   We just set the height and visual treatment. */
-.nav > .container { height: 56px; }
+   We just set the height and visual treatment. The position: relative
+   anchors the mobile dropdown panel to the nav. */
+.nav > .container { height: 56px; position: relative; }
 .nav-brand {
   font-weight: 800;
   font-size: 1rem;
@@ -108,9 +109,71 @@ a:hover { color: #000; }
 @media (max-width: 768px) {
   .nav-links a { padding: 0 12px; font-size: .7rem; }
 }
-@media (max-width: 580px) {
-  .nav-links a { display: none; }
-  .nav-links a.nav-cta { display: flex; border: none; }
+
+/* Hamburger toggle button - hidden on desktop, shown on mobile. */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  height: 56px;
+  justify-content: center;
+}
+.nav-toggle-bar {
+  display: block;
+  width: 26px;
+  height: 3px;
+  background: #000;
+  border-radius: 2px;
+  transition: transform .2s, opacity .2s;
+}
+/* Animate the bars into an X when the menu is open. */
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  /* Show the hamburger button. */
+  .nav-toggle { display: flex; }
+
+  /* Collapse the links into a dropdown panel below the bar.
+     !important overrides Bootstrap's .d-flex utility on the same element. */
+  .nav-links {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    background: var(--accent);
+    border-top: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    /* Hidden state - collapsed and not focusable. */
+    display: none !important;
+  }
+  .nav-links.open { display: flex !important; }
+
+  /* Stack links vertically as full-width rows. */
+  .nav-links a {
+    width: 100%;
+    height: auto;
+    padding: 14px 20px;
+    font-size: .8rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(0,0,0,.15);
+  }
+  .nav-links a:first-child { border-left: none; }
+  .nav-links a:last-child { border-bottom: none; }
+  .nav-links a.nav-cta { border: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -166,6 +229,95 @@ a:hover { color: #000; }
   display: flex;
   gap: 0;
   flex-wrap: wrap;
+}
+@media (max-width: 580px) {
+  .hero-actions .btn { width: 100%; }
+  .hero-actions .btn + .btn { margin-top: 10px; }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero carousel
+   --------------------------------------------------------------------------- */
+.hero-carousel {
+  position: relative;
+  border: 2px solid var(--border);
+  overflow: hidden;
+  background: #000;
+}
+.hero-carousel-slides {
+  position: relative;
+}
+.hero-carousel-slide {
+  display: none;
+  /* Fixed aspect ratio matching the images (2048x1536 = 4:3).
+     Videos are 2:1, so they get letterboxed with black bars. */
+  aspect-ratio: 4 / 3;
+}
+.hero-carousel-slide.active {
+  display: block;
+}
+.hero-carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hero-carousel-slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;    /* preserve video aspect ratio, black bars fill the rest */
+  background: #000;
+  display: block;
+}
+/* Prev / next arrows */
+.hero-carousel-prev,
+.hero-carousel-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  z-index: 2;
+}
+.hero-carousel-prev:hover,
+.hero-carousel-next:hover {
+  background: rgba(0,0,0,.8);
+}
+.hero-carousel-prev { left: 12px; }
+.hero-carousel-next { right: 12px; }
+/* Dot indicators */
+.hero-carousel-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+.hero-carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.4);
+  cursor: pointer;
+  padding: 0;
+  transition: background .15s;
+}
+.hero-carousel-dot.active {
+  background: var(--accent);
 }
 .btn {
   display: inline-flex;

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "serve": "eleventy --serve --port=8080",
+    "serve:static": "npm run build && npx serve _site -l 8080",
     "build": "eleventy",
     "clean": "rm -rf _site",
     "debug": "DEBUG=Eleventy* eleventy --serve"

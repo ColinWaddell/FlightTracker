@@ -283,7 +283,7 @@ find . -maxdepth 1 -not -name 'env' -not -name '.' -exec rm -rf {} +
 
 curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/master.zip -o /tmp/FlightTracker.zip
 unzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src
-cp -r /tmp/FlightTracker-src/*/* /home/pi/FlightTracker/
+cp -r /tmp/FlightTracker-src/ /home/pi/FlightTracker/
 
 source env/bin/activate
 pip install -r requirements.txt
