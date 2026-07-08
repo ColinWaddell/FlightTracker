@@ -73,6 +73,8 @@ class SceneManager:
                 self.current_scene = highest_with_data
 
         elif highest_active:
+            if highest_active is not self.current_scene:
+                highest_active.on_enter()
             self.current_scene = highest_active
 
         else:
