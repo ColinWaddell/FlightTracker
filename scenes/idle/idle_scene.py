@@ -509,8 +509,6 @@ class IdleScene:
             y1 = RAINFALL_GRAPH_ORIGIN[1] + (1 if hourly_marker else 0)
             y2 = RAINFALL_GRAPH_ORIGIN[1] - rain_height
 
-            print(f"{x1=}, {y1=}, {x2=}, {y2=}, {hourly_marker=}, {column_x=}")
-
             colour = (
                 graph_colour
                 if graph_colour is not None
