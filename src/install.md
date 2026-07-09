@@ -7,7 +7,6 @@ permalink: "/install/"
 
 <div class="status-bar">
   <div class="status-item"><a href="#quick-install" class="text-black">Quick install</a></div>
-  <div class="status-item"><a href="#full-install" class="text-black">Full install</a></div>
   <div class="status-item"><a href="#upgrading" class="text-black">Upgrading</a></div>
   <div class="status-item"><a href="#manual-install" class="text-black">Manual install</a></div>
   <div class="status-item"><a href="#simulator" class="text-black">Simulator</a></div>
