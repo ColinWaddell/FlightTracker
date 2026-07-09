@@ -5,6 +5,7 @@
       <div class="capture-screen">
         {%- if item.type == "video" -%}
           <video autoplay loop muted playsinline preload="metadata">
+            <source src="{{ item.src | replace('.webm', '.mp4') }}" type="video/mp4" />
             <source src="{{ item.src }}" type="video/webm" />
           </video>
         {%- else -%}

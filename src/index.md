@@ -25,6 +25,7 @@ permalink: "/"
             </div>
             <div class="hero-carousel-slide" data-type="video">
               <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+                <source src="images/captures/pass_preview.mp4" type="video/mp4">
                 <source src="images/captures/pass_preview.webm" type="video/webm">
               </video>
             </div>
@@ -33,6 +34,7 @@ permalink: "/"
             </div>
             <div class="hero-carousel-slide" data-type="video">
               <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+                <source src="images/captures/Satellite pass.mp4" type="video/mp4">
                 <source src="images/captures/Satellite pass.webm" type="video/webm">
               </video>
             </div>
@@ -90,6 +92,7 @@ permalink: "/"
         <div class="card h-100">
           <div class="card-body p-0">
             <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+              <source src="images/captures/full names and plane type.mp4" type="video/mp4">
               <source src="images/captures/full names and plane type.webm" type="video/webm">
             </video>
           </div>
@@ -100,6 +103,7 @@ permalink: "/"
         <div class="card h-100">
           <div class="card-body p-0">
             <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+              <source src="images/captures/full names and tlm.mp4" type="video/mp4">
               <source src="images/captures/full names and tlm.webm" type="video/webm">
             </video>
           </div>
@@ -110,6 +114,7 @@ permalink: "/"
         <div class="card h-100">
           <div class="card-body p-0">
             <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+              <source src="images/captures/short names and plane type.mp4" type="video/mp4">
               <source src="images/captures/short names and plane type.webm" type="video/webm">
             </video>
           </div>
@@ -120,6 +125,7 @@ permalink: "/"
         <div class="card h-100">
           <div class="card-body">
             <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+              <source src="images/captures/short names and tlm.mp4" type="video/mp4">
               <source src="images/captures/short names and tlm.webm" type="video/webm">
             </video>
           </div>
@@ -157,6 +163,7 @@ permalink: "/"
       </div>
       <div class="col-lg-8">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+            <source src="images/captures/web-config-ui.mp4" type="video/mp4">
             <source src="images/captures/web-config-ui.webm" type="video/webm">
         </video>
       </div>
@@ -187,6 +194,7 @@ permalink: "/"
     <div class="card mb-4">
       <div class="card-body p-2 bg-black">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+          <source src="images/captures/themes.mp4" type="video/mp4">
           <source src="images/captures/themes.webm" type="video/webm">
         </video>
       </div>
@@ -233,6 +241,7 @@ permalink: "/"
     <div class="card">
       <div class="card-body p-2 bg-black">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+          <source src="images/captures/Satellite pass.mp4" type="video/mp4">
           <source src="images/captures/Satellite pass.webm" type="video/webm">
         </video>
       </div>
