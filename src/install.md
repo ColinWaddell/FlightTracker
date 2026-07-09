@@ -213,7 +213,7 @@ permalink: "/install/"
        <div class="card-header">First boot - scan to configure</div>
       </div>
 
-      <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <code>platforms/pi</code> and <code>platforms/pi5</code>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+      <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms/pi"><code>platforms/pi</code></a> and <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms/pi5"><code>platforms/pi5</code></a>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
     </div>
 
 
