@@ -2,8 +2,6 @@
 
 [![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
 
-<video src="assets/full_names_and_plane_type.webm" autoplay loop muted playsinline width="100%"></video>
-
 A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead. It sits on your fridge, or a shelf, or wherever you decide to put it, and quietly answers the important question: **"What's that plane?"**
 
 FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there's nothing overhead, it shows the time, weather, temperature, rainfall, or satellite passes.
@@ -93,8 +91,6 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 ## Satellite Tracking
 
 To see when a particular satellite is over head enter its [NORAD ID](https://celestrak.org/SATCAT/search.php) in the device config and it'll let you know where to look, its altitude and speed.
-
-<video src="assets/satellite_pass.webm" autoplay loop muted playsinline width="100%"></video>
 
 ## Running the tracker from the command line
 
