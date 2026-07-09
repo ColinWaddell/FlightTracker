@@ -216,8 +216,24 @@
                    name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
             <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
                  style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i>Keep this at 5 or below when using FlightRadar24 - each flight requires a separate API call and higher values risk hitting rate limits.
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>Flights are sorted by closest to your first. Keep this at 5 or below when using FlightRadar24 - each flight requires a separate API call and higher values risk hitting rate limits.
             </div>
+          </div>
+
+          <div id="callsign_format_fields" class="mt-3"
+               style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
+            <label class="form-label small">Callsign format</label>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao" value="icao"
+                     {% if cfg.callsign_format != 'iata' %}checked{% endif %} />
+              <label class="form-check-label" for="callsign_format_icao">ICAO callsign (e.g. BAW123)</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_iata" value="iata"
+                     {% if cfg.callsign_format == 'iata' %}checked{% endif %} />
+              <label class="form-check-label" for="callsign_format_iata">IATA flight number (e.g. BA123)</label>
+            </div>
+            <div class="form-text text-muted small">Choose whether to display the ICAO callsign or IATA flight number. Falls back to ICAO when the IATA number is unavailable.</div>
           </div>
         </div>
 
@@ -227,11 +243,13 @@
             var tar1090Radio = document.getElementById('data_source_tar1090');
             var tar1090Fields = document.getElementById('tar1090_fields');
             var fr24Warning   = document.getElementById('fr24_lookup_warning');
+            var callsignFields = document.getElementById('callsign_format_fields');
 
             function updateDataSourceUI() {
               var isTar1090 = tar1090Radio.checked;
               tar1090Fields.style.display = isTar1090 ? 'block' : 'none';
               fr24Warning.style.display   = isTar1090 ? 'none'  : 'block';
+              callsignFields.style.display = isTar1090 ? 'none'  : 'block';
             }
 
             fr24Radio.addEventListener('change', updateDataSourceUI);

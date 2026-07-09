@@ -90,6 +90,7 @@ DEFAULT_LOADING_LED_GPIO_PIN = ""
 DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
+DEFAULT_CALLSIGN_FORMAT = "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
@@ -146,6 +147,7 @@ DEFAULTS: dict[str, Any] = {
     "data_source": DEFAULT_DATA_SOURCE,
     "tar1090_url": DEFAULT_TAR1090_URL,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
+    "callsign_format": DEFAULT_CALLSIGN_FORMAT,
     # Satellite tracking
     "satellite_tracking_enabled": DEFAULT_SATELLITE_TRACKING_ENABLED,
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
@@ -713,6 +715,11 @@ class Config:
             )
         except (TypeError, ValueError):
             return DEFAULT_MAX_FLIGHT_LOOKUP
+
+    @property
+    def callsign_format(self) -> str:
+        val = str(self.data_store.get("callsign_format", DEFAULT_CALLSIGN_FORMAT)).lower()
+        return val if val in ("icao", "iata") else DEFAULT_CALLSIGN_FORMAT
 
     @property
     def satellite_tracking_enabled(self) -> bool:

@@ -200,6 +200,11 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         "tar1090_url": str_val(form.get("tar1090_url"), ""),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
+        "callsign_format": (
+            "iata"
+            if str_val(form.get("callsign_format"), "icao").lower() == "iata"
+            else "icao"
+        ),
         # Satellite tracking
         "satellite_tracking_enabled": bool_val(form.get("satellite_tracking_enabled")),
         "satellite_norad_ids": [

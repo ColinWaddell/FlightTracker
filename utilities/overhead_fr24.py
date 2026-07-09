@@ -70,6 +70,7 @@ class Overhead:
         self.max_altitude = cfg.flight_max_altitude
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
+        self.callsign_format = cfg.callsign_format
 
         self.api = FlightRadar24API(timeout=FR24_TIMEOUT)
         self.lock = Lock()
@@ -148,13 +149,16 @@ class Overhead:
             )
 
             for flight in flights[: self.max_flight_lookup]:
-                callsign = clean_field(flight.callsign)
-
-                #number = IATA
-                #callsign = ICAO
+                # ICAO callsign is always used as the route-cache key.
+                # The displayed identifier can be IATA (flight.number) or ICAO.
+                icao_callsign = clean_field(flight.callsign)
+                if self.callsign_format == "iata":
+                    display_callsign = clean_field(flight.number) or icao_callsign
+                else:
+                    display_callsign = icao_callsign
 
                 # Check route cache first - avoids expensive API lookups
-                cached = routes_cache.get(callsign) if callsign else None
+                cached = routes_cache.get(icao_callsign) if icao_callsign else None
 
                 if cached is not None:
                     plane = cached.get("plane", "")
@@ -206,9 +210,9 @@ class Overhead:
                             destination_name = ""
 
                         # Cache the route info for 24 hours
-                        if callsign:
+                        if icao_callsign:
                             routes_cache.put(
-                                callsign,
+                                icao_callsign,
                                 {
                                     "plane": plane,
                                     "origin": origin,
@@ -247,7 +251,7 @@ class Overhead:
                         "altitude": flight.altitude,
                         "ground_speed": ground_speed,
                         "heading": heading,
-                        "callsign": callsign,
+                        "callsign": display_callsign,
                     }
                 )
 
