@@ -150,6 +150,9 @@ class Overhead:
             for flight in flights[: self.max_flight_lookup]:
                 callsign = clean_field(flight.callsign)
 
+                #number = IATA
+                #callsign = ICAO
+
                 # Check route cache first - avoids expensive API lookups
                 cached = routes_cache.get(callsign) if callsign else None
 

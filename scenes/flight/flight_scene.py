@@ -608,7 +608,7 @@ class FlightScene:
 
     def model_spans(self) -> list:
         text = self.flights[self.flight_index].get("plane", "")
-        return [(TC(THEME_PLANE), fonts.regular, text)]
+        return [(TC(THEME_PLANE), fonts.regular, text.upper())]
 
     def telemetry_spans(self, cfg) -> list:
         flight = self.flights[self.flight_index]
