@@ -26,8 +26,12 @@ The installer detects your hardware, clones the repo, creates a virtual environm
 
 If you already have FlightTracker running with a `config.py`, this is all you need:
 
+If your checkout is still on the old `master` branch, switch to `main` before pulling updates:
+
 ```bash
 cd /home/pi/FlightTracker
+git fetch --all
+git checkout main
 git pull
 source env/bin/activate
 pip install -r platforms/pi/requirements.txt

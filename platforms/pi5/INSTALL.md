@@ -97,8 +97,12 @@ journalctl -u FlightTracker.service -f
 
 ## Upgrading from a previous version
 
+If your checkout is still on the old `master` branch, switch to `main` before pulling updates:
+
 ```bash
 cd /home/pi/FlightTracker
+git fetch --all
+git checkout main
 git pull
 source env/bin/activate
 pip install -r platforms/pi5/requirements.txt

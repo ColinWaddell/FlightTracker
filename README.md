@@ -10,6 +10,8 @@ A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead.
 
 FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there's nothing overhead, it shows the time, weather, temperature, rainfall, or satellite passes.
 
+For much more detailed documentation, visit [colinwaddell.github.io/FlightTracker](https://colinwaddell.github.io/FlightTracker).
+
 ---
 
 ## Installation
@@ -88,10 +90,28 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 
 ---
 
-## Updating to the most recent version
+## Running the tracker from the command line
+
+The main entrypoint is the script at the repo root:
 
 ```bash
 cd /home/pi/FlightTracker
+source env/bin/activate
+python3 flight-tracker.py
+```
+
+That starts the FlightTracker application directly. The script does not currently expose additional CLI flags; its behaviour is controlled by the configuration file and the web settings UI.
+
+---
+
+## Updating to the most recent version
+
+If your checkout is still on the old `master` branch, switch to `main` before pulling updates:
+
+```bash
+cd /home/pi/FlightTracker
+git fetch --all
+git checkout main
 git pull
 source env/bin/activate
 pip install -r platforms/pi/requirements.txt
@@ -109,24 +129,41 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `flight_lat` / `flight_lng` | Centre of the flight search zone | `55.87` / `-4.25` |
 | `flight_radius` | Search radius in km | `20.0` |
 | `flight_min_altitude` | Ignore aircraft below this altitude (metres) | `100.0` |
-| `home_airport_code` | IATA code of your local airport - highlighted on display | `""` |
-| `full_airport_name` | Scroll the full airport name instead of just the IATA code | `false` |
-| `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Weather uses your flight location coordinates. Leave blank to disable weather entirely | `""` |
-| `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
-| `units` | `"m"` for metric (C / km), `"i"` for imperial (F / mi) | `"m"` |
+| `flight_max_altitude` | Ignore aircraft above this altitude (metres) | `10000.0` |
+| `full_airport_name` | Show the full airport name instead of the IATA code | `false` |
+| `abbreviate_name` | Abbreviate the airport name where possible | `false` |
+| `home_airport_code` | IATA code of your local airport - highlighted on the display | `""` |
+| `journey_blank_filler` | Filler shown for blank journey segments | `"???"` |
 | `details` | Bottom row: `0` = aircraft make/model, `1` = altitude/speed/heading | `0` |
-| `theme` | `0` = Default, `1` = Monochrome, `2` = Pastel | `0` |
-| `screen_brightness` | 1 (dim) - 5 (full) | `3` |
+| `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Leave blank to disable weather | `""` |
+| `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
+| `rain_sensitivity` | `0` = dry, `1` = moderate, `2` = wet | `1` |
+| `units` | `"m"` for metric (C / km), `"i"` for imperial (F / mi) | `"m"` |
+| `theme` | `0` = default, `1` = monochrome, `2` = pastel | `0` |
+| `screen_brightness` | Display brightness from `1` (dim) to `5` (full) | `3` |
+| `screen_rotate` | Rotate the display by 180° | `false` |
+| `screen_schedule_enabled` | Enable scheduled brightness changes | `false` |
+| `screen_schedule_auto` | Use the brightness schedule automatically | `false` |
+| `screen_schedule_start` | Schedule start time (`HH:MM`) | `"22:00"` |
+| `screen_schedule_end` | Schedule end time (`HH:MM`) | `"07:00"` |
+| `screen_schedule_brightness` | Brightness level used during the scheduled window | `0` |
 | `clock_24hr` | `true` for 24-hour clock | `true` |
-| `timezone` | IANA timezone name, e.g. `"America/New_York"` | `"Europe/London"` |
 | `date_format` | `0` = YYYY-MM-DD, `1` = DD-MM-YYYY, `2` = MM-DD-YYYY | `0` |
-| `web_interface_enabled` | Set to `false` to disable the config UI entirely - Flask will not start and no QR code will be shown on boot. To re-enable, set this back to `true` in `config.json` | `true` |
-| `web_port` | TCP port for the Flask config server (1024-65535). Change requires a restart | `8584` |
-| `gpio_slowdown` | 1-4; increase if display flickers. Pi 4 typically needs `4` | `1` |
-| `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires solder bridge) | `true` |
+| `web_interface_enabled` | Enable the config UI and QR code on boot | `true` |
+| `web_port` | TCP port for the Flask config server (1024-65535) | `8584` |
+| `web_password_hash` | SHA-256 hash for the web UI password | `""` |
+| `gpio_slowdown` | `1`-`4`; increase if the display flickers | `1` |
+| `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires a solder bridge) | `true` |
 | `loading_led_enabled` | Blink a GPIO LED while loading flight data | `false` |
-| `loading_led_gpio_pin` | GPIO pin number for the loading LED | `25` |
-| `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json`. When set, FlightRadar24 is not used | `""` |
+| `loading_led_gpio_pin` | GPIO pin number for the loading LED | `""` |
+| `data_source` | `"fr24"` for FlightRadar24, `"tar1090"` for a local receiver | `"fr24"` |
+| `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json` | `""` |
+| `max_flight_lookup` | Number of nearby flights to track at once | `5` |
+| `satellite_tracking_enabled` | Enable satellite pass tracking | `true` |
+| `satellite_norad_ids` | NORAD IDs for tracked satellites | `[25544]` |
+| `satellite_min_elevation` | Minimum elevation for satellite passes | `20` |
+| `satellite_max_count` | Maximum number of satellites to plot at once | `5` |
+| `log_level` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` | `"INFO"` |
 
 ---
 
