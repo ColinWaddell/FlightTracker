@@ -562,7 +562,7 @@ class Config:
 
     @property
     def display_speed_factor(self) -> float:
-        return {"default": 1.0, "slower": 2.0, "faster": 0.5}.get(
+        return {"default": 1.0, "slower": 2.0, "faster": 0.75}.get(
             self.display_speed, 1.0
         )
 

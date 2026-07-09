@@ -469,9 +469,9 @@
           <div class="mb-3">
             <label class="form-label small">Animation speed</label>
             <select class="form-select form-select-sm" name="display_speed" style="max-width:220px">
-              <option value="default" {% if cfg.display_speed == 'default' %}selected{% endif %}>Default</option>
-              <option value="slower" {% if cfg.display_speed == 'slower' %}selected{% endif %}>Slower</option>
-              <option value="faster" {% if cfg.display_speed == 'faster' %}selected{% endif %}>Faster</option>
+                <option value="slower" {% if cfg.display_speed == 'slower' %}selected{% endif %}>Slower</option>
+                <option value="default" {% if cfg.display_speed == 'default' %}selected{% endif %}>Default</option>
+                <option value="faster" {% if cfg.display_speed == 'faster' %}selected{% endif %}>Faster</option>
             </select>
             <div class="form-text text-muted small">Adjust how quickly the display updates and animates.</div>
           </div>
