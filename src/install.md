@@ -385,7 +385,7 @@ sudo systemctl restart FlightTracker.service</code></pre>
 
       <div class="code-card">
         <div class="code-card-header">
-          <span>Install simulator dependencies</span>
+          <span>Linux / macOS</span>
           <button class="code-card-copy" onclick="copyCode(this, 'git clone https://github.com/ColinWaddell/FlightTracker\ncd FlightTracker\npython3 -m venv env\nsource env/bin/activate\npip install -r platforms/simulator/requirements.txt')">Copy</button>
         </div>
         <div class="code-card-body">
@@ -393,6 +393,20 @@ sudo systemctl restart FlightTracker.service</code></pre>
 cd FlightTracker
 python3 -m venv env
 source env/bin/activate
+pip install -r platforms/simulator/requirements.txt</code></pre>
+        </div>
+      </div>
+
+      <div class="code-card mt-2">
+        <div class="code-card-header">
+          <span>Windows</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'git clone https://github.com/ColinWaddell/FlightTracker\ncd FlightTracker\npython -m venv env\nenv\\Scripts\\activate\npip install -r platforms/simulator/requirements.txt')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>git clone https://github.com/ColinWaddell/FlightTracker
+cd FlightTracker
+python -m venv env
+env\Scripts\activate
 pip install -r platforms/simulator/requirements.txt</code></pre>
         </div>
       </div>
@@ -405,11 +419,21 @@ pip install -r platforms/simulator/requirements.txt</code></pre>
 
       <div class="code-card">
         <div class="code-card-header">
-          <span>Start the simulator</span>
+          <span>Linux / macOS</span>
           <button class="code-card-copy" onclick="copyCode(this, 'env/bin/python3 flight-tracker.py')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>env/bin/python3 flight-tracker.py</code></pre>
+        </div>
+      </div>
+
+      <div class="code-card mt-2">
+        <div class="code-card-header">
+          <span>Windows</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'env\Scripts\python.exe flight-tracker.py')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>env\Scripts\python.exe flight-tracker.py</code></pre>
         </div>
       </div>
 
