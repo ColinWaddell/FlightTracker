@@ -12,6 +12,9 @@ FlightTracker takes live aircraft data, works out what is nearby, and displays i
 
 For much more detailed documentation, visit [colinwaddell.github.io/FlightTracker](https://colinwaddell.github.io/FlightTracker).
 
+ - [Hardware: Build your own](https://colinwaddell.github.io/FlightTracker/build/)
+ - [Software: Install and configure](https://colinwaddell.github.io/FlightTracker/install/)
+
 ---
 
 ## Installation
