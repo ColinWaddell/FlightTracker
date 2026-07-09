@@ -230,9 +230,48 @@ a:hover { color: #000; }
   gap: 0;
   flex-wrap: wrap;
 }
-@media (max-width: 580px) {
-  .hero-actions .btn { width: 100%; }
-  .hero-actions .btn + .btn { margin-top: 10px; }
+.hero-actions .btn {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
+}
+.hero-actions .btn .btn-label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: .9;
+}
+.hero-actions .btn .btn-subtext {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.hero-actions .btn-yellow .btn-label,
+.hero-actions .btn-yellow .btn-subtext {
+  color: #000;
+}
+.hero-actions .btn-dark .btn-label {
+  color: var(--accent);
+}
+.hero-actions .btn-dark .btn-subtext {
+  color: #fff;
+}
+@media (max-width: 700px) {
+  .hero-actions {
+    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  .hero-actions .btn + .btn { margin-top: 10px; margin-left: 0; }
 }
 
 /* ---------------------------------------------------------------------------

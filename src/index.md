@@ -57,8 +57,8 @@ permalink: "/"
           <p>FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there is nothing overhead, it can show the time, weather, temperature, rainfall, or satellite passes.</p>
           <p>This site will show you what you need to build your own and get the software installed.</p>
           <div class="hero-actions">
-            <a href="/build/" class="btn btn-yellow mx-2">Hardware // Build your own</a>
-            <a href="/install/" class="btn btn-dark mx-2">Software // Install and configure</a>
+            <a href="/build/" class="btn btn-yellow me-sm-4"><span class="btn-label">Hardware</span><span class="btn-subtext">Build your own</span></a>
+            <a href="/install/" class="btn btn-dark"><span class="btn-label">Software</span><span class="btn-subtext">Install and configure</span></a>
           </div>
         </div>
       </div>
