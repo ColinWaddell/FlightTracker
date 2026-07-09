@@ -15,7 +15,7 @@ For much more detailed documentation, visit [colinwaddell.github.io/FlightTracke
 
 ## v1 to v2
 
-Recently this codebase has had a major rewrite. There are detailed guides on the update procedure but it's worth pointing out the change in branching:
+Recently (June 2026) this codebase has had a major rewrite. There are detailed guides on the update procedure but it's worth pointing out the change in branching:
 
  - `main` is the new home for FlightTracker `v2`
  - `master` is the resting place of FlightTracker `v1`
