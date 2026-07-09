@@ -1,4 +1,4 @@
-# RGB Matrix Flight Tracker
+# Raspberry Pi Flight Tracker
 
 [![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
 
