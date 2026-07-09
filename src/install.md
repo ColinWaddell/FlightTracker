@@ -10,6 +10,7 @@ permalink: "/install/"
   <div class="status-item"><a href="#full-install" class="text-black">Full install</a></div>
   <div class="status-item"><a href="#upgrading" class="text-black">Upgrading</a></div>
   <div class="status-item"><a href="#manual-install" class="text-black">Manual install</a></div>
+  <div class="status-item"><a href="#simulator" class="text-black">Simulator</a></div>
 </div>
 
 <section>
@@ -356,5 +357,85 @@ sudo systemctl restart FlightTracker.service</code></pre>
 
     </div>
 
+  </div>
+</section>
+<section id="simulator">
+  <div class="container">
+    <h2 class="section-title">Running the simulator</h2>
+
+    <div class="narrative">
+      <p>
+        If you don't have a Raspberry Pi or LED panel handy, FlightTracker can run entirely on your
+        desktop or laptop. When the hardware display drivers (piomatter for Pi 5, rgbmatrix for
+        Pi 3/4) aren't available, the app automatically falls back to a pygame-based simulator that
+        renders the LED matrix in a window on your screen.
+      </p>
+
+      <p>
+        This is useful for development, testing configuration changes, or just seeing what the
+        software looks like before you commit to building the full hardware.
+      </p>
+
+      <h3>Setup</h3>
+
+      <p>
+        You'll need Python 3.10 or newer. Clone the repo, create a virtual environment, and install
+        the simulator dependencies:
+      </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Install simulator dependencies</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'git clone https://github.com/ColinWaddell/FlightTracker\ncd FlightTracker\npython3 -m venv env\nsource env/bin/activate\npip install -r platforms/simulator/requirements.txt')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>git clone https://github.com/ColinWaddell/FlightTracker
+cd FlightTracker
+python3 -m venv env
+source env/bin/activate
+pip install -r platforms/simulator/requirements.txt</code></pre>
+        </div>
+      </div>
+
+      <h3>Running</h3>
+
+      <p>
+        Launch it the same way you would on a Pi:
+      </p>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <span>Start the simulator</span>
+          <button class="code-card-copy" onclick="copyCode(this, 'env/bin/python3 flight-tracker.py')">Copy</button>
+        </div>
+        <div class="code-card-body">
+          <pre><code>env/bin/python3 flight-tracker.py</code></pre>
+        </div>
+      </div>
+
+      <p>
+        A pygame window opens showing the simulated LED matrix. The app runs exactly as it would on
+        a Pi, including the web configuration interface at
+        <a href="http://localhost:8584"><code>http://localhost:8584</code></a>.
+      </p>
+
+      <h3>Capture keys</h3>
+
+      <p>
+        The simulator supports saving screenshots and video frame sequences — handy for creating
+        the kind of capture clips you see on the home page:
+      </p>
+
+      <ul>
+        <li><strong>P</strong> — Save a photo to <code>captures/</code></li>
+        <li><strong>R</strong> — Toggle video recording on/off (saves a PNG frame sequence to <code>captures/</code>)</li>
+      </ul>
+
+      <p>
+        Full setup details are in the
+        <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/simulator/INSTALL.md">simulator install guide</a>
+        on GitHub.
+      </p>
+    </div>
   </div>
 </section>
