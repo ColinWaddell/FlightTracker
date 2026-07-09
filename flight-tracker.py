@@ -1,6 +1,7 @@
 import os
 import socket
 import sys
+import json
 import threading
 import time
 import logging
@@ -9,6 +10,7 @@ from version import VERSION
 
 from setup.configuration import Config, CONFIG_PATH
 from setup.logging import setup_logging
+from utilities.cli import dispatch_cli_command
 
 # -- Phase 1: Minimal imports for the splash screen -----------------------
 # Only the panel factory + PIL + qrcode are needed here.  Imported before the
@@ -156,6 +158,7 @@ def load_full_interface(panel, canvas, cfg: Config):
     url = f"http://{local_ip()}:{cfg.web_port}/settings"
     print(f"[web] Config interface: {url}", flush=True)
 
+    result: dict = {}
     flask_ready = threading.Event()
 
     # Thread A: Flask (fast - just binds a port)
@@ -202,9 +205,12 @@ def load_full_interface(panel, canvas, cfg: Config):
     display_thread.join()
     flask_thread.join()
 
+    return result
+
 
 def load_minimum_interface(panel, canvas, cfg: Config):
     # No web UI - brief splash, then build display in the background.
+    result: dict = {}
     display_thread = threading.Thread(
         target=display_load,
         args=(panel, canvas, result),
@@ -214,9 +220,10 @@ def load_minimum_interface(panel, canvas, cfg: Config):
     display_thread.start()
     time.sleep(2)
     display_thread.join()
+    return result
 
 
-if __name__ == "__main__":
+def run_flight_tracker():
     setup_logging()
     logger = logging.getLogger("startup")
 
@@ -246,11 +253,11 @@ if __name__ == "__main__":
 
     if cfg.web_interface_enabled:
         logger.info("Web interface enabled - starting full interface")
-        load_full_interface(panel, canvas, cfg)
+        result = load_full_interface(panel, canvas, cfg)
 
     else:
         logger.info("Web interface disabled - starting minimum interface")
-        load_minimum_interface(panel, canvas, cfg)
+        result = load_minimum_interface(panel, canvas, cfg)
 
     if "error" in result:
         logger.error("Display build failed: %s", result["error"])
@@ -262,3 +269,39 @@ if __name__ == "__main__":
 
     # -- Phase 5: Run the main display loop -----------------------------------
     display.run()
+
+
+def _config_exists() -> bool:
+    return CONFIG_PATH.exists()
+
+
+def _warn_no_config() -> None:
+    print(f"No config found at {CONFIG_PATH}", file=sys.stderr)
+    print(
+        "Run the application once or create a config before using this command.",
+        file=sys.stderr,
+    )
+
+
+def _load_existing_config() -> Config | None:
+    if not _config_exists():
+        _warn_no_config()
+        return None
+    return Config.instance()
+
+
+def _save_config_change(key: str, value) -> int:
+    cfg = _load_existing_config()
+    if cfg is None:
+        return 1
+    cfg.set(key, value)
+    cfg.save()
+    print(f"Updated {key} in {CONFIG_PATH}")
+    return 0
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        run_flight_tracker()
+    else:
+        sys.exit(dispatch_cli_command(sys.argv))

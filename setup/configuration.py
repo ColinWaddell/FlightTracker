@@ -10,14 +10,25 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import sys
 import math
 from datetime import datetime, time
 from pathlib import Path
 from typing import Any
 
+try:
+    import platformdirs
+except ModuleNotFoundError:
+    from pip._vendor import platformdirs
+
 ROOT_PATH = Path(__file__).parent.parent
-CONFIG_PATH = ROOT_PATH / "config.json"
+APP_NAME = "FlightTracker"
+APP_AUTHOR = "FlightTracker"
+PLATFORM_DATA_DIR = Path(
+    platformdirs.user_data_dir(APP_NAME, APP_AUTHOR, ensure_exists=True)
+)
+CONFIG_PATH = PLATFORM_DATA_DIR / "config.json"
 LEGACY_PATH = ROOT_PATH / "config.py"
 
 # Sensible defaults - single source of truth for each config key.
@@ -152,6 +163,38 @@ def mins_to_time(m: float) -> time:
 def time_to_mins(t: time) -> int:
     """Convert a ``datetime.time`` to minutes from midnight."""
     return t.hour * 60 + t.minute
+
+
+def _next_backup_path(path: Path) -> Path:
+    backup = path.with_suffix(path.suffix + ".bak")
+    if not backup.exists():
+        return backup
+
+    for index in range(1, 100):
+        candidate = path.with_name(f"{path.name}.bak.{index}")
+        if not candidate.exists():
+            return candidate
+
+    raise FileExistsError(f"Unable to create backup for {path}")
+
+
+def migrate_legacy_json(repo_path: Path, platform_path: Path) -> Path:
+    platform_path.parent.mkdir(parents=True, exist_ok=True)
+    repo_exists = repo_path.exists()
+    platform_exists = platform_path.exists()
+
+    if repo_exists and platform_exists:
+        backup = _next_backup_path(repo_path)
+        repo_path.rename(backup)
+        return platform_path
+
+    if repo_exists:
+        shutil.copy2(repo_path, platform_path)
+        backup = _next_backup_path(repo_path)
+        repo_path.rename(backup)
+        return platform_path
+
+    return platform_path
 
 
 def parse_time(value: Any, default: str = "00:00") -> time:
@@ -356,6 +399,8 @@ class Config:
     # ------------------------------------------------------------------
 
     def load(self):
+        migrate_legacy_json(ROOT_PATH / "config.json", CONFIG_PATH)
+
         if CONFIG_PATH.exists():
             try:
                 with open(CONFIG_PATH) as fh:

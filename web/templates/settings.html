@@ -112,17 +112,17 @@
           </nav>
         </div>
         <div class="menu-section">
-          <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
-          <nav class="nav flex-column">
-            <a class="nav-link" href="#group-display"><i class="bi bi-pip me-2"></i>Display</a>
-            <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
-          </nav>
-        </div>
-        <div class="menu-section">
           <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
           <nav class="nav flex-column">
             <a class="nav-link" href="#group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</a>
             <a class="nav-link" href="#group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</a>
+          </nav>
+        </div>
+        <div class="menu-section">
+          <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
+          <nav class="nav flex-column">
+            <a class="nav-link" href="#group-display"><i class="bi bi-pip me-2"></i>Display</a>
+            <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
           </nav>
         </div>
         <div class="menu-section">
@@ -353,6 +353,106 @@
           })();
         </script>
 
+        <div id="group-clock" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
+
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
+                   {% if cfg.clock_24hr %}checked{% endif %} />
+            <label class="form-check-label" for="clock_24hr">24-hour clock</label>
+          </div>
+
+
+          <div class="mb-2">
+            <label class="form-label small">Date format</label>
+            <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
+              <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
+              <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
+              <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ====== Weather ====== -->
+        <div id="group-weather" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Weather display</label>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
+                     {% if cfg.weather_mode == 0 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='none';document.getElementById('rain_sensitivity_fields').style.display='none'" />
+              <label class="form-check-label" for="weather_off">Off</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
+                     {% if cfg.weather_mode == 1 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='none'" />
+              <label class="form-check-label" for="weather_temp">Temperature</label>
+            </div>
+            <div class="form-check mb-1">
+              <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
+                     {% if cfg.weather_mode == 2 %}checked{% endif %}
+                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='block'" />
+              <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
+            </div>
+            <p class="text-muted small mb-1">
+              The rainfall graph shows the forecast for the next 24 hours, hour by hour.
+            </p>
+            <div id="rain_sensitivity_fields" style="display:{% if cfg.weather_mode == 2 %}block{% else %}none{% endif %}">
+              <label class="form-label small mt-2">Rainfall sensitivity</label>
+              <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:260px">
+                <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Not very rainy - desert / arid (1 mm)</option>
+                <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Moderately rainy - UK / Europe (3 mm)</option>
+                <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>Very rainy - tropics / monsoon (9 mm)</option>
+              </select>
+              <div class="form-text text-muted small">Sets the full-scale value of the graph. Increase if your bars are always full; decrease if they're always empty.</div>
+            </div>
+          </div>
+
+          <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
+            <label class="form-label small">WeatherAPI.com API Key</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
+                   placeholder="Get a free key at weatherapi.com" />
+            <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
+            <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Units</label>
+            <select class="form-select form-select-sm" name="units" style="max-width:180px">
+              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
+              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
+            </select>
+            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
+          </div>
+
+          <div class="card bg-light p-3 mb-3">
+            <h5 class="pb-3">How the rainfall graph works</h5>
+            <div class="row g-3 align-items-center pb-3">
+              <div class="col-12 col-sm-5 text-center">
+                <img src="{{ url_for('static', filename='images/weather_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:150px;" alt="Weather graph example" />
+              </div>
+              <div class="col-12 col-sm-7">
+                <p class="small mb-1">Each column is one hour, the leftmost is <strong>now</strong>.</p>
+                <p class="small mb-0">The height of the column shows how much rain is expected that hour.</p>
+              </div>
+            </div>
+            <hr class="pb-3">
+            <div class="row g-3 align-items-center">
+              <div class="col-12 col-sm-5 text-center">
+                <img src="{{ url_for('static', filename='images/scale_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:75px" alt="Temperature colour scale" />
+              </div>
+              <div class="col-12 col-sm-7">
+                <p class="small mb-0">The colour of each column shows the temperature at that hour.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
         <!-- ====== Display ====== -->
         <div id="group-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-pip me-2"></i>Display</p>
@@ -455,8 +555,8 @@
             <input type="checkbox" class="form-check-input" name="hat_pwm_enabled" id="hat_pwm_enabled"
                    {% if cfg.hat_pwm_enabled %}checked{% endif %} />
             <label class="form-check-label" for="hat_pwm_enabled">Adafruit HAT PWM mode</label>
+            <div class="form-text text-muted small">Has no effect on a Pi 5; only applies to older Pi models using the rgbmatrix library.</div>
           </div>
-
 
           <div class="mb-3">
             <label class="form-label small">GPIO slowdown (1-4)</label>
@@ -481,107 +581,6 @@
                    style="max-width:80px" />
             <div class="form-text text-muted small">An external LED can be used to indicate the search for flights. Requires LED driving circuitry. Leave blank if not required.</div>
           </div>
-        </div>
-
-        <!-- ====== Clock & Date ====== -->
-        <div id="group-clock" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
-
-          <div class="mb-2 form-check">
-            <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
-                   {% if cfg.clock_24hr %}checked{% endif %} />
-            <label class="form-check-label" for="clock_24hr">24-hour clock</label>
-          </div>
-
-
-          <div class="mb-2">
-            <label class="form-label small">Date format</label>
-            <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
-              <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
-              <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
-              <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ====== Weather ====== -->
-        <div id="group-weather" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather</p>
-
-          <div class="mb-3">
-            <label class="form-label small">Weather display</label>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
-                     {% if cfg.weather_mode == 0 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='none';document.getElementById('rain_sensitivity_fields').style.display='none'" />
-              <label class="form-check-label" for="weather_off">Off</label>
-            </div>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
-                     {% if cfg.weather_mode == 1 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='none'" />
-              <label class="form-check-label" for="weather_temp">Temperature</label>
-            </div>
-            <div class="form-check mb-1">
-              <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
-                     {% if cfg.weather_mode == 2 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='block'" />
-              <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
-            </div>
-            <p class="text-muted small mb-1">
-              The rainfall graph shows the forecast for the next 24 hours, hour by hour.
-            </p>
-            <div id="rain_sensitivity_fields" style="display:{% if cfg.weather_mode == 2 %}block{% else %}none{% endif %}">
-              <label class="form-label small mt-2">Rainfall sensitivity</label>
-              <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:260px">
-                <option value="0" {% if cfg.rain_sensitivity == 0 %}selected{% endif %}>Not very rainy - desert / arid (1 mm)</option>
-                <option value="1" {% if cfg.rain_sensitivity == 1 %}selected{% endif %}>Moderately rainy - UK / Europe (3 mm)</option>
-                <option value="2" {% if cfg.rain_sensitivity == 2 %}selected{% endif %}>Very rainy - tropics / monsoon (9 mm)</option>
-              </select>
-              <div class="form-text text-muted small">Sets the full-scale value of the graph. Increase if your bars are always full; decrease if they're always empty.</div>
-            </div>
-          </div>
-
-          <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
-            <label class="form-label small">WeatherAPI.com API Key</label>
-            <input type="text" class="form-control form-control-sm"
-                   name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
-                   placeholder="Get a free key at weatherapi.com" />
-            <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
-            <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small">Units</label>
-            <select class="form-select form-select-sm" name="units" style="max-width:180px">
-              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
-              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
-            </select>
-            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
-          </div>
-
-          <div class="card bg-light p-3 mb-3">
-            <h5 class="pb-3">How the rainfall graph works</h5>
-            <div class="row g-3 align-items-center pb-3">
-              <div class="col-12 col-sm-5 text-center">
-                <img src="{{ url_for('static', filename='images/weather_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:150px;" alt="Weather graph example" />
-              </div>
-              <div class="col-12 col-sm-7">
-                <p class="small mb-1">Each column is one hour, the leftmost is <strong>now</strong>.</p>
-                <p class="small mb-0">The height of the column shows how much rain is expected that hour.</p>
-              </div>
-            </div>
-            <hr class="pb-3">
-            <div class="row g-3 align-items-center">
-              <div class="col-12 col-sm-5 text-center">
-                <img src="{{ url_for('static', filename='images/scale_explained.png') }}" class="img-fluid mx-auto d-block" style="max-height:75px" alt="Temperature colour scale" />
-              </div>
-              <div class="col-12 col-sm-7">
-                <p class="small mb-0">The colour of each column shows the temperature at that hour.</p>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         <!-- ====== Logging ====== -->
