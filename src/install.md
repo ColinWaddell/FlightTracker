@@ -87,7 +87,7 @@ permalink: "/install/"
       </div>
 
       <ol start="2">
-        <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 32-bit if you're on a Pi Zero, otherwise go with 64-bit.</li>
+        <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 64-bit unless you're on a Pi Zero, in which case choose 32-bit.</li>
       </ol>
 
       <div class="card mb-3">
