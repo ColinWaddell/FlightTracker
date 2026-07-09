@@ -8,7 +8,7 @@
 # needed, unlike the Pi 3/4 installer which builds hzeller's rpi-rgb-led-matrix.
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/main/platforms/pi5/install.sh | bash
 #
 
 set -e
@@ -27,7 +27,7 @@ fi
 # ============================================================================
 
 # Git branch to clone
-BRANCH="master"
+BRANCH="main"
 
 # ============================================================================
 # HELPERS
@@ -118,7 +118,7 @@ info "Detected: ${PI_MODEL}"
 if ! echo "$PI_MODEL" | grep -q "Raspberry Pi 5"; then
     error "This script is for Raspberry Pi 5 only. Detected: ${PI_MODEL}"
     error "For Pi 3/4/Zero, use the Pi installer instead:"
-    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi/install.sh | bash"
+    error "  curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/main/platforms/pi/install.sh | bash"
     exit 1
 fi
 
