@@ -15,10 +15,13 @@ import threading
 import time
 from pathlib import Path
 
+from setup.configuration import PLATFORM_DATA_DIR, ROOT_PATH, migrate_legacy_json
+
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 86400  # 24 hours
-CACHE_PATH = Path(__file__).parent.parent / "routes_cache.json"
+CACHE_PATH = PLATFORM_DATA_DIR / "routes_cache.json"
+CACHE_PATH = migrate_legacy_json(ROOT_PATH / "routes_cache.json", CACHE_PATH)
 
 _lock = threading.Lock()
 _cache: dict = {}

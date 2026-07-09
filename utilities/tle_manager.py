@@ -19,7 +19,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from setup.configuration import Config, CONFIG_PATH
+from setup.configuration import Config, CONFIG_PATH, ROOT_PATH, migrate_legacy_json
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 TLE_CACHE_TTL = 86400  # 24 hours
-TLE_CACHE_PATH = CONFIG_PATH.parent / "tle_cache.json"
+TLE_CACHE_PATH = migrate_legacy_json(ROOT_PATH / "tle_cache.json", CONFIG_PATH.parent / "tle_cache.json")
 HTTP_TIMEOUT = 15
 
 GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
