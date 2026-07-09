@@ -1,11 +1,11 @@
 [
   { "icon": "✈", "tile": "accent", "title": "Aircraft callsign" },
   { "icon": "🛩", "tile": "blue", "title": "Aircraft type" },
-  { "icon": "🏢", "tile": "danger", "title": "Airline or operator" },
+  { "icon": "🛰", "tile": "danger", "title": "Satellite passes" },
   { "icon": "→", "tile": "accent", "title": "Origin and destination airports" },
   { "icon": "📊", "tile": "blue", "title": "Altitude, speed, and heading" },
   { "icon": "🕐", "tile": "danger", "title": "Local time and date" },
   { "icon": "°", "tile": "accent", "title": "Temperature and weather" },
   { "icon": "🌧", "tile": "blue", "title": "Rainfall forecast" },
-  { "icon": "🛰", "tile": "danger", "title": "Satellite passes" }
+  { "icon": "🌐", "tile": "danger", "title": "Web Interface" }
 ]

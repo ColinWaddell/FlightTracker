@@ -36,25 +36,25 @@ permalink: "/install/"
     <div class="code-card">
       <div class="code-card-header">
         <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="code-card mt-2">
       <div class="code-card-header">
         <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="narrative mt-3">
-      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/pi5/install.sh">Pi 5</a>.</p>
+      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
   </div>
@@ -183,20 +183,20 @@ permalink: "/install/"
     <div class="code-card">
       <div class="code-card-header">
         <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="code-card mt-2">
       <div class="code-card-header">
         <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash')">Copy</button>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash</code></pre>
       </div>
     </div>
 
@@ -214,7 +214,7 @@ permalink: "/install/"
        <div class="card-header">First boot - scan to configure</div>
       </div>
 
-      <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms/pi"><code>platforms/pi</code></a> and <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms/pi5"><code>platforms/pi5</code></a>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+      <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <a href="https://github.com/ColinWaddell/FlightTracker/tree/main/platforms/pi"><code>platforms/pi</code></a> and <a href="https://github.com/ColinWaddell/FlightTracker/tree/main/platforms/pi5"><code>platforms/pi5</code></a>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
     </div>
 
 
@@ -269,7 +269,7 @@ permalink: "/install/"
       <div class="code-card">
         <div class="code-card-header">
           <span>Update from a zip download, preserving settings</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cp /home/pi/FlightTracker/config.py /tmp/config.py.backup\n\ncd /home/pi/FlightTracker\nfind . -maxdepth 1 -not -name \'env\' -not -name \'.\' -exec rm -rf {} +\n\ncurl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/release/v2.zip -o /tmp/FlightTracker.zip\nunzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src\ncp -r /tmp/FlightTracker-src/FlightTracker-release-v2/. /home/pi/FlightTracker/\n\nsource env/bin/activate\npip install -r requirements.txt\n\ncp /tmp/config.py.backup /home/pi/FlightTracker/config.py\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cp /home/pi/FlightTracker/config.py /tmp/config.py.backup\n\ncd /home/pi/FlightTracker\nfind . -maxdepth 1 -not -name \'env\' -not -name \'.\' -exec rm -rf {} +\n\ncurl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/main.zip -o /tmp/FlightTracker.zip\nunzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src\ncp -r /tmp/FlightTracker-src/FlightTracker-release-v2/. /home/pi/FlightTracker/\n\nsource env/bin/activate\npip install -r requirements.txt\n\ncp /tmp/config.py.backup /home/pi/FlightTracker/config.py\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cp /home/pi/FlightTracker/config.py /tmp/config.py.backup
@@ -277,7 +277,7 @@ permalink: "/install/"
 cd /home/pi/FlightTracker
 find . -maxdepth 1 -not -name 'env' -not -name '.' -exec rm -rf {} +
 
-curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/release/v2.zip -o /tmp/FlightTracker.zip
+curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/main.zip -o /tmp/FlightTracker.zip
 unzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src
 cp -r /tmp/FlightTracker-src/FlightTracker-release-v2/. /home/pi/FlightTracker/
 
@@ -305,12 +305,12 @@ sudo systemctl restart FlightTracker.service</code></pre>
       <div class="code-card">
         <div class="code-card-header">
           <span>Pull the latest code</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit fetch --all\ngit checkout release/v2\ngit pull')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit fetch --all\ngit checkout main\ngit pull')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cd /home/pi/FlightTracker
 git fetch --all
-git checkout release/v2
+git checkout main
 git pull</code></pre>
         </div>
       </div>
@@ -324,12 +324,12 @@ git pull</code></pre>
       <div class="code-card">
         <div class="code-card-header">
           <span>Stash local changes before pulling</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit stash\ngit checkout release/v2\ngit pull')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit stash\ngit checkout main\ngit pull')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cd /home/pi/FlightTracker
 git stash
-git checkout release/v2
+git checkout main
 git pull</code></pre>
         </div>
       </div>
@@ -457,7 +457,7 @@ pip install -r platforms/simulator/requirements.txt</code></pre>
 
       <p>
         Full setup details are in the
-        <a href="https://github.com/ColinWaddell/FlightTracker/blob/release/v2/platforms/simulator/INSTALL.md">simulator install guide</a>
+        <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/simulator/INSTALL.md">simulator install guide</a>
         on GitHub.
       </p>
     </div>
