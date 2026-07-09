@@ -117,7 +117,6 @@ Commands:
   config                 Dump current configuration as JSON
   data                   Print the platform data directory path
   reset-password         Clear web_password_hash in the config
-  webinterface enable    Enable the web interface in the config
   interface enable       Enable the web interface in the config
   interface disable      Disable the web interface in the config
   help                   Show this help message

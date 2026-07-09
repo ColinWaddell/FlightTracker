@@ -43,7 +43,6 @@ def _print_usage() -> None:
     print("  config                 Dump current configuration as JSON")
     print("  data                   Print the platform data directory path")
     print("  reset-password         Clear web_password_hash in the config")
-    print("  webinterface enable    Enable the web interface in the config")
     print("  interface enable       Enable the web interface in the config")
     print("  interface disable      Disable the web interface in the config")
     print("  help                   Show this help message")
@@ -80,7 +79,7 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
 
     if len(argv) == 3:
         action = argv[2].lower()
-        if command in {"webinterface", "interface"} and action in {"enable", "disable"}:
+        if command == "interface" and action in {"enable", "disable"}:
             if not _config_exists():
                 _warn_no_config()
                 return 1
