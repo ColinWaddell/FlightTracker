@@ -7,7 +7,7 @@ This guide covers both fresh installs and upgrades from the previous version of 
 ## Automated install (recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/release/v2/platforms/pi/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/platforms/pi/install.sh | bash
 ```
 
 The installer detects your hardware, clones the repo, creates a virtual environment, installs dependencies (including the hzeller rpi-rgb-led-matrix C++ driver), and sets up a systemd service.

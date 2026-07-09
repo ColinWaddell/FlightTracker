@@ -15,7 +15,7 @@ This guide covers installing FlightTracker on a Raspberry Pi 5 using Adafruit's 
 ## Automated install (recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/release/v2/platforms/pi5/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/master/platforms/pi5/install.sh | bash
 ```
 
 The installer detects your hardware, clones the repo, creates a virtual environment, installs dependencies, and sets up a systemd service.
