@@ -6,10 +6,10 @@ permalink: "/install/"
 ---
 
 <div class="status-bar">
-  <div class="status-item"><a href="#quick-install" class="text-black">Quick Install</a></div>
-  <div class="status-item"><a href="#full-install" class="text-black">Full Install</a></div>
+  <div class="status-item"><a href="#quick-install" class="text-black">Quick install</a></div>
+  <div class="status-item"><a href="#full-install" class="text-black">Full install</a></div>
   <div class="status-item"><a href="#upgrading" class="text-black">Upgrading</a></div>
-  <div class="status-item"><a href="#manual-install" class="text-black">Manual Install</a></div>
+  <div class="status-item"><a href="#manual-install" class="text-black">Manual install</a></div>
 </div>
 
 <section>
@@ -64,13 +64,13 @@ permalink: "/install/"
     <h2 class="section-title">Preparing the SD card</h2>
 
     <div class="narrative">
-      <p>The easiest way to get all the FlightTracker software installed is with a freshly prepared Raspberry Pi. The quick-installer script assumes it's running on a fresh install of Raspberry Pi OS, Trixie.</p>
+      <p>The easiest way to get all the FlightTracker software installed is with a freshly prepared Raspberry Pi. The installer script assumes it's running on a fresh install of Raspberry Pi OS Trixie.</p>
       <p>These instructions are a walk-through of how to use the Raspberry Pi Imager for those unfamiliar with these tools.</p>
 
       <p>First, download and install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your computer.</p>
 
       <div class="alert alert-info border-info border-2" role="alert">
-        <p class="mb-0">Use a decent quality microSD card with at least <strong>8GB</strong> of space. Cheap cards can cause random crashes, slow installs and have a higher chance of randomly dying.</p>
+        <p class="mb-0">Use a decent quality microSD card with at least <strong>8GB</strong> of space. Cheap cards can cause random crashes and slow installs, and they have a higher chance of randomly dying.</p>
       </div>
 
       <p>Stick a microSD card into your computer and open the Imager. The steps are:</p>
@@ -87,7 +87,7 @@ permalink: "/install/"
       </div>
 
       <ol start="2">
-        <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just wastes resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 32-bit if you're on a Pi Zero, otherwise go with 64-bit.</li>
+        <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 32-bit if you're on a Pi Zero, otherwise go with 64-bit.</li>
       </ol>
 
       <div class="card mb-3">
@@ -123,10 +123,6 @@ permalink: "/install/"
               <img src="/images/installer/004_choose_wifi.png" alt="Raspberry Pi Imager OS customisation screen showing Wi-Fi configuration" loading="lazy" class="w-100 d-block">
             </div>
           </div>
-
-          <ul>
-            <li><strong>SSH</strong> - under the Services tab, tick <em>Enable SSH</em> and choose <em>Use password authentication</em>. Unless you know what you're doing with SSH keys, password-based login is the simplest way to get going.</li>
-          </ul>
 
           <div class="card mb-3">
             <div class="card-header">Enable SSH</div>
@@ -217,7 +213,7 @@ permalink: "/install/"
        <div class="card-header">First boot - scan to configure</div>
       </div>
 
-      <p>If anything goes wrong, the full manual install steps are in the <a href="https://github.com/ColinWaddell/FlightTracker/tree/release/v2/platforms">platforms folder on GitHub</a>, and you can <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+      <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <code>platforms/pi</code> and <code>platforms/pi5</code>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
     </div>
 
 
@@ -226,13 +222,12 @@ permalink: "/install/"
       <h2 class="section-title" id="upgrading">Upgrading from FlightTracker v1 to v2</h2>
 
       <p>
-        I'd recommend a clean-install by wiping your SD card and starting from scratch. If that's not an option
-        then you should be able to stop the the current code from running and swapping out the source code
+        I'd recommend a clean install by wiping your SD card and starting from scratch. If that's not an option, you should be able to stop the current code from running and swap out the source code
         for the latest version.
-      </p> 
+      </p>
 
       <p>
-        If you've customized the code you're trying to update path you're probably going to have a bad to
+        If you've customised the code, you're probably going to have a bad time trying to update in place,
         as a huge amount has been rewritten between v1 and v2.
       </p>
 
@@ -273,7 +268,7 @@ permalink: "/install/"
       <div class="code-card">
         <div class="code-card-header">
           <span>Update from a zip download, preserving settings</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cp /home/pi/FlightTracker/config.py /tmp/config.py.backup\n\ncd /home/pi/FlightTracker\nfind . -maxdepth 1 -not -name \'env\' -not -name \'.\' -exec rm -rf {} +\n\ncurl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/master.zip -o /tmp/FlightTracker.zip\nunzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src\ncp -r /tmp/FlightTracker-src/*/* /home/pi/FlightTracker/\n\nsource env/bin/activate\npip install -r requirements.txt\n\ncp /tmp/config.py.backup /home/pi/FlightTracker/config.py\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cp /home/pi/FlightTracker/config.py /tmp/config.py.backup\n\ncd /home/pi/FlightTracker\nfind . -maxdepth 1 -not -name \'env\' -not -name \'.\' -exec rm -rf {} +\n\ncurl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/release/v2.zip -o /tmp/FlightTracker.zip\nunzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src\ncp -r /tmp/FlightTracker-src/FlightTracker-release-v2/. /home/pi/FlightTracker/\n\nsource env/bin/activate\npip install -r requirements.txt\n\ncp /tmp/config.py.backup /home/pi/FlightTracker/config.py\n\nsudo systemctl restart FlightTracker.service')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cp /home/pi/FlightTracker/config.py /tmp/config.py.backup
@@ -281,9 +276,9 @@ permalink: "/install/"
 cd /home/pi/FlightTracker
 find . -maxdepth 1 -not -name 'env' -not -name '.' -exec rm -rf {} +
 
-curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/master.zip -o /tmp/FlightTracker.zip
+curl -sSL https://github.com/ColinWaddell/FlightTracker/archive/refs/heads/release/v2.zip -o /tmp/FlightTracker.zip
 unzip -q /tmp/FlightTracker.zip -d /tmp/FlightTracker-src
-cp -r /tmp/FlightTracker-src/ /home/pi/FlightTracker/
+cp -r /tmp/FlightTracker-src/FlightTracker-release-v2/. /home/pi/FlightTracker/
 
 source env/bin/activate
 pip install -r requirements.txt
@@ -299,7 +294,7 @@ sudo systemctl restart FlightTracker.service</code></pre>
         <code>config.json</code> automatically.
       </p>
 
-      <h3>You installed the original using git-clone</h3>
+      <h3>You installed the original using git clone</h3>
 
       <p>
         If you originally cloned the repository with <code>git clone</code>, upgrading is
@@ -309,12 +304,12 @@ sudo systemctl restart FlightTracker.service</code></pre>
       <div class="code-card">
         <div class="code-card-header">
           <span>Pull the latest code</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit fetch --all\ngit checkout master\ngit pull')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit fetch --all\ngit checkout release/v2\ngit pull')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cd /home/pi/FlightTracker
 git fetch --all
-git checkout master
+git checkout release/v2
 git pull</code></pre>
         </div>
       </div>
@@ -328,12 +323,12 @@ git pull</code></pre>
       <div class="code-card">
         <div class="code-card-header">
           <span>Stash local changes before pulling</span>
-          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit stash\ngit checkout master\ngit pull')">Copy</button>
+          <button class="code-card-copy" onclick="copyCode(this, 'cd /home/pi/FlightTracker\ngit stash\ngit checkout release/v2\ngit pull')">Copy</button>
         </div>
         <div class="code-card-body">
           <pre><code>cd /home/pi/FlightTracker
 git stash
-git checkout master
+git checkout release/v2
 git pull</code></pre>
         </div>
       </div>

@@ -25,8 +25,8 @@ permalink: "/"
             </div>
             <div class="hero-carousel-slide" data-type="video">
               <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-                <source src="images/captures/pass_preview.mp4" type="video/mp4">
-                <source src="images/captures/pass_preview.webm" type="video/webm">
+                <source src="images/captures/pass-preview.mp4" type="video/mp4">
+                <source src="images/captures/pass-preview.webm" type="video/webm">
               </video>
             </div>
             <div class="hero-carousel-slide" data-type="image">
@@ -34,8 +34,8 @@ permalink: "/"
             </div>
             <div class="hero-carousel-slide" data-type="video">
               <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-                <source src="images/captures/Satellite pass.mp4" type="video/mp4">
-                <source src="images/captures/Satellite pass.webm" type="video/webm">
+                <source src="images/captures/satellite-pass.mp4" type="video/mp4">
+                <source src="images/captures/satellite-pass.webm" type="video/webm">
               </video>
             </div>
           </div>
@@ -87,52 +87,7 @@ permalink: "/"
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 g-3 mt-3">
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body p-0">
-            <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-              <source src="images/captures/full names and plane type.mp4" type="video/mp4">
-              <source src="images/captures/full names and plane type.webm" type="video/webm">
-            </video>
-          </div>
-          <div class="card-header">Full airport names + aircraft type</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body p-0">
-            <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-              <source src="images/captures/full names and tlm.mp4" type="video/mp4">
-              <source src="images/captures/full names and tlm.webm" type="video/webm">
-            </video>
-          </div>
-          <div class="card-header">Full airport names + telemetry</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body p-0">
-            <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-              <source src="images/captures/short names and plane type.mp4" type="video/mp4">
-              <source src="images/captures/short names and plane type.webm" type="video/webm">
-            </video>
-          </div>
-          <div class="card-header">Short airport codes + aircraft type</div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-              <source src="images/captures/short names and tlm.mp4" type="video/mp4">
-              <source src="images/captures/short names and tlm.webm" type="video/webm">
-            </video>
-          </div>
-          <div class="card-header">Short airport codes + telemetry</div>
-        </div>
-      </div>
-    </div>
+    {% include "display-modes.njk" %}
   </div>
 </section>
 
@@ -204,7 +159,7 @@ permalink: "/"
     {% include "theme-swatches.njk" %}
 
     <div class="narrative mb-4">
-      <p><em>Looking for a way to contribute? New themes are somewhere <a href="{{ site.repo }}">I'd love some help</a>.</em></p>
+      <p><em>Looking for a way to contribute? I'd love some help adding new themes.</em></p>
     </div>
   </div>
 </section>
@@ -225,7 +180,7 @@ permalink: "/"
     </div>
 
     <div class="narrative">
-      <p>The screen can be configured to dim through-out the night or even switch off.</p>
+      <p>The screen can be configured to dim throughout the night or even switch off.</p>
     </div>
   </div>
 </section>
@@ -241,8 +196,8 @@ permalink: "/"
     <div class="card">
       <div class="card-body p-2 bg-black">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-          <source src="images/captures/Satellite pass.mp4" type="video/mp4">
-          <source src="images/captures/Satellite pass.webm" type="video/webm">
+          <source src="images/captures/satellite-pass.mp4" type="video/mp4">
+          <source src="images/captures/satellite-pass.webm" type="video/webm">
         </video>
       </div>
       <div class="card-header">ISS pass - azimuth/elevation plot with speed and altitude</div>
