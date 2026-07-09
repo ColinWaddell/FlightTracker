@@ -467,6 +467,16 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label small">Animation speed</label>
+            <select class="form-select form-select-sm" name="display_speed" style="max-width:220px">
+              <option value="default" {% if cfg.display_speed == 'default' %}selected{% endif %}>Default</option>
+              <option value="slower" {% if cfg.display_speed == 'slower' %}selected{% endif %}>Slower</option>
+              <option value="faster" {% if cfg.display_speed == 'faster' %}selected{% endif %}>Faster</option>
+            </select>
+            <div class="form-text text-muted small">Adjust how quickly the display updates and animates.</div>
+          </div>
+
+          <div class="mb-3">
             <label class="form-label small">Brightness: <span id="brightness_display">{{ cfg.screen_brightness }}</span>/5</label>
             <input type="range" class="form-range pt-3 px-2" name="screen_brightness" id="screen_brightness"
                    min="1" max="5" step="1" value="{{ cfg.screen_brightness }}" style="max-width:240px" />

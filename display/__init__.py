@@ -94,6 +94,8 @@ def build_display_class():
 
             self.loading = IndicatorClass(self.canvas, self.panel, overhead)
             self.frames = frames
+            self.frame_period = max(0.001, self.frames.PERIOD * cfg.display_speed_factor)
+            self.brightness_update_interval = max(1, int(round(1 / self.frame_period)))
 
         def update_brightness(self):
             cfg = Config.instance()
@@ -116,7 +118,7 @@ def build_display_class():
                 while True:
                     start = perf_counter()
 
-                    if not (frame % int(self.frames.PER_SECOND)):
+                    if not (frame % self.brightness_update_interval):
                         self.update_brightness()
 
                     self.scene_manager.kick()
@@ -128,11 +130,9 @@ def build_display_class():
                     frame += 1
 
                     elapsed = perf_counter() - start
-                    sleep_time = self.frames.PERIOD - elapsed
+                    sleep_time = self.frame_period - elapsed
                     if sleep_time < 0.001:
                         sleep_time = 0.001
-                    elif sleep_time > 0.05:
-                        sleep_time = 0.05
                     sleep(sleep_time)
 
             except KeyboardInterrupt:

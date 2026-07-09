@@ -161,6 +161,12 @@ def parse_settings_form(form, cfg) -> dict:
         "theme": int_val(form.get("theme"), 0),
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),
+        "display_speed": (
+            str_val(form.get("display_speed"), cfg.display_speed).lower()
+            if str_val(form.get("display_speed"), cfg.display_speed).lower()
+            in ("default", "slower", "faster")
+            else cfg.display_speed
+        ),
         # Brightness schedule
         "screen_schedule_enabled": bool_val(form.get("screen_schedule_enabled")),
         "screen_schedule_auto": bool_val(form.get("screen_schedule_auto")),

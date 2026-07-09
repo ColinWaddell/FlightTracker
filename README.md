@@ -165,6 +165,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `theme` | `0` = default, `1` = monochrome, `2` = pastel | `0` |
 | `screen_brightness` | Display brightness from `1` (dim) to `5` (full) | `3` |
 | `screen_rotate` | Rotate the display by 180° | `false` |
+| `display_speed` | Animation speed preset: `default`, `slower`, or `faster` | `"default"` |
 | `screen_schedule_enabled` | Enable scheduled brightness changes | `false` |
 | `screen_schedule_auto` | Use the brightness schedule automatically | `false` |
 | `screen_schedule_start` | Schedule start time (`HH:MM`) | `"22:00"` |

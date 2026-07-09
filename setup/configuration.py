@@ -62,6 +62,7 @@ DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
 DEFAULT_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel
 DEFAULT_SCREEN_BRIGHTNESS = 3  # 1-5
 DEFAULT_SCREEN_ROTATE = False
+DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
 
 # Brightness schedule
 DEFAULT_SCREEN_SCHEDULE_ENABLED = False
@@ -122,6 +123,7 @@ DEFAULTS: dict[str, Any] = {
     "theme": DEFAULT_THEME,
     "screen_brightness": DEFAULT_SCREEN_BRIGHTNESS,
     "screen_rotate": DEFAULT_SCREEN_ROTATE,
+    "display_speed": DEFAULT_DISPLAY_SPEED,
     # Brightness schedule
     "screen_schedule_enabled": DEFAULT_SCREEN_SCHEDULE_ENABLED,
     "screen_schedule_auto": DEFAULT_SCREEN_SCHEDULE_AUTO,
@@ -552,6 +554,17 @@ class Config:
     @property
     def screen_rotate(self) -> bool:
         return bool(self.data_store.get("screen_rotate", DEFAULT_SCREEN_ROTATE))
+
+    @property
+    def display_speed(self) -> str:
+        val = str(self.data_store.get("display_speed", DEFAULT_DISPLAY_SPEED)).lower()
+        return val if val in ("default", "slower", "faster") else DEFAULT_DISPLAY_SPEED
+
+    @property
+    def display_speed_factor(self) -> float:
+        return {"default": 1.0, "slower": 2.0, "faster": 0.5}.get(
+            self.display_speed, 1.0
+        )
 
     @property
     def screen_schedule_enabled(self) -> bool:
