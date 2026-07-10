@@ -363,6 +363,12 @@ def settings():
     )
 
 
+@app.route("/ping")
+def ping():
+    """Health-check endpoint used by the restarting page to detect a successful reboot."""
+    return "ok", 200
+
+
 AIRPORTS_JSON: str | None = None
 
 
