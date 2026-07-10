@@ -358,6 +358,22 @@
               </div>
             </div>
 
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="satellite_timeout_enabled"
+                     name="satellite_timeout_enabled" value="1"
+                     {% if cfg.satellite_timeout_enabled %}checked{% endif %}
+                     onchange="document.getElementById('satellite_timeout_fields').style.display=this.checked?'block':'none'" />
+              <label class="form-check-label small" for="satellite_timeout_enabled">Limit display time per pass</label>
+            </div>
+
+            <div id="satellite_timeout_fields" class="mb-2" style="display:{% if cfg.satellite_timeout_enabled %}block{% else %}none{% endif %}">
+              <label class="form-label small" for="satellite_timeout_seconds">Timeout (seconds)</label>
+              <input type="number" class="form-control form-control-sm" id="satellite_timeout_seconds"
+                     name="satellite_timeout_seconds" value="{{ cfg.satellite_timeout_seconds }}"
+                     min="5" max="3600" style="width:6rem" />
+              <div class="form-text text-muted small">The satellite scene will yield to flight tracking after this many seconds from a pass's start (AOS), even if the satellite is still overhead. A new pass beginning within the window will keep the scene active.</div>
+            </div>
+
           </div>
         </div>
 

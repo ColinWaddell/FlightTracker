@@ -218,6 +218,10 @@ def parse_settings_form(form, cfg) -> dict:
         "satellite_max_count": max(
             1, min(10, int_val(form.get("satellite_max_count"), 5))
         ),
+        "satellite_timeout_enabled": bool_val(form.get("satellite_timeout_enabled")),
+        "satellite_timeout_seconds": max(
+            5, min(3600, int_val(form.get("satellite_timeout_seconds"), 30))
+        ),
     }
 
 
@@ -330,7 +334,11 @@ def settings():
             return (
                 render_template(
                     "settings.html",
-                    cfg={**cfg.as_dict(), **new_data} if 'new_data' in locals() else cfg.as_dict(),
+                    cfg=(
+                        {**cfg.as_dict(), **new_data}
+                        if "new_data" in locals()
+                        else cfg.as_dict()
+                    ),
                     airports_json=airports_json(),
                     error=str(exc),
                     csrf_token=csrf_token(),
@@ -447,9 +455,7 @@ def logs_download():
     return Response(
         payload,
         mimetype="text/plain",
-        headers={
-            "Content-Disposition": "attachment; filename=flighttracker-logs.txt"
-        },
+        headers={"Content-Disposition": "attachment; filename=flighttracker-logs.txt"},
     )
 
 
@@ -481,33 +487,42 @@ def update_check():
 def update_apply():
     """Apply an update by checking out the given tag and restarting."""
     if not validate_csrf(request.form):
-        return render_template(
-            "update.html",
-            info=get_update_info(),
-            csrf_token=csrf_token(),
-            error="Invalid CSRF token.",
-        ), 403
+        return (
+            render_template(
+                "update.html",
+                info=get_update_info(),
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+            ),
+            403,
+        )
 
     tag = request.form.get("tag", "").strip()
     if not tag:
-        return render_template(
-            "update.html",
-            info=get_update_info(),
-            csrf_token=csrf_token(),
-            error="No tag specified.",
-        ), 400
+        return (
+            render_template(
+                "update.html",
+                info=get_update_info(),
+                csrf_token=csrf_token(),
+                error="No tag specified.",
+            ),
+            400,
+        )
 
     logger.info("Applying update to tag %s", tag)
     success, message = perform_update(tag)
 
     if not success:
         logger.error("Update failed: %s", message)
-        return render_template(
-            "update.html",
-            info=get_update_info(),
-            csrf_token=csrf_token(),
-            error=message,
-        ), 500
+        return (
+            render_template(
+                "update.html",
+                info=get_update_info(),
+                csrf_token=csrf_token(),
+                error=message,
+            ),
+            500,
+        )
 
     logger.info("Update succeeded, restarting...")
     restart_after(delay=2.0)

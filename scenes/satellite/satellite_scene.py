@@ -102,7 +102,14 @@ class SatelliteScene:
             self.recompute_passes(cfg)
 
     def has_data(self) -> bool:
-        return bool(passes_mod.current_passes(self.pass_windows))
+        cfg = Config.instance()
+        return bool(
+            passes_mod.visible_passes(
+                self.pass_windows,
+                cfg.satellite_timeout_enabled,
+                cfg.satellite_timeout_seconds,
+            )
+        )
 
     def active(self) -> bool:
         return self.has_data()
@@ -136,7 +143,9 @@ class SatelliteScene:
         # Draw ring once (persists across frames)
         if not self.ring_drawn:
             # Clear plot area before redrawing ring + trajectories
-            self.panel.draw_square(self.canvas, 0, 0, 31, screen.HEIGHT, Colour(0, 0, 0))
+            self.panel.draw_square(
+                self.canvas, 0, 0, 31, screen.HEIGHT, Colour(0, 0, 0)
+            )
             azel_plot.draw_horizon_ring(self.panel, self.canvas)
             self.draw_trajectories(active)
             self.ring_drawn = True
@@ -183,7 +192,9 @@ class SatelliteScene:
         """Paint dim trajectory arcs for all currently active passes."""
         for window in active:
             traj_2d = [(az, el) for az, el, _, _ in window.trajectory]
-            azel_plot.draw_trajectory(self.panel, self.canvas, traj_2d, window.tle_index)
+            azel_plot.draw_trajectory(
+                self.panel, self.canvas, traj_2d, window.tle_index
+            )
 
     def draw_positions(self, active: list[passes_mod.PassWindow]) -> None:
         """
@@ -218,18 +229,28 @@ class SatelliteScene:
                 # First frame or blink toggled - redraw
                 if old is not None:
                     old_px, old_py, old_idx = old
-                    azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
+                    azel_plot.draw_trail_pixel(
+                        self.panel, self.canvas, old_px, old_py, old_idx
+                    )
                 if self.blink_on:
-                    azel_plot.draw_position(self.panel, self.canvas, az, el, window.tle_index)
+                    azel_plot.draw_position(
+                        self.panel, self.canvas, az, el, window.tle_index
+                    )
                 else:
-                    azel_plot.draw_trail_pixel(self.panel, self.canvas, px, py, window.tle_index)
+                    azel_plot.draw_trail_pixel(
+                        self.panel, self.canvas, px, py, window.tle_index
+                    )
             else:
                 old_px, old_py, old_idx = old
                 if (px, py) != (old_px, old_py):
                     # Pixel changed: dim the old, draw the new (respecting blink)
-                    azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
+                    azel_plot.draw_trail_pixel(
+                        self.panel, self.canvas, old_px, old_py, old_idx
+                    )
                     if self.blink_on:
-                        azel_plot.draw_position(self.panel, self.canvas, az, el, window.tle_index)
+                        azel_plot.draw_position(
+                            self.panel, self.canvas, az, el, window.tle_index
+                        )
                     else:
                         azel_plot.draw_trail_pixel(
                             self.panel, self.canvas, px, py, window.tle_index
@@ -238,7 +259,9 @@ class SatelliteScene:
         # Dim any satellites that were active last frame but aren't now
         for name, (old_px, old_py, old_idx) in self.last_positions.items():
             if name not in new_positions:
-                azel_plot.draw_trail_pixel(self.panel, self.canvas, old_px, old_py, old_idx)
+                azel_plot.draw_trail_pixel(
+                    self.panel, self.canvas, old_px, old_py, old_idx
+                )
 
         self.last_positions = new_positions
         self.last_blink_on = self.blink_on

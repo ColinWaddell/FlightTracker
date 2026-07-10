@@ -55,7 +55,9 @@ DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
 DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
-DEFAULT_RAIN_SENSITIVITY = 1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
+DEFAULT_RAIN_SENSITIVITY = (
+    1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
+)
 DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
 
 # Display
@@ -90,13 +92,19 @@ DEFAULT_LOADING_LED_GPIO_PIN = ""
 DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
-DEFAULT_CALLSIGN_FORMAT = "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
+DEFAULT_CALLSIGN_FORMAT = (
+    "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
+)
 
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
 DEFAULT_SATELLITE_NORAD_IDS = [25544]  # ISS (ZARYA) = 25544; celestrak.org for others
 DEFAULT_SATELLITE_MIN_ELEVATION = 20  # degrees - passes peaking below this are ignored
 DEFAULT_SATELLITE_MAX_COUNT = 5  # max simultaneous satellites to plot
+DEFAULT_SATELLITE_TIMEOUT_ENABLED = False  # cap how long the scene is shown per pass
+DEFAULT_SATELLITE_TIMEOUT_SECONDS = (
+    30  # seconds from AOS before the scene yields to lower-priority scenes
+)
 
 # Logging
 DEFAULT_LOG_LEVEL = "INFO"  # DEBUG / INFO / WARNING / ERROR / CRITICAL
@@ -153,6 +161,8 @@ DEFAULTS: dict[str, Any] = {
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
     "satellite_min_elevation": DEFAULT_SATELLITE_MIN_ELEVATION,
     "satellite_max_count": DEFAULT_SATELLITE_MAX_COUNT,
+    "satellite_timeout_enabled": DEFAULT_SATELLITE_TIMEOUT_ENABLED,
+    "satellite_timeout_seconds": DEFAULT_SATELLITE_TIMEOUT_SECONDS,
     # Logging
     "log_level": DEFAULT_LOG_LEVEL,
 }
@@ -524,7 +534,11 @@ class Config:
     def rain_sensitivity(self) -> int:
         """Graph full-scale mm/hr: 0 = 1mm (dry), 1 = 3mm (moderate), 2 = 9mm (wet)."""
         return max(
-            0, min(2, int(self.data_store.get("rain_sensitivity", DEFAULT_RAIN_SENSITIVITY)))
+            0,
+            min(
+                2,
+                int(self.data_store.get("rain_sensitivity", DEFAULT_RAIN_SENSITIVITY)),
+            ),
         )
 
     @property
@@ -718,7 +732,9 @@ class Config:
 
     @property
     def callsign_format(self) -> str:
-        val = str(self.data_store.get("callsign_format", DEFAULT_CALLSIGN_FORMAT)).lower()
+        val = str(
+            self.data_store.get("callsign_format", DEFAULT_CALLSIGN_FORMAT)
+        ).lower()
         return val if val in ("icao", "iata") else DEFAULT_CALLSIGN_FORMAT
 
     @property
@@ -775,6 +791,32 @@ class Config:
             )
         except (TypeError, ValueError):
             return DEFAULT_SATELLITE_MAX_COUNT
+
+    @property
+    def satellite_timeout_enabled(self) -> bool:
+        return bool(
+            self.data_store.get(
+                "satellite_timeout_enabled", DEFAULT_SATELLITE_TIMEOUT_ENABLED
+            )
+        )
+
+    @property
+    def satellite_timeout_seconds(self) -> int:
+        try:
+            return max(
+                5,
+                min(
+                    3600,
+                    int(
+                        self.data_store.get(
+                            "satellite_timeout_seconds",
+                            DEFAULT_SATELLITE_TIMEOUT_SECONDS,
+                        )
+                    ),
+                ),
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_SATELLITE_TIMEOUT_SECONDS
 
     @property
     def log_level(self) -> str:

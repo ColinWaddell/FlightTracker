@@ -365,6 +365,25 @@ def current_passes(windows: list[PassWindow]) -> list[PassWindow]:
     return [w for w in windows if w.aos <= now <= w.los]
 
 
+def visible_passes(
+    windows: list[PassWindow],
+    timeout_enabled: bool,
+    timeout_seconds: int,
+) -> list[PassWindow]:
+    """Return passes that are active AND within their per-pass timeout.
+
+    When *timeout_enabled* is False (or *timeout_seconds* <= 0) this is
+    identical to :func:`current_passes`.  When enabled, a pass is only
+    considered visible while ``now - AOS < timeout_seconds``, so the scene
+    yields to lower-priority scenes even if the satellite is still overhead.
+    """
+    active = current_passes(windows)
+    if not timeout_enabled or timeout_seconds <= 0:
+        return active
+    now = datetime.datetime.utcnow()
+    return [w for w in active if (now - w.aos).total_seconds() < timeout_seconds]
+
+
 def current_position(window: PassWindow) -> tuple[float, float] | None:
     """
     Interpolate the current Az/El for an active pass.

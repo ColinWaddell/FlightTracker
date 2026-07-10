@@ -188,6 +188,8 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `satellite_norad_ids` | NORAD IDs for tracked satellites | `[25544]` |
 | `satellite_min_elevation` | Minimum elevation for satellite passes | `20` |
 | `satellite_max_count` | Maximum number of satellites to plot at once | `5` |
+| `satellite_timeout_enabled` | Limit how long the satellite scene is shown per pass | `false` |
+| `satellite_timeout_seconds` | Seconds from a pass's start (AOS) before the scene yields to flight tracking | `30` |
 | `log_level` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` | `"INFO"` |
 
 ---
