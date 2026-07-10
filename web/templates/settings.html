@@ -151,7 +151,7 @@
             <div class="btn-group w-100 mb-1" role="group" aria-label="Tracking mode">
               <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_simple" value="simple" autocomplete="off"
                      {% if cfg.flight_location_mode != 'advanced' %}checked{% endif %}
-                     onchange="document.getElementById('simple_tracking').style.display='block';document.getElementById('advanced_tracking').style.display='none';document.getElementById('mode_help_advanced').style.display='none';document.getElementById('mode_help_simple').style.display='block'" />
+                     onchange="document.getElementById('simple_tracking').style.display='block';document.getElementById('advanced_tracking').style.display='none';document.getElementById('mode_help_advanced').style.display='none';document.getElementById('mode_help_simple').style.display='block';setTimeout(function(){map.invalidateSize();map.fitBounds(circle.getBounds(),{padding:[20,20]})},50)" />
               <label class="btn btn-outline-primary btn-sm" for="location_mode_simple"><i class="bi bi-circle me-1"></i>Simple</label>
 
               <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_advanced" value="advanced" autocomplete="off"
@@ -1120,7 +1120,16 @@ const AdvLockControl = L.Control.extend({
 advMap.addControl(new AdvLockControl());
 setAdvMapLocked(true);
 
-// If the page loads in advanced mode, the map was initialised while hidden.
+// If the page loads in advanced mode, the simple map was initialised while hidden.
+// Fix the tile layout and zoom to fit the circle once the browser has laid out the container.
+setTimeout(function() {
+  if (document.getElementById('simple_tracking').style.display !== 'none') {
+    map.invalidateSize();
+    map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+  }
+}, 100);
+
+// If the page loads in advanced mode, the advanced map was initialised while hidden.
 // Fix the tile layout and zoom to fit the rectangle once the browser has laid out the container.
 setTimeout(function() {
   if (document.getElementById('advanced_tracking').style.display !== 'none') {
