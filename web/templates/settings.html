@@ -151,15 +151,25 @@
             <div class="btn-group w-100 mb-1" role="group" aria-label="Tracking mode">
               <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_simple" value="simple" autocomplete="off"
                      {% if cfg.flight_location_mode != 'advanced' %}checked{% endif %}
-                     onchange="document.getElementById('simple_tracking').style.display='block';document.getElementById('advanced_tracking').style.display='none'" />
+                     onchange="document.getElementById('simple_tracking').style.display='block';document.getElementById('advanced_tracking').style.display='none';document.getElementById('mode_help_advanced').style.display='none';document.getElementById('mode_help_simple').style.display='block'" />
               <label class="btn btn-outline-primary btn-sm" for="location_mode_simple"><i class="bi bi-circle me-1"></i>Simple</label>
 
               <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_advanced" value="advanced" autocomplete="off"
                      {% if cfg.flight_location_mode == 'advanced' %}checked{% endif %}
-                     onchange="document.getElementById('simple_tracking').style.display='none';document.getElementById('advanced_tracking').style.display='block';setTimeout(function(){advMap.invalidateSize();advMap.fitBounds(advRect.getBounds(),{padding:[20,20]})},50)" />
+                     onchange="document.getElementById('simple_tracking').style.display='none';document.getElementById('advanced_tracking').style.display='block';document.getElementById('mode_help_simple').style.display='none';document.getElementById('mode_help_advanced').style.display='block';setTimeout(function(){advMap.invalidateSize();advMap.fitBounds(advRect.getBounds(),{padding:[20,20]})},50)" />
               <label class="btn btn-outline-primary btn-sm" for="location_mode_advanced"><i class="bi bi-bounding-box me-1"></i>Advanced</label>
             </div>
-            <div class="form-text text-muted small">Simple: set a centre point and search radius. Advanced: draw a search box and place your observer location.</div>
+            <div id="mode_help_simple" class="form-text text-muted small" style="display:{% if cfg.flight_location_mode != 'advanced' %}block{% else %}none{% endif %}">
+              Set a centre point and search radius. The bounding box for flight data queries and your observer location (used for weather, satellite passes, and distance sorting) are both derived from this point.
+            </div>
+            <div id="mode_help_advanced" class="form-text text-muted small" style="display:{% if cfg.flight_location_mode == 'advanced' %}block{% else %}none{% endif %}">
+              Draw a search box for flight data queries and place your observer location separately. The observer location is used for weather, satellite passes, and distance sorting.
+              <ul class="mb-0 mt-1 ps-3">
+                <li><strong>Single click:</strong> move the observer marker to the clicked location</li>
+                <li><strong>Drag:</strong> drag the marker or the box corners to adjust their positions</li>
+                <li><strong>Double click:</strong> set the observer marker and centre a 10&nbsp;km search box around the clicked location</li>
+              </ul>
+            </div>
           </div>
 
           <div id="simple_tracking" style="display:{% if cfg.flight_location_mode != 'advanced' %}block{% else %}none{% endif %}">
@@ -927,7 +937,7 @@ const advBrX = parseFloat(document.getElementById("flight_zone_br_x").value);
 const advObsLat = parseFloat(document.getElementById("flight_observer_lat").value);
 const advObsLng = parseFloat(document.getElementById("flight_observer_lng").value);
 
-const advMap = L.map("map_advanced").setView([advObsLat, advObsLng], 10);
+const advMap = L.map("map_advanced", { doubleClickZoom: false }).setView([advObsLat, advObsLng], 10);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors", maxZoom: 18,
 }).addTo(advMap);
@@ -1008,6 +1018,30 @@ advMap.on("click", e => {
     advMarker.setLatLng(e.latlng);
     syncAdvMarker(e.latlng.lat, e.latlng.lng);
   }
+});
+
+// Double-click: set observer + centre a 10 km box around the location
+advMap.on("dblclick", e => {
+  if (advMapLocked) return;
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+  advMarker.setLatLng(e.latlng);
+  syncAdvMarker(lat, lng);
+  const boxLatDeg = 10 / 111.0;
+  const boxLngDeg = 10 / (111.0 * Math.cos(lat * Math.PI / 180));
+  // Disable Geoman editing, remove old rect, create a fresh one
+  advRect.pm.disable();
+  advMap.removeLayer(advRect);
+  advRect = L.rectangle(
+    [[lat + boxLatDeg, lng - boxLngDeg], [lat - boxLatDeg, lng + boxLngDeg]],
+    { color: "#198754", weight: 2, fillOpacity: 0.1 }
+  ).addTo(advMap);
+  advRect.pm.enable({ snappable: false, preventIntersection: false });
+  advRect.on("pm:edit", () => syncAdvRect());
+  advRect.on("pm:dragend", () => syncAdvRect());
+  advRect.on("pm:resize", () => syncAdvRect());
+  syncAdvRect();
+  advMap.fitBounds(advRect.getBounds(), { padding: [20, 20] });
 });
 
 document.getElementById("observer_lat_display").addEventListener("change", () => {
