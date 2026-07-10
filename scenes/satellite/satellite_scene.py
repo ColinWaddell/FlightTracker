@@ -169,8 +169,8 @@ class SatelliteScene:
         try:
             self.pass_windows = passes_mod.compute_passes(
                 tles,
-                cfg.flight_lat,
-                cfg.flight_lng,
+                cfg.observer_lat,
+                cfg.observer_lng,
                 cfg.satellite_min_elevation,
                 cfg.satellite_max_count,
             )
