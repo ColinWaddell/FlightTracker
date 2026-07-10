@@ -148,18 +148,18 @@
 
           <div class="mb-3">
             <label class="form-label small">Tracking mode</label>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="flight_location_mode" id="location_mode_simple" value="simple"
+            <div class="btn-group w-100 mb-1" role="group" aria-label="Tracking mode">
+              <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_simple" value="simple" autocomplete="off"
                      {% if cfg.flight_location_mode != 'advanced' %}checked{% endif %}
                      onchange="document.getElementById('simple_tracking').style.display='block';document.getElementById('advanced_tracking').style.display='none'" />
-              <label class="form-check-label" for="location_mode_simple">Simple &mdash; centre point + radius</label>
-            </div>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="flight_location_mode" id="location_mode_advanced" value="advanced"
+              <label class="btn btn-outline-primary btn-sm" for="location_mode_simple"><i class="bi bi-circle me-1"></i>Simple</label>
+
+              <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_advanced" value="advanced" autocomplete="off"
                      {% if cfg.flight_location_mode == 'advanced' %}checked{% endif %}
                      onchange="document.getElementById('simple_tracking').style.display='none';document.getElementById('advanced_tracking').style.display='block';setTimeout(function(){advMap.invalidateSize();advMap.fitBounds(advRect.getBounds(),{padding:[20,20]})},50)" />
-              <label class="form-check-label" for="location_mode_advanced">Advanced &mdash; draw search box + set observer location</label>
+              <label class="btn btn-outline-primary btn-sm" for="location_mode_advanced"><i class="bi bi-bounding-box me-1"></i>Advanced</label>
             </div>
+            <div class="form-text text-muted small">Simple: set a centre point and search radius. Advanced: draw a search box and place your observer location.</div>
           </div>
 
           <div id="simple_tracking" style="display:{% if cfg.flight_location_mode != 'advanced' %}block{% else %}none{% endif %}">
