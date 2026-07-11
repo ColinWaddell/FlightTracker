@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with FlightTracker
+description: Report a problem with FlightTracker
 title: "[BUG] "
 labels: bug
 body:
@@ -16,6 +16,8 @@ body:
 
         You can also grab your recent logs from the **Logs** page
         (link in the Settings footer) and paste the relevant lines below.
+        If possible I'd recommend bumping up the logging level to 
+        VERBOSE before cpaturing a log of the event.
 
   - type: input
     id: version

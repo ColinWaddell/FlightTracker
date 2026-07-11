@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new feature or improvement for FlightTracker
+description: Suggest a new feature or improvement for FlightTracker
 title: "[FEATURE] "
 labels: enhancement
 body:
@@ -27,8 +27,3 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives considered
-      description: Have you tried any workarounds or alternative approaches?

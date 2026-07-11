@@ -205,4 +205,4 @@ If you'd like to contribute to FlightTracker - whether it's a bug report, featur
 
 ## License
 
-Flight Tracker is released under the GNU General Public License v3.0. You're welcome to use, modify, and share the code - just keep it under the same license and include proper attribution (retain the copyright and license notice). See [LICENSE](LICENSE) for details.
+Flight Tracker is released under the GNU General Public License v3.0. You're welcome to use, modify, and share the code - just keep it under the same license and include proper attribution (retain the copyright and license notice). See [LICENSE.md](LICENSE.md) for details.
