@@ -4,6 +4,26 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.0.7] - 2026-07-11
+
+### Added
+- Pytest test suite with 141 tests across 8 modules covering configuration migration, route caching, flight scene helpers, overhead data handling, CLI dispatch, satellite math, scene manager, and theme system
+- `pyproject.toml` now includes `dev` optional dependencies (`pytest`, `pytest-cov`) and `[tool.pytest.ini_options]` configuration
+- CI workflow expanded with a `test` job that installs dependencies and runs the full pytest suite
+- GitHub issue templates (bug report with debug config export guidance, feature request linking to CONTRIBUTING.md)
+- `SECURITY.md` with responsible disclosure guidance
+- Ko-fi funding link in `.github/FUNDING.yml` and floating button on the gh-pages site
+- `CHANGELOG.md` (Keep a Changelog format, covering v2.0.0 onward)
+
+### Fixed
+- Plane cache retrieval bugs where flights were not pulling out of cache correctly
+- README license link corrected from `LICENSE` to `LICENSE.md`
+- Ruff lint issues (42 auto-fixed, 11 manually fixed) across the codebase
+
+### Changed
+- LICENSE copyright year updated to 2026
+- `.gitignore` updated with `node_modules/`, `_site/`, `.dev/`
+
 ## [v2.0.6] - 2026-07-11
 
 ### Changed

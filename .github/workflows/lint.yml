@@ -1,4 +1,4 @@
-name: Lint
+name: CI
 
 on:
   push:
@@ -36,3 +36,22 @@ jobs:
         run: |
           python -m py_compile flight-tracker.py version.py
           find setup display utilities scenes web -name "*.py" -exec python -m py_compile {} +
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install sgp4
+
+      - name: Run tests
+        run: pytest tests/ -v
