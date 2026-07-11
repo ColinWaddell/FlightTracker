@@ -98,12 +98,14 @@ DEFAULT_LOADING_LED_ENABLED = False
 DEFAULT_LOADING_LED_GPIO_PIN = ""
 
 # Data source
-DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090
+DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090, 'osn' = OpenSky Network
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 DEFAULT_CALLSIGN_FORMAT = (
     "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 )
+DEFAULT_OSN_CLIENT_ID = ""  # OpenSky Network OAuth2 client ID
+DEFAULT_OSN_CLIENT_SECRET = ""  # OpenSky Network OAuth2 client secret
 
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
@@ -173,6 +175,8 @@ DEFAULTS: dict[str, Any] = {
     "tar1090_url": DEFAULT_TAR1090_URL,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
+    "osn_client_id": DEFAULT_OSN_CLIENT_ID,
+    "osn_client_secret": DEFAULT_OSN_CLIENT_SECRET,
     # Satellite tracking
     "satellite_tracking_enabled": DEFAULT_SATELLITE_TRACKING_ENABLED,
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
@@ -779,11 +783,27 @@ class Config:
     @property
     def data_source(self) -> str:
         val = str(self.data_store.get("data_source", DEFAULT_DATA_SOURCE)).lower()
-        return val if val in ("fr24", "tar1090") else DEFAULT_DATA_SOURCE
+        return val if val in ("fr24", "tar1090", "osn") else DEFAULT_DATA_SOURCE
 
     @property
     def use_tar1090(self) -> bool:
         return self.data_source == "tar1090" and bool(self.tar1090_url)
+
+    @property
+    def osn_client_id(self) -> str:
+        return str(self.data_store.get("osn_client_id", DEFAULT_OSN_CLIENT_ID))
+
+    @property
+    def osn_client_secret(self) -> str:
+        return str(self.data_store.get("osn_client_secret", DEFAULT_OSN_CLIENT_SECRET))
+
+    @property
+    def use_osn(self) -> bool:
+        return (
+            self.data_source == "osn"
+            and bool(self.osn_client_id)
+            and bool(self.osn_client_secret)
+        )
 
     @property
     def max_flight_lookup(self) -> int:

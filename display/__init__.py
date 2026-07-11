@@ -35,6 +35,11 @@ def build_display_class():
             cfg.tar1090_url or "<unset>",
             REFRESH_INTERVAL,
         )
+    elif cfg.use_osn:
+        from utilities.overhead_osn import Overhead
+
+        REFRESH_INTERVAL = 30
+        logger.info("Data source: OpenSky Network, refresh every %ds", REFRESH_INTERVAL)
     else:
         from utilities.overhead_fr24 import Overhead
 

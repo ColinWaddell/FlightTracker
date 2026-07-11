@@ -1,73 +1,16 @@
-import json
 import logging
 import math
-from pathlib import Path
 from threading import Event, Lock, Thread
 
 import requests
 from requests.exceptions import RequestException
 
-from utilities import routes_cache
+from utilities import route_lookup
 
 logger = logging.getLogger(__name__)
 
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
-
-# ---------------------------------------------------------------------------
-# Airport name lookup (bundled airports.json)
-# ---------------------------------------------------------------------------
-
-airports_cache: dict[str, dict] = {}
-airports_loaded = False
-
-
-def load_airports():
-    global airports_cache, airports_loaded
-
-    if airports_loaded:
-        return
-
-    path = Path(__file__).parent.parent / "assets" / "airports.json"
-    if path.exists():
-        try:
-            with open(path) as fh:
-                airports_cache = json.load(fh)
-
-        except Exception:
-            airports_cache = {}
-
-    airports_loaded = True
-
-
-def airport_info(iata: str) -> dict:
-    """Return the full airport dict {name, municipality, country_name} or {}."""
-    load_airports()
-    return airports_cache.get(iata.upper(), {})
-
-
-def airport_name(iata: str) -> str:
-    """Return the airport name, or empty string if not found."""
-    return airport_info(iata).get("name", "")
-
-
-# ---------------------------------------------------------------------------
-# Route lookup (adsb.im)
-# ---------------------------------------------------------------------------
-
-
-def lookup_route(callsign: str, lat=None, lng=None) -> dict | None:
-    payload = {"planes": [{"callsign": callsign, "lat": lat, "lng": lng}]}
-    resp = requests.post(
-        "https://adsb.im/api/0/routeset",
-        json=payload,
-        headers={"Content-Type": "application/json; charset=utf-8"},
-        timeout=15,
-    )
-    resp.raise_for_status()
-    routes = resp.json()
-    return routes[0] if routes else None
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -111,6 +54,7 @@ class Overhead:
         self.max_altitude = cfg.flight_max_altitude
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
+        self._session = requests.Session()
         self.lock = Lock()
         self.done = Event()
 
@@ -156,51 +100,11 @@ class Overhead:
 
         return finished
 
-    def get_route(self, callsign, lat=None, lng=None):
-        # Check persistent cache first (24h TTL)
-        cached = routes_cache.get(callsign) if callsign else None
-        if cached is not None:
-            return cached.get("origin", ""), cached.get("destination", "")
-
-        # Cache miss - fetch from adsb.im
-        origin, dest = "", ""
-        try:
-            route = lookup_route(callsign, lat, lng)
-
-            if route and route.get("_airports"):
-                airports = route["_airports"]
-                origin = airports[0].get("iata", "") or ""
-                dest = airports[-1].get("iata", "") or ""
-
-                if origin.upper() in BLANK_FIELDS:
-                    origin = ""
-
-                if dest.upper() in BLANK_FIELDS:
-                    dest = ""
-
-        except (RequestException, ValueError, KeyError, AttributeError, TypeError):
-            pass
-
-        # Cache the route info for 24 hours
-        if callsign and (origin or dest):
-            routes_cache.put(
-                callsign,
-                {
-                    "plane": "",
-                    "origin": origin,
-                    "destination": dest,
-                    "origin_name": "",
-                    "destination_name": "",
-                },
-            )
-
-        return origin, dest
-
     def grab_data_impl(self):
         data = []
 
         try:
-            response = requests.get(self.tar1090_url, timeout=10)
+            response = self._session.get(self.tar1090_url, timeout=10)
             response.raise_for_status()
 
             aircraft_list = response.json().get("aircraft", [])
@@ -239,20 +143,22 @@ class Overhead:
                     if callsign.upper() in BLANK_FIELDS:
                         callsign = ""
 
+                    # tar1090 provides aircraft type directly from its local DB
+                    # (tar1090-db enrichment). We keep this as the primary source
+                    # since it's local and instant. adsbdb may fill it in if blank.
                     plane = (ac.get("desc") or "").strip()
                     if plane.upper() in BLANK_FIELDS:
                         plane = ""
 
-                    if callsign:
-                        origin, destination = self.get_route(
-                            callsign, ac.get("lat"), ac.get("lon")
-                        )
-                    else:
-                        origin, destination = "", ""
+                    # mode_s (hex) enables the combined adsbdb endpoint which
+                    # returns richer airport info (name, municipality, country)
+                    # directly - no airports.json lookup needed for known routes.
+                    mode_s = (ac.get("hex") or "").strip().lower() or None
+                    route = route_lookup.get_route(callsign, mode_s=mode_s)
 
-                    # Full airport info from bundled airport database
-                    origin_info = airport_info(origin) if origin else {}
-                    dest_info = airport_info(destination) if destination else {}
+                    # Prefer local tar1090 plane type; fall back to adsbdb
+                    if not plane:
+                        plane = route["plane"]
 
                     # Telemetry
                     try:
@@ -268,16 +174,14 @@ class Overhead:
                     data.append(
                         {
                             "plane": plane,
-                            "origin": origin,
-                            "destination": destination,
-                            "origin_name": origin_info.get("name", ""),
-                            "destination_name": dest_info.get("name", ""),
-                            "origin_municipality": origin_info.get("municipality", ""),
-                            "destination_municipality": dest_info.get(
-                                "municipality", ""
-                            ),
-                            "origin_country": origin_info.get("country_name", ""),
-                            "destination_country": dest_info.get("country_name", ""),
+                            "origin": route["origin"],
+                            "destination": route["destination"],
+                            "origin_name": route["origin_name"],
+                            "destination_name": route["destination_name"],
+                            "origin_municipality": route["origin_municipality"],
+                            "destination_municipality": route["destination_municipality"],
+                            "origin_country": route["origin_country"],
+                            "destination_country": route["destination_country"],
                             "vertical_speed": ac.get("baro_rate", 0),
                             "altitude": ac.get("alt_baro", 0),
                             "ground_speed": ground_speed,

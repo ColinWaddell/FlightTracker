@@ -220,10 +220,8 @@ def parse_settings_form(form, cfg) -> dict:
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
         # Data source
         "data_source": (
-            "tar1090"
-            if str_val(form.get("data_source"), "fr24").lower() == "tar1090"
-            else "fr24"
-        ),
+            lambda v: v if v in ("fr24", "tar1090", "osn") else "fr24"
+        )(str_val(form.get("data_source"), "fr24").lower()),
         "tar1090_url": str_val(form.get("tar1090_url"), ""),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
         "callsign_format": (
@@ -231,6 +229,8 @@ def parse_settings_form(form, cfg) -> dict:
             if str_val(form.get("callsign_format"), "icao").lower() == "iata"
             else "icao"
         ),
+        "osn_client_id": str_val(form.get("osn_client_id"), ""),
+        "osn_client_secret": str_val(form.get("osn_client_secret"), ""),
         # Satellite tracking
         "satellite_tracking_enabled": bool_val(form.get("satellite_tracking_enabled")),
         "satellite_norad_ids": [
@@ -416,7 +416,7 @@ def airports_json() -> str:
 
 # Keys that may contain sensitive information and should be stripped from
 # the debug config export.
-SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash"}
+SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash", "osn_client_secret"}
 
 
 @app.route("/debug-config")

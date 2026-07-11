@@ -94,6 +94,29 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 - All position and altitude data comes from your receiver in real time
 - No rate limiting or API key required
 
+### Using OpenSky Network as your data source
+
+[OpenSky Network](https://opensky-network.org) is a free, community-driven ADS-B network that can replace FlightRadar24 as the flight data source. No subscription is required — a free registered account gives you enough API credits for 30-second polling.
+
+#### What you need
+
+- A free account at [opensky-network.org](https://opensky-network.org)
+- An API client created under Account → API Clients (gives you a Client ID and Client Secret)
+
+#### Enabling OpenSky Network
+
+1. Log in to the FlightTracker web interface
+2. Under **Data Source**, select **OpenSky Network**
+3. Enter your **Client ID** and **Client Secret**
+4. Save — the tracker will restart and begin fetching from OpenSky
+
+#### Differences from FlightRadar24 mode
+
+- Uses OAuth2 credentials (Client ID + Client Secret) rather than a third-party library
+- Aircraft type and route origin/destination are both looked up via [adsbdb.com](https://api.adsbdb.com), the same service used in tar1090 mode
+- If your credentials are invalid the display will show `KEY ERROR` as the callsign rather than going blank
+- Data refreshes every 30 seconds
+
 ---
 ## Satellite Tracking
 
@@ -117,6 +140,7 @@ Commands:
   config                 Dump current configuration as JSON
   data                   Print the platform data directory path
   reset-password         Clear web_password_hash in the config
+  cache clear            Wipe all on-disk cache files (routes and TLE)
   interface enable       Enable the web interface in the config
   interface disable      Disable the web interface in the config
   help                   Show this help message

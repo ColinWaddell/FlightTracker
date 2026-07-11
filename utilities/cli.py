@@ -5,6 +5,8 @@ import sys
 from collections.abc import Sequence
 
 from setup.configuration import CONFIG_PATH, Config
+from utilities import routes_cache
+from utilities.tle_manager import TLE_CACHE_PATH
 from version import VERSION
 
 
@@ -37,12 +39,33 @@ def _save_config_change(key: str, value) -> int:
     return 0
 
 
+def _cache_clear() -> int:
+    """Wipe all on-disk cache files (routes and TLE)."""
+    cleared = []
+
+    routes_cache.clear()
+    cleared.append(f"routes cache ({routes_cache.CACHE_PATH})")
+
+    if TLE_CACHE_PATH.exists():
+        try:
+            TLE_CACHE_PATH.unlink()
+            cleared.append(f"TLE cache ({TLE_CACHE_PATH})")
+        except OSError as e:
+            print(f"Failed to delete TLE cache: {e}", file=sys.stderr)
+            return 1
+
+    for item in cleared:
+        print(f"Cleared {item}")
+    return 0
+
+
 def _print_usage() -> None:
     print("Usage: python flight-tracker.py [command]")
     print("Commands:")
     print("  config                 Dump current configuration as JSON")
     print("  data                   Print the platform data directory path")
     print("  reset-password         Clear web_password_hash in the config")
+    print("  cache clear            Wipe all on-disk cache files")
     print("  interface enable       Enable the web interface in the config")
     print("  interface disable      Disable the web interface in the config")
     print("  help                   Show this help message")
@@ -89,6 +112,8 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
             cfg.save()
             print(f"Set web_interface_enabled={enabled} in {CONFIG_PATH}")
             return 0
+        if command == "cache" and action == "clear":
+            return _cache_clear()
 
     _print_usage()
     return 2

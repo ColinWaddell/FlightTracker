@@ -247,13 +247,18 @@
           <div class="mb-3">
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
-                     {% if cfg.data_source != 'tar1090' %}checked{% endif %} />
+                     {% if cfg.data_source == 'fr24' %}checked{% endif %} />
               <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online)</label>
             </div>
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
                      {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
               <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_osn" value="osn"
+                     {% if cfg.data_source == 'osn' %}checked{% endif %} />
+              <label class="form-check-label" for="data_source_osn">OpenSky Network (online)</label>
             </div>
           </div>
 
@@ -266,18 +271,35 @@
             <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
           </div>
 
+          <div id="osn_fields" style="display:{% if cfg.data_source == 'osn' %}block{% else %}none{% endif %}">
+            <label class="form-label small">Client ID</label>
+            <input type="text" class="form-control form-control-sm mb-2"
+                   name="osn_client_id" value="{{ cfg.osn_client_id }}"
+                   placeholder="your-client-id" autocomplete="off" />
+            <label class="form-label small">Client Secret</label>
+            <input type="password" class="form-control form-control-sm"
+                   name="osn_client_secret" value="{{ cfg.osn_client_secret }}"
+                   placeholder="your-client-secret" autocomplete="new-password" />
+            <div class="form-text text-muted small mt-1">
+              Create an API client at
+              <a href="https://opensky-network.org/login" target="_blank" rel="noopener noreferrer">opensky-network.org</a>
+              (Account &rarr; API Clients) to get your credentials.
+              A free registered account is sufficient for 30-second polling.
+            </div>
+          </div>
+
           <div class="mt-3">
             <label class="form-label small" for="max_flight_lookup">Flights to track</label>
             <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
                    name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
             <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
-                 style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
+                 style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
               <i class="bi bi-exclamation-triangle-fill me-1"></i>Flights are sorted by closest to your first. Keep this at 5 or below when using FlightRadar24 - each flight requires a separate API call and higher values risk hitting rate limits.
             </div>
           </div>
 
           <div id="callsign_format_fields" class="mt-3"
-               style="display:{% if cfg.data_source != 'tar1090' %}block{% else %}none{% endif %}">
+               style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
             <label class="form-label small">Callsign format</label>
             <div class="form-check">
               <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao" value="icao"
@@ -295,21 +317,27 @@
 
         <script>
           (function () {
-            var fr24Radio   = document.getElementById('data_source_fr24');
-            var tar1090Radio = document.getElementById('data_source_tar1090');
-            var tar1090Fields = document.getElementById('tar1090_fields');
-            var fr24Warning   = document.getElementById('fr24_lookup_warning');
+            var fr24Radio      = document.getElementById('data_source_fr24');
+            var tar1090Radio   = document.getElementById('data_source_tar1090');
+            var osnRadio       = document.getElementById('data_source_osn');
+            var tar1090Fields  = document.getElementById('tar1090_fields');
+            var osnFields      = document.getElementById('osn_fields');
+            var fr24Warning    = document.getElementById('fr24_lookup_warning');
             var callsignFields = document.getElementById('callsign_format_fields');
 
             function updateDataSourceUI() {
+              var isFr24    = fr24Radio.checked;
               var isTar1090 = tar1090Radio.checked;
-              tar1090Fields.style.display = isTar1090 ? 'block' : 'none';
-              fr24Warning.style.display   = isTar1090 ? 'none'  : 'block';
-              callsignFields.style.display = isTar1090 ? 'none'  : 'block';
+              var isOsn     = osnRadio.checked;
+              tar1090Fields.style.display  = isTar1090 ? 'block' : 'none';
+              osnFields.style.display      = isOsn     ? 'block' : 'none';
+              fr24Warning.style.display    = isFr24    ? 'block' : 'none';
+              callsignFields.style.display = isFr24    ? 'block' : 'none';
             }
 
             fr24Radio.addEventListener('change', updateDataSourceUI);
             tar1090Radio.addEventListener('change', updateDataSourceUI);
+            osnRadio.addEventListener('change', updateDataSourceUI);
           })();
         </script>
 
