@@ -12,6 +12,28 @@ logger = logging.getLogger(__name__)
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
 
+
+def _url_error_flight() -> dict:
+    """Return a fake flight entry displayed when the tar1090 URL is unreachable."""
+    return {
+        "plane": "Check tar1090 URL",
+        "origin": "",
+        "destination": "",
+        "origin_name": "",
+        "destination_name": "",
+        "origin_municipality": "",
+        "destination_municipality": "",
+        "origin_country": "",
+        "destination_country": "",
+        "altitude": 0,
+        "ground_speed": 0,
+        "heading": 0,
+        "vertical_speed": 0,
+        "callsign": "URL ERROR",
+        "icao_callsign": "URL ERROR",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -201,10 +223,14 @@ class Overhead:
             logger.debug("tar1090 fetch complete - %d flight(s) tracked", len(data))
 
         except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
-            with self.lock:
-                self.new_data_store = False
-                self.error_store = e
+            # Surface a visible placeholder so the display shows something useful
+            # rather than going blank. Any exception here means the URL is wrong
+            # or the receiver is unreachable.
             logger.warning("tar1090 fetch failed: %s", e)
+            with self.lock:
+                self.data_store = [_url_error_flight()]
+                self.new_data_store = True
+                self.error_store = None
 
         finally:
             with self.lock:
