@@ -1,0 +1,92 @@
+---
+name: Bug report
+about: Report a problem with FlightTracker
+title: "[BUG] "
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+
+        **Before you file:** if you can access the web UI, please download a
+        **safe (redacted) copy of your configuration** from the footer of the
+        Settings page — the "Download debug config" button. This file has API
+        keys and passwords stripped out, so it's safe to attach here.
+
+        You can also grab your recent logs from the **Logs** page
+        (link in the Settings footer) and paste the relevant lines below.
+
+  - type: input
+    id: version
+    attributes:
+      label: FlightTracker version
+      description: Shown on the Settings page under "Version", or run `flight-tracker --version`
+      placeholder: "v2.0.6"
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: What hardware are you running on?
+      placeholder: "Raspberry Pi 4, Pi 5, Pi Zero W, desktop simulator"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: OS and version
+      placeholder: "Raspberry Pi OS Bookworm 64-bit, Debian 12, etc."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data_source
+    attributes:
+      label: Data source
+      description: Which flight data source are you using?
+      options:
+        - FlightRadar24 (online)
+        - tar1090 (local / self-hosted)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. What did you expect to happen, and what actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can we trigger this bug?
+      placeholder: |
+        1. Go to Settings → ...
+        2. Change ... to ...
+        3. Save and restart
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Paste any error messages or relevant log lines from the Logs page. No need to include the full log.
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Debug config
+      description: If possible, download the debug config from the Settings page footer and paste it here (API keys are automatically removed).
+      render: json
