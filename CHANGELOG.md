@@ -4,6 +4,14 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.1] - 2026-07-11
+
+### Changed
+- Minor UI updates for the data-sources network.
+
+### Fixed
+- Cache is now cleared on update so stale entries never survive a version change.
+
 ## [v2.1.0] - 2026-07-11
 
 ### Added

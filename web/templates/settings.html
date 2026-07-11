@@ -248,17 +248,19 @@
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
                      {% if cfg.data_source == 'fr24' %}checked{% endif %} />
-              <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online)</label>
+              <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online) <span class="text-danger small">(will be deprecated eventually; getting harder to support)</span></label>
             </div>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
-                     {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
-              <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
-            </div>
+
             <div class="form-check">
               <input type="radio" class="form-check-input" name="data_source" id="data_source_osn" value="osn"
                      {% if cfg.data_source == 'osn' %}checked{% endif %} />
               <label class="form-check-label" for="data_source_osn">OpenSky Network (online)</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
+                     {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
+              <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
             </div>
           </div>
 

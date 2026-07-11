@@ -224,8 +224,11 @@ def perform_update(tag: str) -> tuple[bool, str]:
         )
 
     # 2. Fetch tags
+    # --force allows existing tags to be updated if they were moved on the remote
+    # (e.g. after an amended commit). Without it, git rejects any tag that would
+    # change and aborts the whole fetch.
     logger.info("Fetching tags from origin...")
-    ok, msg = _run_git(["fetch", "--tags", "origin"], timeout=60)
+    ok, msg = _run_git(["fetch", "--tags", "--force", "origin"], timeout=60)
     if not ok:
         return False, f"git fetch failed: {msg}"
 
