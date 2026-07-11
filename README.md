@@ -197,6 +197,12 @@ This table is for reference if you've disabled the web interface (`web_interface
 
 ---
 
+## Contributing
+
+If you'd like to contribute to FlightTracker — whether it's a bug report, feature idea, or pull request — please read the [contributing guide](CONTRIBUTORS.md).
+
+---
+
 ## License
 
 Flight Tracker is released under the GNU General Public License v3.0. You're welcome to use, modify, and share the code - just keep it under the same license and include proper attribution (retain the copyright and license notice). See [LICENSE](LICENSE) for details.
