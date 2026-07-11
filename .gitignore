@@ -8,6 +8,7 @@ tle_cache.json
 routes_cache.json
 captures/
 _junk/
+*.bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
