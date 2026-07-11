@@ -38,7 +38,7 @@ def build_display_class():
     else:
         from utilities.overhead_fr24 import Overhead
 
-        REFRESH_INTERVAL = 45
+        REFRESH_INTERVAL = 30
         logger.info("Data source: FlightRadar24, refresh every %ds", REFRESH_INTERVAL)
 
     if cfg.loading_led_enabled:

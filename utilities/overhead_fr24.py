@@ -175,8 +175,6 @@ class Overhead:
                 key=lambda f: distance_from_flight_to_home(f, self.location_home),
             )
 
-            print(f"FR24: {len(flights)} flight(s) overhead in zone {self.zone_home}")
-
             for flight in flights[: self.max_flight_lookup]:
                 # ICAO callsign is always used as the route-cache key.
                 # The displayed identifier can be IATA (flight.number) or ICAO.
