@@ -185,10 +185,14 @@ def _run_git(args: list[str], timeout: int = 60) -> tuple[bool, str]:
 
 
 def is_dirty_tree() -> bool:
-    """Check if the git working tree has uncommitted changes."""
+    """Check if the git working tree has uncommitted changes to tracked files.
+
+    Untracked files (e.g. .bak files left by config migration) are ignored
+    so they don't block updates.
+    """
     try:
         result = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
