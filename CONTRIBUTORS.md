@@ -26,7 +26,7 @@ I'm not opposed to AI-assisted development.
 
 If you submit AI-generated code, I expect you've reviewed it thoroughly, understand every line, and are happy to stand behind it as if you'd written it yourself.
 
-I'll naturally have more confidence in contributions from developers with an established track record. If your account is very new, has little public history, or your contribution suggests you aren't yet comfortable with the codebase, I'm much more likely to ask you to develop the idea further before merging it. The same applies to handwritten code as well—this isn't about AI, it's about confidence in the contribution.
+I'll naturally have more confidence in contributions from developers with an established track record. If your account is very new, has little public history, or your contribution suggests you aren't yet comfortable with the codebase, I'm much more likely reject the code and/or implement it myself. The same applies to handwritten code as well; this isn't about AI, it's about confidence in the contribution.
 
 ## Why I'm selective
 

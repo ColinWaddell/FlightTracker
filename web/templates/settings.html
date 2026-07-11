@@ -940,7 +940,7 @@ document.getElementById("flight_radius").addEventListener("input", e => {
 });
 
 // ===========================================================================
-// Advanced map — editable rectangle + draggable observer marker
+// Advanced map - editable rectangle + draggable observer marker
 // ===========================================================================
 const advTlY = parseFloat(document.getElementById("flight_zone_tl_y").value);
 const advTlX = parseFloat(document.getElementById("flight_zone_tl_x").value);
@@ -974,7 +974,7 @@ let advMarker = L.marker([advObsLat, advObsLng], {
 
 advMap.fitBounds(advRect.getBounds(), { padding: [20, 20] });
 
-// Enable Geoman for rectangle editing (programmatic only — no toolbar)
+// Enable Geoman for rectangle editing (programmatic only - no toolbar)
 advMap.pm.addControls({
   position: "topleft",
   drawRectangle: false,
@@ -989,7 +989,7 @@ advMap.pm.addControls({
   removalMode: false,
   editMode: false,
 });
-// Remove the Geoman toolbar from the DOM — we only need the programmatic API
+// Remove the Geoman toolbar from the DOM - we only need the programmatic API
 const pmToolbar = advMap.pm.getControlContainer && advMap.pm.getControlContainer();
 if (pmToolbar) pmToolbar.remove();
 

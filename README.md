@@ -199,7 +199,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 
 ## Contributing
 
-If you'd like to contribute to FlightTracker — whether it's a bug report, feature idea, or pull request — please read the [contributing guide](CONTRIBUTORS.md).
+If you'd like to contribute to FlightTracker - whether it's a bug report, feature idea, or pull request - please read the [contributing guide](CONTRIBUTORS.md).
 
 ---
 

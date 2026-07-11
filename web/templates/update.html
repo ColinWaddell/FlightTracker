@@ -120,9 +120,9 @@ document.getElementById("check-btn").addEventListener("click", async function() 
 
     if (data.error) {
       statusArea.innerHTML = '<span class="badge bg-secondary"><i class="bi bi-exclamation-triangle me-1"></i>' + data.error + '</span>';
-      latestEl.textContent = '—';
+      latestEl.textContent = '-';
     } else {
-      latestEl.textContent = data.latest_version || '—';
+      latestEl.textContent = data.latest_version || '-';
 
       if (data.update_available) {
         statusArea.innerHTML = '<span class="badge bg-warning text-dark"><i class="bi bi-arrow-up-circle me-1"></i>Update available</span>';

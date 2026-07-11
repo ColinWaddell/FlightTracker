@@ -944,14 +944,14 @@ class Config:
 
     @property
     def observer_lat(self) -> float:
-        """Observer latitude — used for weather, sunrise/sunset, and satellite passes."""
+        """Observer latitude - used for weather, sunrise/sunset, and satellite passes."""
         if self.flight_location_mode == "advanced":
             return self.flight_observer_lat
         return self.flight_lat
 
     @property
     def observer_lng(self) -> float:
-        """Observer longitude — used for weather, sunrise/sunset, and satellite passes."""
+        """Observer longitude - used for weather, sunrise/sunset, and satellite passes."""
         if self.flight_location_mode == "advanced":
             return self.flight_observer_lng
         return self.flight_lng
