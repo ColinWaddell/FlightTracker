@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import os
 import sys
-import math
 from datetime import datetime
 
-from display.rgbpanel import RGBPanel, Colour
+from display.rgbpanel import Colour, RGBPanel
 
 # ---------------------------------------------------------------------------
 # Display constants
@@ -89,7 +88,7 @@ def _parse_bdf(path: str) -> dict[int, _Glyph]:
     """Parse a BDF font file and return a dict mapping code-point → _Glyph."""
     glyphs: dict[int, _Glyph] = {}
 
-    with open(path, "r", encoding="latin-1") as fh:
+    with open(path, encoding="latin-1") as fh:
         lines = fh.readlines()
 
     encoding = -1
@@ -429,7 +428,10 @@ class SimulatorPanel(RGBPanel):
         ):
             self._small_buf = pygame.Surface((cols, rows))
         pa = pygame.PixelArray(self._small_buf)
-        clamp = lambda v: 255 if v > 255 else (0 if v < 0 else int(v))
+
+        def clamp(v):
+            return 255 if v > 255 else (0 if v < 0 else int(v))
+
         for i, (r, g, b) in enumerate(buf):
             pa[i % cols, i // cols] = (
                 clamp(r * scale),

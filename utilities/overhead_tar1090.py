@@ -1,13 +1,12 @@
 import json
 import logging
 import math
-import requests
-
-from threading import Thread, Lock, Event
-from time import time
 from pathlib import Path
+from threading import Event, Lock, Thread
 
+import requests
 from requests.exceptions import RequestException
+
 from utilities import routes_cache
 
 logger = logging.getLogger(__name__)

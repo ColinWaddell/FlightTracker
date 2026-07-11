@@ -9,8 +9,6 @@ This lets us use the existing .bdf font files on Pi 5 (piomatter/PIL)
 without converting them to another format.
 """
 
-from PIL import ImageDraw
-
 
 class BDFFont:
     """A parsed BDF font with glyph lookup by codepoint."""
@@ -23,7 +21,7 @@ class BDFFont:
         self._load(path)
 
     def _load(self, path: str):
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
+        with open(path, encoding="utf-8", errors="replace") as f:
             lines = [line.rstrip("\n") for line in f]
 
         i = 0

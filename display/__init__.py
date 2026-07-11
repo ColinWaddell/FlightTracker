@@ -10,17 +10,17 @@ DisplayClass = None
 
 
 def build_display_class():
-    from setup.configuration import Config
-    from setup import frames
-    from setup.themes import theme_set
     import logging
 
     from display.panel_factory import get_panel
+    from scenes.flight.flight_scene import FlightScene
+    from scenes.idle.idle_scene import IdleScene
+    from scenes.satellite.satellite_scene import SatelliteScene
+    from setup import frames
+    from setup.configuration import Config
+    from setup.themes import theme_set
     from utilities.scene_manager import SceneManager
     from utilities.tle_manager import TLEManager
-    from scenes.idle.idle_scene import IdleScene
-    from scenes.flight.flight_scene import FlightScene
-    from scenes.satellite.satellite_scene import SatelliteScene
 
     cfg = Config.instance()
     theme_set(cfg.theme)
@@ -94,7 +94,9 @@ def build_display_class():
 
             self.loading = IndicatorClass(self.canvas, self.panel, overhead)
             self.frames = frames
-            self.frame_period = max(0.001, self.frames.PERIOD * cfg.display_speed_factor)
+            self.frame_period = max(
+                0.001, self.frames.PERIOD * cfg.display_speed_factor
+            )
             self.brightness_update_interval = max(1, int(round(1 / self.frame_period)))
 
         def update_brightness(self):

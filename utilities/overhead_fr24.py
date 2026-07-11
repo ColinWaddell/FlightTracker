@@ -1,12 +1,11 @@
-from threading import Thread, Lock, Event
-from time import sleep
+import contextlib
 import json
 import logging
 from pathlib import Path
+from threading import Event, Lock, Thread
+from time import sleep
 
-from requests.exceptions import RequestException, ConnectionError
 from utilities import routes_cache
-from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 try:
     from curl_cffi.requests.exceptions import Timeout as CurlTimeout
@@ -155,10 +154,8 @@ class Overhead:
         try:
             # Clear cookies before each fetch to avoid FR24 rate-limiting
             # on subsequent calls (stale cookies cause empty results)
-            try:
+            with contextlib.suppress(Exception):
                 self.api._FlightRadar24API__client.clear_cookies()
-            except Exception:
-                pass
 
             bounds = self.api.get_bounds(self.zone_home)
             flights = self.api.get_flights(bounds=bounds)

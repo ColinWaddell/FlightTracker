@@ -9,8 +9,8 @@ from __future__ import annotations
 import json
 import logging
 import subprocess
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 from version import VERSION
@@ -55,10 +55,10 @@ def parse_version(tag: str) -> list[int]:
 
 def is_newer(remote: list[int], local: list[int]) -> bool:
     """Return True if remote version is strictly greater than local."""
-    for r, l in zip(remote, local):
-        if r > l:
+    for r, lcl in zip(remote, local):
+        if r > lcl:
             return True
-        if r < l:
+        if r < lcl:
             return False
     return False  # equal
 

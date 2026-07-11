@@ -15,9 +15,9 @@ import datetime
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import List, Tuple
 
-from sgp4.api import Satrec, jday as sgp4_jday
+from sgp4.api import Satrec
+from sgp4.api import jday as sgp4_jday
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class PassWindow:
     aos: datetime.datetime
     los: datetime.datetime
     max_el: float
-    trajectory: List[Tuple[float, float, float, datetime.datetime]] = field(
+    trajectory: list[tuple[float, float, float, datetime.datetime]] = field(
         default_factory=list
     )
     # Each entry: (azimuth_deg, elevation_deg, range_km, utc_time)

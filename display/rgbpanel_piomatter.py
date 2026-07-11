@@ -7,13 +7,13 @@ Brightness is implemented via colour scaling at swap() time since piomatter
 has no hardware brightness control.
 """
 
+import adafruit_blinka_raspberry_pi5_piomatter as piomatter
 import numpy as np
 from PIL import Image, ImageDraw
 
-import adafruit_blinka_raspberry_pi5_piomatter as piomatter
-
-from display.rgbpanel import RGBPanel, Colour
-from display.bdf_font import BDFFont, draw_text as bdf_draw_text
+from display.bdf_font import BDFFont
+from display.bdf_font import draw_text as bdf_draw_text
+from display.rgbpanel import Colour, RGBPanel
 
 
 class PiomatterPanel(RGBPanel):

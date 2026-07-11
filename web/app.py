@@ -30,7 +30,7 @@ from pathlib import Path
 
 from flask import Flask, Response, redirect, render_template, request, session, url_for
 
-from setup.configuration import Config, CONFIG_PATH
+from setup.configuration import CONFIG_PATH, Config
 from setup.logging import get_buffer
 from utilities.updater import get_update_info, perform_update, version_string
 from version import VERSION

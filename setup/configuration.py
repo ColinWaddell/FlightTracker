@@ -7,12 +7,13 @@ file is imported and its variables are migrated automatically.
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import json
+import math
 import os
 import shutil
 import sys
-import math
 from datetime import datetime, time
 from pathlib import Path
 from typing import Any
@@ -409,13 +410,13 @@ class Config:
     instance_cache: Config | None = None
 
     @classmethod
-    def instance(cls) -> "Config":
+    def instance(cls) -> Config:
         if cls.instance_cache is None:
             cls.instance_cache = cls()
         return cls.instance_cache
 
     @classmethod
-    def reload(cls) -> "Config":
+    def reload(cls) -> Config:
         """Discard the cached instance and reload from disk."""
         cls.instance_cache = None
         return cls.instance()
@@ -817,10 +818,8 @@ class Config:
         if isinstance(val, list):
             ids = []
             for n in val:
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     ids.append(int(n))
-                except (TypeError, ValueError):
-                    pass
             return ids
         return list(DEFAULT_SATELLITE_NORAD_IDS)
 
