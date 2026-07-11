@@ -149,8 +149,12 @@ This table is for reference if you've disabled the web interface (`web_interface
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `flight_lat` / `flight_lng` | Centre of the flight search zone | `55.87` / `-4.25` |
-| `flight_radius` | Search radius in km | `20.0` |
+| `flight_location_mode` | `"simple"` (centre + radius) or `"advanced"` (drawn box + observer) | `"simple"` |
+| `flight_lat` / `flight_lng` | Centre of the flight search zone (simple mode) | `55.87` / `-4.25` |
+| `flight_radius` | Search radius in km (simple mode) | `20.0` |
+| `flight_zone_tl_y` / `flight_zone_tl_x` | Search box top-left corner, lat/lng (advanced mode) | `56.05` / `-4.57` |
+| `flight_zone_br_y` / `flight_zone_br_x` | Search box bottom-right corner, lat/lng (advanced mode) | `55.69` / `-3.93` |
+| `flight_observer_lat` / `flight_observer_lng` | Observer position for weather, sunrise/sunset, satellite passes, and flight distance sorting (advanced mode) | `55.87` / `-4.25` |
 | `flight_min_altitude` | Ignore aircraft below this altitude (metres) | `100.0` |
 | `flight_max_altitude` | Ignore aircraft above this altitude (metres) | `10000.0` |
 | `full_airport_name` | Show the full airport name instead of the IATA code | `false` |

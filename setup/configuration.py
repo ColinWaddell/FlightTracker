@@ -37,11 +37,20 @@ LEGACY_PATH = ROOT_PATH / "config.py"
 DEFAULT_PASSWORD = b"flighttracker"
 
 # Location / flight zone
+DEFAULT_FLIGHT_LOCATION_MODE = "simple"  # "simple" or "advanced"
 DEFAULT_FLIGHT_LAT = 55.87
 DEFAULT_FLIGHT_LNG = -4.25
 DEFAULT_FLIGHT_RADIUS = 20.0  # km
 DEFAULT_FLIGHT_MIN_ALTITUDE = 100.0  # metres
 DEFAULT_FLIGHT_MAX_ALTITUDE = 10000.0  # metres
+# Advanced mode: bounding-box corners (FR24/tar1090 search area)
+DEFAULT_FLIGHT_ZONE_TL_Y = 55.87 + 0.18  # north
+DEFAULT_FLIGHT_ZONE_TL_X = -4.25 - 0.32  # west
+DEFAULT_FLIGHT_ZONE_BR_Y = 55.87 - 0.18  # south
+DEFAULT_FLIGHT_ZONE_BR_X = -4.25 + 0.32  # east
+# Advanced mode: observer position (weather + distance sorting)
+DEFAULT_FLIGHT_OBSERVER_LAT = 55.87
+DEFAULT_FLIGHT_OBSERVER_LNG = -4.25
 
 # Airport display
 DEFAULT_FULL_AIRPORT_NAME = False
@@ -111,11 +120,20 @@ DEFAULT_LOG_LEVEL = "INFO"  # DEBUG / INFO / WARNING / ERROR / CRITICAL
 
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
+    "flight_location_mode": DEFAULT_FLIGHT_LOCATION_MODE,
     "flight_lat": DEFAULT_FLIGHT_LAT,
     "flight_lng": DEFAULT_FLIGHT_LNG,
     "flight_radius": DEFAULT_FLIGHT_RADIUS,
     "flight_min_altitude": DEFAULT_FLIGHT_MIN_ALTITUDE,
     "flight_max_altitude": DEFAULT_FLIGHT_MAX_ALTITUDE,
+    # Advanced mode: bounding-box corners
+    "flight_zone_tl_y": DEFAULT_FLIGHT_ZONE_TL_Y,
+    "flight_zone_tl_x": DEFAULT_FLIGHT_ZONE_TL_X,
+    "flight_zone_br_y": DEFAULT_FLIGHT_ZONE_BR_Y,
+    "flight_zone_br_x": DEFAULT_FLIGHT_ZONE_BR_X,
+    # Advanced mode: observer position
+    "flight_observer_lat": DEFAULT_FLIGHT_OBSERVER_LAT,
+    "flight_observer_lng": DEFAULT_FLIGHT_OBSERVER_LNG,
     # Airport display
     "full_airport_name": DEFAULT_FULL_AIRPORT_NAME,
     "abbreviate_name": DEFAULT_ABBREVIATE_NAME,
@@ -472,6 +490,13 @@ class Config:
     # ------------------------------------------------------------------
 
     @property
+    def flight_location_mode(self) -> str:
+        val = str(
+            self.data_store.get("flight_location_mode", DEFAULT_FLIGHT_LOCATION_MODE)
+        ).lower()
+        return val if val in ("simple", "advanced") else DEFAULT_FLIGHT_LOCATION_MODE
+
+    @property
     def flight_lat(self) -> float:
         return float(self.data_store.get("flight_lat", DEFAULT_FLIGHT_LAT))
 
@@ -493,6 +518,38 @@ class Config:
     def flight_max_altitude(self) -> float:
         return float(
             self.data_store.get("flight_max_altitude", DEFAULT_FLIGHT_MAX_ALTITUDE)
+        )
+
+    # -- Advanced mode: bounding-box corners -----------------------------
+
+    @property
+    def flight_zone_tl_y(self) -> float:
+        return float(self.data_store.get("flight_zone_tl_y", DEFAULT_FLIGHT_ZONE_TL_Y))
+
+    @property
+    def flight_zone_tl_x(self) -> float:
+        return float(self.data_store.get("flight_zone_tl_x", DEFAULT_FLIGHT_ZONE_TL_X))
+
+    @property
+    def flight_zone_br_y(self) -> float:
+        return float(self.data_store.get("flight_zone_br_y", DEFAULT_FLIGHT_ZONE_BR_Y))
+
+    @property
+    def flight_zone_br_x(self) -> float:
+        return float(self.data_store.get("flight_zone_br_x", DEFAULT_FLIGHT_ZONE_BR_X))
+
+    # -- Advanced mode: observer position -------------------------------
+
+    @property
+    def flight_observer_lat(self) -> float:
+        return float(
+            self.data_store.get("flight_observer_lat", DEFAULT_FLIGHT_OBSERVER_LAT)
+        )
+
+    @property
+    def flight_observer_lng(self) -> float:
+        return float(
+            self.data_store.get("flight_observer_lng", DEFAULT_FLIGHT_OBSERVER_LNG)
         )
 
     @property
@@ -644,7 +701,9 @@ class Config:
         Returns (00:00, 00:00) when the schedule is disabled.
         """
         if self.screen_schedule_auto:
-            sunrise, sunset = approx_sunrise_sunset(self.flight_lat, self.flight_lng)
+            sunrise, sunset = approx_sunrise_sunset(
+                self.observer_lat, self.observer_lng
+            )
             return sunset, sunrise
         return self.screen_schedule_start, self.screen_schedule_end
 
@@ -841,9 +900,19 @@ class Config:
     @property
     def zone_home(self) -> dict:
         """
-        Derive a bounding box from lat/lng + radius.
-        1 degree latitude ≈ 111 km; longitude varies with cos(lat).
+        Bounding box for flight data queries.
+
+        In *simple* mode the box is derived from lat/lng + radius.
+        In *advanced* mode the box corners are stored directly.
         """
+        if self.flight_location_mode == "advanced":
+            return {
+                "tl_y": self.flight_zone_tl_y,
+                "tl_x": self.flight_zone_tl_x,
+                "br_y": self.flight_zone_br_y,
+                "br_x": self.flight_zone_br_x,
+            }
+
         import math
 
         lat, lng, r = self.flight_lat, self.flight_lng, self.flight_radius
@@ -858,5 +927,24 @@ class Config:
 
     @property
     def location_home(self) -> list:
-        """[lat, lng, altitude_km] compatible with the old LOCATION_HOME format."""
+        """[lat, lng, altitude_km] compatible with the old LOCATION_HOME format.
+
+        Uses the observer position in advanced mode, the centre point in simple mode.
+        """
+        if self.flight_location_mode == "advanced":
+            return [self.flight_observer_lat, self.flight_observer_lng, 6371.0]
         return [self.flight_lat, self.flight_lng, 6371.0]
+
+    @property
+    def observer_lat(self) -> float:
+        """Observer latitude — used for weather, sunrise/sunset, and satellite passes."""
+        if self.flight_location_mode == "advanced":
+            return self.flight_observer_lat
+        return self.flight_lat
+
+    @property
+    def observer_lng(self) -> float:
+        """Observer longitude — used for weather, sunrise/sunset, and satellite passes."""
+        if self.flight_location_mode == "advanced":
+            return self.flight_observer_lng
+        return self.flight_lng

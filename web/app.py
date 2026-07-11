@@ -136,6 +136,11 @@ def parse_settings_form(form, cfg) -> dict:
     """Coerce the submitted HTML form into a config dict, applying clamps."""
     return {
         # Location / flight zone
+        "flight_location_mode": (
+            "advanced"
+            if str_val(form.get("flight_location_mode"), "simple").lower() == "advanced"
+            else "simple"
+        ),
         "flight_lat": float_val(form.get("flight_lat"), cfg.flight_lat),
         "flight_lng": float_val(form.get("flight_lng"), cfg.flight_lng),
         "flight_radius": float_val(form.get("flight_radius"), cfg.flight_radius),
@@ -144,6 +149,26 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         "flight_max_altitude": float_val(
             form.get("flight_max_altitude"), cfg.flight_max_altitude
+        ),
+        # Advanced mode: bounding-box corners
+        "flight_zone_tl_y": float_val(
+            form.get("flight_zone_tl_y"), cfg.flight_zone_tl_y
+        ),
+        "flight_zone_tl_x": float_val(
+            form.get("flight_zone_tl_x"), cfg.flight_zone_tl_x
+        ),
+        "flight_zone_br_y": float_val(
+            form.get("flight_zone_br_y"), cfg.flight_zone_br_y
+        ),
+        "flight_zone_br_x": float_val(
+            form.get("flight_zone_br_x"), cfg.flight_zone_br_x
+        ),
+        # Advanced mode: observer position
+        "flight_observer_lat": float_val(
+            form.get("flight_observer_lat"), cfg.flight_observer_lat
+        ),
+        "flight_observer_lng": float_val(
+            form.get("flight_observer_lng"), cfg.flight_observer_lng
         ),
         # Airport display
         "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],
