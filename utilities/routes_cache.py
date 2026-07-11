@@ -11,10 +11,8 @@ Cache file: <repo_root>/routes_cache.json
 
 import json
 import logging
-import os
 import threading
 import time
-from pathlib import Path
 
 from setup.configuration import PLATFORM_DATA_DIR, ROOT_PATH, migrate_legacy_json
 
@@ -37,7 +35,7 @@ def _load():
     _loaded = True
     try:
         if CACHE_PATH.exists():
-            with open(CACHE_PATH, "r") as f:
+            with open(CACHE_PATH) as f:
                 _cache = json.load(f)
             logger.debug(
                 "Route cache loaded %d entries from %s", len(_cache), CACHE_PATH

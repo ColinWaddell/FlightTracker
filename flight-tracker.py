@@ -1,26 +1,26 @@
+import logging
 import os
 import socket
 import sys
-import json
 import threading
 import time
-import logging
 
-from version import VERSION
-
-from setup.configuration import Config, CONFIG_PATH
-from setup.logging import setup_logging
-from utilities.cli import dispatch_cli_command
+from PIL import Image
 
 # -- Phase 1: Minimal imports for the splash screen -----------------------
 # Only the panel factory + PIL + qrcode are needed here.  Imported before the
 # background threads start to avoid GIL contention with heavy imports.
 from display.panel_factory import get_panel
-from PIL import Image
+from setup.configuration import CONFIG_PATH, Config
+from setup.logging import setup_logging
+from utilities.cli import dispatch_cli_command
+from version import VERSION
 
 panel = get_panel()
 # Font loading doesn't require the matrix to be initialised
-loading_font = panel.load_font(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
+loading_font = panel.load_font(
+    os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf")
+)
 
 try:
     import qrcode
@@ -80,9 +80,12 @@ def render_splash(
     else:
         # Loading state: dim white "loading..." at top-left while Flask starts.
         from setup.colours import WHITE
+
         dim = WHITE.__class__(180, 180, 180)
         panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
-        panel.draw_text(canvas, loading_font, 1, 28, dim, f"v{'.'.join(map(str, VERSION))}")
+        panel.draw_text(
+            canvas, loading_font, 1, 28, dim, f"v{'.'.join(map(str, VERSION))}"
+        )
 
     panel.swap(canvas)
 
@@ -96,9 +99,11 @@ def flask_load(ready_event: threading.Event, result: dict):
     off to a daemon thread so this function can return promptly.
     """
     try:
-        from web.app import app, FLASK_PORT
-        from werkzeug.serving import make_server
         import logging
+
+        from werkzeug.serving import make_server
+
+        from web.app import FLASK_PORT, app
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
 

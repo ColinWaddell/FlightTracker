@@ -25,25 +25,25 @@ import time
 from enum import Enum, auto
 
 from setup import fonts, screen
-from setup.themes import TC
+from setup.configuration import Config
 from setup.themes import (
+    TC,
+    THEME_ARROW,
     THEME_BG,
+    THEME_DATA_INDEX,
+    THEME_DIVIDING_BAR,
     THEME_FLIGHT_ALPHA,
     THEME_FLIGHT_NUMERIC,
-    THEME_DIVIDING_BAR,
-    THEME_DATA_INDEX,
+    THEME_LOCATION_DESTINATION,
+    THEME_LOCATION_DESTINATION_ARROW,
+    THEME_LOCATION_DESTINATION_FULL,
+    THEME_LOCATION_ORIGIN,
+    THEME_LOCATION_ORIGIN_ARROW,
+    THEME_LOCATION_ORIGIN_FULL,
     THEME_PLANE,
     THEME_PLANE_TLM,
     THEME_PLANE_TLM_UNITS,
-    THEME_ARROW,
-    THEME_LOCATION_ORIGIN,
-    THEME_LOCATION_DESTINATION,
-    THEME_LOCATION_ORIGIN_FULL,
-    THEME_LOCATION_DESTINATION_FULL,
-    THEME_LOCATION_ORIGIN_ARROW,
-    THEME_LOCATION_DESTINATION_ARROW,
 )
-from setup.configuration import Config
 
 logger = logging.getLogger(__name__)
 
@@ -185,13 +185,12 @@ class LineScroller:
                     else BounceState.INITIAL
                 )
                 self.timer = 0
-        elif st == BounceState.RETRACT:
-            if self.position >= 0:
-                self.position = 0
-                self.loop_count += 1
-                self.loop_done = True
-                self.state = BounceState.PAUSE
-                self.timer = 0
+        elif st == BounceState.RETRACT and self.position >= 0:
+            self.position = 0
+            self.loop_count += 1
+            self.loop_done = True
+            self.state = BounceState.PAUSE
+            self.timer = 0
 
         self.timer += 1
         return self.position
@@ -490,10 +489,13 @@ class FlightScene:
                 self.undraw_full_line(cfg, flight, line_idx, prev_x)
             self.draw_full_line(cfg, flight, line_idx, new_x)
 
-        if self.origin_scroll.scroll_max > 0 and self.dest_scroll.scroll_max > 0:
-            if self.origin_scroll.state != self.dest_scroll.state:
-                self.origin_scroll.timer = 0
-                self.dest_scroll.timer = 0
+        if (
+            self.origin_scroll.scroll_max > 0
+            and self.dest_scroll.scroll_max > 0
+            and self.origin_scroll.state != self.dest_scroll.state
+        ):
+            self.origin_scroll.timer = 0
+            self.dest_scroll.timer = 0
 
         origin_done = self.origin_scroll.loop_done or self.origin_scroll.scroll_max == 0
         dest_done = self.dest_scroll.loop_done or self.dest_scroll.scroll_max == 0

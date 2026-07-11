@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
-from setup.configuration import Config, CONFIG_PATH
+from setup.configuration import CONFIG_PATH, Config
 from version import VERSION
 
 

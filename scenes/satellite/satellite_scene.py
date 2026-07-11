@@ -22,11 +22,11 @@ import datetime
 import logging
 
 from display.rgbpanel import Colour
-from setup import fonts, frames, screen
-from setup.colours import PEACH, WHITE, PINK, YELLOW
-from setup.configuration import Config
-from scenes.satellite import passes as passes_mod
 from scenes.satellite import azel_plot
+from scenes.satellite import passes as passes_mod
+from setup import fonts, frames, screen
+from setup.colours import PEACH, PINK, WHITE, YELLOW
+from setup.configuration import Config
 
 logger = logging.getLogger(__name__)
 

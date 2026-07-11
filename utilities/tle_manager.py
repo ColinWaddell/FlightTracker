@@ -17,9 +17,8 @@ import logging
 import threading
 import time
 import urllib.request
-from pathlib import Path
 
-from setup.configuration import Config, CONFIG_PATH, ROOT_PATH, migrate_legacy_json
+from setup.configuration import CONFIG_PATH, ROOT_PATH, Config, migrate_legacy_json
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 TLE_CACHE_TTL = 86400  # 24 hours
-TLE_CACHE_PATH = migrate_legacy_json(ROOT_PATH / "tle_cache.json", CONFIG_PATH.parent / "tle_cache.json")
+TLE_CACHE_PATH = migrate_legacy_json(
+    ROOT_PATH / "tle_cache.json", CONFIG_PATH.parent / "tle_cache.json"
+)
 HTTP_TIMEOUT = 15
 
 GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
@@ -53,7 +54,7 @@ def fetch_tle(norad_id: int) -> tuple[str, str, str] | None:
         logger.error("HTTP error fetching TLE for NORAD %d: %s", norad_id, exc)
         return None
 
-    lines = [l.rstrip() for l in body.splitlines() if l.strip()]
+    lines = [line.rstrip() for line in body.splitlines() if line.strip()]
     if len(lines) >= 3 and lines[1].startswith("1 ") and lines[2].startswith("2 "):
         return lines[0].strip(), lines[1], lines[2]
 

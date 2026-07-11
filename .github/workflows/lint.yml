@@ -1,0 +1,38 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Run ruff
+        run: ruff check .
+
+      - name: Check formatting with black
+        run: |
+          pip install black
+          black --check --diff .
+
+      - name: Compile check
+        run: |
+          python -m py_compile flight-tracker.py version.py
+          find setup display utilities scenes web -name "*.py" -exec python -m py_compile {} +

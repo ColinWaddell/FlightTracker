@@ -5,8 +5,9 @@ Wraps the rgbmatrix C++ Python bindings (RGBMatrix, RGBMatrixOptions, graphics)
 behind the unified RGBPanel interface.
 """
 
-from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
-from display.rgbpanel import RGBPanel, Colour
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+
+from display.rgbpanel import RGBPanel
 
 
 class RGBMatrixPanel(RGBPanel):

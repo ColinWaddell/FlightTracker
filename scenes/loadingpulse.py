@@ -28,11 +28,15 @@ class LoadingPulseIndicator:
             brightness = (1 - (self.count / BLINKER_STEPS)) / 2
             brightness = max(0.0, min(1.0, brightness))
             v = int(brightness * BLINKER_COLOUR.red)  # WHITE is (255,255,255)
-            self.panel.set_pixel(self.canvas, BLINKER_POSITION[0], BLINKER_POSITION[1], v, v, v)
+            self.panel.set_pixel(
+                self.canvas, BLINKER_POSITION[0], BLINKER_POSITION[1], v, v, v
+            )
             if self.count >= BLINKER_STEPS - 1:
                 self.count = 0
             else:
                 self.count += 1
         else:
-            self.panel.set_pixel(self.canvas, BLINKER_POSITION[0], BLINKER_POSITION[1], 0, 0, 0)
+            self.panel.set_pixel(
+                self.canvas, BLINKER_POSITION[0], BLINKER_POSITION[1], 0, 0, 0
+            )
             self.count = 0

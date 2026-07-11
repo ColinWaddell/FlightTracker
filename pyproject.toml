@@ -1,0 +1,87 @@
+[project]
+name = "flighttracker"
+version = "2.0.6"
+description = "Real-time flight tracker display for Raspberry Pi with RGB LED panels"
+readme = "README.md"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "Colin Waddell", email = "colinwaddell.com" }]
+requires-python = ">=3.9"
+keywords = ["flight-tracker", "flightradar24", "ads-b", "led-panel", "raspberry-pi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Raspberry Pi",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Hardware",
+]
+
+dependencies = [
+    "beautifulsoup4>=4.13.0",
+    "Flask>=3.0.0",
+    "FlightRadarAPI>=1.5.1",
+    "qrcode[pil]>=7.4.2",
+    "requests>=2.32.0",
+    "rich>=15.0.0",
+    "sgp4>=2.22",
+]
+
+[project.optional-dependencies]
+pi = [
+    "RPi.GPIO==0.7.1",
+    "rgbmatrix",
+]
+pi5 = [
+    "adafruit-blinka-raspberry-pi5-piomatter>=1.0.0",
+    "numpy>=2.0.0",
+    "pillow>=10.0.0",
+]
+simulator = [
+    "pygame>=2.6.0",
+    "pillow>=10.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ColinWaddell/FlightTracker"
+Repository = "https://github.com/ColinWaddell/FlightTracker"
+Issues = "https://github.com/ColinWaddell/FlightTracker/issues"
+Changelog = "https://github.com/ColinWaddell/FlightTracker/blob/main/CHANGELOG.md"
+
+# ── Black ──────────────────────────────────────────────────────────────
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+extend-exclude = '''
+/(
+    env
+  | \.dev
+  | _site
+)/
+'''
+
+# ── Ruff ───────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+extend-exclude = ["env", ".dev", "_site"]
+
+[tool.ruff.lint]
+# E/WHIGH = pycodestyle errors (but not E501 — black handles line length)
+# F = pyflakes (unused imports, undefined names, etc.)
+# I = isort (import ordering)
+# UP = pyupgrade (modernise syntax)
+# B = bugbear (common gotchas)
+# SIM = simplify
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",   # line too long — black is the formatter
+    "E203",   # whitespace before ':' — conflicts with black
+    "B008",   # function call in default argument (Flask uses this pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["setup", "display", "utilities", "scenes", "web", "version"]

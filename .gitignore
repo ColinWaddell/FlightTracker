@@ -1,4 +1,3 @@
-
 # Custom
 _crap/
 .vscode/
@@ -9,6 +8,11 @@ routes_cache.json
 captures/
 _junk/
 *.bak
+
+# Docs site (Eleventy)
+node_modules/
+_site/
+.dev/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

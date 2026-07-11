@@ -16,14 +16,15 @@ import urllib.request
 from math import ceil
 
 from display.rgbpanel import Colour
-from setup import fonts, frames, screen
-from setup.themes import TC
+from setup import fonts, frames
+from setup.configuration import Config
 from setup.themes import (
+    TC,
     THEME_BG,
-    THEME_TIME,
-    THEME_TIME_AMPM,
     THEME_CURRENT_DATE,
     THEME_CURRENT_DAY,
+    THEME_TIME,
+    THEME_TIME_AMPM,
     THEME_WEATHER_00C,
     THEME_WEATHER_01C,
     THEME_WEATHER_10C,
@@ -32,7 +33,6 @@ from setup.themes import (
     THEME_WEATHER_25C,
     THEME_WEATHER_35C,
 )
-from setup.configuration import Config
 
 # ---------------------------------------------------------------------------
 # Constants
