@@ -53,8 +53,7 @@ DEFAULT_FLIGHT_OBSERVER_LAT = 55.87
 DEFAULT_FLIGHT_OBSERVER_LNG = -4.25
 
 # Airport display
-DEFAULT_FULL_AIRPORT_NAME = False
-DEFAULT_ABBREVIATE_NAME = False
+DEFAULT_AIRPORT_DISPLAY_STYLE = 0  # 0=short code, 1=name, 2=name abbreviated, 3=municipality, 4=municipality+country
 DEFAULT_HOME_AIRPORT_CODE = ""
 DEFAULT_JOURNEY_BLANK_FILLER = "???"
 
@@ -135,8 +134,7 @@ DEFAULTS: dict[str, Any] = {
     "flight_observer_lat": DEFAULT_FLIGHT_OBSERVER_LAT,
     "flight_observer_lng": DEFAULT_FLIGHT_OBSERVER_LNG,
     # Airport display
-    "full_airport_name": DEFAULT_FULL_AIRPORT_NAME,
-    "abbreviate_name": DEFAULT_ABBREVIATE_NAME,
+    "airport_display_style": DEFAULT_AIRPORT_DISPLAY_STYLE,
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
     # Plane info row
@@ -553,12 +551,21 @@ class Config:
         )
 
     @property
-    def full_airport_name(self) -> bool:
-        return bool(self.data_store.get("full_airport_name", DEFAULT_FULL_AIRPORT_NAME))
-
-    @property
-    def abbreviate_name(self) -> bool:
-        return bool(self.data_store.get("abbreviate_name", DEFAULT_ABBREVIATE_NAME))
+    def airport_display_style(self) -> int:
+        try:
+            return max(
+                0,
+                min(
+                    4,
+                    int(
+                        self.data_store.get(
+                            "airport_display_style", DEFAULT_AIRPORT_DISPLAY_STYLE
+                        )
+                    ),
+                ),
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_AIRPORT_DISPLAY_STYLE
 
     @property
     def home_airport_code(self) -> str:

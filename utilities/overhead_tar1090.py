@@ -19,7 +19,7 @@ BLANK_FIELDS = ["", "N/A", "NONE"]
 # Airport name lookup (bundled airports.json)
 # ---------------------------------------------------------------------------
 
-airports_cache: dict[str, str] = {}
+airports_cache: dict[str, dict] = {}
 airports_loaded = False
 
 
@@ -41,9 +41,15 @@ def load_airports():
     airports_loaded = True
 
 
-def airport_name(iata: str) -> str:
+def airport_info(iata: str) -> dict:
+    """Return the full airport dict {name, municipality, country_name} or {}."""
     load_airports()
-    return airports_cache.get(iata.upper(), "")
+    return airports_cache.get(iata.upper(), {})
+
+
+def airport_name(iata: str) -> str:
+    """Return the airport name, or empty string if not found."""
+    return airport_info(iata).get("name", "")
 
 
 # ---------------------------------------------------------------------------
@@ -245,9 +251,9 @@ class Overhead:
                     else:
                         origin, destination = "", ""
 
-                    # Full names from bundled airport database
-                    origin_name = airport_name(origin) if origin else ""
-                    destination_name = airport_name(destination) if destination else ""
+                    # Full airport info from bundled airport database
+                    origin_info = airport_info(origin) if origin else {}
+                    dest_info = airport_info(destination) if destination else {}
 
                     # Telemetry
                     try:
@@ -265,8 +271,14 @@ class Overhead:
                             "plane": plane,
                             "origin": origin,
                             "destination": destination,
-                            "origin_name": origin_name,
-                            "destination_name": destination_name,
+                            "origin_name": origin_info.get("name", ""),
+                            "destination_name": dest_info.get("name", ""),
+                            "origin_municipality": origin_info.get("municipality", ""),
+                            "destination_municipality": dest_info.get(
+                                "municipality", ""
+                            ),
+                            "origin_country": origin_info.get("country_name", ""),
+                            "destination_country": dest_info.get("country_name", ""),
                             "vertical_speed": ac.get("baro_rate", 0),
                             "altitude": ac.get("alt_baro", 0),
                             "ground_speed": ground_speed,

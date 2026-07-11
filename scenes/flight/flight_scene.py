@@ -466,7 +466,7 @@ class FlightScene:
             self.last_origin = origin
             self.last_dest = destination
 
-        if not cfg.full_airport_name:
+        if cfg.airport_display_style == 0:
             if not self.journey_loop_completed:
                 self.draw_iata_mode(cfg, flight)
             return
@@ -474,7 +474,9 @@ class FlightScene:
         if self.journey_mode != "full" or self.journey_first_draw:
             self.journey_mode = "full"
             self.setup_full_mode(cfg, flight)
-            self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG))
+            self.panel.draw_square(
+                self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
+            )
             self.journey_first_draw = False
 
         for line_idx, scroller in enumerate((self.origin_scroll, self.dest_scroll)):
@@ -524,8 +526,12 @@ class FlightScene:
         y1 = ay - (ARROW_HEIGHT // 2)
         y2 = ay + (ARROW_HEIGHT // 2)
         self.panel.set_pixel(
-            self.canvas, ax, ay,
-            TC(THEME_ARROW).red, TC(THEME_ARROW).green, TC(THEME_ARROW).blue
+            self.canvas,
+            ax,
+            ay,
+            TC(THEME_ARROW).red,
+            TC(THEME_ARROW).green,
+            TC(THEME_ARROW).blue,
         )
         for _ in range(ARROW_WIDTH):
             self.panel.draw_line(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
@@ -538,12 +544,32 @@ class FlightScene:
     def setup_full_mode(self, cfg, flight: dict) -> None:
         origin = flight.get("origin") or cfg.journey_blank_filler
         destination = flight.get("destination") or cfg.journey_blank_filler
-        origin_name = flight.get("origin_name") or ""
-        dest_name = flight.get("destination_name") or ""
 
-        if cfg.abbreviate_name:
-            origin_name = abbreviate(origin_name)
-            dest_name = abbreviate(dest_name)
+        style = cfg.airport_display_style
+
+        def resolve_name(
+            flight_key_name, flight_key_muni, flight_key_country, abbrev=False
+        ):
+            if style == 1:
+                name = flight.get(flight_key_name) or ""
+            elif style == 2:
+                name = abbreviate(flight.get(flight_key_name) or "")
+            elif style == 3:
+                name = flight.get(flight_key_muni) or ""
+            elif style == 4:
+                muni = flight.get(flight_key_muni) or ""
+                country = flight.get(flight_key_country) or ""
+                name = f"{muni}, {country}" if muni and country else (muni or country)
+            else:
+                name = flight.get(flight_key_name) or ""
+            return name
+
+        origin_name = resolve_name(
+            "origin_name", "origin_municipality", "origin_country"
+        )
+        dest_name = resolve_name(
+            "destination_name", "destination_municipality", "destination_country"
+        )
 
         self.origin_name = (origin_name or "Unknown") + " "
         self.dest_name = (dest_name or "Unknown") + " "

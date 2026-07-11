@@ -172,8 +172,9 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         # Airport display
         "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],
-        "full_airport_name": bool_val(form.get("full_airport_name")),
-        "abbreviate_name": bool_val(form.get("abbreviate_name")),
+        "airport_display_style": max(
+            0, min(4, int_val(form.get("airport_display_style"), 0))
+        ),
         "journey_blank_filler": str_val(form.get("journey_blank_filler"), " ? "),
         # Plane info row
         "details": int_val(form.get("details"), 0),

@@ -317,32 +317,44 @@
           <div class="mb-3">
             <label class="form-label small">Airport display style</label>
             <div class="form-check">
-              <input type="radio" class="form-check-input" name="full_airport_name" id="airport_short" value="0"
-                     {% if not cfg.full_airport_name %}checked{% endif %}
-                     onchange="document.getElementById('home_airport_fields').style.display='block';document.getElementById('abbreviate_fields').style.display='none'" />
+              <input type="radio" class="form-check-input" name="airport_display_style" id="airport_short" value="0"
+                     {% if cfg.airport_display_style == 0 %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='block'" />
               <label class="form-check-label" for="airport_short">Short airport code</label>
             </div>
             <div class="form-check">
-              <input type="radio" class="form-check-input" name="full_airport_name" id="airport_full" value="1"
-                     {% if cfg.full_airport_name %}checked{% endif %}
-                     onchange="document.getElementById('home_airport_fields').style.display='none';document.getElementById('abbreviate_fields').style.display='block'" />
-              <label class="form-check-label" for="airport_full">Full airport name (scrolling)</label>
+              <input type="radio" class="form-check-input" name="airport_display_style" id="airport_name" value="1"
+                     {% if cfg.airport_display_style == 1 %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='none'" />
+              <label class="form-check-label" for="airport_name">Airport name</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="airport_display_style" id="airport_name_abbrev" value="2"
+                     {% if cfg.airport_display_style == 2 %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='none'" />
+              <label class="form-check-label" for="airport_name_abbrev">Airport name, abbreviated</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="airport_display_style" id="airport_muni" value="3"
+                     {% if cfg.airport_display_style == 3 %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='none'" />
+              <label class="form-check-label" for="airport_muni">Airport municipality</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="airport_display_style" id="airport_muni_country" value="4"
+                     {% if cfg.airport_display_style == 4 %}checked{% endif %}
+                     onchange="document.getElementById('home_airport_fields').style.display='none'" />
+              <label class="form-check-label" for="airport_muni_country">Airport municipality and country</label>
             </div>
           </div>
 
-          <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.full_airport_name %}none{% else %}block{% endif %}">
+          <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.airport_display_style == 0 %}block{% else %}none{% endif %}">
             <input type="text" maxlength="3" class="form-control form-control-sm"
                    name="home_airport_code" id="home_airport_code"
                    value="{{ cfg.home_airport_code }}"
                    placeholder="e.g. GLA" style="text-transform:uppercase;max-width:120px" />
             <div id="airport_name_hint" class="form-text text-muted small"></div>
             <div class="form-text text-muted small mt-1">When a flight's origin or destination matches this code, that airport will appear <strong>bold</strong> on the display. Leave blank to disable.</div>
-          </div>
-
-          <div id="abbreviate_fields" class="mb-2 form-check" style="display:{% if cfg.full_airport_name %}block{% else %}none{% endif %}">
-            <input type="checkbox" class="form-check-input" name="abbreviate_name" id="abbreviate_name"
-                   {% if cfg.abbreviate_name %}checked{% endif %} />
-            <label class="form-check-label" for="abbreviate_name">Abbreviate long names (e.g. "Intl" for "International")</label>
           </div>
 
           <div class="mb-2">

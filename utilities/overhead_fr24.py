@@ -1,6 +1,8 @@
 from threading import Thread, Lock, Event
 from time import sleep
+import json
 import logging
+from pathlib import Path
 
 from requests.exceptions import RequestException, ConnectionError
 from utilities import routes_cache
@@ -18,6 +20,34 @@ RATE_LIMIT_DELAY = 1
 FR24_TIMEOUT = 60  # seconds - default 30 is too short for Pi on slow networks
 EARTH_RADIUS_KM = 6371
 BLANK_FIELDS = ["", "N/A", "NONE"]
+
+
+# ---------------------------------------------------------------------------
+# Airport info lookup (bundled airports.json)
+# ---------------------------------------------------------------------------
+
+_airports_cache: dict[str, dict] = {}
+_airports_loaded = False
+
+
+def _load_airports():
+    global _airports_cache, _airports_loaded
+    if _airports_loaded:
+        return
+    _airports_loaded = True
+    path = Path(__file__).parent.parent / "assets" / "airports.json"
+    if path.exists():
+        try:
+            with open(path) as fh:
+                _airports_cache = json.load(fh)
+        except Exception:
+            _airports_cache = {}
+
+
+def airport_info(iata: str) -> dict:
+    """Return the full airport dict {name, municipality, country_name} or {}."""
+    _load_airports()
+    return _airports_cache.get(iata.upper(), {})
 
 
 def clean_field(value):
@@ -164,10 +194,8 @@ class Overhead:
                     plane = cached.get("plane", "")
                     origin = cached.get("origin", "")
                     destination = cached.get("destination", "")
-                    origin_name = cached.get("origin_name", "")
-                    destination_name = cached.get("destination_name", "")
                 else:
-                    # Cache miss - fetch details from FR24 API
+                    # Cache miss - fetch details from FR24 API (for plane model only)
                     retries = RETRIES
                     details = None
                     while retries:
@@ -197,18 +225,6 @@ class Overhead:
                         origin = clean_field(flight.origin_airport_iata)
                         destination = clean_field(flight.destination_airport_iata)
 
-                        try:
-                            origin_name = details["airport"]["origin"]["name"] or ""
-                        except (KeyError, TypeError):
-                            origin_name = ""
-
-                        try:
-                            destination_name = (
-                                details["airport"]["destination"]["name"] or ""
-                            )
-                        except (KeyError, TypeError):
-                            destination_name = ""
-
                         # Cache the route info for 24 hours
                         if icao_callsign:
                             routes_cache.put(
@@ -217,8 +233,6 @@ class Overhead:
                                     "plane": plane,
                                     "origin": origin,
                                     "destination": destination,
-                                    "origin_name": origin_name[:80],
-                                    "destination_name": destination_name[:80],
                                 },
                             )
                     else:
@@ -226,8 +240,10 @@ class Overhead:
                         plane = ""
                         origin = clean_field(flight.origin_airport_iata)
                         destination = clean_field(flight.destination_airport_iata)
-                        origin_name = ""
-                        destination_name = ""
+
+                # Airport names / municipality / country from bundled airports.json
+                origin_info = airport_info(origin) if origin else {}
+                dest_info = airport_info(destination) if destination else {}
 
                 # Telemetry (always from live flight object, not cached)
                 try:
@@ -245,8 +261,12 @@ class Overhead:
                         "plane": plane,
                         "origin": origin,
                         "destination": destination,
-                        "origin_name": origin_name[:80],
-                        "destination_name": destination_name[:80],
+                        "origin_name": origin_info.get("name", ""),
+                        "destination_name": dest_info.get("name", ""),
+                        "origin_municipality": origin_info.get("municipality", ""),
+                        "destination_municipality": dest_info.get("municipality", ""),
+                        "origin_country": origin_info.get("country_name", ""),
+                        "destination_country": dest_info.get("country_name", ""),
                         "vertical_speed": flight.vertical_speed,
                         "altitude": flight.altitude,
                         "ground_speed": ground_speed,

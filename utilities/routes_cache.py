@@ -1,9 +1,10 @@
 """
 Persistent route cache - shared by overhead_fr24 and overhead_tar1090.
 
-Stores route info (plane, origin, destination, airport names) keyed by
-callsign in a JSON file with a 24-hour TTL. This avoids repeated API
-lookups for the same flight route.
+Stores route info (plane, origin, destination) keyed by callsign in a
+JSON file with a 24-hour TTL. This avoids repeated API lookups for the
+same flight route. Airport names/municipality/country are looked up from
+the bundled airports.json at runtime, not cached here.
 
 Cache file: <repo_root>/routes_cache.json
 """

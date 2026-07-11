@@ -157,8 +157,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `flight_observer_lat` / `flight_observer_lng` | Observer position for weather, sunrise/sunset, satellite passes, and flight distance sorting (advanced mode) | `55.87` / `-4.25` |
 | `flight_min_altitude` | Ignore aircraft below this altitude (metres) | `100.0` |
 | `flight_max_altitude` | Ignore aircraft above this altitude (metres) | `10000.0` |
-| `full_airport_name` | Show the full airport name instead of the IATA code | `false` |
-| `abbreviate_name` | Abbreviate the airport name where possible | `false` |
+| `airport_display_style` | `0` = short code, `1` = airport name, `2` = abbreviated name, `3` = municipality, `4` = municipality + country | `0` |
 | `home_airport_code` | IATA code of your local airport - highlighted on the display | `""` |
 | `journey_blank_filler` | Filler shown for blank journey segments | `"???"` |
 | `details` | Bottom row: `0` = aircraft make/model, `1` = altitude/speed/heading | `0` |
