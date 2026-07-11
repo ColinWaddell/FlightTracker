@@ -44,6 +44,10 @@ simulator = [
     "pygame>=2.6.0",
     "pillow>=10.0.0",
 ]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/ColinWaddell/FlightTracker"
@@ -85,3 +89,11 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["setup", "display", "utilities", "scenes", "web", "version"]
+
+# ── pytest ─────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
