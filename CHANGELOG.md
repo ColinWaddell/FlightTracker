@@ -4,6 +4,23 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.0] - 2026-07-11
+
+### Added
+- **OpenSky Network data source** — use OSN as an alternative to FlightRadar24, authenticated via OAuth2 client credentials (Client ID + Client Secret obtained from your OSN account). Configured from the web UI under Data Source.
+- **adsbdb.com unified lookup** — route origin/destination and aircraft type are now both resolved via [adsbdb.com](https://api.adsbdb.com) for tar1090 and OpenSky Network data sources, replacing the previous mix of adsb.im (routes) and hexdb.io (aircraft type). Route and aircraft lookups are now independent, each cached under their own key with a 24-hour TTL.
+- `python flight-tracker.py cache clear` CLI command to wipe all on-disk cache files (routes and TLE).
+- Cache is automatically cleared on a successful OTA update so stale entries never survive a version change.
+
+### Changed
+- `data_source` config key now accepts `"osn"` in addition to `"fr24"` and `"tar1090"`.
+- `route_lookup.py` rewritten to use two separate adsbdb endpoints (`/v0/callsign/{callsign}` for routes, `/v0/aircraft/{mode_s}` for aircraft type) rather than the combined endpoint, which silently omitted route data when adsbdb could not verify the callsign–airframe association.
+- Stale cache entries with empty origin and destination are now treated as cache misses and re-queried, fixing cases where old backend data blocked fresh lookups.
+
+### Fixed
+- Origin and destination showing blank for flights whose routes were known to adsbdb via the callsign endpoint but not resolvable via the combined aircraft endpoint (e.g. KLM933 → AMS–DUB).
+- Python 3.13 dummy-thread GC noise (`TypeError: 'NoneType' object does not support the context manager protocol`) eliminated by using persistent `requests.Session` objects in `route_lookup`, `overhead_tar1090`, and `overhead_osn`.
+
 ## [v2.0.7] - 2026-07-11
 
 ### Added
