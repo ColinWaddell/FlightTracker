@@ -1,5 +1,6 @@
 ---
 name: Bug report
+descriptions: Report a problem with FlightTracker
 title: "[BUG] "
 labels: bug
 body:
