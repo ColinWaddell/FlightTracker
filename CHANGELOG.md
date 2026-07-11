@@ -1,0 +1,103 @@
+# Changelog
+
+All notable changes to FlightTracker are documented here.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v2.0.6] - 2026-07-11
+
+### Changed
+- Airport display options expanded from a simple full-name toggle to five styles: short code, full name, abbreviated name, municipality, and municipality + country
+- Replaced `full_airport_name` and `abbreviate_name` config keys with a single `airport_display_style` setting (0–4)
+- Bundled airports database significantly expanded (45,000+ entries) with richer metadata (name, municipality, country)
+- Airport lookup now returns full airport info dict instead of just the name string, for both FR24 and tar1090 data sources
+
+## [v2.0.5] - 2026-07-11
+
+### Fixed
+- Updater no longer blocked by untracked files (e.g. `.bak` files from config migration) — `git status` now uses `--untracked-files=no`
+
+## [v2.0.4] - 2026-07-11
+
+### Added
+- Advanced flight zone mode: draw a bounding box on a map to define the search area instead of using a centre + radius
+- Observer position setting (advanced mode) for weather, sunrise/sunset, satellite passes, and flight distance sorting
+- Interactive map selector in the web UI for choosing between simple and advanced zone definitions
+
+### Changed
+- `flight_location_mode` config key added (`"simple"` or `"advanced"`)
+- Web settings page reworked with map-based zone picker
+
+## [v2.0.3] - 2026-07-11
+
+### Added
+- Satellite pass timeout: optionally limit how long the satellite scene is shown per pass, yielding back to flight tracking after a configurable number of seconds from acquisition of signal (AOS)
+- `satellite_timeout_enabled` and `satellite_timeout_seconds` config keys
+- Satellite timeout controls in the web UI
+
+### Fixed
+- Restored polling route for web UI status updates
+
+## [v2.0.2] - 2026-07-09
+
+Bundled the complete v2 overhaul (see [v2.0.0](#v200---2026-07-09)) along with several post-merge refinements.
+
+### Added
+- Password enforcement on first run
+- CLI utilities (`config`, `data`, `reset-password`, `interface enable/disable`)
+- Auto-update status reporting
+- Documentation and README rewrite for the v2 branch structure
+
+### Removed
+- Old v1 scene files (`clock.py`, `date.py`, `day.py`, `flightdetails.py`, `journey.py`, `planedetails.py`, `weather.py`)
+- `animator.py` (replaced by scene manager)
+- Taps-aff weather service (replaced by WeatherAPI)
+
+## [v2.0.1] - 2026-07-08
+
+### Added
+- Initial auto-update test release — verified the update mechanism works end-to-end from the web UI
+
+## [v2.0.0] - 2026-07-09 — Overhaul released
+
+Complete ground-up rewrite of FlightTracker, developed across `release/v2` and numerous feature/hotfix branches. Not separately tagged, but merged into `main` on 9 July 2026 and first released as v2.0.1.
+
+### Added
+- **Complete codebase rewrite** from the ground up, reorganised into `scenes/`, `display/`, `utilities/`, `setup/`, and `web/` packages
+- **Scene manager architecture** (C++-style) with `on_enter`/`on_exit` lifecycle, making it straightforward to add new display scenes
+- **Web configuration UI** with login page, password protection, settings editor, update page, and log viewer
+- **Satellite tracking** — plot satellite passes with NORAD ID configuration, azimuth/elevation ring, and trajectory arcs
+- **Idle screen** showing time, weather (temperature + optional 24-hour rainfall chart), date, and day
+- **Splash screen** with custom bitmap logo and QR code for web UI access
+- **Raspberry Pi 5 support** with dedicated installer, requirements, and `rgbpanel_piomatter` display driver
+- **Desktop simulator** platform with `rgbpanel_simulator` for development without hardware
+- **One-line install scripts** for Pi 3/4/Zero and Pi 5 with hardware detection, progress output, and systemd service setup
+- **Auto-update system** — update from the web UI or CLI, with git pull, pip install, and service restart
+- **CLI tools** — `config`, `data`, `reset-password`, `interface enable/disable`, `--version`
+- **Structured logging** with configurable verbosity, accessible from the web UI
+- **Brightness scheduling** based on sunrise/sunset, with configurable time windows and brightness levels
+- **Themes** — default, monochrome, and pastel colour palettes
+- **tar1090 / local ADS-B receiver support** as an alternative to FlightRadar24
+- **adsbdb.com integration** for origin/destination airport lookups when using tar1090
+- **Routes caching** to reduce repeated API calls
+- **Loading LED** — optional GPIO LED that blinks while fetching flight data
+- **Configurable airport display** — short code, full name, or abbreviated
+- **Home airport highlighting** — emphasise your local IATA code on the display
+- **Animation speed presets** — `default`, `slower`, `faster`
+- **Callsign format selector** — ICAO callsign (e.g. BAW123) or IATA flight number (e.g. BA123), FR24 only
+- **Rain sensitivity** setting for the rainfall chart
+- **Imperial/metric units** toggle
+- **24-hour/12-hour clock** and date format options
+- **Screen rotation** (180°) and **brightness** controls (1–5)
+- **Bundled airports database** (`airports.json`) with Python helper script to keep it updated
+
+### Removed
+- Old v1 scene files (`clock.py`, `date.py`, `day.py`, `flightdetails.py`, `journey.py`, `planedetails.py`, `weather.py`)
+- `animator.py` (replaced by scene manager)
+- Taps-aff weather service (replaced by WeatherAPI)
+
+---
+
+## v1
+
+The original Python flight tracker for Raspberry Pi. Lives on the `master` branch.

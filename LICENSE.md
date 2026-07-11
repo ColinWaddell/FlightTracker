@@ -1,4 +1,4 @@
-Copyright (C) 2025 Colin Waddell <colinwaddell.com>
+Copyright (C) 2026 Colin Waddell <colinwaddell.com>
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
