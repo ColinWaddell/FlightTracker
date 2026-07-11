@@ -61,14 +61,26 @@ ERROR_BACKOFF_S = 60
 TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
 
 
+def _flight_id(flight: dict) -> str:
+    """Return the unique identity key for a flight dict.
+
+    The ICAO callsign is the stable, unique identifier.  The display
+    ``callsign`` field may hold an IATA flight number (e.g. ``BA123``)
+    which is reused daily and across codeshares, so it must NOT be used
+    for identity matching.  We fall back to the display callsign only
+    when the ICAO callsign is absent (e.g. tar1090 with a blank field).
+    """
+    return flight.get("icao_callsign") or flight.get("callsign", "")
+
+
 def callsigns_match(a: list, b: list) -> bool:
-    return {f["callsign"] for f in a} == {f["callsign"] for f in b}
+    return {_flight_id(f) for f in a} == {_flight_id(f) for f in b}
 
 
 def telemetry_changed(old: list, new: list) -> bool:
-    lookup = {f["callsign"]: f for f in old}
+    lookup = {_flight_id(f): f for f in old}
     for flight in new:
-        prev = lookup.get(flight["callsign"])
+        prev = lookup.get(_flight_id(flight))
         if prev and any(flight.get(k) != prev.get(k) for k in TELEMETRY_FIELDS):
             return True
     return False
@@ -319,8 +331,12 @@ class FlightScene:
             self.flights = new_flights
             if there_is_data:
                 self.reset()
-        elif telemetry_changed(old_flights, new_flights):
-            # Silent swap - scroller continues uninterrupted
+        else:
+            # Same flights - always pick up the latest data so that
+            # route info, plane model, or airport names that were
+            # incomplete on a previous fetch (or filled in from the
+            # route cache) are reflected.  No reset needed; the
+            # scroller continues uninterrupted.
             self.flights = new_flights
 
     @property
