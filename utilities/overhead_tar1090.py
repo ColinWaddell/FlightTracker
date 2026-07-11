@@ -283,6 +283,7 @@ class Overhead:
                             "ground_speed": ground_speed,
                             "heading": heading,
                             "callsign": callsign,
+                            "icao_callsign": callsign,
                         }
                     )
 
