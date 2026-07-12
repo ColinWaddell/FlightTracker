@@ -219,9 +219,9 @@ def parse_settings_form(form, cfg) -> dict:
         "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
         # Data source
-        "data_source": (
-            lambda v: v if v in ("fr24", "tar1090", "osn") else "fr24"
-        )(str_val(form.get("data_source"), "fr24").lower()),
+        "data_source": (lambda v: v if v in ("fr24", "tar1090", "osn") else "fr24")(
+            str_val(form.get("data_source"), "fr24").lower()
+        ),
         "tar1090_url": str_val(form.get("tar1090_url"), ""),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
         "callsign_format": (

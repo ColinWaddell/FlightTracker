@@ -201,7 +201,9 @@ class Overhead:
                             "origin_name": route["origin_name"],
                             "destination_name": route["destination_name"],
                             "origin_municipality": route["origin_municipality"],
-                            "destination_municipality": route["destination_municipality"],
+                            "destination_municipality": route[
+                                "destination_municipality"
+                            ],
                             "origin_country": route["origin_country"],
                             "destination_country": route["destination_country"],
                             "vertical_speed": ac.get("baro_rate", 0),

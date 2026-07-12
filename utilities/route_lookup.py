@@ -94,11 +94,10 @@ def _lookup_route(callsign: str) -> dict:
     Never raises.
     """
     cached = routes_cache.get(callsign)
-    if cached is not None:
-        # Skip stale entries that have no useful data (e.g. from a previous
-        # backend that cached empty results, or a failed lookup)
-        if cached.get("origin") or cached.get("destination"):
-            return {**EMPTY_RESULT, **cached, "plane": ""}
+    # Skip stale entries that have no useful data (e.g. from a previous
+    # backend that cached empty results, or a failed lookup)
+    if cached is not None and (cached.get("origin") or cached.get("destination")):
+        return {**EMPTY_RESULT, **cached, "plane": ""}
 
     route = {k: "" for k in EMPTY_RESULT if k != "plane"}
     try:

@@ -2,14 +2,16 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security issue in FlightTracker, please report it responsibly
-rather than opening a public GitHub issue.
+If you discover a security issue in FlightTracker, please report it
+responsibly rather than opening a public GitHub issue.
 
-**Email:** security@colinwaddell.com
+**Visit my website for contact details:**
+www.colinwaddell.com
 
-Include as much detail as you can — steps to reproduce, affected versions, and
-any potential impact. I'll acknowledge receipt within 48 hours and aim to
-provide a fix or mitigation as soon as reasonably possible.
+Include as much detail as you can — steps to reproduce, affected
+versions, and any potential impact. Reports will be acknowledged
+within 48 hours and I'll aim to provide a fix or mitigation as soon
+as reasonably possible.
 
 ## Sharing Config Safely
 

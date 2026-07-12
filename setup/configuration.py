@@ -98,7 +98,9 @@ DEFAULT_LOADING_LED_ENABLED = False
 DEFAULT_LOADING_LED_GPIO_PIN = ""
 
 # Data source
-DEFAULT_DATA_SOURCE = "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090, 'osn' = OpenSky Network
+DEFAULT_DATA_SOURCE = (
+    "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090, 'osn' = OpenSky Network
+)
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 DEFAULT_CALLSIGN_FORMAT = (
