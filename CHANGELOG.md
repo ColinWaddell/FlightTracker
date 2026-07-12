@@ -4,6 +4,16 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.4] - 2026-07-11
+
+### Changed
+- Loading screen tests to ensure data sources are working
+- Moved to hexdb.io for flight lookups
+- Can delete cache from web UI
+
+### Fixed
+- Logic around when to jog onto the next flight's details have been tweaked
+
 ## [v2.1.3] - 2026-07-12
 
 ### Changed
