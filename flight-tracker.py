@@ -21,6 +21,7 @@ panel = get_panel()
 loading_font = panel.load_font(
     os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf")
 )
+test_font = panel.load_font(os.path.join(os.path.dirname(__file__), "fonts", "4x6.bdf"))
 
 try:
     import qrcode
@@ -79,34 +80,19 @@ def _check_celestrack() -> bool:
         return False
 
 
-def _render_web_interface_test(panel, canvas, cfg: Config, y):
-    from setup.colours import GREEN, GREY, ORANGE
-
-    panel.draw_text(canvas, loading_font, 1, y, GREY, "IFACE: ")
-    if cfg.web_interface_enabled:
-        result_text = "ON"
-        result_colour = GREEN
-    else:
-        result_text = "OFF"
-        result_colour = ORANGE
-    # Right-align the result label on the 64px-wide screen
-    result_width = len(result_text) * 4
-    panel.draw_text(
-        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
-    )
-
-
 def _render_ip_address(panel, canvas, y):
     from setup.colours import GREY
 
     ip = local_ip()
-    panel.draw_text(canvas, loading_font, 1, y, GREY, ip)
+    panel.draw_text(canvas, test_font, 1, y, GREY, ip)
+    panel.swap(canvas)
 
 
 def _render_celestrack_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, ORANGE, RED
 
-    panel.draw_text(canvas, loading_font, 1, y, GREY, "TLE: ")
+    panel.draw_text(canvas, test_font, 1, y, GREY, "TLE: ")
+    panel.swap(canvas)
 
     if not cfg.satellite_tracking_enabled:
         result_text = "OFF"
@@ -119,8 +105,9 @@ def _render_celestrack_test(panel, canvas, cfg: Config, y):
     # Right-align the result label on the 64px-wide screen
     result_width = len(result_text) * 4
     panel.draw_text(
-        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
+        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
     )
+    panel.swap(canvas)
 
 
 def _render_data_source_test(panel, canvas, cfg: Config, y):
@@ -129,10 +116,11 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
     labels = {
         "fr24": "FR24: ",
         "osn": "OSN: ",
-        "tar1090": "TAR1090: ",
+        "tar1090": "TAR: ",
     }
     label = labels.get(cfg.data_source, "?: ")
-    panel.draw_text(canvas, loading_font, 1, y, GREY, label)
+    panel.draw_text(canvas, test_font, 1, y, GREY, label)
+    panel.swap(canvas)
 
     ok = _check_data_source(cfg)
     result_text = "OK" if ok else "FAIL"
@@ -140,8 +128,9 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
     # Right-align the result label on the 64px-wide screen
     result_width = len(result_text) * 4
     panel.draw_text(
-        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
+        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
     )
+    panel.swap(canvas)
 
 
 def render_tests(panel, canvas):
@@ -151,9 +140,8 @@ def render_tests(panel, canvas):
 
     cfg = Config.instance()
 
-    _render_web_interface_test(panel, canvas, cfg, 5)
-    _render_data_source_test(panel, canvas, cfg, 13)
-    _render_celestrack_test(panel, canvas, cfg, 21)
+    _render_data_source_test(panel, canvas, cfg, 5)
+    _render_celestrack_test(panel, canvas, cfg, 13)
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)
