@@ -1,0 +1,124 @@
+/* ===== Shared styles for FlightTracker web UI ===== */
+
+body { background: #f8f9fa; }
+
+.card { border: none; box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+
+.form-check-label { cursor: pointer; }
+
+/* ===== Settings page ===== */
+
+#map, #map_advanced { height: 320px; border-radius: .375rem; }
+
+.section-heading {
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: .4rem;
+  margin-bottom: 1rem;
+}
+
+/* Leaflet map lock controls */
+.leaflet-control.map-lock-control {
+  background: #fff;
+  border-radius: 4px;
+}
+.leaflet-control.map-lock-control button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.leaflet-control.map-lock-control button:focus {
+  outline: 2px solid rgba(13, 110, 253, 0.5);
+  outline-offset: 1px;
+}
+.leaflet-control.map-lock-control svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 1rem;
+  background: #fff;
+  border-radius: .375rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,.1);
+  padding: .5rem .75rem;
+}
+.sidebar .nav-link {
+  color: #495057;
+  padding: .4rem .75rem .4rem 1.75rem;
+  border-radius: .375rem;
+  font-size: .9rem;
+  font-weight: 500;
+}
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  color: #0d6efd;
+  background: rgba(13,110,253,.08);
+}
+.sidebar .nav-link .badge {
+  font-size: .65rem;
+  font-weight: 400;
+  margin-left: auto;
+}
+.sidebar .menu-section {
+  padding: .25rem 0;
+}
+.sidebar .menu-section + .menu-section {
+  border-top: 1px solid #dee2e6;
+}
+.group-header {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: .5rem .75rem .25rem .75rem;
+  margin-top: 0;
+  color: #6c757d;
+}
+.sidebar .nav-link.nav-link-selected {
+  color: #0d6efd;
+  background: rgba(13,110,253,.08);
+}
+
+/* Vue Router page visibility */
+.settings-page { display: none; }
+.settings-page.active { display: block; }
+
+/* ===== Logs page ===== */
+
+.log-table { font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; }
+.log-table td { vertical-align: top; white-space: pre-wrap; word-break: break-word; }
+.log-table tbody tr td:first-child { white-space: nowrap; color: #6c757d; }
+.log-table .lvl-DEBUG { color: #6c757d; }
+.log-table .lvl-INFO  { color: #0d6efd; }
+.log-table .lvl-WARNING { color: #ad8700; font-weight: 600; }
+.log-table .lvl-ERROR { color: #c92a2a; font-weight: 600; }
+.log-table .lvl-CRITICAL { color: #fff; background: #c92a2a; font-weight: 700; }
+.log-table .src { color: #495057; }
+.empty-state { color: #adb5bd; }
+
+/* ===== Restarting page ===== */
+
+.spinner-ring {
+  width: 48px; height: 48px;
+  border: 5px solid #dee2e6;
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.status { color: #6c757d; font-size: .95rem; }
+
+/* ===== Update page ===== */
+
+.version-badge { font-size: 1.1rem; font-weight: 600; }
