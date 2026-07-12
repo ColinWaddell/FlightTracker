@@ -370,7 +370,6 @@ def run_flight_tracker():
     if cfg.web_interface_enabled:
         logger.info("Web interface enabled - starting full interface")
         result = load_full_interface(panel, canvas, cfg)
-
     else:
         logger.info("Web interface disabled - starting minimum interface")
         result = load_minimum_interface(panel, canvas, cfg)
@@ -379,6 +378,14 @@ def run_flight_tracker():
         logger.error("Display build failed: %s", result["error"])
         print(f"[startup] Display build failed: {result['error']}", file=sys.stderr)
         sys.exit(1)
+
+    if cfg.web_interface_enabled:
+        try:
+            from web.app import app_ready
+
+            app_ready.set()
+        except Exception:
+            pass
 
     display = result["display"]
     logger.info("Display built - entering main loop")

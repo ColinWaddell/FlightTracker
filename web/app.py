@@ -42,6 +42,7 @@ FLASK_PORT = Config.instance().web_port
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app_ready = threading.Event()
 
 logger = logging.getLogger("web")
 
@@ -394,7 +395,9 @@ def settings():
 @app.route("/ping")
 def ping():
     """Health-check endpoint used by the restarting page to detect a successful reboot."""
-    return "ok", 200
+    if app_ready.is_set():
+        return "ok", 200
+    return "starting", 503
 
 
 AIRPORTS_JSON: str | None = None
