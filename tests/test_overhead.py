@@ -197,7 +197,9 @@ class TestTar1090DataUnavailability:
 
         overhead_instance._session.get = MagicMock(return_value=mock_response)
 
-        with patch("utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route):
+        with patch(
+            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
+        ):
             overhead_instance.refresh()
 
         assert overhead_instance.error is None

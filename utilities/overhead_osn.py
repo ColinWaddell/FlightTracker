@@ -55,6 +55,7 @@ TOKEN_EXPIRY_BUFFER = 60
 # Unit conversion helpers
 # ---------------------------------------------------------------------------
 
+
 def _metres_to_feet(m) -> float:
     try:
         return float(m) * 3.28084
@@ -80,11 +81,9 @@ def _ms_to_fpm(ms) -> int:
 # Geometry helpers
 # ---------------------------------------------------------------------------
 
+
 def _in_zone(lat, lon, zone) -> bool:
-    return (
-        zone["br_y"] <= lat <= zone["tl_y"]
-        and zone["tl_x"] <= lon <= zone["br_x"]
-    )
+    return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
 
 
 def _distance_from_home(lat, lon, alt_ft, home) -> float:
@@ -108,6 +107,7 @@ def _distance_from_home(lat, lon, alt_ft, home) -> float:
 # ---------------------------------------------------------------------------
 # Placeholder flight for credential errors
 # ---------------------------------------------------------------------------
+
 
 def _key_error_flight() -> dict:
     """Return a fake flight entry displayed when OSN credentials are invalid."""
@@ -133,6 +133,7 @@ def _key_error_flight() -> dict:
 # ---------------------------------------------------------------------------
 # Overhead class
 # ---------------------------------------------------------------------------
+
 
 class Overhead:
     def __init__(self):
@@ -297,7 +298,9 @@ class Overhead:
 
             # Sort by distance from observer
             candidates.sort(
-                key=lambda sv: _distance_from_home(sv[6], sv[5], _metres_to_feet(sv[7]), home)
+                key=lambda sv: _distance_from_home(
+                    sv[6], sv[5], _metres_to_feet(sv[7]), home
+                )
             )
 
             for sv in candidates[: self.max_flight_lookup]:
@@ -327,7 +330,9 @@ class Overhead:
                             "origin_name": route["origin_name"],
                             "destination_name": route["destination_name"],
                             "origin_municipality": route["origin_municipality"],
-                            "destination_municipality": route["destination_municipality"],
+                            "destination_municipality": route[
+                                "destination_municipality"
+                            ],
                             "origin_country": route["origin_country"],
                             "destination_country": route["destination_country"],
                             "altitude": alt_ft,
@@ -353,7 +358,10 @@ class Overhead:
             if status in (401, 403):
                 # Bad or missing credentials - surface a visible placeholder so
                 # the display shows something useful rather than going idle.
-                logger.warning("OSN authentication failed (HTTP %s) - check client credentials", status)
+                logger.warning(
+                    "OSN authentication failed (HTTP %s) - check client credentials",
+                    status,
+                )
                 with self.lock:
                     self.data_store = [_key_error_flight()]
                     self.new_data_store = True
