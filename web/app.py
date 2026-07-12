@@ -32,6 +32,8 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 
 from setup.configuration import CONFIG_PATH, Config
 from setup.logging import get_buffer
+from utilities import routes_cache
+from utilities.tle_manager import TLE_CACHE_PATH
 from utilities.updater import get_update_info, perform_update, version_string
 from version import VERSION
 
@@ -479,8 +481,8 @@ def logs_download():
 
     records = get_buffer().records()
     lines = [
-        f"{ _dt.datetime.fromtimestamp(r['time']).strftime('%Y-%m-%d %H:%M:%S') } "
-        f"{ r['level']:<8} { r['source']:<20} { r['message'] }"
+        f"{_dt.datetime.fromtimestamp(r['time']).strftime('%Y-%m-%d %H:%M:%S')} "
+        f"{r['level']:<8} {r['source']:<20} {r['message']}"
         for r in records
     ]
     payload = "\n".join(lines)
@@ -557,5 +559,47 @@ def update_apply():
         )
 
     logger.info("Update succeeded, restarting...")
+    restart_after(delay=2.0)
+    return render_template("restarting.html")
+
+
+@app.route("/cache-clear")
+@login_required
+def cache_clear():
+    """Show the clear-cache status page."""
+    return render_template("clear_cache.html", csrf_token=csrf_token())
+
+
+@app.route("/cache-clear/apply", methods=["POST"])
+@login_required
+def cache_clear_apply():
+    """Clear route/TLE cache files then restart."""
+    if not validate_csrf(request.form):
+        return (
+            render_template(
+                "clear_cache.html",
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+            ),
+            403,
+        )
+
+    logger.info("Clearing cache files")
+    try:
+        routes_cache.clear()
+        if TLE_CACHE_PATH.exists():
+            TLE_CACHE_PATH.unlink()
+    except OSError as exc:
+        logger.error("Cache clear failed: %s", exc)
+        return (
+            render_template(
+                "clear_cache.html",
+                csrf_token=csrf_token(),
+                error=f"Failed to clear cache: {exc}",
+            ),
+            500,
+        )
+
+    logger.info("Cache cleared, restarting...")
     restart_after(delay=2.0)
     return render_template("restarting.html")
