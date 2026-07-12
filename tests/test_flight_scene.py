@@ -1,4 +1,4 @@
-"""Tests for scenes/flight/flight_scene.py — pure helper functions."""
+"""Tests for scenes/flight/flight_scene.py - pure helper functions."""
 
 from scenes.flight.flight_scene import (
     EASING_STEPS,
@@ -128,7 +128,7 @@ class TestTelemetryChanged:
     def test_new_flight_not_in_old(self):
         old = [Flight(callsign="BAW123", altitude=35000)]
         new = [Flight(callsign="UAL456", altitude=30000)]
-        # New flight not in lookup — no comparison possible, so no change detected
+        # New flight not in lookup - no comparison possible, so no change detected
         assert telemetry_changed(old, new) is False
 
     def test_empty_lists(self):

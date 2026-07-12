@@ -1,4 +1,4 @@
-"""Tests for utilities/cli.py — CLI command dispatch."""
+"""Tests for utilities/cli.py - CLI command dispatch."""
 
 import json
 from unittest.mock import patch

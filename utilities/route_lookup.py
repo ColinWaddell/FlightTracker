@@ -18,7 +18,7 @@ Three hexdb.io endpoints are used:
 ICAO-to-IATA conversion uses a bundled lookup table (assets/icao_to_iata.json)
 so we can convert route codes without an extra API call.  Airport name,
 municipality and country are resolved from the bundled airports.json (keyed
-by IATA code) — the same file used by the FR24 backend.
+by IATA code) - the same file used by the FR24 backend.
 
 Each lookup is independently cached so a caller that only has a callsign
 (overhead_tar1090) pays one request; a caller with both (overhead_osn) pays
@@ -80,7 +80,7 @@ def _icao_to_iata_code(icao: str) -> str:
     if icao in _icao_to_iata:
         return _icao_to_iata[icao]
 
-    # Not in the local table — try the hexdb airport endpoint as a fallback
+    # Not in the local table - try the hexdb airport endpoint as a fallback
     info = _lookup_airport_icao(icao)
     iata = info.get("iata", "")
     if iata:
@@ -164,7 +164,7 @@ def _airport_details(iata: str) -> dict:
     if info:
         return info
 
-    # Not in airports.json — try hexdb by IATA
+    # Not in airports.json - try hexdb by IATA
     try:
         resp = _session.get(f"{HEXDB_BASE}/airport/iata/{iata}", timeout=10)
         if resp.status_code == 404:
@@ -216,7 +216,7 @@ def _lookup_route(callsign: str) -> RouteInfo:
     """Return route fields for *callsign* via GET /api/v1/route/icao/{callsign}.
 
     Cached by callsign.  Returns a RouteInfo with origin/destination fields
-    (plane is always "" here — aircraft type is looked up separately).
+    (plane is always "" here - aircraft type is looked up separately).
     Never raises.
     """
     cached = routes_cache.get(callsign)

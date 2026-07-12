@@ -76,7 +76,7 @@ target-version = "py39"
 extend-exclude = ["env", ".dev", "_site"]
 
 [tool.ruff.lint]
-# E/WHIGH = pycodestyle errors (but not E501 — black handles line length)
+# E/WHIGH = pycodestyle errors (but not E501 - black handles line length)
 # F = pyflakes (unused imports, undefined names, etc.)
 # I = isort (import ordering)
 # UP = pyupgrade (modernise syntax)
@@ -84,8 +84,8 @@ extend-exclude = ["env", ".dev", "_site"]
 # SIM = simplify
 select = ["E", "W", "F", "I", "UP", "B", "SIM"]
 ignore = [
-    "E501",   # line too long — black is the formatter
-    "E203",   # whitespace before ':' — conflicts with black
+    "E501",   # line too long - black is the formatter
+    "E203",   # whitespace before ':' - conflicts with black
     "B008",   # function call in default argument (Flask uses this pattern)
 ]
 

@@ -27,8 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.1.0] - 2026-07-11
 
 ### Added
-- **OpenSky Network data source** — use OSN as an alternative to FlightRadar24, authenticated via OAuth2 client credentials (Client ID + Client Secret obtained from your OSN account). Configured from the web UI under Data Source.
-- **adsbdb.com unified lookup** — route origin/destination and aircraft type are now both resolved via [adsbdb.com](https://api.adsbdb.com) for tar1090 and OpenSky Network data sources, replacing the previous mix of adsb.im (routes) and hexdb.io (aircraft type). Route and aircraft lookups are now independent, each cached under their own key with a 24-hour TTL.
+- **OpenSky Network data source** - use OSN as an alternative to FlightRadar24, authenticated via OAuth2 client credentials (Client ID + Client Secret obtained from your OSN account). Configured from the web UI under Data Source.
+- **adsbdb.com unified lookup** - route origin/destination and aircraft type are now both resolved via [adsbdb.com](https://api.adsbdb.com) for tar1090 and OpenSky Network data sources, replacing the previous mix of adsb.im (routes) and hexdb.io (aircraft type). Route and aircraft lookups are now independent, each cached under their own key with a 24-hour TTL.
 - `python flight-tracker.py cache clear` CLI command to wipe all on-disk cache files (routes and TLE).
 - Cache is automatically cleared on a successful OTA update so stale entries never survive a version change.
 
@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.0.5] - 2026-07-11
 
 ### Fixed
-- Updater no longer blocked by untracked files (e.g. `.bak` files from config migration) — `git status` now uses `--untracked-files=no`
+- Updater no longer blocked by untracked files (e.g. `.bak` files from config migration) - `git status` now uses `--untracked-files=no`
 
 ## [v2.0.4] - 2026-07-11
 
@@ -113,9 +113,9 @@ Bundled the complete v2 overhaul (see [v2.0.0](#v200---2026-07-09)) along with s
 ## [v2.0.1] - 2026-07-08
 
 ### Added
-- Initial auto-update test release — verified the update mechanism works end-to-end from the web UI
+- Initial auto-update test release - verified the update mechanism works end-to-end from the web UI
 
-## [v2.0.0] - 2026-07-09 — Overhaul released
+## [v2.0.0] - 2026-07-09 - Overhaul released
 
 Complete ground-up rewrite of FlightTracker, developed across `release/v2` and numerous feature/hotfix branches. Not separately tagged, but merged into `main` on 9 July 2026 and first released as v2.0.1.
 
@@ -123,25 +123,25 @@ Complete ground-up rewrite of FlightTracker, developed across `release/v2` and n
 - **Complete codebase rewrite** from the ground up, reorganised into `scenes/`, `display/`, `utilities/`, `setup/`, and `web/` packages
 - **Scene manager architecture** (C++-style) with `on_enter`/`on_exit` lifecycle, making it straightforward to add new display scenes
 - **Web configuration UI** with login page, password protection, settings editor, update page, and log viewer
-- **Satellite tracking** — plot satellite passes with NORAD ID configuration, azimuth/elevation ring, and trajectory arcs
+- **Satellite tracking** - plot satellite passes with NORAD ID configuration, azimuth/elevation ring, and trajectory arcs
 - **Idle screen** showing time, weather (temperature + optional 24-hour rainfall chart), date, and day
 - **Splash screen** with custom bitmap logo and QR code for web UI access
 - **Raspberry Pi 5 support** with dedicated installer, requirements, and `rgbpanel_piomatter` display driver
 - **Desktop simulator** platform with `rgbpanel_simulator` for development without hardware
 - **One-line install scripts** for Pi 3/4/Zero and Pi 5 with hardware detection, progress output, and systemd service setup
-- **Auto-update system** — update from the web UI or CLI, with git pull, pip install, and service restart
-- **CLI tools** — `config`, `data`, `reset-password`, `interface enable/disable`, `--version`
+- **Auto-update system** - update from the web UI or CLI, with git pull, pip install, and service restart
+- **CLI tools** - `config`, `data`, `reset-password`, `interface enable/disable`, `--version`
 - **Structured logging** with configurable verbosity, accessible from the web UI
 - **Brightness scheduling** based on sunrise/sunset, with configurable time windows and brightness levels
-- **Themes** — default, monochrome, and pastel colour palettes
+- **Themes** - default, monochrome, and pastel colour palettes
 - **tar1090 / local ADS-B receiver support** as an alternative to FlightRadar24
 - **adsbdb.com integration** for origin/destination airport lookups when using tar1090
 - **Routes caching** to reduce repeated API calls
-- **Loading LED** — optional GPIO LED that blinks while fetching flight data
-- **Configurable airport display** — short code, full name, or abbreviated
-- **Home airport highlighting** — emphasise your local IATA code on the display
-- **Animation speed presets** — `default`, `slower`, `faster`
-- **Callsign format selector** — ICAO callsign (e.g. BAW123) or IATA flight number (e.g. BA123), FR24 only
+- **Loading LED** - optional GPIO LED that blinks while fetching flight data
+- **Configurable airport display** - short code, full name, or abbreviated
+- **Home airport highlighting** - emphasise your local IATA code on the display
+- **Animation speed presets** - `default`, `slower`, `faster`
+- **Callsign format selector** - ICAO callsign (e.g. BAW123) or IATA flight number (e.g. BA123), FR24 only
 - **Rain sensitivity** setting for the rainfall chart
 - **Imperial/metric units** toggle
 - **24-hour/12-hour clock** and date format options

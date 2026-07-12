@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, fields
 
 # ---------------------------------------------------------------------------
-# RouteInfo — origin/destination/aircraft lookup result
+# RouteInfo - origin/destination/aircraft lookup result
 # ---------------------------------------------------------------------------
 
 
@@ -48,7 +48,7 @@ class RouteInfo:
 
 
 # ---------------------------------------------------------------------------
-# Flight — a single tracked aircraft
+# Flight - a single tracked aircraft
 # ---------------------------------------------------------------------------
 
 # Telemetry fields compared by telemetry_changed()
@@ -88,7 +88,7 @@ class Flight:
 
     @property
     def flight_id(self) -> str:
-        """Stable identity key — ICAO callsign preferred, display callsign fallback."""
+        """Stable identity key - ICAO callsign preferred, display callsign fallback."""
         return self.icao_callsign or self.callsign
 
     def __eq__(self, other: object) -> bool:

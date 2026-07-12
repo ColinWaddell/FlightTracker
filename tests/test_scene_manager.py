@@ -1,4 +1,4 @@
-"""Tests for utilities/scene_manager.py — priority-based scene dispatch."""
+"""Tests for utilities/scene_manager.py - priority-based scene dispatch."""
 
 from unittest.mock import MagicMock
 
@@ -81,7 +81,7 @@ class TestSceneManagerDispatch:
         sm.register(mid)
         sm.register(high)
         sm.kick()
-        # high is active and highest priority — should be drawn
+        # high is active and highest priority - should be drawn
         high.draw.assert_called_once()
 
     def test_same_scene_not_re_entered(self):

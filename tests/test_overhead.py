@@ -1,4 +1,4 @@
-"""Tests for utilities/overhead_tar1090.py and overhead_fr24.py — data handling."""
+"""Tests for utilities/overhead_tar1090.py and overhead_fr24.py - data handling."""
 
 from unittest.mock import MagicMock, patch
 
@@ -94,7 +94,7 @@ class TestAirportName:
 
 
 # ---------------------------------------------------------------------------
-# tar1090 Overhead — data unavailability
+# tar1090 Overhead - data unavailability
 # ---------------------------------------------------------------------------
 
 
@@ -122,7 +122,7 @@ class TestTar1090DataUnavailability:
         assert overhead_instance.error is None
 
     def test_empty_aircraft_list(self, overhead_instance):
-        """API returns no aircraft — should be empty data, no error."""
+        """API returns no aircraft - should be empty data, no error."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"aircraft": []}
         mock_response.raise_for_status = MagicMock()
@@ -135,7 +135,7 @@ class TestTar1090DataUnavailability:
         assert overhead_instance.data == []
 
     def test_connection_error(self, overhead_instance):
-        """API unreachable — should show URL-error placeholder, no error set."""
+        """API unreachable - should show URL-error placeholder, no error set."""
         from requests.exceptions import ConnectionError as ReqConnError
 
         overhead_instance._session.get = MagicMock(
@@ -150,7 +150,7 @@ class TestTar1090DataUnavailability:
         assert overhead_instance.data[0].callsign == "URL ERROR"
 
     def test_invalid_json(self, overhead_instance):
-        """API returns invalid JSON — should show URL-error placeholder."""
+        """API returns invalid JSON - should show URL-error placeholder."""
         mock_response = MagicMock()
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_response.raise_for_status = MagicMock()
@@ -158,13 +158,13 @@ class TestTar1090DataUnavailability:
         overhead_instance._session.get = MagicMock(return_value=mock_response)
         overhead_instance.refresh()
 
-        # ValueError is caught — placeholder flight is shown, error stays None
+        # ValueError is caught - placeholder flight is shown, error stays None
         assert overhead_instance.error is None
         assert overhead_instance.data_is_empty is False
         assert overhead_instance.data[0].callsign == "URL ERROR"
 
     def test_successful_data(self, overhead_instance):
-        """API returns valid aircraft — should populate data."""
+        """API returns valid aircraft - should populate data."""
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "aircraft": [

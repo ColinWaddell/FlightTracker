@@ -1,4 +1,4 @@
-"""Tests for scenes/satellite/passes.py — coordinate math and pass filtering."""
+"""Tests for scenes/satellite/passes.py - coordinate math and pass filtering."""
 
 import datetime
 import math

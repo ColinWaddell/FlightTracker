@@ -1,4 +1,4 @@
-"""Tests for setup/configuration.py — migration, parsing, and utilities."""
+"""Tests for setup/configuration.py - migration, parsing, and utilities."""
 
 import types
 from datetime import datetime, time

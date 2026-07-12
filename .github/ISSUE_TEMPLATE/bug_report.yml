@@ -11,7 +11,7 @@ body:
 
         **Before you file:** if you can access the web UI, please download a
         **safe (redacted) copy of your configuration** from the footer of the
-        Settings page — the "Download debug config" button. This file has API
+        Settings page - the "Download debug config" button. This file has API
         keys and passwords stripped out, so it's safe to attach here.
 
         You can also grab your recent logs from the **Logs** page

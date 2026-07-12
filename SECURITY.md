@@ -8,7 +8,7 @@ responsibly rather than opening a public GitHub issue.
 **Visit my website for contact details:**
 www.colinwaddell.com
 
-Include as much detail as you can — steps to reproduce, affected
+Include as much detail as you can - steps to reproduce, affected
 versions, and any potential impact. Reports will be acknowledged
 within 48 hours and I'll aim to provide a fix or mitigation as soon
 as reasonably possible.
@@ -16,7 +16,7 @@ as reasonably possible.
 ## Sharing Config Safely
 
 If a security issue involves your configuration, **do not paste your raw
-`config.json`** — it may contain API keys and password hashes.
+`config.json`** - it may contain API keys and password hashes.
 
 Use the **"Download debug config"** button in the footer of the Settings page
 in the web UI. This exports your configuration with all sensitive fields

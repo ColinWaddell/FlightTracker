@@ -96,7 +96,7 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 
 ### Using OpenSky Network as your data source
 
-[OpenSky Network](https://opensky-network.org) is a free, community-driven ADS-B network that can replace FlightRadar24 as the flight data source. No subscription is required — a free registered account gives you enough API credits for 30-second polling.
+[OpenSky Network](https://opensky-network.org) is a free, community-driven ADS-B network that can replace FlightRadar24 as the flight data source. No subscription is required - a free registered account gives you enough API credits for 30-second polling.
 
 #### What you need
 
@@ -108,7 +108,7 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 1. Log in to the FlightTracker web interface
 2. Under **Data Source**, select **OpenSky Network**
 3. Enter your **Client ID** and **Client Secret**
-4. Save — the tracker will restart and begin fetching from OpenSky
+4. Save - the tracker will restart and begin fetching from OpenSky
 
 #### Differences from FlightRadar24 mode
 

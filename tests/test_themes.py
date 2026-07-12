@@ -1,4 +1,4 @@
-"""Tests for setup/themes.py and setup/colours.py — theme system integrity."""
+"""Tests for setup/themes.py and setup/colours.py - theme system integrity."""
 
 from setup.colours import Colour
 from setup.themes import (
@@ -45,7 +45,7 @@ class TestThemeColours:
 
     def test_theme_set_invalid_index(self):
         # Setting an out-of-range index should not crash
-        # (it may clamp or wrap — just ensure no exception)
+        # (it may clamp or wrap - just ensure no exception)
         import contextlib
 
         original = theme_get()

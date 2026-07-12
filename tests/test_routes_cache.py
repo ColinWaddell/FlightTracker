@@ -1,4 +1,4 @@
-"""Tests for utilities/routes_cache.py — TTL, get/put/clear, thread safety."""
+"""Tests for utilities/routes_cache.py - TTL, get/put/clear, thread safety."""
 
 import json
 import time
@@ -84,7 +84,7 @@ class TestRoutesCachePut:
 
 
 class TestRoutesCacheClear:
-    # NOTE: clear() has a bug — `_cache = {}` inside the function is a local
+    # NOTE: clear() has a bug - `_cache = {}` inside the function is a local
     # variable, not a global assignment. The in-memory cache is NOT cleared
     # and _save() writes the old (non-empty) cache to disk. These tests
     # document the current behaviour. When the bug is fixed, update them.
