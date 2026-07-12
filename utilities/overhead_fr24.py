@@ -4,6 +4,7 @@ from threading import Event, Lock, Thread
 from time import sleep
 
 from utilities import routes_cache
+from utilities.flight import Flight
 from utilities.overhead_utilities import (
     airport_info,
     clean_field,
@@ -204,23 +205,23 @@ class Overhead:
                     heading = 0
 
                 data.append(
-                    {
-                        "plane": plane,
-                        "origin": origin,
-                        "destination": destination,
-                        "origin_name": origin_info.get("name", ""),
-                        "destination_name": dest_info.get("name", ""),
-                        "origin_municipality": origin_info.get("municipality", ""),
-                        "destination_municipality": dest_info.get("municipality", ""),
-                        "origin_country": origin_info.get("country_name", ""),
-                        "destination_country": dest_info.get("country_name", ""),
-                        "vertical_speed": flight.vertical_speed,
-                        "altitude": flight.altitude,
-                        "ground_speed": ground_speed,
-                        "heading": heading,
-                        "callsign": display_callsign,
-                        "icao_callsign": icao_callsign,
-                    }
+                    Flight(
+                        plane=plane,
+                        origin=origin,
+                        destination=destination,
+                        origin_name=origin_info.get("name", ""),
+                        destination_name=dest_info.get("name", ""),
+                        origin_municipality=origin_info.get("municipality", ""),
+                        destination_municipality=dest_info.get("municipality", ""),
+                        origin_country=origin_info.get("country_name", ""),
+                        destination_country=dest_info.get("country_name", ""),
+                        vertical_speed=flight.vertical_speed,
+                        altitude=flight.altitude,
+                        ground_speed=ground_speed,
+                        heading=heading,
+                        callsign=display_callsign,
+                        icao_callsign=icao_callsign,
+                    )
                 )
 
             with self.lock:

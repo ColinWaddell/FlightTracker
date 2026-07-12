@@ -5,6 +5,7 @@ import requests
 from requests.exceptions import RequestException
 
 from utilities import route_lookup
+from utilities.flight import Flight
 from utilities.overhead_utilities import (
     clean_field,
     distance_from_home,
@@ -14,25 +15,13 @@ from utilities.overhead_utilities import (
 logger = logging.getLogger(__name__)
 
 
-def _url_error_flight() -> dict:
+def _url_error_flight() -> Flight:
     """Return a fake flight entry displayed when the tar1090 URL is unreachable."""
-    return {
-        "plane": "Check tar1090 URL",
-        "origin": "",
-        "destination": "",
-        "origin_name": "",
-        "destination_name": "",
-        "origin_municipality": "",
-        "destination_municipality": "",
-        "origin_country": "",
-        "destination_country": "",
-        "altitude": 0,
-        "ground_speed": 0,
-        "heading": 0,
-        "vertical_speed": 0,
-        "callsign": "URL ERROR",
-        "icao_callsign": "URL ERROR",
-    }
+    return Flight(
+        plane="Check tar1090 URL",
+        callsign="URL ERROR",
+        icao_callsign="URL ERROR",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -151,7 +140,7 @@ class Overhead:
 
                     # Prefer local tar1090 plane type; fall back to adsbdb
                     if not plane:
-                        plane = route["plane"]
+                        plane = route.plane
 
                     # Telemetry
                     try:
@@ -165,25 +154,16 @@ class Overhead:
                         heading = 0
 
                     data.append(
-                        {
-                            "plane": plane,
-                            "origin": route["origin"],
-                            "destination": route["destination"],
-                            "origin_name": route["origin_name"],
-                            "destination_name": route["destination_name"],
-                            "origin_municipality": route["origin_municipality"],
-                            "destination_municipality": route[
-                                "destination_municipality"
-                            ],
-                            "origin_country": route["origin_country"],
-                            "destination_country": route["destination_country"],
-                            "vertical_speed": ac.get("baro_rate", 0),
-                            "altitude": ac.get("alt_baro", 0),
-                            "ground_speed": ground_speed,
-                            "heading": heading,
-                            "callsign": callsign,
-                            "icao_callsign": callsign,
-                        }
+                        Flight.from_route(
+                            route,
+                            plane=plane,
+                            callsign=callsign,
+                            icao_callsign=callsign,
+                            altitude=ac.get("alt_baro", 0),
+                            ground_speed=ground_speed,
+                            heading=heading,
+                            vertical_speed=ac.get("baro_rate", 0),
+                        )
                     )
 
                 except (KeyError, AttributeError, TypeError):

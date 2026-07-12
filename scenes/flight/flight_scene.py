@@ -44,6 +44,7 @@ from setup.themes import (
     THEME_PLANE_TLM,
     THEME_PLANE_TLM_UNITS,
 )
+from utilities.flight import TELEMETRY_FIELDS, Flight
 
 logger = logging.getLogger(__name__)
 
@@ -58,30 +59,18 @@ ERROR_BACKOFF_S = 60
 # Data update helpers
 # ---------------------------------------------------------------------------
 
-TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
-
-
-def _flight_id(flight: dict) -> str:
-    """Return the unique identity key for a flight dict.
-
-    The ICAO callsign is the stable, unique identifier.  The display
-    ``callsign`` field may hold an IATA flight number (e.g. ``BA123``)
-    which is reused daily and across codeshares, so it must NOT be used
-    for identity matching.  We fall back to the display callsign only
-    when the ICAO callsign is absent (e.g. tar1090 with a blank field).
-    """
-    return flight.get("icao_callsign") or flight.get("callsign", "")
-
 
 def callsigns_match(a: list, b: list) -> bool:
-    return {_flight_id(f) for f in a} == {_flight_id(f) for f in b}
+    return {f.flight_id for f in a} == {f.flight_id for f in b}
 
 
 def telemetry_changed(old: list, new: list) -> bool:
-    lookup = {_flight_id(f): f for f in old}
+    lookup = {f.flight_id: f for f in old}
     for flight in new:
-        prev = lookup.get(_flight_id(flight))
-        if prev and any(flight.get(k) != prev.get(k) for k in TELEMETRY_FIELDS):
+        prev = lookup.get(flight.flight_id)
+        if prev and any(
+            getattr(flight, k) != getattr(prev, k) for k in TELEMETRY_FIELDS
+        ):
             return True
     return False
 
@@ -387,7 +376,7 @@ class FlightScene:
     # ------------------------------------------------------------------
 
     def draw_callsign(self) -> None:
-        callsign = self.flights[self.flight_index].get("callsign", "")
+        callsign = self.flights[self.flight_index].callsign
         flight_count = len(self.flights)
         index = self.flight_index
 
@@ -469,8 +458,8 @@ class FlightScene:
     def draw_journey(self) -> None:
         cfg = Config.instance()
         flight = self.flights[self.flight_index]
-        origin = flight.get("origin")
-        destination = flight.get("destination")
+        origin = flight.origin
+        destination = flight.destination
 
         if origin != self.last_origin or destination != self.last_dest:
             self.journey_first_draw = True
@@ -518,9 +507,9 @@ class FlightScene:
         if origin_done and dest_done:
             self.journey_loop_completed = True
 
-    def draw_iata_mode(self, cfg, flight: dict) -> None:
-        origin = flight.get("origin", "") or cfg.journey_blank_filler
-        destination = flight.get("destination", "") or cfg.journey_blank_filler
+    def draw_iata_mode(self, cfg, flight: Flight) -> None:
+        origin = flight.origin or cfg.journey_blank_filler
+        destination = flight.destination or cfg.journey_blank_filler
         home_code = cfg.home_airport_code
 
         self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
@@ -559,9 +548,9 @@ class FlightScene:
 
         self.journey_loop_completed = True
 
-    def setup_full_mode(self, cfg, flight: dict) -> None:
-        origin = flight.get("origin") or cfg.journey_blank_filler
-        destination = flight.get("destination") or cfg.journey_blank_filler
+    def setup_full_mode(self, cfg, flight: Flight) -> None:
+        origin = flight.origin or cfg.journey_blank_filler
+        destination = flight.destination or cfg.journey_blank_filler
 
         style = cfg.airport_display_style
 
@@ -569,17 +558,17 @@ class FlightScene:
             flight_key_name, flight_key_muni, flight_key_country, abbrev=False
         ):
             if style == 1:
-                name = flight.get(flight_key_name) or ""
+                name = getattr(flight, flight_key_name, "") or ""
             elif style == 2:
-                name = abbreviate(flight.get(flight_key_name) or "")
+                name = abbreviate(getattr(flight, flight_key_name, "") or "")
             elif style == 3:
-                name = flight.get(flight_key_muni) or ""
+                name = getattr(flight, flight_key_muni, "") or ""
             elif style == 4:
-                muni = flight.get(flight_key_muni) or ""
-                country = flight.get(flight_key_country) or ""
+                muni = getattr(flight, flight_key_muni, "") or ""
+                country = getattr(flight, flight_key_country, "") or ""
                 name = f"{muni}, {country}" if muni and country else (muni or country)
             else:
-                name = flight.get(flight_key_name) or ""
+                name = getattr(flight, flight_key_name, "") or ""
             return name
 
         origin_name = resolve_name(
@@ -600,16 +589,16 @@ class FlightScene:
             w = font_text_width(fonts.small, f"{iata}{arrow}{name}")
             scroller.scroll_max = max(0, w - screen.WIDTH)
 
-    def draw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
+    def draw_full_line(self, cfg, flight: Flight, line_idx: int, x_offset: int) -> None:
         if line_idx == 0:
-            iata = flight.get("origin") or cfg.journey_blank_filler
+            iata = flight.origin or cfg.journey_blank_filler
             name = self.origin_name
             arrow = ">"
             colour_code = TC(THEME_LOCATION_ORIGIN)
             colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
             colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
         else:
-            iata = flight.get("destination") or cfg.journey_blank_filler
+            iata = flight.destination or cfg.journey_blank_filler
             name = self.dest_name
             arrow = "<"
             colour_code = TC(THEME_LOCATION_DESTINATION)
@@ -626,11 +615,13 @@ class FlightScene:
         )
         self.panel.draw_text(self.canvas, fonts.small_symbols, x, y, colour_name, name)
 
-    def undraw_full_line(self, cfg, flight: dict, line_idx: int, x_offset: int) -> None:
+    def undraw_full_line(
+        self, cfg, flight: Flight, line_idx: int, x_offset: int
+    ) -> None:
         iata = (
-            (flight.get("origin") or cfg.journey_blank_filler)
+            (flight.origin or cfg.journey_blank_filler)
             if line_idx == 0
-            else (flight.get("destination") or cfg.journey_blank_filler)
+            else (flight.destination or cfg.journey_blank_filler)
         )
         name = self.origin_name if line_idx == 0 else self.dest_name
         arrow = ">" if line_idx == 0 else "<"
@@ -651,14 +642,14 @@ class FlightScene:
         return self.telemetry_spans(cfg) if cfg.details == 1 else self.model_spans()
 
     def model_spans(self) -> list:
-        text = self.flights[self.flight_index].get("plane", "")
+        text = self.flights[self.flight_index].plane
         return [(TC(THEME_PLANE), fonts.regular, text.upper())]
 
     def telemetry_spans(self, cfg) -> list:
         flight = self.flights[self.flight_index]
-        altitude_ft = flight.get("altitude", 0) or 0
-        ground_speed_kts = flight.get("ground_speed", 0) or 0
-        heading = flight.get("heading", 0) or 0
+        altitude_ft = flight.altitude or 0
+        ground_speed_kts = flight.ground_speed or 0
+        heading = flight.heading or 0
 
         if cfg.units == "i":
             alt_val = str(int(altitude_ft))

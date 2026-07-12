@@ -31,6 +31,7 @@ from threading import Event, Lock, Thread
 import requests
 
 from utilities import route_lookup
+from utilities.flight import Flight
 from utilities.overhead_utilities import (
     clean_field,
     distance_from_home,
@@ -61,25 +62,13 @@ TOKEN_EXPIRY_BUFFER = 60
 # ---------------------------------------------------------------------------
 
 
-def _key_error_flight() -> dict:
+def _key_error_flight() -> Flight:
     """Return a fake flight entry displayed when OSN credentials are invalid."""
-    return {
-        "plane": "Check OSN credentials",
-        "origin": "",
-        "destination": "",
-        "origin_name": "",
-        "destination_name": "",
-        "origin_municipality": "",
-        "destination_municipality": "",
-        "origin_country": "",
-        "destination_country": "",
-        "altitude": 0,
-        "ground_speed": 0,
-        "heading": 0,
-        "vertical_speed": 0,
-        "callsign": "KEY ERROR",
-        "icao_callsign": "KEY ERROR",
-    }
+    return Flight(
+        plane="Check OSN credentials",
+        callsign="KEY ERROR",
+        icao_callsign="KEY ERROR",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +144,58 @@ class Overhead:
             self._refresh_token()
         return {"Authorization": f"Bearer {self._token}"}
 
+    def _get_states(self, zone: dict) -> list:
+        params = {
+            "lamin": zone["br_y"],
+            "lomin": zone["tl_x"],
+            "lamax": zone["tl_y"],
+            "lomax": zone["br_x"],
+        }
+
+        resp = self._session.get(
+            OSN_STATES_URL,
+            params=params,
+            headers=self._auth_headers(),
+            timeout=15,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+
+        states = payload.get("states") or []
+
+        min_alt_ft = self.min_altitude / 0.3048
+        max_alt_ft = self.max_altitude / 0.3048
+        home = self.location_home
+
+        # Filter and collect candidates
+        candidates = []
+        for sv in states:
+            # sv is a list; guard against malformed entries
+            if not isinstance(sv, list) or len(sv) < 12:
+                continue
+
+            on_ground = sv[8]
+            if on_ground:
+                continue
+
+            lat = sv[6]
+            lon = sv[5]
+            baro_alt_m = sv[7]
+
+            if lat is None or lon is None or baro_alt_m is None:
+                continue
+
+            alt_ft = metres_to_feet(baro_alt_m)
+            if not (min_alt_ft < alt_ft < max_alt_ft):
+                continue
+
+            if not in_zone(lat, lon, zone):
+                continue
+
+            candidates.append(sv)
+
+        return candidates
+
     # ------------------------------------------------------------------
     # Threading interface
     # ------------------------------------------------------------------
@@ -199,59 +240,12 @@ class Overhead:
 
         try:
             zone = self.zone_home
-            params = {
-                "lamin": zone["br_y"],
-                "lomin": zone["tl_x"],
-                "lamax": zone["tl_y"],
-                "lomax": zone["br_x"],
-            }
-
-            resp = self._session.get(
-                OSN_STATES_URL,
-                params=params,
-                headers=self._auth_headers(),
-                timeout=15,
-            )
-            resp.raise_for_status()
-            payload = resp.json()
-
-            states = payload.get("states") or []
-
-            min_alt_ft = self.min_altitude / 0.3048
-            max_alt_ft = self.max_altitude / 0.3048
-            home = self.location_home
-
-            # Filter and collect candidates
-            candidates = []
-            for sv in states:
-                # sv is a list; guard against malformed entries
-                if not isinstance(sv, list) or len(sv) < 12:
-                    continue
-
-                on_ground = sv[8]
-                if on_ground:
-                    continue
-
-                lat = sv[6]
-                lon = sv[5]
-                baro_alt_m = sv[7]
-
-                if lat is None or lon is None or baro_alt_m is None:
-                    continue
-
-                alt_ft = metres_to_feet(baro_alt_m)
-                if not (min_alt_ft < alt_ft < max_alt_ft):
-                    continue
-
-                if not in_zone(lat, lon, zone):
-                    continue
-
-                candidates.append(sv)
+            candidates = self._get_states(zone)
 
             # Sort by distance from observer
             candidates.sort(
                 key=lambda sv: distance_from_home(
-                    sv[6], sv[5], metres_to_feet(sv[7]), home
+                    sv[6], sv[5], metres_to_feet(sv[7]), self.location_home
                 )
             )
 
@@ -273,25 +267,15 @@ class Overhead:
                     route = route_lookup.get_route(callsign, mode_s=icao24)
 
                     data.append(
-                        {
-                            "plane": route["plane"],
-                            "origin": route["origin"],
-                            "destination": route["destination"],
-                            "origin_name": route["origin_name"],
-                            "destination_name": route["destination_name"],
-                            "origin_municipality": route["origin_municipality"],
-                            "destination_municipality": route[
-                                "destination_municipality"
-                            ],
-                            "origin_country": route["origin_country"],
-                            "destination_country": route["destination_country"],
-                            "altitude": alt_ft,
-                            "ground_speed": ground_speed,
-                            "heading": heading,
-                            "vertical_speed": vertical_speed,
-                            "callsign": callsign,
-                            "icao_callsign": callsign,
-                        }
+                        Flight.from_route(
+                            route,
+                            callsign=callsign,
+                            icao_callsign=callsign,
+                            altitude=alt_ft,
+                            ground_speed=ground_speed,
+                            heading=heading,
+                            vertical_speed=vertical_speed,
+                        )
                     )
 
                 except (IndexError, TypeError, ValueError, AttributeError):

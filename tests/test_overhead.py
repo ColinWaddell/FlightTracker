@@ -7,6 +7,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Shared helpers (now in overhead_utilities)
 # ---------------------------------------------------------------------------
+from utilities.flight import RouteInfo
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,
@@ -146,7 +147,7 @@ class TestTar1090DataUnavailability:
         # rather than setting error_store (unlike the FR24 backend).
         assert overhead_instance.error is None
         assert overhead_instance.data_is_empty is False
-        assert overhead_instance.data[0]["callsign"] == "URL ERROR"
+        assert overhead_instance.data[0].callsign == "URL ERROR"
 
     def test_invalid_json(self, overhead_instance):
         """API returns invalid JSON — should show URL-error placeholder."""
@@ -160,7 +161,7 @@ class TestTar1090DataUnavailability:
         # ValueError is caught — placeholder flight is shown, error stays None
         assert overhead_instance.error is None
         assert overhead_instance.data_is_empty is False
-        assert overhead_instance.data[0]["callsign"] == "URL ERROR"
+        assert overhead_instance.data[0].callsign == "URL ERROR"
 
     def test_successful_data(self, overhead_instance):
         """API returns valid aircraft — should populate data."""
@@ -181,17 +182,17 @@ class TestTar1090DataUnavailability:
         }
         mock_response.raise_for_status = MagicMock()
 
-        mock_route = {
-            "origin": "LHR",
-            "destination": "GLA",
-            "plane": "",
-            "origin_name": "London Heathrow",
-            "origin_municipality": "London",
-            "origin_country": "United Kingdom",
-            "destination_name": "Glasgow Airport",
-            "destination_municipality": "Glasgow",
-            "destination_country": "United Kingdom",
-        }
+        mock_route = RouteInfo(
+            origin="LHR",
+            destination="GLA",
+            plane="",
+            origin_name="London Heathrow",
+            origin_municipality="London",
+            origin_country="United Kingdom",
+            destination_name="Glasgow Airport",
+            destination_municipality="Glasgow",
+            destination_country="United Kingdom",
+        )
 
         overhead_instance._session.get = MagicMock(return_value=mock_response)
 
@@ -203,8 +204,8 @@ class TestTar1090DataUnavailability:
         assert overhead_instance.error is None
         assert overhead_instance.data_is_empty is False
         assert len(overhead_instance.data) == 1
-        assert overhead_instance.data[0]["callsign"] == "BAW123"
-        assert overhead_instance.data[0]["altitude"] == 35000
+        assert overhead_instance.data[0].callsign == "BAW123"
+        assert overhead_instance.data[0].altitude == 35000
 
 
 # ---------------------------------------------------------------------------

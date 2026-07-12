@@ -29,6 +29,7 @@ import requests
 from requests.exceptions import RequestException
 
 from utilities import routes_cache
+from utilities.flight import RouteInfo
 
 logger = logging.getLogger(__name__)
 
@@ -37,18 +38,6 @@ ADSBDB_BASE = "https://api.adsbdb.com/v0"
 # Module-level session - keeps the urllib3 connection pool alive across calls,
 # avoiding Python 3.13 dummy-thread GC noise.
 _session = requests.Session()
-
-EMPTY_RESULT: dict = {
-    "origin": "",
-    "destination": "",
-    "plane": "",
-    "origin_name": "",
-    "origin_municipality": "",
-    "origin_country": "",
-    "destination_name": "",
-    "destination_municipality": "",
-    "destination_country": "",
-}
 
 # ---------------------------------------------------------------------------
 # Response parsers
@@ -86,10 +75,10 @@ def _parse_aircraft_type(ac: dict | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _lookup_route(callsign: str) -> dict:
+def _lookup_route(callsign: str) -> RouteInfo:
     """Return route fields for *callsign* via GET /v0/callsign/{callsign}.
 
-    Cached by callsign.  Returns a dict with origin/destination fields only
+    Cached by callsign.  Returns a RouteInfo with origin/destination fields
     (plane is always "" here — aircraft type is looked up separately).
     Never raises.
     """
@@ -97,36 +86,38 @@ def _lookup_route(callsign: str) -> dict:
     # Skip stale entries that have no useful data (e.g. from a previous
     # backend that cached empty results, or a failed lookup)
     if cached is not None and (cached.get("origin") or cached.get("destination")):
-        return {**EMPTY_RESULT, **cached, "plane": ""}
+        ri = RouteInfo.from_dict(cached)
+        ri.plane = ""
+        return ri
 
-    route = {k: "" for k in EMPTY_RESULT if k != "plane"}
+    route = RouteInfo()
     try:
         resp = _session.get(f"{ADSBDB_BASE}/callsign/{callsign}", timeout=10)
         if resp.status_code == 404:
             logger.debug("adsbdb: unknown callsign %r", callsign)
-            return {**EMPTY_RESULT, "plane": ""}
+            return RouteInfo()
         resp.raise_for_status()
 
         flightroute = resp.json().get("response", {}).get("flightroute", {})
         if flightroute:
             origin = _parse_airport(flightroute.get("origin"))
             dest = _parse_airport(flightroute.get("destination"))
-            route["origin"] = origin.get("iata", "")
-            route["origin_name"] = origin.get("name", "")
-            route["origin_municipality"] = origin.get("municipality", "")
-            route["origin_country"] = origin.get("country_name", "")
-            route["destination"] = dest.get("iata", "")
-            route["destination_name"] = dest.get("name", "")
-            route["destination_municipality"] = dest.get("municipality", "")
-            route["destination_country"] = dest.get("country_name", "")
+            route.origin = origin.get("iata", "")
+            route.origin_name = origin.get("name", "")
+            route.origin_municipality = origin.get("municipality", "")
+            route.origin_country = origin.get("country_name", "")
+            route.destination = dest.get("iata", "")
+            route.destination_name = dest.get("name", "")
+            route.destination_municipality = dest.get("municipality", "")
+            route.destination_country = dest.get("country_name", "")
 
     except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.debug("adsbdb callsign lookup failed for %r: %s", callsign, e)
 
-    if route.get("origin") or route.get("destination"):
-        routes_cache.put(callsign, {"plane": "", **route})
+    if route.origin or route.destination:
+        routes_cache.put(callsign, route.to_dict())
 
-    return {**EMPTY_RESULT, "plane": "", **route}
+    return route
 
 
 def _lookup_aircraft(mode_s: str) -> str:
@@ -163,27 +154,23 @@ def _lookup_aircraft(mode_s: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def get_route(callsign: str, mode_s: str | None = None) -> dict:
-    """Return a combined route + aircraft dict.
+def get_route(callsign: str, mode_s: str | None = None) -> RouteInfo:
+    """Return a combined route + aircraft info.
 
     Runs up to two independent adsbdb lookups (route by callsign, aircraft
     type by mode_s) and merges the results.  Each is independently cached
     with a 24-hour TTL, so repeat calls within that window are free.
 
-    Returns a dict with keys:
-        origin, destination, plane,
-        origin_name, origin_municipality, origin_country,
-        destination_name, destination_municipality, destination_country
-
-    All values are strings; unknown fields are "".  Never raises.
+    Returns a :class:`RouteInfo` with all fields as strings; unknown
+    fields are "".  Never raises.
     """
-    result = dict(EMPTY_RESULT)
+    result = RouteInfo()
 
     if callsign:
         route = _lookup_route(callsign)
-        result.update(route)
+        result = route
 
-    if mode_s and not result["plane"]:
-        result["plane"] = _lookup_aircraft(mode_s)
+    if mode_s and not result.plane:
+        result.plane = _lookup_aircraft(mode_s)
 
     return result

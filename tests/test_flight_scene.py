@@ -7,6 +7,7 @@ from scenes.flight.flight_scene import (
     telemetry_changed,
     tick_to_offset,
 )
+from utilities.flight import Flight
 
 # ---------------------------------------------------------------------------
 # callsigns_match
@@ -15,29 +16,29 @@ from scenes.flight.flight_scene import (
 
 class TestCallsignsMatch:
     def test_identical_lists(self):
-        a = [{"callsign": "BAW123"}, {"callsign": "UAL456"}]
-        b = [{"callsign": "BAW123"}, {"callsign": "UAL456"}]
+        a = [Flight(callsign="BAW123"), Flight(callsign="UAL456")]
+        b = [Flight(callsign="BAW123"), Flight(callsign="UAL456")]
         assert callsigns_match(a, b) is True
 
     def test_different_order(self):
-        a = [{"callsign": "BAW123"}, {"callsign": "UAL456"}]
-        b = [{"callsign": "UAL456"}, {"callsign": "BAW123"}]
+        a = [Flight(callsign="BAW123"), Flight(callsign="UAL456")]
+        b = [Flight(callsign="UAL456"), Flight(callsign="BAW123")]
         assert callsigns_match(a, b) is True
 
     def test_different_sets(self):
-        a = [{"callsign": "BAW123"}, {"callsign": "UAL456"}]
-        b = [{"callsign": "BAW123"}, {"callsign": "DAL789"}]
+        a = [Flight(callsign="BAW123"), Flight(callsign="UAL456")]
+        b = [Flight(callsign="BAW123"), Flight(callsign="DAL789")]
         assert callsigns_match(a, b) is False
 
     def test_both_empty(self):
         assert callsigns_match([], []) is True
 
     def test_one_empty(self):
-        assert callsigns_match([{"callsign": "BAW123"}], []) is False
+        assert callsigns_match([Flight(callsign="BAW123")], []) is False
 
     def test_duplicate_callsigns(self):
-        a = [{"callsign": "BAW123"}, {"callsign": "BAW123"}]
-        b = [{"callsign": "BAW123"}]
+        a = [Flight(callsign="BAW123"), Flight(callsign="BAW123")]
+        b = [Flight(callsign="BAW123")]
         # Sets are equal despite different list lengths
         assert callsigns_match(a, b) is True
 
@@ -50,83 +51,83 @@ class TestCallsignsMatch:
 class TestTelemetryChanged:
     def test_no_change(self):
         old = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         new = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         assert telemetry_changed(old, new) is False
 
     def test_altitude_changed(self):
         old = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         new = [
-            {
-                "callsign": "BAW123",
-                "altitude": 34000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=34000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         assert telemetry_changed(old, new) is True
 
     def test_ground_speed_changed(self):
         old = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         new = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 460,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=460,
+                heading=90,
+            )
         ]
         assert telemetry_changed(old, new) is True
 
     def test_heading_changed(self):
         old = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 90,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=90,
+            )
         ]
         new = [
-            {
-                "callsign": "BAW123",
-                "altitude": 35000,
-                "ground_speed": 450,
-                "heading": 120,
-            }
+            Flight(
+                callsign="BAW123",
+                altitude=35000,
+                ground_speed=450,
+                heading=120,
+            )
         ]
         assert telemetry_changed(old, new) is True
 
     def test_new_flight_not_in_old(self):
-        old = [{"callsign": "BAW123", "altitude": 35000}]
-        new = [{"callsign": "UAL456", "altitude": 30000}]
+        old = [Flight(callsign="BAW123", altitude=35000)]
+        new = [Flight(callsign="UAL456", altitude=30000)]
         # New flight not in lookup — no comparison possible, so no change detected
         assert telemetry_changed(old, new) is False
 
