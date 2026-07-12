@@ -233,6 +233,14 @@ permalink: "/"
     </div>
 
     <div class="info-panel">
+      <div class="info-panel-header">hexdb.io</div>
+      <div class="info-panel-body">
+        <p>FlightTracker uses <a href="https://hexdb.io" target="_blank">hexdb.io</a> to look up flight routes (origin and destination airports) and aircraft type information by callsign and Mode-S hex code.</p>
+        <p>Lookups are cached for 24 hours, keeping API usage low during normal operation.</p>
+      </div>
+    </div>
+
+    <div class="info-panel">
       <div class="info-panel-header">CelesTrak</div>
       <div class="info-panel-body">
         <p>FlightTracker can also fetch TLE data from CelesTrak and use it to show satellite passes.</p>
