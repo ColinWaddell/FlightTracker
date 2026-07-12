@@ -21,6 +21,7 @@ Pygments==2.20.0
 qrcode==8.2
 requests==2.32.4
 rich==15.0.0
+ruff==0.15.21
 sgp4==2.26
 soupsieve==2.7
 typing_extensions==4.14.1

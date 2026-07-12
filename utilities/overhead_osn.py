@@ -164,7 +164,6 @@ class Overhead:
 
         min_alt_ft = self.min_altitude / 0.3048
         max_alt_ft = self.max_altitude / 0.3048
-        home = self.location_home
 
         # Filter and collect candidates
         candidates = []
@@ -253,8 +252,6 @@ class Overhead:
                     icao24 = (sv[0] or "").strip().lower()
                     callsign = clean_field(sv[1])
 
-                    lat = sv[6]
-                    lon = sv[5]
                     alt_ft = metres_to_feet(sv[7])
                     ground_speed = ms_to_knots(sv[9])
                     heading = int(float(sv[10])) if sv[10] is not None else 0
