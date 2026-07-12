@@ -79,6 +79,12 @@
       margin-top: 0;
       color: #6c757d;
     }
+    .sidebar .nav-link.nav-link-selected {
+      color: #0d6efd;
+      background: rgba(13,110,253,.08);
+    }
+    .settings-page { display: none; }
+    .settings-page.active { display: block; }
   </style>
 </head>
 <body>
@@ -96,42 +102,42 @@
   <div class="row">
     <!-- Sidebar -->
     <div class="col-md-3">
-      <div class="sidebar">
+      <div class="sidebar" id="settings-sidebar">
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-rocket-takeoff-pin me-2"></i>Flight Monitoring</div>
           <nav class="nav flex-column">
-            <a class="nav-link" href="#group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</a>
-            <a class="nav-link" href="#group-data-source"><i class="bi bi-hdd-network me-2"></i>Data Source</a>
+            <router-link class="nav-link" to="/flight-monitoring" data-section="group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</router-link>
+            <router-link class="nav-link" to="/flight-monitoring" data-section="group-data-source"><i class="bi bi-hdd-network me-2"></i>Data Source</router-link>
           </nav>
         </div>
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-card-list me-2"></i>Reporting</div>
           <nav class="nav flex-column">
-            <a class="nav-link" href="#group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</a>
-            <a class="nav-link" href="#group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</a>
-            <a class="nav-link" href="#group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</a>
+            <router-link class="nav-link" to="/reporting" data-section="group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</router-link>
+            <router-link class="nav-link" to="/reporting" data-section="group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</router-link>
+            <router-link class="nav-link" to="/reporting" data-section="group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</router-link>
           </nav>
         </div>
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
           <nav class="nav flex-column">
-            <a class="nav-link" href="#group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</a>
-            <a class="nav-link" href="#group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</a>
+            <router-link class="nav-link" to="/default-screen" data-section="group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</router-link>
+            <router-link class="nav-link" to="/default-screen" data-section="group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</router-link>
           </nav>
         </div>
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
           <nav class="nav flex-column">
-            <a class="nav-link" href="#group-display"><i class="bi bi-pip me-2"></i>Display</a>
-            <a class="nav-link" href="#group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</a>
+            <router-link class="nav-link" to="/hardware" data-section="group-display"><i class="bi bi-pip me-2"></i>Display</router-link>
+            <router-link class="nav-link" to="/hardware" data-section="group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</router-link>
           </nav>
         </div>
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-shield-lock me-2"></i>Admin</div>
           <nav class="nav flex-column">
-              <a class="nav-link" href="#group-logging"><i class="bi bi-terminal me-2"></i>Logging</a>
-              <a class="nav-link" href="#group-password"><i class="bi bi-key me-2"></i>Change Password</a>
-              <a class="nav-link" href="#group-version"><i class="bi bi-info-circle me-2"></i>Version</a>
+              <router-link class="nav-link" to="/admin" data-section="group-logging"><i class="bi bi-terminal me-2"></i>Logging</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-password"><i class="bi bi-key me-2"></i>Change Password</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-version"><i class="bi bi-info-circle me-2"></i>Version</router-link>
           </nav>
         </div>
       </div>
@@ -141,6 +147,10 @@
     <div class="col-md-9">
       <form method="post" action="/settings" id="settings-form" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+        <!-- ====== Flight Monitoring page ====== -->
+        <div class="settings-page" id="page-flight-monitoring" data-page="flight-monitoring">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-rocket-takeoff-pin me-2"></i>Flight Monitoring</h2>
 
         <!-- ====== Flight Monitoring ====== -->
         <div id="group-flight-monitoring" class="card mb-3 p-3">
@@ -343,6 +353,12 @@
           })();
         </script>
 
+        </div><!-- /page-flight-monitoring -->
+
+        <!-- ====== Reporting page ====== -->
+        <div class="settings-page" id="page-reporting" data-page="reporting">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-card-list me-2"></i>Reporting</h2>
+
         <!-- ====== Airport Display ====== -->
         <div id="group-airport-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>
@@ -485,6 +501,12 @@
           })();
         </script>
 
+        </div><!-- /page-reporting -->
+
+        <!-- ====== Default Screen page ====== -->
+        <div class="settings-page" id="page-default-screen" data-page="default-screen">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-house me-2"></i>Default Screen</h2>
+
         <div id="group-clock" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
 
@@ -585,6 +607,12 @@
 
         </div>
 
+        </div><!-- /page-default-screen -->
+
+        <!-- ====== Hardware page ====== -->
+        <div class="settings-page" id="page-hardware" data-page="hardware">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-cpu me-2"></i>Hardware</h2>
+
         <!-- ====== Display ====== -->
         <div id="group-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-pip me-2"></i>Display</p>
@@ -664,10 +692,11 @@
             </div>
             <div class="row g-2 mt-2">
               <div class="col-auto">
-                <label class="form-label small">Night brightness (0=off)</label>
-                <input type="number" min="0" max="5" class="form-control form-control-sm"
-                       name="screen_schedule_brightness" value="{{ cfg.screen_schedule_brightness }}"
-                       style="max-width:70px" />
+                <label class="form-label small">Night brightness: <span id="night_brightness_display">{{ cfg.screen_schedule_brightness }}</span>/5 (0=off)</label>
+                <input type="range" class="form-range pt-3 px-2" name="screen_schedule_brightness"
+                       id="screen_schedule_brightness"
+                       min="0" max="5" step="1" value="{{ cfg.screen_schedule_brightness }}"
+                       style="max-width:240px" />
               </div>
             </div>
           </div>
@@ -725,6 +754,12 @@
           </div>
         </div>
 
+        </div><!-- /page-hardware -->
+
+        <!-- ====== Admin page ====== -->
+        <div class="settings-page" id="page-admin" data-page="admin">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-shield-lock me-2"></i>Admin</h2>
+
         <!-- ====== Logging ====== -->
         <div id="group-logging" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-terminal me-2"></i>Logging</p>
@@ -774,6 +809,8 @@
           </div>
         </div>
 
+        </div><!-- /page-admin -->
+
         {% if error %}
         <div class="alert alert-danger mb-3">
           <strong>Error saving settings:</strong> {{ error }}
@@ -807,6 +844,102 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.20.0/dist/leaflet-geoman.js"></script>
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/vue-router@4.5.0/dist/vue-router.global.prod.js"></script>
+<script>
+// -- Vue Router setup (hash mode) --
+const { createApp } = Vue;
+const { createRouter, createWebHashHistory } = VueRouter;
+
+const routes = [
+  { path: '/', redirect: '/flight-monitoring' },
+  { path: '/flight-monitoring', component: { template: '<div/>' } },
+  { path: '/reporting',          component: { template: '<div/>' } },
+  { path: '/default-screen',     component: { template: '<div/>' } },
+  { path: '/hardware',           component: { template: '<div/>' } },
+  { path: '/admin',              component: { template: '<div/>' } },
+];
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes,
+  linkActiveClass: '',
+  linkExactActiveClass: '',
+});
+
+// -- Page visibility + scroll-to-section on navigation --
+const PAGES = ['flight-monitoring', 'reporting', 'default-screen', 'hardware', 'admin'];
+let pendingSection = null;
+
+function showPage(pageName) {
+  PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.classList.toggle('active', p === pageName);
+  });
+}
+
+function highlightSidebarItem(section) {
+  document.querySelectorAll('#settings-sidebar .nav-link').forEach(l => l.classList.remove('nav-link-selected'));
+  if (section) {
+    const link = document.querySelector('#settings-sidebar .nav-link[data-section="' + section + '"]');
+    if (link) link.classList.add('nav-link-selected');
+  }
+}
+
+router.afterEach((to) => {
+  const pageName = to.path.replace(/^\//, '');
+  showPage(pageName);
+
+  const section = pendingSection;
+  pendingSection = null;
+
+  highlightSidebarItem(section);
+
+  if (section) {
+    setTimeout(() => {
+      const target = document.getElementById(section);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Fix Leaflet tile layout when the Flight Monitoring page becomes visible
+  if (pageName === 'flight-monitoring') {
+    setTimeout(() => {
+      if (typeof map !== 'undefined' && document.getElementById('simple_tracking').style.display !== 'none') {
+        map.invalidateSize();
+        map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+      }
+      if (typeof advMap !== 'undefined' && document.getElementById('advanced_tracking').style.display !== 'none') {
+        advMap.invalidateSize();
+        advMap.fitBounds(advRect.getBounds(), { padding: [20, 20] });
+      }
+    }, 100);
+  }
+});
+
+// Intercept sidebar link clicks that carry a data-section attribute so we
+// can scroll to the sub-section even when already on that page.
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[data-section]');
+  if (!link) return;
+  const section = link.getAttribute('data-section');
+  const href = link.getAttribute('href') || '';
+  const targetPage = href.replace(/^#\/?/, '');
+  const currentPath = router.currentRoute.value.path.replace(/^\//, '');
+  pendingSection = section;
+  if (currentPath === targetPage) {
+    e.preventDefault();
+    highlightSidebarItem(section);
+    const target = document.getElementById(section);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    pendingSection = null;
+  }
+});
+
+createApp({}).use(router).mount('#settings-sidebar');
+</script>
 <script>
 // -- Airports lookup --
 const AIRPORTS = {{ airports_json | safe }};
@@ -1183,9 +1316,12 @@ setTimeout(function() {
   }
 }, 100);
 
-// -- Brightness slider --
+// -- Brightness sliders --
 document.getElementById("screen_brightness").addEventListener("input", e => {
   document.getElementById("brightness_display").textContent = e.target.value;
+});
+document.getElementById("screen_schedule_brightness").addEventListener("input", e => {
+  document.getElementById("night_brightness_display").textContent = e.target.value;
 });
 
 // -- Airport name hint --
