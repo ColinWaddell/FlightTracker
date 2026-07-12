@@ -179,6 +179,7 @@ class LineScroller:
                 self.state = BounceState.PAUSE
                 self.timer = 0
         elif st == BounceState.PAUSE:
+            self.loop_done = True
             if self.timer >= PAUSE_TICKS:
                 self.state = (
                     BounceState.RETRACT
@@ -186,10 +187,6 @@ class LineScroller:
                     else BounceState.INITIAL
                 )
                 self.timer = 0
-                # Consider the loop complete once the name has scrolled
-                # out and paused - don't wait for it to bounce back.
-                if self.position <= -self.scroll_max:
-                    self.loop_done = True
         elif st == BounceState.RETRACT and self.position >= 0:
             self.position = 0
             self.loop_count += 1
