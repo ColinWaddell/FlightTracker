@@ -218,6 +218,13 @@ permalink: "/"
     </div>
 
     <div class="info-panel">
+      <div class="info-panel-header">Open Sky Network + ADSB.DB</div>
+      <div class="info-panel-body">
+        <p>If you register an account and obtain an <a href="https://opensky-network.org" target="_blank">OpenSky Network</a> API key, FlightTracker can use <a href="https://opensky-network.org" target="_blank">OpenSky Network</a> together with <a href="https://adsbdb.com" target="_blank">ADSB.DB</a> for flight, route, and aircraft lookups.</p>
+      </div>
+    </div>
+
+    <div class="info-panel">
       <div class="info-panel-header">tar1090 / dump1090</div>
       <div class="info-panel-body">
         <p>If you have your own ADS-B receiver, FlightTracker can use your local <code>tar1090</code> or <code>dump1090</code> instance instead.</p>
