@@ -49,6 +49,11 @@ def airport_info(iata: str) -> dict:
     return _airports_cache.get(iata.upper(), {})
 
 
+def airport_name(iata: str) -> str:
+    """Return the airport name for *iata*, or '' if unknown."""
+    return airport_info(iata).get("name", "")
+
+
 def clean_field(value):
     if value is None:
         return ""

@@ -5,12 +5,19 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
-# tar1090 helpers
+# FR24 helpers
 # ---------------------------------------------------------------------------
-from utilities.overhead_fr24 import clean_field, distance_from_flight_to_home
-from utilities.overhead_tar1090 import (
+from utilities.overhead_fr24 import (
     airport_info,
     airport_name,
+    clean_field,
+    distance_from_flight_to_home,
+)
+
+# ---------------------------------------------------------------------------
+# tar1090 helpers
+# ---------------------------------------------------------------------------
+from utilities.overhead_tar1090 import (
     distance_from_home,
     in_zone,
 )
@@ -121,41 +128,41 @@ class TestTar1090DataUnavailability:
         mock_response.json.return_value = {"aircraft": []}
         mock_response.raise_for_status = MagicMock()
 
-        with patch(
-            "utilities.overhead_tar1090.requests.get", return_value=mock_response
-        ):
-            overhead_instance.refresh()
+        overhead_instance._session.get = MagicMock(return_value=mock_response)
+        overhead_instance.refresh()
 
         assert overhead_instance.data_is_empty is True
         assert overhead_instance.error is None
         assert overhead_instance.data == []
 
     def test_connection_error(self, overhead_instance):
-        """API unreachable — should set error, data unchanged."""
+        """API unreachable — should show URL-error placeholder, no error set."""
         from requests.exceptions import ConnectionError as ReqConnError
 
-        with patch(
-            "utilities.overhead_tar1090.requests.get",
-            side_effect=ReqConnError("Connection refused"),
-        ):
-            overhead_instance.refresh()
+        overhead_instance._session.get = MagicMock(
+            side_effect=ReqConnError("Connection refused")
+        )
+        overhead_instance.refresh()
 
-        assert overhead_instance.error is not None
-        assert overhead_instance.new_data is False
-        assert overhead_instance.data_is_empty is True
+        # tar1090 Overhead surfaces a placeholder flight on connection errors
+        # rather than setting error_store (unlike the FR24 backend).
+        assert overhead_instance.error is None
+        assert overhead_instance.data_is_empty is False
+        assert overhead_instance.data[0]["callsign"] == "URL ERROR"
 
     def test_invalid_json(self, overhead_instance):
-        """API returns invalid JSON — should set error."""
+        """API returns invalid JSON — should show URL-error placeholder."""
         mock_response = MagicMock()
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_response.raise_for_status = MagicMock()
 
-        with patch(
-            "utilities.overhead_tar1090.requests.get", return_value=mock_response
-        ):
-            overhead_instance.refresh()
+        overhead_instance._session.get = MagicMock(return_value=mock_response)
+        overhead_instance.refresh()
 
-        assert overhead_instance.error is not None
+        # ValueError is caught — placeholder flight is shown, error stays None
+        assert overhead_instance.error is None
+        assert overhead_instance.data_is_empty is False
+        assert overhead_instance.data[0]["callsign"] == "URL ERROR"
 
     def test_successful_data(self, overhead_instance):
         """API returns valid aircraft — should populate data."""
@@ -176,12 +183,21 @@ class TestTar1090DataUnavailability:
         }
         mock_response.raise_for_status = MagicMock()
 
-        with (
-            patch(
-                "utilities.overhead_tar1090.requests.get", return_value=mock_response
-            ),
-            patch.object(overhead_instance, "get_route", return_value=("LHR", "GLA")),
-        ):
+        mock_route = {
+            "origin": "LHR",
+            "destination": "GLA",
+            "plane": "",
+            "origin_name": "London Heathrow",
+            "origin_municipality": "London",
+            "origin_country": "United Kingdom",
+            "destination_name": "Glasgow Airport",
+            "destination_municipality": "Glasgow",
+            "destination_country": "United Kingdom",
+        }
+
+        overhead_instance._session.get = MagicMock(return_value=mock_response)
+
+        with patch("utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route):
             overhead_instance.refresh()
 
         assert overhead_instance.error is None
