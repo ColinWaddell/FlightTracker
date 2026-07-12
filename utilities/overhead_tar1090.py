@@ -129,16 +129,16 @@ class Overhead:
 
                     # tar1090 provides aircraft type directly from its local DB
                     # (tar1090-db enrichment). We keep this as the primary source
-                    # since it's local and instant. adsbdb may fill it in if blank.
+                    # since it's local and instant. hexdb may fill it in if blank.
                     plane = clean_field(ac.get("desc"))
 
-                    # mode_s (hex) enables the combined adsbdb endpoint which
-                    # returns richer airport info (name, municipality, country)
-                    # directly - no airports.json lookup needed for known routes.
+                    # mode_s (hex) enables the hexdb aircraft endpoint which
+                    # returns the aircraft type, complementing the route lookup
+                    # that returns origin/destination airport info.
                     mode_s = (ac.get("hex") or "").strip().lower() or None
                     route = route_lookup.get_route(callsign, mode_s=mode_s)
 
-                    # Prefer local tar1090 plane type; fall back to adsbdb
+                    # Prefer local tar1090 plane type; fall back to hexdb
                     if not plane:
                         plane = route.plane
 

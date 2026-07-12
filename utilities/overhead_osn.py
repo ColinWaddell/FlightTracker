@@ -6,11 +6,10 @@ the configured bounding box.  Authenticates via OAuth2 client credentials
 (client_id + client_secret obtained from opensky-network.org account settings).
 
 Route lookup (origin/destination) and aircraft type are both handled via
-route_lookup.get_route(), which uses two independent adsbdb.com endpoints:
-  Route    GET /v0/callsign/{callsign}     -> cached by callsign
-  Aircraft GET /v0/aircraft/{icao24}       -> cached by mode_s
-See utilities/route_lookup.py for details on why we avoid the combined
-endpoint.
+route_lookup.get_route(), which uses two independent hexdb.io endpoints:
+  Route    GET /api/v1/route/icao/{callsign}  -> cached by callsign
+  Aircraft GET /api/v1/aircraft/{hex}        -> cached by mode_s
+See utilities/route_lookup.py for details.
 
 OpenSky state vector field order (indices):
   0  icao24          unique 24-bit ICAO transponder address (hex string)
@@ -261,7 +260,7 @@ class Overhead:
                     heading = int(float(sv[10])) if sv[10] is not None else 0
                     vertical_speed = ms_to_fpm(sv[11])
 
-                    # Two independent adsbdb lookups: route by callsign,
+                    # Two independent hexdb lookups: route by callsign,
                     # aircraft type by mode_s.  Each is cached under its own
                     # key so repeat polls are free.
                     route = route_lookup.get_route(callsign, mode_s=icao24)

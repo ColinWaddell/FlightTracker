@@ -19,7 +19,7 @@ from dataclasses import dataclass, field, fields
 
 @dataclass
 class RouteInfo:
-    """Result of a route + aircraft lookup via adsbdb or airports.json.
+    """Result of a route + aircraft lookup via hexdb.io or airports.json.
 
     Returned by :func:`utilities.route_lookup.get_route`.
     """
@@ -107,7 +107,7 @@ class Flight:
 
         Telemetry kwargs override the corresponding route fields (e.g.
         ``plane`` from a local tar1090 database takes priority over the
-        adsbdb lookup result).
+        hexdb lookup result).
         """
         route_fields = {f.name: getattr(route, f.name) for f in fields(route)}
         route_fields.update(telemetry)
