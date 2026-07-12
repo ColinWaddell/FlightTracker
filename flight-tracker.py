@@ -41,6 +41,125 @@ def local_ip() -> str:
         return "127.0.0.1"
 
 
+def _check_data_source(cfg: Config) -> bool:
+    """Return True if the configured data source endpoint is reachable."""
+    import requests
+
+    try:
+        if cfg.data_source == "fr24":
+            requests.get(
+                "https://data-cloud.flightradar24.com/zones/fcgi/feed.js",
+                timeout=5,
+            )
+            return True
+        elif cfg.data_source == "osn":
+            requests.get(
+                "https://opensky-network.org/api/states/all",
+                timeout=5,
+            )
+            return True
+        elif cfg.data_source == "tar1090":
+            if not cfg.tar1090_url:
+                return False
+            requests.get(cfg.tar1090_url, timeout=5)
+            return True
+    except Exception:
+        return False
+    return False
+
+
+def _check_celestrack() -> bool:
+    """Return True if the configured TLE source is reachable."""
+    import requests
+
+    try:
+        requests.get("https://celestrak.org/NORAD/elements/gp.php", timeout=5)
+        return True
+    except Exception:
+        return False
+
+
+def _render_web_interface_test(panel, canvas, cfg: Config, y):
+    from setup.colours import GREEN, GREY, ORANGE
+
+    panel.draw_text(canvas, loading_font, 1, y, GREY, "IFACE: ")
+    if cfg.web_interface_enabled:
+        result_text = "ON"
+        result_colour = GREEN
+    else:
+        result_text = "OFF"
+        result_colour = ORANGE
+    # Right-align the result label on the 64px-wide screen
+    result_width = len(result_text) * 4
+    panel.draw_text(
+        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
+    )
+
+
+def _render_ip_address(panel, canvas, y):
+    from setup.colours import GREY
+
+    ip = local_ip()
+    panel.draw_text(canvas, loading_font, 1, y, GREY, ip)
+
+
+def _render_celestrack_test(panel, canvas, cfg: Config, y):
+    from setup.colours import GREEN, GREY, ORANGE, RED
+
+    panel.draw_text(canvas, loading_font, 1, y, GREY, "TLE: ")
+
+    if not cfg.satellite_tracking_enabled:
+        result_text = "OFF"
+        result_colour = ORANGE
+    else:
+        working = _check_celestrack()
+        result_text = "OK" if working else "FAIL"
+        result_colour = GREEN if working else RED
+
+    # Right-align the result label on the 64px-wide screen
+    result_width = len(result_text) * 4
+    panel.draw_text(
+        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
+    )
+
+
+def _render_data_source_test(panel, canvas, cfg: Config, y):
+    from setup.colours import GREEN, GREY, RED
+
+    labels = {
+        "fr24": "FR24: ",
+        "osn": "OSN: ",
+        "tar1090": "TAR1090: ",
+    }
+    label = labels.get(cfg.data_source, "?: ")
+    panel.draw_text(canvas, loading_font, 1, y, GREY, label)
+
+    ok = _check_data_source(cfg)
+    result_text = "OK" if ok else "FAIL"
+    result_colour = GREEN if ok else RED
+    # Right-align the result label on the 64px-wide screen
+    result_width = len(result_text) * 4
+    panel.draw_text(
+        canvas, loading_font, 64 - result_width - 1, y, result_colour, result_text
+    )
+
+
+def render_tests(panel, canvas):
+    from time import sleep
+
+    from setup.configuration import Config
+
+    cfg = Config.instance()
+
+    _render_web_interface_test(panel, canvas, cfg, 5)
+    _render_data_source_test(panel, canvas, cfg, 13)
+    _render_celestrack_test(panel, canvas, cfg, 21)
+    _render_ip_address(panel, canvas, 31)
+
+    panel.swap(canvas)
+    sleep(2)
+
+
 def render_splash(
     panel,
     canvas,
@@ -251,9 +370,13 @@ def run_flight_tracker():
         cfg.brightness_percent,
     )
 
-    # -- Phase 2: Show splash (loading state, no QR) --------------------------
+    # -- Phase 2: Show start-up tests --------------------------
+    render_tests(panel, canvas)
+
+    # -- Phase 3: Show splash (loading state, no QR) --------------------------
     render_splash(panel, canvas, Image, loading_font)
 
+    # -- Phase 4: Start web interface --------------------------
     result = {}
 
     if cfg.web_interface_enabled:

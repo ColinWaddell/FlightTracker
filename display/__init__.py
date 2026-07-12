@@ -55,11 +55,20 @@ def build_display_class():
         def __init__(self, matrix=None, canvas=None):
             cfg = Config.instance()
 
+            self._init_panel(matrix, canvas, cfg)
+
+            overhead = Overhead()
+            self._init_scenes(overhead, cfg)
+
+            self.loading = IndicatorClass(self.canvas, self.panel, overhead)
+            self._init_timing(cfg)
+
+        def _init_panel(self, matrix, canvas, cfg):
             if matrix is not None:
                 # Came from splash screen - reuse the already-initialised panel
                 self.panel = get_panel()
                 self.canvas = canvas
-                self.from_splash = True
+                self.pre_initialised = True
             else:
                 self.panel = get_panel()
                 self.panel.init_matrix(
@@ -72,10 +81,9 @@ def build_display_class():
                 )
                 self.canvas = self.panel.create_canvas()
                 self.panel.clear(self.canvas)
-                self.from_splash = False
+                self.pre_initialised = False
 
-            overhead = Overhead()
-
+        def _init_scenes(self, overhead, cfg):
             self.scene_manager = SceneManager()
             self.scene_manager.register(IdleScene(self.canvas, self.panel))
             self.scene_manager.register(
@@ -97,7 +105,7 @@ def build_display_class():
             else:
                 logger.info("Satellite tracking disabled")
 
-            self.loading = IndicatorClass(self.canvas, self.panel, overhead)
+        def _init_timing(self, cfg):
             self.frames = frames
             self.frame_period = max(
                 0.001, self.frames.PERIOD * cfg.display_speed_factor
@@ -114,7 +122,7 @@ def build_display_class():
         def run(self):
             print("Press CTRL-C to stop")
 
-            if self.from_splash:
+            if self.pre_initialised:
                 self.panel.clear(self.canvas)
                 self.panel.swap(self.canvas)
 
