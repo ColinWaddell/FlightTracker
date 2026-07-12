@@ -25,22 +25,26 @@ OpenSky state vector field order (indices):
 """
 
 import logging
-import math
 import time as time_mod
 from threading import Event, Lock, Thread
 
 import requests
 
 from utilities import route_lookup
+from utilities.overhead_utilities import (
+    clean_field,
+    distance_from_home,
+    in_zone,
+    metres_to_feet,
+    ms_to_fpm,
+    ms_to_knots,
+)
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-
-EARTH_RADIUS_KM = 6371
-BLANK_FIELDS = {"", "N/A", "NONE"}
 
 OSN_TOKEN_URL = (
     "https://auth.opensky-network.org/auth/realms/opensky-network"
@@ -50,58 +54,6 @@ OSN_STATES_URL = "https://opensky-network.org/api/states/all"
 
 # Refresh token this many seconds before it actually expires to avoid races
 TOKEN_EXPIRY_BUFFER = 60
-
-# ---------------------------------------------------------------------------
-# Unit conversion helpers
-# ---------------------------------------------------------------------------
-
-
-def _metres_to_feet(m) -> float:
-    try:
-        return float(m) * 3.28084
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def _ms_to_knots(ms) -> int:
-    try:
-        return int(float(ms) * 1.94384)
-    except (TypeError, ValueError):
-        return 0
-
-
-def _ms_to_fpm(ms) -> int:
-    try:
-        return int(float(ms) * 196.85)
-    except (TypeError, ValueError):
-        return 0
-
-
-# ---------------------------------------------------------------------------
-# Geometry helpers
-# ---------------------------------------------------------------------------
-
-
-def _in_zone(lat, lon, zone) -> bool:
-    return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
-
-
-def _distance_from_home(lat, lon, alt_ft, home) -> float:
-    def polar_to_cartesian(lat, lon, alt):
-        deg2rad = math.pi / 180
-        return [
-            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
-            alt * math.sin(deg2rad * lat),
-            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
-        ]
-
-    altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
-    try:
-        x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
-        x1, y1, z1 = polar_to_cartesian(*home)
-        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
-    except (TypeError, ValueError):
-        return 1e6
 
 
 # ---------------------------------------------------------------------------
@@ -287,35 +239,33 @@ class Overhead:
                 if lat is None or lon is None or baro_alt_m is None:
                     continue
 
-                alt_ft = _metres_to_feet(baro_alt_m)
+                alt_ft = metres_to_feet(baro_alt_m)
                 if not (min_alt_ft < alt_ft < max_alt_ft):
                     continue
 
-                if not _in_zone(lat, lon, zone):
+                if not in_zone(lat, lon, zone):
                     continue
 
                 candidates.append(sv)
 
             # Sort by distance from observer
             candidates.sort(
-                key=lambda sv: _distance_from_home(
-                    sv[6], sv[5], _metres_to_feet(sv[7]), home
+                key=lambda sv: distance_from_home(
+                    sv[6], sv[5], metres_to_feet(sv[7]), home
                 )
             )
 
             for sv in candidates[: self.max_flight_lookup]:
                 try:
                     icao24 = (sv[0] or "").strip().lower()
-                    callsign = (sv[1] or "").strip()
-                    if callsign.upper() in BLANK_FIELDS:
-                        callsign = ""
+                    callsign = clean_field(sv[1])
 
                     lat = sv[6]
                     lon = sv[5]
-                    alt_ft = _metres_to_feet(sv[7])
-                    ground_speed = _ms_to_knots(sv[9])
+                    alt_ft = metres_to_feet(sv[7])
+                    ground_speed = ms_to_knots(sv[9])
                     heading = int(float(sv[10])) if sv[10] is not None else 0
-                    vertical_speed = _ms_to_fpm(sv[11])
+                    vertical_speed = ms_to_fpm(sv[11])
 
                     # Two independent adsbdb lookups: route by callsign,
                     # aircraft type by mode_s.  Each is cached under its own

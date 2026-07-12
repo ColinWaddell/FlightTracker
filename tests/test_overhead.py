@@ -5,22 +5,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
-# FR24 helpers
+# Shared helpers (now in overhead_utilities)
 # ---------------------------------------------------------------------------
-from utilities.overhead_fr24 import (
+from utilities.overhead_utilities import (
     airport_info,
     airport_name,
     clean_field,
-    distance_from_flight_to_home,
-)
-
-# ---------------------------------------------------------------------------
-# tar1090 helpers
-# ---------------------------------------------------------------------------
-from utilities.overhead_tar1090 import (
     distance_from_home,
     in_zone,
 )
+
+# ---------------------------------------------------------------------------
+# FR24-specific adapter
+# ---------------------------------------------------------------------------
+from utilities.overhead_fr24 import distance_from_flight_to_home
 
 
 class TestInZone:

@@ -1,11 +1,14 @@
 import contextlib
-import json
 import logging
-from pathlib import Path
 from threading import Event, Lock, Thread
 from time import sleep
 
 from utilities import routes_cache
+from utilities.overhead_utilities import (
+    airport_info,
+    clean_field,
+    distance_from_home,
+)
 
 try:
     from curl_cffi.requests.exceptions import Timeout as CurlTimeout
@@ -17,76 +20,18 @@ logger = logging.getLogger(__name__)
 RETRIES = 3
 RATE_LIMIT_DELAY = 1
 FR24_TIMEOUT = 60  # seconds - default 30 is too short for Pi on slow networks
-EARTH_RADIUS_KM = 6371
-BLANK_FIELDS = ["", "N/A", "NONE"]
-
-
-# ---------------------------------------------------------------------------
-# Airport info lookup (bundled airports.json)
-# ---------------------------------------------------------------------------
-
-_airports_cache: dict[str, dict] = {}
-_airports_loaded = False
-
-
-def _load_airports():
-    global _airports_cache, _airports_loaded
-    if _airports_loaded:
-        return
-    _airports_loaded = True
-    path = Path(__file__).parent.parent / "assets" / "airports.json"
-    if path.exists():
-        try:
-            with open(path) as fh:
-                _airports_cache = json.load(fh)
-        except Exception:
-            _airports_cache = {}
-
-
-def airport_info(iata: str) -> dict:
-    """Return the full airport dict {name, municipality, country_name} or {}."""
-    _load_airports()
-    return _airports_cache.get(iata.upper(), {})
-
-
-def airport_name(iata: str) -> str:
-    """Return the airport name for *iata*, or '' if unknown."""
-    return airport_info(iata).get("name", "")
-
-
-def clean_field(value):
-    if value is None:
-        return ""
-    try:
-        value = value.strip()
-    except AttributeError:
-        value = str(value).strip()
-    return "" if value.upper() in BLANK_FIELDS else value
 
 
 def distance_from_flight_to_home(flight, location_home):
-    import math
+    """Distance from a FR24 flight object to home.
 
-    def polar_to_cartesian(lat, lon, alt):
-        deg2rad = math.pi / 180
-        return [
-            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
-            alt * math.sin(deg2rad * lat),
-            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
-        ]
-
-    def feet_to_km_plus_earth(altitude_ft):
-        return 0.0003048 * altitude_ft + EARTH_RADIUS_KM
-
-    home = location_home
+    Thin adapter that extracts lat/lon/alt from the flight object and
+    delegates to :func:`overhead_utilities.distance_from_home`.
+    """
     try:
-        x0, y0, z0 = polar_to_cartesian(
-            flight.latitude,
-            flight.longitude,
-            feet_to_km_plus_earth(flight.altitude),
+        return distance_from_home(
+            flight.latitude, flight.longitude, flight.altitude, location_home
         )
-        x1, y1, z1 = polar_to_cartesian(*home)
-        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
     except (AttributeError, TypeError, ValueError):
         return 1e6
 

@@ -1,16 +1,17 @@
 import logging
-import math
 from threading import Event, Lock, Thread
 
 import requests
 from requests.exceptions import RequestException
 
 from utilities import route_lookup
+from utilities.overhead_utilities import (
+    clean_field,
+    distance_from_home,
+    in_zone,
+)
 
 logger = logging.getLogger(__name__)
-
-EARTH_RADIUS_KM = 6371
-BLANK_FIELDS = ["", "N/A", "NONE"]
 
 
 def _url_error_flight() -> dict:
@@ -32,32 +33,6 @@ def _url_error_flight() -> dict:
         "callsign": "URL ERROR",
         "icao_callsign": "URL ERROR",
     }
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def in_zone(lat, lon, zone):
-    return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
-
-
-def distance_from_home(lat, lon, alt_ft, home):
-    def polar_to_cartesian(lat, lon, alt):
-        deg2rad = math.pi / 180
-
-        return [
-            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
-            alt * math.sin(deg2rad * lat),
-            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
-        ]
-
-    altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
-    x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
-    x1, y1, z1 = polar_to_cartesian(*home)
-
-    return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
 
 
 # ---------------------------------------------------------------------------
@@ -161,16 +136,12 @@ class Overhead:
 
             for ac in candidates[: self.max_flight_lookup]:
                 try:
-                    callsign = (ac.get("flight") or "").strip()
-                    if callsign.upper() in BLANK_FIELDS:
-                        callsign = ""
+                    callsign = clean_field(ac.get("flight"))
 
                     # tar1090 provides aircraft type directly from its local DB
                     # (tar1090-db enrichment). We keep this as the primary source
                     # since it's local and instant. adsbdb may fill it in if blank.
-                    plane = (ac.get("desc") or "").strip()
-                    if plane.upper() in BLANK_FIELDS:
-                        plane = ""
+                    plane = clean_field(ac.get("desc"))
 
                     # mode_s (hex) enables the combined adsbdb endpoint which
                     # returns richer airport info (name, municipality, country)
