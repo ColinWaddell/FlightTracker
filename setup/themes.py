@@ -147,8 +147,38 @@ THEME_PASTEL = {
     THEME_WEATHER_35C: colours.HOT_PINK,
 }
 
-THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL]
-THEME_NAMES = ["Default", "Monochrome", "Pastel"]
+THEME_CLASSIC = {
+    THEME_BG: colours.BLACK,
+    THEME_TEXT: colours.WHITE,
+    THEME_PLANE: colours.PURPLE,
+    THEME_FLIGHT_NUMERIC: colours.BLUE_LIGHT,
+    THEME_FLIGHT_ALPHA: colours.BLUE,
+    THEME_DIVIDING_BAR: colours.GREEN,
+    THEME_DATA_INDEX: colours.GREY,
+    THEME_ARROW: colours.ORANGE,
+    THEME_PLANE_TLM: colours.PINK,
+    THEME_PLANE_TLM_UNITS: colours.PINK,
+    THEME_TIME: colours.BLUE_DARK,
+    THEME_TIME_AMPM: colours.BLUE_DARK,
+    THEME_CURRENT_DAY: colours.PINK_DARK,
+    THEME_CURRENT_DATE: colours.PINK_DARKER,
+    THEME_LOCATION_ORIGIN: colours.YELLOW,
+    THEME_LOCATION_DESTINATION: colours.YELLOW,
+    THEME_LOCATION_ORIGIN_FULL: colours.YELLOW,
+    THEME_LOCATION_DESTINATION_FULL: colours.YELLOW,
+    THEME_LOCATION_ORIGIN_ARROW: colours.ORANGE,
+    THEME_LOCATION_DESTINATION_ARROW: colours.ORANGE,
+    THEME_WEATHER_00C: colours.WHITE,
+    THEME_WEATHER_01C: colours.BLUE_LIGHT,
+    THEME_WEATHER_10C: colours.PINK_DARK,
+    THEME_WEATHER_15C: colours.YELLOW,
+    THEME_WEATHER_20C: colours.YELLOW,
+    THEME_WEATHER_25C: colours.ORANGE,
+    THEME_WEATHER_35C: colours.RED,
+}
+
+THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL, THEME_CLASSIC]
+THEME_NAMES = ["Default", "Monochrome", "Pastel", "Classic (v1)"]
 
 # ---------------------------------------------------------------------------
 # Active theme state
