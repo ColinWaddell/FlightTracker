@@ -558,10 +558,9 @@ if [ ! -f "$SERVICE_TEMPLATE" ]; then
 fi
 
 info "Generating service file from template..."
-# Substitute __USER__ and __HOME__ placeholders
+# Substitute pi placeholder
 GENERATED_SERVICE="/tmp/FlightTracker.service"
-sed -e "s|__USER__|${CURRENT_USER}|g" \
-    -e "s|__HOME__|${CURRENT_HOME}|g" \
+sed -e "s|pi|${CURRENT_USER}|g" \
     "$SERVICE_TEMPLATE" > "$GENERATED_SERVICE"
 
 info "Installing systemd service..."
