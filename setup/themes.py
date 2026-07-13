@@ -147,7 +147,7 @@ THEME_PASTEL = {
     THEME_WEATHER_35C: colours.HOT_PINK,
 }
 
-THEME_V1INSPIRED = {
+THEME_CLASSIC = {
     THEME_BG: colours.BLACK,
     THEME_TEXT: colours.WHITE,
     THEME_PLANE: colours.PURPLE,
@@ -177,8 +177,8 @@ THEME_V1INSPIRED = {
     THEME_WEATHER_35C: colours.RED,
 }
 
-THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL, THEME_V1INSPIRED]
-THEME_NAMES = ["Default", "Monochrome", "Pastel", "V1Inspired"]
+THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL, THEME_CLASSIC]
+THEME_NAMES = ["Default", "Monochrome", "Pastel", "Classic (v1)"]
 
 # ---------------------------------------------------------------------------
 # Active theme state
