@@ -86,6 +86,9 @@ DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
 DEFAULT_CLOCK_24HR = True
 DEFAULT_DATE_FORMAT = 0  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
 
+# Idle screen theme
+DEFAULT_IDLE_SCREEN_THEME = "classic"  # classic / astronomy / forecast
+
 # Web interface
 DEFAULT_WEB_INTERFACE_ENABLED = True
 DEFAULT_WEB_PORT = 8584  # TCP port for the Flask config server
@@ -163,6 +166,8 @@ DEFAULTS: dict[str, Any] = {
     # Clock / date
     "clock_24hr": DEFAULT_CLOCK_24HR,
     "date_format": DEFAULT_DATE_FORMAT,
+    # Idle screen theme
+    "idle_screen_theme": DEFAULT_IDLE_SCREEN_THEME,
     # Web interface
     "web_interface_enabled": DEFAULT_WEB_INTERFACE_ENABLED,
     "web_port": DEFAULT_WEB_PORT,
@@ -728,6 +733,18 @@ class Config:
     @property
     def date_format(self) -> int:
         return int(self.data_store.get("date_format", DEFAULT_DATE_FORMAT))
+
+    @property
+    def idle_screen_theme(self) -> str:
+        """Idle screen theme name: 'classic', 'astronomy', 'forecast'."""
+        val = str(
+            self.data_store.get("idle_screen_theme", DEFAULT_IDLE_SCREEN_THEME)
+        ).lower()
+        return (
+            val
+            if val in ("classic", "astronomy", "forecast")
+            else DEFAULT_IDLE_SCREEN_THEME
+        )
 
     @property
     def web_interface_enabled(self) -> bool:
