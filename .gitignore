@@ -152,3 +152,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+
+# NPM
+package-lock.json
+package.json

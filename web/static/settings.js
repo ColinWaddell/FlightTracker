@@ -551,10 +551,26 @@
   })();
 
   // ===========================================================================
+  // Idle screen theme selector
+  // ===========================================================================
+  window.updateIdleThemeSections = function updateIdleThemeSections() {
+    const sel = document.getElementById("idle_screen_theme");
+    if (!sel) return;
+    const theme = sel.value;
+    const classic = document.getElementById("idle-theme-classic");
+    const astronomy = document.getElementById("idle-theme-astronomy");
+    const forecast = document.getElementById("idle-theme-forecast");
+    if (classic) classic.style.display = theme === "classic" ? "block" : "none";
+    if (astronomy) astronomy.style.display = theme === "astronomy" ? "block" : "none";
+    if (forecast) forecast.style.display = theme === "forecast" ? "block" : "none";
+  };
+
+  // ===========================================================================
   // Save button feedback
   // ===========================================================================
   document.getElementById("settings-form").addEventListener("submit", (e) => {
-    const weatherMode = document.querySelector('input[name="weather_mode"]:checked').value;
+    const weatherModeRadio = document.querySelector('input[name="weather_mode"]:checked');
+    const weatherMode = weatherModeRadio ? weatherModeRadio.value : "0";
     const weatherKey = document.getElementById("weatherapi_key").value.trim();
     const weatherErr = document.getElementById("weather_key_error");
     if (weatherMode !== "0" && !weatherKey) {
