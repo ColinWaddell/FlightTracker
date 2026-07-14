@@ -376,7 +376,9 @@ fi
 info "Generating service file from template..."
 # Substitute pi placeholder
 GENERATED_SERVICE="/tmp/FlightTracker.service"
-sed -e "s|pi|${CURRENT_USER}|g" \
+sed \
+    -e "s|/home/pi/|/home/${CURRENT_USER}/|g" \
+    -e "s|^User=pi$|User=${CURRENT_USER}|" \
     "$SERVICE_TEMPLATE" > "$GENERATED_SERVICE"
 
 info "Installing systemd service..."
