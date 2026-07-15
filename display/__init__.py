@@ -23,7 +23,7 @@ def build_display_class():
     from utilities.tle_manager import TLEManager
 
     cfg = Config.instance()
-    theme_set(cfg.theme)
+    theme_set(cfg.colour_theme)
     logger = logging.getLogger("display")
 
     if cfg.use_tar1090:

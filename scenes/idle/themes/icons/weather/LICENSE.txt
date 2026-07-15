@@ -1,0 +1,5 @@
+Breezy Weather Pixel Icon Provider
+License: LGPL v3
+Source: https://github.com/breezy-weather/pixel-icon-provider
+
+Original icons are 256x256 PNG downscaled to 16x16

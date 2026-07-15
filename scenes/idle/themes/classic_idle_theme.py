@@ -303,8 +303,12 @@ class ClassicIdleTheme(BaseIdleScene):
         start = datetime.datetime.now().hour
         slice = forecast[start : start + RAINFALL_HOURS]
         return [
-            {"precip_mm": precip, "temp_c": temp, "hour": (start + i) % 24}
-            for i, (temp, precip) in enumerate(slice)
+            {
+                "precip_mm": h["precip_mm"],
+                "temp_c": h["temp_c"],
+                "hour": (start + i) % 24,
+            }
+            for i, h in enumerate(slice)
         ]
 
     def draw_rainfall_graph(

@@ -537,17 +537,28 @@
         <div id="idle-theme-forecast" style="display:{% if cfg.idle_screen_theme == 'forecast' %}block{% else %}none{% endif %}">
           <div class="card mb-3 p-3">
             <p class="section-heading"><i class="bi bi-cloud-sun-fill me-2"></i>Forecast</p>
-            <p class="text-muted small mb-0">Test card for forecast</p>
+            <p class="text-muted small mb-0">Display upcoming weather forecasts as icons on the idle screen.</p>
           </div>
           <div class="card mb-3 p-3">
-            <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Forecast Hours</p>
+            <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Forecast Duration</p>
             <div class="mb-3">
-              <label class="form-label small">Hours to display (test)</label>
-              <input type="number" class="form-control form-control-sm" id="test_forecast_hours" value="12" min="1" max="48" style="width:6rem" />
-            </div>
-            <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="test_forecast_wind" />
-              <label class="form-check-label" for="test_forecast_wind">Show wind speed (test)</label>
+              <label class="form-label small">Forecast type</label>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="theme_forecast_duration" id="forecast_duration_3hour" value="3hour"
+                       {% if cfg.theme.forecast.duration != '12hour' and cfg.theme.forecast.duration != '3day' %}checked{% endif %} />
+                <label class="form-check-label" for="forecast_duration_3hour">3 hour (now + next 2 hours)</label>
+              </div>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="theme_forecast_duration" id="forecast_duration_12hour" value="12hour"
+                       {% if cfg.theme.forecast.duration == '12hour' %}checked{% endif %} />
+                <label class="form-check-label" for="forecast_duration_12hour">12 hour (now + 4h + 8h)</label>
+              </div>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="theme_forecast_duration" id="forecast_duration_3day" value="3day"
+                       {% if cfg.theme.forecast.duration == '3day' %}checked{% endif %} />
+                <label class="form-check-label" for="forecast_duration_3day">3 day (today + next 2 days)</label>
+              </div>
+              <div class="form-text text-muted small">Choose how far ahead the forecast display looks.</div>
             </div>
           </div>
         </div><!-- /idle-theme-forecast -->
@@ -563,12 +574,12 @@
           <p class="section-heading"><i class="bi bi-pip me-2"></i>Display</p>
 
           <div class="mb-3">
-            <label class="form-label small">Theme</label>
-            <select class="form-select form-select-sm" name="theme" style="max-width:200px">
-              <option value="0" {% if cfg.theme == 0 %}selected{% endif %}>Default</option>
-              <option value="1" {% if cfg.theme == 1 %}selected{% endif %}>Monochrome</option>
-              <option value="2" {% if cfg.theme == 2 %}selected{% endif %}>Pastel</option>
-              <option value="3" {% if cfg.theme == 3 %}selected{% endif %}>Classic (v1)</option>
+            <label class="form-label small">Colour theme</label>
+            <select class="form-select form-select-sm" name="colour_theme" style="max-width:200px">
+              <option value="0" {% if cfg.colour_theme == 0 %}selected{% endif %}>Default</option>
+              <option value="1" {% if cfg.colour_theme == 1 %}selected{% endif %}>Monochrome</option>
+              <option value="2" {% if cfg.colour_theme == 2 %}selected{% endif %}>Pastel</option>
+              <option value="3" {% if cfg.colour_theme == 3 %}selected{% endif %}>Classic (v1)</option>
             </select>
           </div>
 
@@ -700,8 +711,6 @@
           </div>
         </div>
 
-        </div><!-- /page-hardware -->
-
         <!-- ====== Defaults ====== -->
         <div id="group-defaults" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-rulers me-2"></i>Defaults</p>
@@ -715,6 +724,8 @@
             <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
           </div>
         </div>
+
+        </div><!-- /page-hardware -->
 
         
         <!-- ====== Admin page ====== -->

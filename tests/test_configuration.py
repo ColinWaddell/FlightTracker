@@ -13,6 +13,7 @@ from setup.configuration import (
     time_in_window,
     time_to_mins,
 )
+from utilities.sun_times import is_daytime
 
 # ---------------------------------------------------------------------------
 # _next_backup_path
@@ -303,3 +304,97 @@ class TestMigrateConfig:
         # Should return defaults
         assert "flight_lat" in data
         assert "units" in data
+
+
+# ---------------------------------------------------------------------------
+# is_daytime (utilities.sun_times)
+# ---------------------------------------------------------------------------
+
+
+class TestIsDaytime:
+    def test_london_midday_summer(self):
+        # London ~51.5N, -0.12W, June 21 at 12:00 - should be daytime
+        assert is_daytime(51.5, -0.12, datetime(2026, 6, 21, 12, 0)) is True
+
+    def test_london_midnight_summer(self):
+        # London ~51.5N, -0.12W, June 21 at 00:00 - should be night
+        assert is_daytime(51.5, -0.12, datetime(2026, 6, 21, 0, 0)) is False
+
+    def test_london_midday_winter(self):
+        # London ~51.5N, -0.12W, Dec 21 at 12:00 - should be daytime
+        assert is_daytime(51.5, -0.12, datetime(2026, 12, 21, 12, 0)) is True
+
+    def test_london_midnight_winter(self):
+        # London ~51.5N, -0.12W, Dec 21 at 00:00 - should be night
+        assert is_daytime(51.5, -0.12, datetime(2026, 12, 21, 0, 0)) is False
+
+    def test_polar_night(self):
+        # North Pole area in December - sun never rises
+        assert is_daytime(80.0, 0.0, datetime(2026, 12, 21, 12, 0)) is False
+
+    def test_midnight_sun(self):
+        # North Pole area in June - sun never sets
+        assert is_daytime(80.0, 0.0, datetime(2026, 6, 21, 0, 0)) is True
+
+    def test_returns_bool(self):
+        result = is_daytime(51.5, -0.12)
+        assert isinstance(result, bool)
+
+
+# ---------------------------------------------------------------------------
+# theme_forecast / colour_theme properties
+# ---------------------------------------------------------------------------
+
+
+class TestThemeForecast:
+    def test_default_duration(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.theme_forecast["duration"] == "3hour"
+
+    def test_valid_durations(self):
+        from setup.configuration import Config
+
+        for duration in ("3hour", "12hour", "3day"):
+            cfg = Config.__new__(Config)
+            cfg.data_store = {"theme": {"forecast": {"duration": duration}}}
+            assert cfg.theme_forecast["duration"] == duration
+
+    def test_invalid_duration_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {"forecast": {"duration": "bogus"}}}
+        assert cfg.theme_forecast["duration"] == "3hour"
+
+    def test_missing_forecast_key(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {}}
+        assert cfg.theme_forecast["duration"] == "3hour"
+
+    def test_non_dict_theme(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": "not a dict"}
+        assert cfg.theme_forecast["duration"] == "3hour"
+
+
+class TestColourTheme:
+    def test_default_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.colour_theme == 0
+
+    def test_stored_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"colour_theme": 2}
+        assert cfg.colour_theme == 2

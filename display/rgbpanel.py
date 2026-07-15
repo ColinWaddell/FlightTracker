@@ -86,6 +86,15 @@ class RGBPanel(ABC):
         """Draw a filled rectangle from (x0, y0) to (x1, y1)."""
         raise NotImplementedError
 
+    @abstractmethod
+    def draw_image(self, canvas, x, y, image):
+        """Draw a PIL Image at (x, y), respecting alpha transparency.
+
+        ``image`` should be a PIL Image (RGBA preferred so transparent
+        pixels are skipped rather than drawn as black).
+        """
+        raise NotImplementedError
+
     def make_colour(self, r, g, b):
         """Create a Colour object."""
         return Colour(r, g, b)

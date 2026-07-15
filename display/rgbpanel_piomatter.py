@@ -134,6 +134,13 @@ class PiomatterPanel(RGBPanel):
         top, bottom = (y0, y1) if y0 <= y1 else (y1, y0)
         draw.rectangle([left, top, right, bottom], fill=(cr, cg, cb))
 
+    def draw_image(self, canvas, x, y, image):
+        """Paste a PIL Image onto the canvas, respecting alpha transparency."""
+        if image.mode == "RGBA":
+            canvas.paste(image, (x, y), mask=image)
+        else:
+            canvas.paste(image, (x, y))
+
     def make_colour(self, r, g, b):
         return Colour(r, g, b)
 

@@ -30,7 +30,7 @@ from setup.themes import (
 
 WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
-    "?key={key}&q={lat},{lng}&days=2&aqi=no&alerts=no"
+    "?key={key}&q={lat},{lng}&days=3&aqi=no&alerts=no"
 )
 WEATHER_REFRESH_SECONDS = 300
 
@@ -188,16 +188,19 @@ def _parse_day(raw_day: dict) -> dict:
     return out
 
 
-def _parse_hourly(raw_forecast_days: list) -> list[tuple[float, float]]:
-    """Flatten all forecast hours into (temp_c, precip_mm) tuples."""
+def _parse_hourly(raw_forecast_days: list) -> list[dict]:
+    """Flatten all forecast hours into dicts with temp, precip, and condition code."""
     out = []
     for day in raw_forecast_days:
         for h in day.get("hour", []):
             out.append(
-                (
-                    _coerce(h.get("temp_c"), float, 0.0),
-                    _coerce(h.get("precip_mm"), float, 0.0),
-                )
+                {
+                    "temp_c": _coerce(h.get("temp_c"), float, 0.0),
+                    "precip_mm": _coerce(h.get("precip_mm"), float, 0.0),
+                    "condition_code": _coerce(
+                        h.get("condition", {}).get("code"), int, 0
+                    ),
+                }
             )
     return out
 

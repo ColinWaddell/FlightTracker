@@ -330,6 +330,18 @@ class SimulatorPanel(RGBPanel):
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
         _draw_square(canvas, x0, y0, x1, y1, colour)
 
+    def draw_image(self, canvas, x, y, image):
+        """Draw a PIL Image at (x, y), skipping transparent pixels."""
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        rgb = image.convert("RGB")
+        alpha = image.split()[3]
+        for py in range(image.height):
+            for px in range(image.width):
+                if alpha.getpixel((px, py)) > 0:
+                    r, g, b = rgb.getpixel((px, py))
+                    canvas.set_pixel(x + px, y + py, r, g, b)
+
     def make_colour(self, r, g, b):
         return Colour(r, g, b)
 

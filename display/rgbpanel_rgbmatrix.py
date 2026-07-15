@@ -97,5 +97,19 @@ class RGBMatrixPanel(RGBPanel):
         for x in range(x0, x1):
             graphics.DrawLine(canvas, x, y0, x, y1, c)
 
+    def draw_image(self, canvas, x, y, image):
+        """Draw a PIL Image at (x, y), skipping transparent pixels."""
+        from PIL import Image
+
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        rgb = image.convert("RGB")
+        alpha = image.split()[3]
+        for py in range(image.height):
+            for px in range(image.width):
+                if alpha.getpixel((px, py)) > 0:
+                    r, g, b = rgb.getpixel((px, py))
+                    canvas.SetPixel(x + px, y + py, r, g, b)
+
     def make_colour(self, r, g, b):
         return graphics.Color(r, g, b)

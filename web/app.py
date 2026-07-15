@@ -187,7 +187,20 @@ def parse_settings_form(form, cfg) -> dict:
         "rain_sensitivity": max(0, min(2, int_val(form.get("rain_sensitivity"), 1))),
         "units": str_val(form.get("units"), "m"),
         # Display
-        "theme": int_val(form.get("theme"), 0),
+        "colour_theme": int_val(form.get("colour_theme"), 0),
+        "theme": {
+            "forecast": {
+                "duration": (
+                    "3day"
+                    if str_val(form.get("theme_forecast_duration"), "3hour").lower()
+                    == "3day"
+                    else "12hour"
+                    if str_val(form.get("theme_forecast_duration"), "3hour").lower()
+                    == "12hour"
+                    else "3hour"
+                ),
+            }
+        },
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),
         "display_speed": (
@@ -207,6 +220,14 @@ def parse_settings_form(form, cfg) -> dict:
         # Clock / date
         "clock_24hr": bool_val(form.get("clock_24hr")),
         "date_format": int_val(form.get("date_format"), 0),
+        # Idle screen theme
+        "idle_screen_theme": (
+            "forecast"
+            if str_val(form.get("idle_screen_theme"), "classic").lower() == "forecast"
+            else "astronomy"
+            if str_val(form.get("idle_screen_theme"), "classic").lower() == "astronomy"
+            else "classic"
+        ),
         # Web interface
         "web_interface_enabled": bool_val(form.get("web_interface_enabled")),
         "web_port": max(1024, min(65535, int_val(form.get("web_port"), cfg.web_port))),

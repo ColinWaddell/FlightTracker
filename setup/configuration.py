@@ -70,10 +70,15 @@ DEFAULT_RAIN_SENSITIVITY = (
 DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
 
 # Display
-DEFAULT_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel
+DEFAULT_COLOUR_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel, 3 = Classic (v1)
 DEFAULT_SCREEN_BRIGHTNESS = 3  # 1-5
 DEFAULT_SCREEN_ROTATE = False
 DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
+
+# Per-theme configuration (nested dict under "theme" in config.json)
+DEFAULT_FORECAST_DURATION = "3hour"  # 3hour / 12hour / 3day
+DEFAULT_THEME_FORECAST = {"duration": DEFAULT_FORECAST_DURATION}
+DEFAULT_THEME = {"forecast": DEFAULT_THEME_FORECAST}
 
 # Brightness schedule
 DEFAULT_SCREEN_SCHEDULE_ENABLED = False
@@ -153,6 +158,8 @@ DEFAULTS: dict[str, Any] = {
     "rain_sensitivity": DEFAULT_RAIN_SENSITIVITY,
     "units": DEFAULT_UNITS,
     # Display
+    "colour_theme": DEFAULT_COLOUR_THEME,
+    # Per-theme configuration (nested dict)
     "theme": DEFAULT_THEME,
     "screen_brightness": DEFAULT_SCREEN_BRIGHTNESS,
     "screen_rotate": DEFAULT_SCREEN_ROTATE,
@@ -196,15 +203,17 @@ DEFAULTS: dict[str, Any] = {
 }
 
 
-def mins_to_time(m: float) -> time:
-    """Convert minutes-from-midnight (0-1440) into a ``datetime.time``."""
-    m = int(round(m)) % 1440
-    return time(hour=m // 60, minute=m % 60)
-
-
-def time_to_mins(t: time) -> int:
-    """Convert a ``datetime.time`` to minutes from midnight."""
-    return t.hour * 60 + t.minute
+# ---------------------------------------------------------------------------
+# Time / sunrise helpers - re-exported from utilities.sun_times
+# so existing imports from setup.configuration still work.
+# ---------------------------------------------------------------------------
+from utilities.sun_times import (  # noqa: E402
+    approx_sunrise_sunset,
+    mins_to_time,
+    parse_time,
+    time_in_window,
+    time_to_mins,
+)
 
 
 def _next_backup_path(path: Path) -> Path:
@@ -239,88 +248,8 @@ def migrate_legacy_json(repo_path: Path, platform_path: Path) -> Path:
     return platform_path
 
 
-def parse_time(value: Any, default: str = "00:00") -> time:
-    """Parse an ``HH:MM`` string (or anything str()-able) into a ``datetime.time``.
-
-    Falls back to *default* on failure. Used at the JSON-storage boundary.
-    """
-    try:
-        return datetime.strptime(str(value).strip(), "%H:%M").time()
-    except (ValueError, AttributeError, TypeError):
-        return datetime.strptime(default, "%H:%M").time()
-
-
-def time_in_window(start: time, end: time) -> bool:
-    """Check if *now* falls inside a time window defined by two ``time`` objects.
-
-    Handles overnight windows (e.g. 22:00 -> 07:00) where start > end.
-    """
-    if start is None or end is None:
-        return False
-
-    now_mins = datetime.now().hour * 60 + datetime.now().minute
-    start_mins = time_to_mins(start)
-    end_mins = time_to_mins(end)
-
-    if start_mins == end_mins:
-        return True
-    if start_mins < end_mins:
-        return start_mins <= now_mins < end_mins
-
-    # Overnight window
-    return now_mins >= start_mins or now_mins < end_mins
-
-
-def approx_sunrise_sunset(lat: float, lng: float, date=None) -> tuple[time, time]:
-    """Approximate sunrise/sunset times for a given lat/lng and date.
-
-    Uses a simplified solar position algorithm (NOAA approximation).
-    Returns (sunrise, sunset) as ``datetime.time`` objects.
-    """
-
-    if date is None:
-        date = datetime.now()
-
-    day_of_year = date.timetuple().tm_yday
-
-    # Solar declination (degrees)
-    decl = 23.45 * math.sin(math.radians(360 / 365 * (day_of_year - 81)))
-
-    # Approximate equation of time in minutes
-    b = math.radians(360 / 365 * (day_of_year - 81))
-    eot = 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
-
-    # Solar noon in UTC (minutes from midnight)
-    solar_noon_utc = 720 - 4 * lng - eot
-
-    # Hour angle at sunrise/sunset (using 90° + 50' = -0.833° elevation)
-    lat_rad = math.radians(lat)
-    decl_rad = math.radians(decl)
-    cos_h = (
-        math.sin(math.radians(-0.833)) - math.sin(lat_rad) * math.sin(decl_rad)
-    ) / (math.cos(lat_rad) * math.cos(decl_rad))
-
-    # Polar night / midnight sun - clamp to 0 or 1440 minutes
-    if cos_h > 1:
-        # Sun never rises
-        noon = mins_to_time(720)
-        return noon, noon
-    if cos_h < -1:
-        # Sun never sets
-        noon = mins_to_time(720)
-        return noon, noon
-
-    ha = math.degrees(math.acos(cos_h))  # degrees
-    ha_minutes = ha * 4  # 1° = 4 minutes
-
-    sunrise = solar_noon_utc - ha_minutes
-    sunset = solar_noon_utc + ha_minutes
-
-    # Wrap into 0-1440
-    sunrise = sunrise % 1440
-    sunset = sunset % 1440
-
-    return mins_to_time(sunrise), mins_to_time(sunset)
+# parse_time, time_in_window, and approx_sunrise_sunset are imported
+# from utilities.sun_times at the top of this section.
 
 
 def import_legacy(path: Path):
@@ -449,6 +378,14 @@ class Config:
                     loaded = json.load(fh)
                 # Merge over defaults so new keys always have a value
                 self.data_store = {**DEFAULTS, **loaded}
+
+                # Migrate legacy flat "theme" (int 0-3 display colour) to
+                # "colour_theme", and reset "theme" to the new nested dict.
+                if isinstance(self.data_store.get("theme"), int):
+                    self.data_store["colour_theme"] = self.data_store.pop("theme")
+                    self.data_store["theme"] = dict(DEFAULT_THEME)
+                    self.save()
+
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -623,8 +560,22 @@ class Config:
         return val if val in ("m", "i") else DEFAULT_UNITS
 
     @property
-    def theme(self) -> int:
-        return int(self.data_store.get("theme", DEFAULT_THEME))
+    def colour_theme(self) -> int:
+        return int(self.data_store.get("colour_theme", DEFAULT_COLOUR_THEME))
+
+    @property
+    def theme_forecast(self) -> dict:
+        """Forecast theme settings, merged over defaults so new sub-keys always have a value."""
+        val = self.data_store.get("theme", {})
+        if not isinstance(val, dict):
+            val = {}
+        forecast = val.get("forecast", {})
+        if not isinstance(forecast, dict):
+            forecast = {}
+        merged = {**DEFAULT_THEME_FORECAST, **forecast}
+        if merged.get("duration") not in ("3hour", "12hour", "3day"):
+            merged["duration"] = DEFAULT_FORECAST_DURATION
+        return merged
 
     @property
     def screen_brightness(self) -> int:
