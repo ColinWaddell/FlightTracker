@@ -107,6 +107,118 @@ def font_text_width(font, text: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Weather data parsing
+# ---------------------------------------------------------------------------
+
+# Fields copied verbatim from raw["current"] into the parsed dict.
+_CURRENT_FLOAT_FIELDS = (
+    "temp_c",
+    "wind_kph",
+    "pressure_mb",
+    "precip_mm",
+    "feelslike_c",
+    "windchill_c",
+    "heatindex_c",
+    "dewpoint_c",
+    "vis_km",
+    "uv",
+    "gust_kph",
+)
+_CURRENT_INT_FIELDS = (
+    "wind_degree",
+    "humidity",
+    "cloud",
+    "will_it_rain",
+    "chance_of_rain",
+    "will_it_snow",
+    "chance_of_snow",
+)
+_CURRENT_STR_FIELDS = ("wind_dir",)
+
+# Fields copied verbatim from raw["forecast"]["forecastday"][n]["day"].
+_DAY_FLOAT_FIELDS = (
+    "maxtemp_c",
+    "mintemp_c",
+    "avgtemp_c",
+    "maxwind_kph",
+    "totalprecip_mm",
+    "totalsnow_cm",
+)
+_DAY_INT_FIELDS = (
+    "avghumidity",
+    "daily_will_it_rain",
+    "daily_chance_of_rain",
+    "daily_will_it_snow",
+    "daily_chance_of_snow",
+)
+
+
+def _coerce(value, caster, default):
+    """Safely cast *value* with *caster*, returning *default* on failure."""
+    try:
+        return caster(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_current(raw_current: dict) -> dict:
+    """Extract and type-coerce the fields we care about from the API current block."""
+    out = {}
+    for key in _CURRENT_FLOAT_FIELDS:
+        out[key] = _coerce(raw_current.get(key), float, 0.0)
+    for key in _CURRENT_INT_FIELDS:
+        out[key] = _coerce(raw_current.get(key), int, 0)
+    for key in _CURRENT_STR_FIELDS:
+        out[key] = str(raw_current.get(key, ""))
+    # condition is a nested object
+    out["condition_code"] = _coerce(
+        raw_current.get("condition", {}).get("code"), int, 0
+    )
+    return out
+
+
+def _parse_day(raw_day: dict) -> dict:
+    """Extract and type-coerce the fields we care about from a forecast day block."""
+    out = {}
+    for key in _DAY_FLOAT_FIELDS:
+        out[key] = _coerce(raw_day.get(key), float, 0.0)
+    for key in _DAY_INT_FIELDS:
+        out[key] = _coerce(raw_day.get(key), int, 0)
+    out["condition_code"] = _coerce(raw_day.get("condition", {}).get("code"), int, 0)
+    return out
+
+
+def _parse_hourly(raw_forecast_days: list) -> list[tuple[float, float]]:
+    """Flatten all forecast hours into (temp_c, precip_mm) tuples."""
+    out = []
+    for day in raw_forecast_days:
+        for h in day.get("hour", []):
+            out.append(
+                (
+                    _coerce(h.get("temp_c"), float, 0.0),
+                    _coerce(h.get("precip_mm"), float, 0.0),
+                )
+            )
+    return out
+
+
+def _parse_weather(raw: dict) -> dict:
+    """Filter the full WeatherAPI response down to the fields we use.
+
+    Returns a dict with current-condition fields at the root level,
+    plus ``hourly`` and ``daily`` lists.  Missing or malformed values
+    are coerced to safe defaults rather than raising.
+    """
+    current = raw.get("current", {})
+    forecast = raw.get("forecast", {}).get("forecastday", [])
+
+    parsed = _parse_current(current)
+    parsed["hourly"] = _parse_hourly(forecast)
+    parsed["daily"] = [_parse_day(d.get("day", {})) for d in forecast]
+    return parsed
+
+
+# ---------------------------------------------------------------------------
 # WeatherService - singleton daemon-thread weather fetcher
 # ---------------------------------------------------------------------------
 
@@ -164,14 +276,7 @@ class WeatherService(threading.Thread):
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     raw = json.loads(resp.read().decode())
 
-                parsed = {
-                    "temp_c": float(raw["current"]["temp_c"]),
-                    "forecast": [
-                        (float(h["temp_c"]), float(h["precip_mm"]))
-                        for day in raw["forecast"]["forecastday"]
-                        for h in day["hour"]
-                    ],
-                }
+                parsed = _parse_weather(raw)
 
                 with self.lock:
                     self.weather_data = parsed

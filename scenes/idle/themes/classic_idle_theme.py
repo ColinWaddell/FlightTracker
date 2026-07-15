@@ -299,7 +299,7 @@ class ClassicIdleTheme(BaseIdleScene):
     def rainfall_data(self, weather: dict | None) -> list | None:
         if weather is None:
             return None
-        forecast = weather["forecast"]
+        forecast = weather["hourly"]
         start = datetime.datetime.now().hour
         slice = forecast[start : start + RAINFALL_HOURS]
         return [
