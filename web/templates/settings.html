@@ -28,32 +28,33 @@
     <div class="col-md-3 mb-4">
       <div class="sidebar" id="settings-sidebar">
         <div class="menu-section">
-          <div class="group-header"><i class="bi bi-rocket-takeoff-pin me-2"></i>Flight Monitoring</div>
+          <div class="group-header"><i class="bi bi-rocket-takeoff-pin me-2"></i>Sky Monitoring</div>
           <nav class="nav flex-column">
-            <router-link class="nav-link" to="/flight-monitoring" data-section="group-flight-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</router-link>
-            <router-link class="nav-link" to="/flight-monitoring" data-section="group-data-source"><i class="bi bi-hdd-network me-2"></i>Data Source</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-sky-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</router-link>
           </nav>
         </div>
         <div class="menu-section">
-          <div class="group-header"><i class="bi bi-card-list me-2"></i>Reporting</div>
+          <div class="group-header"><i class="bi bi-hdd-network me-2"></i>Data Source</div>
           <nav class="nav flex-column">
-            <router-link class="nav-link" to="/reporting" data-section="group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</router-link>
-            <router-link class="nav-link" to="/reporting" data-section="group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</router-link>
-            <router-link class="nav-link" to="/reporting" data-section="group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</router-link>
+            <router-link class="nav-link" to="/data-source" data-section="group-flight-data"><i class="bi bi-airplane-engines me-2"></i>Flight Data</router-link>
+            <router-link class="nav-link" to="/data-source" data-section="group-weather-data"><i class="bi bi-cloud-sun me-2"></i>Weather Data</router-link>
           </nav>
         </div>
         <div class="menu-section">
           <div class="group-header"><i class="bi bi-house me-2"></i>Default Screen</div>
           <nav class="nav flex-column">
-            <router-link class="nav-link" to="/default-screen" data-section="group-clock"><i class="bi bi-clock me-2"></i>Clock &amp; Date</router-link>
-            <router-link class="nav-link" to="/default-screen" data-section="group-weather"><i class="bi bi-cloud-sun me-2"></i>Weather</router-link>
+            <router-link class="nav-link" to="/default-screen" data-section="group-theme"><i class="bi bi-palette me-2"></i>Theme</router-link>
           </nav>
         </div>
         <div class="menu-section">
-          <div class="group-header"><i class="bi bi-cpu me-2"></i>Hardware</div>
+          <div class="group-header"><i class="bi bi-cpu me-2"></i>System</div>
           <nav class="nav flex-column">
             <router-link class="nav-link" to="/hardware" data-section="group-display"><i class="bi bi-pip me-2"></i>Display</router-link>
             <router-link class="nav-link" to="/hardware" data-section="group-hardware"><i class="bi bi-motherboard me-2"></i>Hardware</router-link>
+            <router-link class="nav-link" to="/hardware" data-section="group-defaults"><i class="bi bi-rulers me-2"></i>Defaults</router-link>
           </nav>
         </div>
         <div class="menu-section">
@@ -73,12 +74,12 @@
       <form method="post" action="/settings" id="settings-form" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-        <!-- ====== Flight Monitoring page ====== -->
-        <div class="settings-page" id="page-flight-monitoring" data-page="flight-monitoring">
-        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-rocket-takeoff-pin me-2"></i>Flight Monitoring</h2>
+        <!-- ====== Sky Monitoring page ====== -->
+        <div class="settings-page" id="page-sky-monitoring" data-page="sky-monitoring">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-rocket-takeoff-pin me-2"></i>Sky Monitoring</h2>
 
-        <!-- ====== Flight Monitoring ====== -->
-        <div id="group-flight-monitoring" class="card mb-3 p-3">
+        <!-- ====== Sky Monitoring ====== -->
+        <div id="group-sky-monitoring" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-geo-alt me-2"></i>Location</p>
 
           <div class="mb-3">
@@ -175,88 +176,6 @@
             <i class="bi bi-info-circle me-1"></i>Setting a non-zero minimum altitude (say, <code>10m</code>) prevents the device always listing aircraft on the tarmac.
           </p>
         </div>
-
-        <!-- ====== Data Source ====== -->
-        <div id="group-data-source" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-hdd-network me-2"></i>Data Source</p>
-          <div class="mb-3">
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
-                     {% if cfg.data_source == 'fr24' %}checked{% endif %} />
-              <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online) <span class="text-danger small">(will be deprecated eventually; getting harder to support)</span></label>
-            </div>
-
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="data_source" id="data_source_osn" value="osn"
-                     {% if cfg.data_source == 'osn' %}checked{% endif %} />
-              <label class="form-check-label" for="data_source_osn">OpenSky Network (online)</label>
-            </div>
-
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
-                     {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
-              <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
-            </div>
-          </div>
-
-          <div id="tar1090_fields" style="display:{% if cfg.data_source == 'tar1090' %}block{% else %}none{% endif %}">
-            <label class="form-label small">tar1090 URL</label>
-            <input type="text" class="form-control form-control-sm"
-                   name="tar1090_url" value="{{ cfg.tar1090_url }}"
-                   placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
-            <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
-            <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
-          </div>
-
-          <div id="osn_fields" style="display:{% if cfg.data_source == 'osn' %}block{% else %}none{% endif %}">
-            <label class="form-label small">Client ID</label>
-            <input type="text" class="form-control form-control-sm mb-2"
-                   name="osn_client_id" value="{{ cfg.osn_client_id }}"
-                   placeholder="your-client-id" autocomplete="off" />
-            <label class="form-label small">Client Secret</label>
-            <input type="password" class="form-control form-control-sm"
-                   name="osn_client_secret" value="{{ cfg.osn_client_secret }}"
-                   placeholder="your-client-secret" autocomplete="new-password" />
-            <div class="form-text text-muted small mt-1">
-              Create an API client at
-              <a href="https://opensky-network.org/login" target="_blank" rel="noopener noreferrer">opensky-network.org</a>
-              (Account &rarr; API Clients) to get your credentials.
-              A free registered account is sufficient for 30-second polling.
-            </div>
-          </div>
-
-          <div class="mt-3">
-            <label class="form-label small" for="max_flight_lookup">Flights to track</label>
-            <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
-                   name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
-            <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
-                 style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i>Flights are sorted by closest to your first. Keep this at 5 or below when using FlightRadar24 - each flight requires a separate API call and higher values risk hitting rate limits.
-            </div>
-          </div>
-
-          <div id="callsign_format_fields" class="mt-3"
-               style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
-            <label class="form-label small">Callsign format</label>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao" value="icao"
-                     {% if cfg.callsign_format != 'iata' %}checked{% endif %} />
-              <label class="form-check-label" for="callsign_format_icao">ICAO callsign (e.g. BAW123)</label>
-            </div>
-            <div class="form-check">
-              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_iata" value="iata"
-                     {% if cfg.callsign_format == 'iata' %}checked{% endif %} />
-              <label class="form-check-label" for="callsign_format_iata">IATA flight number (e.g. BA123)</label>
-            </div>
-            <div class="form-text text-muted small">Choose whether to display the ICAO callsign or IATA flight number. Falls back to ICAO when the IATA number is unavailable.</div>
-          </div>
-        </div>
-
-        </div><!-- /page-flight-monitoring -->
-
-        <!-- ====== Reporting page ====== -->
-        <div class="settings-page" id="page-reporting" data-page="reporting">
-        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-card-list me-2"></i>Reporting</h2>
 
         <!-- ====== Airport Display ====== -->
         <div id="group-airport-display" class="card mb-3 p-3">
@@ -390,11 +309,126 @@
           </div>
         </div>
 
-        </div><!-- /page-reporting -->
+        </div><!-- /page-sky-monitoring -->
+
+        <!-- ====== Data Source page ====== -->
+        <div class="settings-page" id="page-data-source" data-page="data-source">
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-hdd-network me-2"></i>Data Source</h2>
+
+        <!-- ====== Flight Data ====== -->
+        <div id="group-flight-data" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-airplane-engines me-2"></i>Flight Data</p>
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24" value="fr24"
+                     {% if cfg.data_source == 'fr24' %}checked{% endif %} />
+              <label class="form-check-label" for="data_source_fr24">FlightRadar24 (online) <span class="text-danger small">(will be deprecated eventually; getting harder to support)</span></label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_osn" value="osn"
+                     {% if cfg.data_source == 'osn' %}checked{% endif %} />
+              <label class="form-check-label" for="data_source_osn">OpenSky Network (online)</label>
+            </div>
+
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="data_source" id="data_source_tar1090" value="tar1090"
+                     {% if cfg.data_source == 'tar1090' %}checked{% endif %} />
+              <label class="form-check-label" for="data_source_tar1090">tar1090 (local / self-hosted)</label>
+            </div>
+          </div>
+
+          <div id="tar1090_fields" style="display:{% if cfg.data_source == 'tar1090' %}block{% else %}none{% endif %}">
+            <label class="form-label small">tar1090 URL</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="tar1090_url" value="{{ cfg.tar1090_url }}"
+                   placeholder="http://192.168.1.x/tar1090/data/aircraft.json" />
+            <div class="form-text text-muted small">Point this at your local tar1090 instance's <code>aircraft.json</code> endpoint.</div>
+            <div class="form-text text-muted small">Currently tested against the latest RPi image from <a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">ADSB.im</a></div>
+          </div>
+
+          <div id="osn_fields" style="display:{% if cfg.data_source == 'osn' %}block{% else %}none{% endif %}">
+            <label class="form-label small">Client ID</label>
+            <input type="text" class="form-control form-control-sm mb-2"
+                   name="osn_client_id" value="{{ cfg.osn_client_id }}"
+                   placeholder="your-client-id" autocomplete="off" />
+            <label class="form-label small">Client Secret</label>
+            <input type="password" class="form-control form-control-sm"
+                   name="osn_client_secret" value="{{ cfg.osn_client_secret }}"
+                   placeholder="your-client-secret" autocomplete="new-password" />
+            <div class="form-text text-muted small mt-1">
+              Create an API client at
+              <a href="https://opensky-network.org/login" target="_blank" rel="noopener noreferrer">opensky-network.org</a>
+              (Account &rarr; API Clients) to get your credentials.
+              A free registered account is sufficient for 30-second polling.
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label small" for="max_flight_lookup">Flights to track</label>
+            <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
+                   name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />
+            <div id="fr24_lookup_warning" class="form-text text-warning small mt-1"
+                 style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>Flights are sorted by closest to your first. Keep this at 5 or below when using FlightRadar24 - each flight requires a separate API call and higher values risk hitting rate limits.
+            </div>
+          </div>
+
+          <div id="callsign_format_fields" class="mt-3"
+               style="display:{% if cfg.data_source == 'fr24' %}block{% else %}none{% endif %}">
+            <label class="form-label small">Callsign format</label>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao" value="icao"
+                     {% if cfg.callsign_format != 'iata' %}checked{% endif %} />
+              <label class="form-check-label" for="callsign_format_icao">ICAO callsign (e.g. BAW123)</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_iata" value="iata"
+                     {% if cfg.callsign_format == 'iata' %}checked{% endif %} />
+              <label class="form-check-label" for="callsign_format_iata">IATA flight number (e.g. BA123)</label>
+            </div>
+            <div class="form-text text-muted small">Choose whether to display the ICAO callsign or IATA flight number. Falls back to ICAO when the IATA number is unavailable.</div>
+          </div>
+        </div>
+
+        <!-- ====== Weather Data ====== -->
+        <div id="group-weather-data" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather Data</p>
+
+          <div class="mb-3">
+            <label class="form-label small">WeatherAPI.com API Key</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
+                   placeholder="Get a free key at weatherapi.com" />
+            <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
+            <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
+          </div>
+        </div>
+
+        </div><!-- /page-data-source -->
 
         <!-- ====== Default Screen page ====== -->
         <div class="settings-page" id="page-default-screen" data-page="default-screen">
         <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-house me-2"></i>Default Screen</h2>
+
+        <!-- ====== Theme selector ====== -->
+        <div id="group-theme" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-palette me-2"></i>Theme</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Idle screen theme</label>
+            <select class="form-select form-select-sm" name="idle_screen_theme" id="idle_screen_theme" style="max-width:200px"
+                    onchange="updateIdleThemeSections()">
+              <option value="classic" {% if cfg.idle_screen_theme == 'classic' %}selected{% endif %}>Classic</option>
+              <option value="astronomy" {% if cfg.idle_screen_theme == 'astronomy' %}selected{% endif %}>Astronomy</option>
+              <option value="forecast" {% if cfg.idle_screen_theme == 'forecast' %}selected{% endif %}>Forecast</option>
+            </select>
+            <div class="form-text text-muted small">Choose what to display on the idle screen when no flights or satellites are overhead.</div>
+          </div>
+        </div>
+
+        <!-- ====== Classic theme settings ====== -->
+        <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme != 'astronomy' and cfg.idle_screen_theme != 'forecast' %}block{% else %}none{% endif %}">
 
         <div id="group-clock" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
@@ -425,19 +459,19 @@
             <div class="form-check">
               <input type="radio" class="form-check-input" name="weather_mode" id="weather_off" value="0"
                      {% if cfg.weather_mode == 0 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='none';document.getElementById('rain_sensitivity_fields').style.display='none'" />
+                     onchange="document.getElementById('rain_sensitivity_fields').style.display='none'" />
               <label class="form-check-label" for="weather_off">Off</label>
             </div>
             <div class="form-check">
               <input type="radio" class="form-check-input" name="weather_mode" id="weather_temp" value="1"
                      {% if cfg.weather_mode == 1 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='none'" />
+                     onchange="document.getElementById('rain_sensitivity_fields').style.display='none'" />
               <label class="form-check-label" for="weather_temp">Temperature</label>
             </div>
             <div class="form-check mb-1">
               <input type="radio" class="form-check-input" name="weather_mode" id="weather_rain" value="2"
                      {% if cfg.weather_mode == 2 %}checked{% endif %}
-                     onchange="document.getElementById('weather_key_fields').style.display='block';document.getElementById('rain_sensitivity_fields').style.display='block'" />
+                     onchange="document.getElementById('rain_sensitivity_fields').style.display='block'" />
               <label class="form-check-label" for="weather_rain">Temperature + rainfall graph</label>
             </div>
             <p class="text-muted small mb-1">
@@ -452,24 +486,6 @@
               </select>
               <div class="form-text text-muted small">Sets the full-scale value of the graph. Increase if your bars are always full; decrease if they're always empty.</div>
             </div>
-          </div>
-
-          <div id="weather_key_fields" class="mb-3" style="display:{% if cfg.weather_mode == 0 %}none{% else %}block{% endif %}">
-            <label class="form-label small">WeatherAPI.com API Key</label>
-            <input type="text" class="form-control form-control-sm"
-                   name="weatherapi_key" id="weatherapi_key" value="{{ cfg.weatherapi_key }}"
-                   placeholder="Get a free key at weatherapi.com" />
-            <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
-            <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small">Units</label>
-            <select class="form-select form-select-sm" name="units" style="max-width:180px">
-              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
-              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
-            </select>
-            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
           </div>
 
           <div class="card bg-light p-3 mb-3">
@@ -496,11 +512,51 @@
 
         </div>
 
+        </div><!-- /idle-theme-classic -->
+
+        <!-- ====== Astronomy theme settings ====== -->
+        <div id="idle-theme-astronomy" style="display:{% if cfg.idle_screen_theme == 'astronomy' %}block{% else %}none{% endif %}">
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-moon-stars me-2"></i>Astronomy</p>
+            <p class="text-muted small mb-0">Test card for astronomy</p>
+          </div>
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-moon me-2"></i>Moon Phase</p>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="test_astronomy_moon" />
+              <label class="form-check-label" for="test_astronomy_moon">Show moon phase (test)</label>
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="test_astronomy_planets" />
+              <label class="form-check-label" for="test_astronomy_planets">Show visible planets (test)</label>
+            </div>
+          </div>
+        </div><!-- /idle-theme-astronomy -->
+
+        <!-- ====== Forecast theme settings ====== -->
+        <div id="idle-theme-forecast" style="display:{% if cfg.idle_screen_theme == 'forecast' %}block{% else %}none{% endif %}">
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-cloud-sun-fill me-2"></i>Forecast</p>
+            <p class="text-muted small mb-0">Test card for forecast</p>
+          </div>
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Forecast Hours</p>
+            <div class="mb-3">
+              <label class="form-label small">Hours to display (test)</label>
+              <input type="number" class="form-control form-control-sm" id="test_forecast_hours" value="12" min="1" max="48" style="width:6rem" />
+            </div>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" id="test_forecast_wind" />
+              <label class="form-check-label" for="test_forecast_wind">Show wind speed (test)</label>
+            </div>
+          </div>
+        </div><!-- /idle-theme-forecast -->
+
         </div><!-- /page-default-screen -->
 
         <!-- ====== Hardware page ====== -->
         <div class="settings-page" id="page-hardware" data-page="hardware">
-        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-cpu me-2"></i>Hardware</h2>
+        <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-cpu me-2"></i>System</h2>
 
         <!-- ====== Display ====== -->
         <div id="group-display" class="card mb-3 p-3">
@@ -646,6 +702,21 @@
 
         </div><!-- /page-hardware -->
 
+        <!-- ====== Defaults ====== -->
+        <div id="group-defaults" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-rulers me-2"></i>Defaults</p>
+
+          <div class="mb-3">
+            <label class="form-label small">Units</label>
+            <select class="form-select form-select-sm" name="units" style="max-width:180px">
+              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
+              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
+            </select>
+            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
+          </div>
+        </div>
+
+        
         <!-- ====== Admin page ====== -->
         <div class="settings-page" id="page-admin" data-page="admin">
         <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-shield-lock me-2"></i>Admin</h2>

@@ -14,9 +14,9 @@
   const { createRouter, createWebHashHistory } = VueRouter;
 
   const routes = [
-    { path: "/", redirect: "/flight-monitoring" },
-    { path: "/flight-monitoring", component: { template: "<div/>" } },
-    { path: "/reporting",          component: { template: "<div/>" } },
+    { path: "/", redirect: "/sky-monitoring" },
+    { path: "/sky-monitoring", component: { template: "<div/>" } },
+    { path: "/data-source",        component: { template: "<div/>" } },
     { path: "/default-screen",     component: { template: "<div/>" } },
     { path: "/hardware",           component: { template: "<div/>" } },
     { path: "/admin",              component: { template: "<div/>" } },
@@ -30,7 +30,7 @@
   });
 
   // -- Page visibility + scroll-to-section on navigation --
-  const PAGES = ["flight-monitoring", "reporting", "default-screen", "hardware", "admin"];
+  const PAGES = ["sky-monitoring", "data-source", "default-screen", "hardware", "admin"];
   let pendingSection = null;
 
   function showPage(pageName) {
@@ -66,8 +66,8 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // Fix Leaflet tile layout when the Flight Monitoring page becomes visible
-    if (pageName === "flight-monitoring") {
+    // Fix Leaflet tile layout when the Sky Monitoring page becomes visible
+    if (pageName === "sky-monitoring") {
       setTimeout(() => {
         if (typeof map !== "undefined" && document.getElementById("simple_tracking").style.display !== "none") {
           map.invalidateSize();
@@ -551,16 +551,32 @@
   })();
 
   // ===========================================================================
+  // Idle screen theme selector
+  // ===========================================================================
+  window.updateIdleThemeSections = function updateIdleThemeSections() {
+    const sel = document.getElementById("idle_screen_theme");
+    if (!sel) return;
+    const theme = sel.value;
+    const classic = document.getElementById("idle-theme-classic");
+    const astronomy = document.getElementById("idle-theme-astronomy");
+    const forecast = document.getElementById("idle-theme-forecast");
+    if (classic) classic.style.display = theme === "classic" ? "block" : "none";
+    if (astronomy) astronomy.style.display = theme === "astronomy" ? "block" : "none";
+    if (forecast) forecast.style.display = theme === "forecast" ? "block" : "none";
+  };
+
+  // ===========================================================================
   // Save button feedback
   // ===========================================================================
   document.getElementById("settings-form").addEventListener("submit", (e) => {
-    const weatherMode = document.querySelector('input[name="weather_mode"]:checked').value;
+    const weatherModeRadio = document.querySelector('input[name="weather_mode"]:checked');
+    const weatherMode = weatherModeRadio ? weatherModeRadio.value : "0";
     const weatherKey = document.getElementById("weatherapi_key").value.trim();
     const weatherErr = document.getElementById("weather_key_error");
     if (weatherMode !== "0" && !weatherKey) {
       e.preventDefault();
       weatherErr.style.display = "block";
-      document.getElementById("weather_key_fields").scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("group-weather-data").scrollIntoView({ behavior: "smooth", block: "center" });
       const btn = document.getElementById("save-btn");
       btn.disabled = false;
       btn.innerHTML = "Save &amp; Restart";
