@@ -35,7 +35,17 @@ from scenes.idle.themes.icons.weather.code_to_weather import weather_icon
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts
 from setup.configuration import Config
-from setup.themes import TC, THEME_TEXT, THEME_WEATHER_10C, THEME_WEATHER_20C
+from setup.themes import (
+    TC,
+    THEME_BG,
+    THEME_CURRENT_DATE,
+    THEME_CURRENT_DAY,
+    THEME_TEXT,
+    THEME_TIME,
+    THEME_TIME_AMPM,
+    THEME_WEATHER_10C,
+    THEME_WEATHER_20C,
+)
 from utilities.sun_times import is_daytime
 
 # ---------------------------------------------------------------------------
@@ -70,6 +80,29 @@ BOTTOM_LABEL_Y = 31  # baseline for the label below the icon
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
+# ---------------------------------------------------------------------------
+# Clock / Date / Day-of-week constants (copied from ClassicIdleTheme)
+# ---------------------------------------------------------------------------
+
+# Clock
+CLOCK_FONT = fonts.regular
+CLOCK_AMPM_FONT = fonts.extrasmall
+CLOCK_POSITION = (1, 8)
+AMPM_POSITION_Y = 6
+
+# Date
+DATE_FONT = fonts.small
+DATE_POSITION = (1, 31)
+DATE_FORMATS = [
+    "%Y-%m-%d",  # 0 = YYYY-MM-DD
+    "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
+    "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
+]
+
+# Day of week
+DAY_FONT = fonts.small
+DAY_POSITION = (2, 23)
+
 
 class ForecastIdleTheme(BaseIdleScene):
     """Forecast idle layout - weather icons for upcoming periods."""
@@ -80,15 +113,25 @@ class ForecastIdleTheme(BaseIdleScene):
 
     def theme_init(self) -> None:
         self.last_slots: list[tuple] | None = None
+        self.last_time: str | None = None
+        self.last_date: str | None = None
+        self.last_day: str | None = None
 
     def theme_reset(self) -> None:
         self.last_slots = None
+        self.last_time = None
+        self.last_date = None
+        self.last_day = None
 
     # ------------------------------------------------------------------
     # draw_content - called once per second by BaseIdleScene.draw()
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
+        self.draw_clock()
+        self.draw_date()
+        self.draw_day()
+
         weather = self.weather.get()
         if weather is None:
             return
@@ -133,7 +176,9 @@ class ForecastIdleTheme(BaseIdleScene):
             # Draw bottom label (temperature)
             if bottom_label:
                 # bottom_label is a list of (text, colour) segments
-                total_width = sum(font_text_width(LABEL_FONT, seg[0]) for seg in bottom_label)
+                total_width = sum(
+                    font_text_width(LABEL_FONT, seg[0]) for seg in bottom_label
+                )
                 seg_x = x + round((16 - total_width) / 2)
                 for seg_text, seg_colour in bottom_label:
                     self.panel.draw_text(
@@ -147,6 +192,131 @@ class ForecastIdleTheme(BaseIdleScene):
                     seg_x += font_text_width(LABEL_FONT, seg_text)
 
         self.last_slots = slots
+
+    # ------------------------------------------------------------------
+    # Clock (copied from ClassicIdleTheme)
+    # ------------------------------------------------------------------
+
+    def draw_clock(self) -> None:
+        cfg = Config.instance()
+        now = datetime.datetime.now()
+        if cfg.clock_24hr:
+            time_str = now.strftime("%H:%M")
+            ampm_str = None
+        else:
+            time_str = now.strftime("%-I:%M")
+            ampm_str = now.strftime("%p")
+
+        current_time = time_str + (ampm_str or "")
+        if self.last_time == current_time:
+            return
+
+        # Undraw old value
+        if self.last_time is not None:
+            self.panel.draw_text(
+                self.canvas,
+                CLOCK_FONT,
+                CLOCK_POSITION[0],
+                CLOCK_POSITION[1],
+                TC(THEME_BG),
+                self.last_time[:5],
+            )
+            if ampm_str:
+                old_ampm = "AM" if "AM" in self.last_time else "PM"
+                ampm_position_x = CLOCK_POSITION[0] + font_text_width(
+                    CLOCK_FONT, self.last_time[:5]
+                )
+                self.panel.draw_text(
+                    self.canvas,
+                    CLOCK_AMPM_FONT,
+                    ampm_position_x + 1,
+                    AMPM_POSITION_Y,
+                    TC(THEME_BG),
+                    old_ampm,
+                )
+
+        self.last_time = current_time
+
+        self.panel.draw_text(
+            self.canvas,
+            CLOCK_FONT,
+            CLOCK_POSITION[0],
+            CLOCK_POSITION[1],
+            TC(THEME_TIME),
+            time_str,
+        )
+        if ampm_str:
+            ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
+            self.panel.draw_text(
+                self.canvas,
+                CLOCK_AMPM_FONT,
+                ampm_position_x + 1,
+                AMPM_POSITION_Y,
+                TC(THEME_TIME_AMPM),
+                ampm_str,
+            )
+
+    # ------------------------------------------------------------------
+    # Date (copied from ClassicIdleTheme)
+    # ------------------------------------------------------------------
+
+    def draw_date(self) -> None:
+        cfg = Config.instance()
+        fmt = (
+            DATE_FORMATS[cfg.date_format]
+            if cfg.date_format < len(DATE_FORMATS)
+            else DATE_FORMATS[0]
+        )
+        current_date = datetime.datetime.now().strftime(fmt)
+        if self.last_date == current_date:
+            return
+
+        if self.last_date is not None:
+            self.panel.draw_text(
+                self.canvas,
+                DATE_FONT,
+                DATE_POSITION[0],
+                DATE_POSITION[1],
+                TC(THEME_BG),
+                self.last_date,
+            )
+        self.last_date = current_date
+        self.panel.draw_text(
+            self.canvas,
+            DATE_FONT,
+            DATE_POSITION[0],
+            DATE_POSITION[1],
+            TC(THEME_CURRENT_DATE),
+            current_date,
+        )
+
+    # ------------------------------------------------------------------
+    # Day of week (copied from ClassicIdleTheme)
+    # ------------------------------------------------------------------
+
+    def draw_day(self) -> None:
+        current_day = datetime.datetime.now().strftime("%A")
+        if self.last_day == current_day:
+            return
+
+        if self.last_day is not None:
+            self.panel.draw_text(
+                self.canvas,
+                DAY_FONT,
+                DAY_POSITION[0],
+                DAY_POSITION[1],
+                TC(THEME_BG),
+                self.last_day,
+            )
+        self.last_day = current_day
+        self.panel.draw_text(
+            self.canvas,
+            DAY_FONT,
+            DAY_POSITION[0],
+            DAY_POSITION[1],
+            TC(THEME_CURRENT_DAY),
+            current_day,
+        )
 
     # ------------------------------------------------------------------
     # Forecast slot selection
