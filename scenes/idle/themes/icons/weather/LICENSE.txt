@@ -1,5 +1,7 @@
-Breezy Weather Pixel Icon Provider
-License: LGPL v3
-Source: https://github.com/breezy-weather/pixel-icon-provider
+Dhole Weather Pixel Icons
+License: CC-BY-SA-4.0
+Source: https://github.com/Dhole/weather-pixel-icons
+Author: Dhole
 
-Original icons are 256x256 PNG downscaled to 16x16
+Original icons are 16x16 monochrome XBM, converted to PNG (white on transparent).
+Hand-drawn pixel art designed for low-resolution displays.

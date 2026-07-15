@@ -63,9 +63,9 @@ def _load_icon(filename: str) -> Image.Image:
 LABEL_FONT = fonts.extrasmall  # 4x6
 LABEL_FONT_HEIGHT = 5  # pixel height of 4x6 glyphs
 
-ICON_POSITIONS_X = (4, 24, 44)  # x positions for 3 icons on a 64px panel
-ICON_POSITIONS_Y = 11  # y position for all icons (16px tall)
-TOP_LABEL_Y = 10  # baseline for the label above the icon
+ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 icons on a 64px panel
+ICON_POSITIONS_Y = 10  # y position for all icons (16px tall)
+TOP_LABEL_Y = 8  # baseline for the label above the icon
 BOTTOM_LABEL_Y = 31  # baseline for the label below the icon
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
