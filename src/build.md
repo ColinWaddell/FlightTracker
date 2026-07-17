@@ -55,8 +55,9 @@ permalink: "/build/"
             Plug everything together and you'll be ready to get the code running.
         </p>
 
-        <div class="alert alert-warning" role="alert">
-          Do not plug a USB power supply into your Pi at the same time as the RGB Matrix Bonnet's power supply. This can fry your Raspberry Pi. You only need the power connection that goes to the bonnet — it will supply power to the Pi as well.
+        <div class="alert alert-danger  " role="alert">
+          ⚠️<br />
+          Do not plug a USB power supply into your Pi at the same time as the RGB Matrix Bonnet's power supply. This can fry your Raspberry Pi. You only need the power connection that goes to the bonnet - it will supply power to the Pi as well.
         </div>
 
         <div class="card">
@@ -90,7 +91,7 @@ permalink: "/build/"
     </div>
 
    <h2>Optional extras</h2>
-    <div class="info-panel">
+    <div class="info-panel narrative">
       <div class="info-panel-header">Optional extras</div>
       <div class="info-panel-body">
         <p>Everything after this point is <b>not needed</b> if you just want to build your own FlightTracker.</p>
