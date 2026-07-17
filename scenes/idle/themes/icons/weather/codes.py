@@ -63,6 +63,10 @@ CODE_MAPPINGS = {
 
 
 def code_to_icon(code: int, night: bool):
+    """Return (icon_name, animation_name) for a condition code.
+
+    ``icon_name`` or ``animation_name`` may be ``None``.
+    """
     row = CODE_MAPPINGS.get(code)
 
     if not row:
@@ -71,3 +75,21 @@ def code_to_icon(code: int, night: bool):
     icon = row[1] if night else row[0]
     animation = row[3] if night else row[2]
     return icon, animation
+
+
+def code_to_weather(code: int, night: bool):
+    """Return (icon_name, animation_name, intensity) for a condition code.
+
+    ``icon_name`` or ``animation_name`` may be ``None``.
+    ``intensity`` is 0 (light), 1 (medium), or 2 (heavy).
+    Returns ``(None, None, 0)`` for unknown codes.
+    """
+    row = CODE_MAPPINGS.get(code)
+
+    if not row:
+        return None, None, 0
+
+    icon = row[1] if night else row[0]
+    animation = row[3] if night else row[2]
+    intensity = row[4]
+    return icon, animation, intensity

@@ -2,38 +2,64 @@
 
 from datetime import datetime
 
-from scenes.idle.themes.icons.weather.code_to_weather import weather_icon
+from scenes.idle.themes.icons.weather.codes import code_to_icon, code_to_weather
 from scenes.idle.themes.theme_utilities import _parse_hourly
 
 
 # ---------------------------------------------------------------------------
-# weather_icon helper
+# code_to_icon / code_to_weather helpers
 # ---------------------------------------------------------------------------
 
 
-class TestWeatherIcon:
+class TestCodeToIcon:
     def test_clear_day(self):
-        assert weather_icon(1000, True) == "clear_day.png"
+        icon, animation = code_to_icon(1000, False)
+        assert icon == "sun"
+        assert animation == "rays"
 
     def test_clear_night(self):
-        assert weather_icon(1000, False) == "clear_night.png"
+        icon, animation = code_to_icon(1000, True)
+        assert icon == "moon"
+        assert animation == "moon_rays"
 
     def test_partly_cloudy_day(self):
-        assert weather_icon(1003, True) == "partly_cloudy_day.png"
+        icon, animation = code_to_icon(1003, False)
+        assert icon == "cloud_sun"
 
     def test_partly_cloudy_night(self):
-        assert weather_icon(1003, False) == "partly_cloudy_night.png"
+        icon, animation = code_to_icon(1003, True)
+        assert icon == "cloud_moon"
 
     def test_rain(self):
-        assert weather_icon(1183, True) == "rain_1.png"
+        icon, animation = code_to_icon(1183, False)
+        assert animation == "rain"
 
     def test_unknown_code_falls_back(self):
-        result = weather_icon(9999, True)
-        assert result == "cloudy.png"
+        icon, animation = code_to_icon(9999, True)
+        assert icon is None
+        assert animation is None
 
-    def test_unknown_code_night_falls_back(self):
-        result = weather_icon(9999, False)
-        assert result == "cloudy.png"
+
+class TestCodeToWeather:
+    def test_returns_icon_animation_intensity(self):
+        icon, animation, intensity = code_to_weather(1000, False)
+        assert icon == "sun"
+        assert animation == "rays"
+        assert intensity == 0
+
+    def test_light_rain_intensity(self):
+        _, _, intensity = code_to_weather(1063, False)
+        assert intensity == 0
+
+    def test_heavy_rain_intensity(self):
+        _, _, intensity = code_to_weather(1192, False)
+        assert intensity == 2
+
+    def test_unknown_code_returns_defaults(self):
+        icon, animation, intensity = code_to_weather(9999, False)
+        assert icon is None
+        assert animation is None
+        assert intensity == 0
 
 
 # ---------------------------------------------------------------------------

@@ -26,14 +26,18 @@ data changes, avoiding constant flicker.
 from __future__ import annotations
 
 import datetime
-from pathlib import Path
-
-from PIL import Image
 
 from scenes.idle.idle_scene import BaseIdleScene
-from scenes.idle.themes.icons.weather.codes import weather_icon
+from scenes.idle.themes.icons.weather.codes import code_to_weather
+from scenes.idle.themes.icons.weather.forecast_sprite import (
+    ANIMATION_HEIGHT,
+    ICON_HEIGHT,
+    SPRITE_HEIGHT,
+    SPRITE_WIDTH,
+    ForecastSprite,
+)
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
-from setup import fonts
+from setup import fonts, frames
 from setup.configuration import Config
 from setup.themes import (
     TC,
@@ -49,34 +53,19 @@ from setup.themes import (
 from utilities.sun_times import is_daytime
 
 # ---------------------------------------------------------------------------
-# Icon directory & cache
-# ---------------------------------------------------------------------------
-
-_ICON_DIR = Path(__file__).parent / "icons" / "weather"
-
-# Module-level cache: filename -> PIL Image (loaded once, reused).
-_image_cache: dict[str, Image.Image] = {}
-
-
-def _load_icon(filename: str) -> Image.Image:
-    """Load a weather icon PNG, caching the result for reuse."""
-    if filename not in _image_cache:
-        path = _ICON_DIR / filename
-        _image_cache[filename] = Image.open(path).convert("RGBA")
-    return _image_cache[filename]
-
-
-# ---------------------------------------------------------------------------
 # Layout constants
 # ---------------------------------------------------------------------------
 
 LABEL_FONT = fonts.extrasmall  # 4x6
 LABEL_FONT_HEIGHT = 5  # pixel height of 4x6 glyphs
 
-ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 icons on a 64px panel
-ICON_POSITIONS_Y = 10  # y position for all icons (16px tall)
-TOP_LABEL_Y = 8  # baseline for the label above the icon
-BOTTOM_LABEL_Y = 31  # baseline for the label below the icon
+ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 sprites on a 64px panel
+# Sprite is 18px tall (12px icon + 6px animation).
+# Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
+# within 32px panel → 4px spare, split as 2px top margin + 2px bottom.
+ICON_POSITIONS_Y = 7  # y position for sprite top-left
+TOP_LABEL_Y = 5  # baseline for the label above the sprite
+BOTTOM_LABEL_Y = 31  # baseline for the label below the sprite
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -116,15 +105,42 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_time: str | None = None
         self.last_date: str | None = None
         self.last_day: str | None = None
+        self.sprites: list[ForecastSprite] = []
 
     def theme_reset(self) -> None:
+        self._destroy_sprites()
         self.last_slots = None
         self.last_time = None
         self.last_date = None
         self.last_day = None
 
     # ------------------------------------------------------------------
-    # draw_content - called once per second by BaseIdleScene.draw()
+    # draw() — overridden for per-frame animation
+    # ------------------------------------------------------------------
+    #
+    # The base class throttles draw_content() to ~1 fps.  The forecast
+    # theme needs per-frame animation (~12.5 fps) but only per-second
+    # data evaluation.  We override draw() to:
+    #   - tick sprite animations every frame
+    #   - call draw_content() (clock/date/day + forecast evaluation)
+    #     once per second
+
+    def draw(self) -> None:
+        self.frame += 1
+
+        # Tick sprite animations every frame
+        for sprite in self.sprites:
+            sprite.draw()
+
+        # Throttle data evaluation to ~1 fps
+        if self.frame % int(frames.PER_SECOND):
+            return
+
+        count = self.frame // int(frames.PER_SECOND)
+        self.draw_content(count)
+
+    # ------------------------------------------------------------------
+    # draw_content - called once per second by draw()
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
@@ -149,21 +165,44 @@ class ForecastIdleTheme(BaseIdleScene):
         if slots == self.last_slots:
             return
 
-        # Clear and redraw
+        # Destroy old sprites and clear canvas for full redraw
+        self._destroy_sprites()
         self.panel.clear(self.canvas)
+
+        # Re-draw clock/date/day after clear (they were drawn above but
+        # the clear wiped them)
+        self.last_time = None
+        self.last_date = None
+        self.last_day = None
+        self.draw_clock()
+        self.draw_date()
+        self.draw_day()
+
+        # Create new sprites and draw labels
         for i, slot in enumerate(slots):
             condition_code, is_day, top_label, bottom_label, temp_c = slot
             x = ICON_POSITIONS_X[i]
 
-            # Draw icon
-            filename = weather_icon(condition_code, is_day)
-            img = _load_icon(filename)
-            self.panel.draw_image(self.canvas, x, ICON_POSITIONS_Y, img)
+            icon_name, animation_name, intensity = code_to_weather(
+                condition_code, not is_day
+            )
+
+            sprite = ForecastSprite(
+                canvas=self.canvas,
+                panel=self.panel,
+                x=x,
+                y=ICON_POSITIONS_Y,
+                icon_name=icon_name,
+                animation_name=animation_name,
+                intensity=intensity,
+                is_day=is_day,
+            )
+            self.sprites.append(sprite)
 
             # Draw top label (day name or hour)
             if top_label:
                 label_width = font_text_width(LABEL_FONT, top_label)
-                label_x = x + round((16 - label_width) / 2)
+                label_x = x + round((SPRITE_WIDTH - label_width) / 2)
                 self.panel.draw_text(
                     self.canvas,
                     LABEL_FONT,
@@ -179,7 +218,7 @@ class ForecastIdleTheme(BaseIdleScene):
                 total_width = sum(
                     font_text_width(LABEL_FONT, seg[0]) for seg in bottom_label
                 )
-                seg_x = x + round((16 - total_width) / 2)
+                seg_x = x + round((SPRITE_WIDTH - total_width) / 2)
                 for seg_text, seg_colour in bottom_label:
                     self.panel.draw_text(
                         self.canvas,
@@ -192,6 +231,12 @@ class ForecastIdleTheme(BaseIdleScene):
                     seg_x += font_text_width(LABEL_FONT, seg_text)
 
         self.last_slots = slots
+
+    def _destroy_sprites(self) -> None:
+        """Destroy all sprites and clear the list."""
+        for sprite in self.sprites:
+            sprite.destroy()
+        self.sprites = []
 
     # ------------------------------------------------------------------
     # Clock (copied from ClassicIdleTheme)
