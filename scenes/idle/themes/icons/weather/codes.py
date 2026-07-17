@@ -1,0 +1,73 @@
+CODE_MAPPINGS = {
+    1000: ["sun", "moon", "rays", "moon_rays", 0],
+    1003: ["cloud_sun", "cloud_moon", "rays", "moon_rays", 1],
+    1006: ["cloud", "cloud_moon", None, None, 0],
+    1009: ["cloud_dark", "cloud_dark", None, None, 0],
+    1012: [None, None, "dusty", "dusty", 0],
+    1015: [None, None, "dusty", "dusty", 0],
+    1018: [None, None, "dusty", "dusty", 1],
+    1021: [None, None, "dusty", "dusty", 2],
+    1024: [None, None, "dusty", "dusty", 2],
+    1027: [None, None, "dusty", "dusty", 2],
+    1030: [None, None, "mist", "mist", 0],
+    1033: [None, None, "mist", "mist", 1],
+    1036: [None, None, "mist", "mist", 1],
+    1039: [None, None, "mist", "mist", 1],
+    1042: [None, None, "mist", "mist", 2],
+    1045: [None, None, "dusty", "dusty", 2],
+    1048: [None, None, "dusty", "dusty", 2],
+    1063: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1066: ["cloud", "cloud_moon", "snow", "snow", 0],
+    1069: ["cloud", "cloud_moon", "sleet", "sleet", 1],
+    1072: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1087: ["cloud", "cloud_moon", "thunder", "thunder", 0],
+    1114: ["cloud", "cloud_moon", "blowing_snow", "blowing_snow", 1],
+    1117: ["cloud_dark", "cloud_dark", "snow", "snow", 2],
+    1135: [None, None, "fog", "fog", 1],
+    1147: [None, None, "fog", "fog", 1],
+    1150: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1153: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1168: ["cloud", "cloud_dark", "rain", "rain", 1],
+    1171: ["cloud_dark", "cloud_dark", "rain", "rain", 2],
+    1180: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1183: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1186: ["cloud", "cloud_dark", "rain", "rain", 1],
+    1189: ["cloud", "cloud_dark", "rain", "rain", 1],
+    1192: ["cloud", "cloud_dark", "rain", "rain", 2],
+    1195: ["cloud_dark", "cloud_dark", "rain", "rain", 2],
+    1198: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1201: ["cloud_dark", "cloud_dark", "rain", "rain", 2],
+    1204: ["cloud", "cloud_moon", "sleet", "sleet", 0],
+    1207: ["cloud_dark", "cloud_dark", "sleet", "sleet", 2],
+    1210: ["cloud", "cloud_moon", "snow", "snow", 0],
+    1213: ["cloud", "cloud_moon", "snow", "snow", 0],
+    1216: ["cloud", "cloud_dark", "snow", "snow", 1],
+    1219: ["cloud", "cloud_dark", "snow", "snow", 1],
+    1222: ["cloud", "cloud_dark", "snow", "snow", 2],
+    1225: ["cloud_dark", "cloud_dark", "snow", "snow", 2],
+    1237: ["cloud", "cloud_dark", "snow", "snow", 1],
+    1240: ["cloud", "cloud_moon", "rain", "rain", 0],
+    1243: ["cloud", "cloud_dark", "rain", "rain", 2],
+    1246: ["cloud_dark", "cloud_dark", "rain", "rain", 2],
+    1249: ["cloud", "cloud_moon", "sleet", "sleet", 0],
+    1252: ["cloud_dark", "cloud_dark", "sleet", "sleet", 2],
+    1255: ["cloud", "cloud_moon", "snow", "snow", 0],
+    1258: ["cloud_dark", "cloud_dark", "snow", "snow", 2],
+    1261: ["cloud", "cloud_moon", "snow", "snow", 0],
+    1264: ["cloud_dark", "cloud_dark", "snow", "snow", 2],
+    1273: ["cloud_sun", "cloud_moon", "thunder_rain", "thunder_rain", 0],
+    1276: ["cloud_dark", "cloud_dark", "thunder_rain", "thunder_rain", 2],
+    1279: ["snow_cloud", "snow_cloud", "thunder_snow", "thunder_snow", 1],
+    1282: ["snow_cloud", "snow_cloud", "thunder_snow", "thunder_snow", 2],
+}
+
+
+def code_to_icon(code: int, night: bool):
+    row = CODE_MAPPINGS.get(code)
+
+    if not row:
+        return None, None
+
+    icon = row[1] if night else row[0]
+    animation = row[3] if night else row[2]
+    return icon, animation

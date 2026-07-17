@@ -31,7 +31,7 @@ from pathlib import Path
 from PIL import Image
 
 from scenes.idle.idle_scene import BaseIdleScene
-from scenes.idle.themes.icons.weather.code_to_weather import weather_icon
+from scenes.idle.themes.icons.weather.codes import weather_icon
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts
 from setup.configuration import Config
