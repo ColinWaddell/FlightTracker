@@ -34,7 +34,7 @@ permalink: "/build/"
         <ul>
             <li>
                 <a href="https://shop.pimoroni.com/products/rgb-led-matrix-panel?variant=42312764298">
-                    RGB LED Matrix Panel - 32x64
+                    RGB LED Matrix Panel - 32x64 - 1:16 Scan Rate
                 </a>
             </li>
             <li>
