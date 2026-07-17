@@ -55,6 +55,10 @@ permalink: "/build/"
             Plug everything together and you'll be ready to get the code running.
         </p>
 
+        <div class="alert alert-warning" role="alert">
+          Do not plug a USB power supply into your Pi at the same time as the RGB Matrix Bonnet's power supply. This can fry your Raspberry Pi. You only need the power connection that goes to the bonnet — it will supply power to the Pi as well.
+        </div>
+
         <div class="card">
           <div class="card-header">Connecting the bonnet to the Raspberry Pi</div>
           <div class="card-body p-2 bg-black">
