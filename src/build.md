@@ -49,7 +49,7 @@ permalink: "/build/"
             </li>
         </ul>
       
-        <p>There are cheaper alternatives to be found on the likes of AliExpress for most of the above, but if you want something to work first time I recommend going to a reputable retailer. In the UK I try and use <a href="https://shop.pimoroni.com/">Pimoroni</a> where possible.</p>
+        <p>There are cheaper alternatives to be found on the likes of AliExpress for most of the above, but if you want something to work first time I recommend going to a reputable retailer. In the UK I try and use <a href="https://shop.pimoroni.com/">Pimoroni</a> where possible. If you do insist on buying from elsewhere make certain it's a 1:16 scan rate screen your buying (it should have <code>-16S-</code> on its ID number, avoid panels that say <code>-32S</code>.</p>
 
         <p>
             Plug everything together and you'll be ready to get the code running.
