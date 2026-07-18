@@ -8,6 +8,8 @@ routes_cache.json
 captures/
 _junk/
 *.bak
+package.json
+package-lock.json
 
 # Docs site (Eleventy)
 node_modules/
