@@ -30,8 +30,8 @@ When hexdb.io returns no origin/destination for a callsign, the lookup
 falls back to FlightRadar24 via the FlightRadarAPI library.  The FR24
 real-time feed (feed.js) includes origin/destination IATA codes directly
 in the flight list, so only one lightweight request is needed (filtered
-by airline ICAO code).  This keeps FR24 usage minimal — only on hexdb
-misses — and avoids hitting FR24 rate limits.
+by airline ICAO code).  This keeps FR24 usage minimal - only on hexdb
+misses - and avoids hitting FR24 rate limits.
 
 The FR24 fallback code is intentionally duplicated here (rather than
 imported from overhead_fr24.py) to keep route_lookup self-contained.
@@ -236,7 +236,7 @@ def _fr24_route_fallback(callsign: str) -> RouteInfo:
 
     The feed.js response includes origin/destination IATA codes directly in
     the flight list, so no call to the clickhandler details endpoint is
-    needed — this keeps the FR24 usage minimal.
+    needed - this keeps the FR24 usage minimal.
 
     Returns a :class:`RouteInfo` with origin/destination fields populated
     from the FR24 flight list.  ``plane`` is always "" (aircraft type is
@@ -245,7 +245,7 @@ def _fr24_route_fallback(callsign: str) -> RouteInfo:
     if not callsign or len(callsign) < 3:
         return RouteInfo()
 
-    # Lazy import — FlightRadarAPI drags in curl_cffi + brotli (~4.7s on Pi).
+    # Lazy import - FlightRadarAPI drags in curl_cffi + brotli (~4.7s on Pi).
     # Only pay that cost when a fallback is actually needed.
     try:
         from FlightRadar24.api import FlightRadar24API
@@ -358,7 +358,7 @@ def _lookup_route(callsign: str) -> RouteInfo:
     # ── FR24 fallback ────────────────────────────────────────────────
     # If hexdb gave us nothing useful, try FR24 before giving up.
     if not route.origin and not route.destination:
-        logger.debug("hexdb had no route for %r — trying FR24 fallback", callsign)
+        logger.debug("hexdb had no route for %r - trying FR24 fallback", callsign)
         fr24_route = _fr24_route_fallback(callsign)
         if fr24_route.origin or fr24_route.destination:
             route = fr24_route

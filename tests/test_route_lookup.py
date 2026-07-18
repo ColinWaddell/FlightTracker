@@ -91,7 +91,7 @@ class TestParseAircraftType:
 
 
 # ---------------------------------------------------------------------------
-# _lookup_route — hexdb success (no FR24 fallback needed)
+# _lookup_route - hexdb success (no FR24 fallback needed)
 # ---------------------------------------------------------------------------
 
 
@@ -99,7 +99,9 @@ class TestLookupRouteHexdbSuccess:
     @patch("utilities.route_lookup._airport_details")
     @patch("utilities.route_lookup._icao_to_iata_code")
     @patch("utilities.route_lookup._session")
-    def test_hexdb_returns_route(self, mock_session, mock_icao_to_iata, mock_airport_details):
+    def test_hexdb_returns_route(
+        self, mock_session, mock_icao_to_iata, mock_airport_details
+    ):
         from utilities.route_lookup import _lookup_route
 
         mock_resp = MagicMock()
@@ -108,7 +110,9 @@ class TestLookupRouteHexdbSuccess:
         mock_resp.json.return_value = {"route": "EGPF-LEMG"}
         mock_session.get.return_value = mock_resp
 
-        mock_icao_to_iata.side_effect = lambda icao: {"EGPF": "GLA", "LEMG": "AGP"}.get(icao, "")
+        mock_icao_to_iata.side_effect = lambda icao: {"EGPF": "GLA", "LEMG": "AGP"}.get(
+            icao, ""
+        )
         mock_airport_details.side_effect = lambda iata: {
             "GLA": {"name": "Glasgow", "municipality": "Glasgow", "country_name": "UK"},
             "AGP": {"name": "Malaga", "municipality": "Malaga", "country_name": "ES"},
@@ -123,7 +127,7 @@ class TestLookupRouteHexdbSuccess:
 
 
 # ---------------------------------------------------------------------------
-# _lookup_route — hexdb miss triggers FR24 fallback
+# _lookup_route - hexdb miss triggers FR24 fallback
 # ---------------------------------------------------------------------------
 
 
@@ -188,7 +192,9 @@ class TestLookupRouteFr24Fallback:
 
     @patch("utilities.route_lookup._fr24_route_fallback")
     @patch("utilities.route_lookup._session")
-    def test_fr24_fallback_fires_when_iata_conversion_fails(self, mock_session, mock_fr24):
+    def test_fr24_fallback_fires_when_iata_conversion_fails(
+        self, mock_session, mock_fr24
+    ):
         from utilities.route_lookup import _lookup_route
 
         mock_resp = MagicMock()
@@ -197,7 +203,7 @@ class TestLookupRouteFr24Fallback:
         mock_resp.json.return_value = {"route": "EGPF-LEMG"}
         mock_session.get.return_value = mock_resp
 
-        # hexdb parsed the route but IATA conversion failed — both empty,
+        # hexdb parsed the route but IATA conversion failed - both empty,
         # so FR24 fallback should fire
         fr24_result = RouteInfo(origin="GLA", destination="AGP")
         mock_fr24.return_value = fr24_result
@@ -212,7 +218,9 @@ class TestLookupRouteFr24Fallback:
     @patch("utilities.route_lookup._fr24_route_fallback")
     @patch("utilities.route_lookup._icao_to_iata_code")
     @patch("utilities.route_lookup._session")
-    def test_fr24_fallback_not_called_when_hexdb_succeeds(self, mock_session, mock_icao_to_iata, mock_fr24):
+    def test_fr24_fallback_not_called_when_hexdb_succeeds(
+        self, mock_session, mock_icao_to_iata, mock_fr24
+    ):
         from utilities.route_lookup import _lookup_route
 
         mock_resp = MagicMock()
@@ -221,7 +229,9 @@ class TestLookupRouteFr24Fallback:
         mock_resp.json.return_value = {"route": "EGPF-LEMG"}
         mock_session.get.return_value = mock_resp
 
-        mock_icao_to_iata.side_effect = lambda icao: {"EGPF": "GLA", "LEMG": "AGP"}.get(icao, "")
+        mock_icao_to_iata.side_effect = lambda icao: {"EGPF": "GLA", "LEMG": "AGP"}.get(
+            icao, ""
+        )
 
         result = _lookup_route("BAW123")
 
@@ -268,7 +278,11 @@ class TestFr24RouteFallback:
         mock_api.get_flights.return_value = [mock_flight]
 
         mock_airport_details.side_effect = lambda iata: {
-            "LHR": {"name": "London Heathrow", "municipality": "London", "country_name": "UK"},
+            "LHR": {
+                "name": "London Heathrow",
+                "municipality": "London",
+                "country_name": "UK",
+            },
             "GLA": {"name": "Glasgow", "municipality": "Glasgow", "country_name": "UK"},
         }.get(iata, {})
 
@@ -367,7 +381,7 @@ class TestFr24RouteFallback:
 
 
 # ---------------------------------------------------------------------------
-# get_route — integration of route + aircraft lookups
+# get_route - integration of route + aircraft lookups
 # ---------------------------------------------------------------------------
 
 
@@ -388,10 +402,14 @@ class TestGetRoute:
 
     @patch("utilities.route_lookup._lookup_aircraft")
     @patch("utilities.route_lookup._lookup_route")
-    def test_no_aircraft_when_route_has_plane(self, mock_lookup_route, mock_lookup_aircraft):
+    def test_no_aircraft_when_route_has_plane(
+        self, mock_lookup_route, mock_lookup_aircraft
+    ):
         from utilities.route_lookup import get_route
 
-        mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA", plane="B738")
+        mock_lookup_route.return_value = RouteInfo(
+            origin="LHR", destination="GLA", plane="B738"
+        )
 
         result = get_route("BAW123", mode_s="a1b2c3")
 
