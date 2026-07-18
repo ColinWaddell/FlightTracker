@@ -23,6 +23,18 @@ by IATA code) - the same file used by the FR24 backend.
 Each lookup is independently cached so a caller that only has a callsign
 (overhead_tar1090) pays one request; a caller with both (overhead_osn) pays
 two on the first encounter then hits cache on every subsequent poll.
+
+FR24 fallback
+--------------
+When hexdb.io returns no origin/destination for a callsign, the lookup
+falls back to FlightRadar24 via the FlightRadarAPI library.  The FR24
+real-time feed (feed.js) includes origin/destination IATA codes directly
+in the flight list, so only one lightweight request is needed (filtered
+by airline ICAO code).  This keeps FR24 usage minimal — only on hexdb
+misses — and avoids hitting FR24 rate limits.
+
+The FR24 fallback code is intentionally duplicated here (rather than
+imported from overhead_fr24.py) to keep route_lookup self-contained.
 """
 
 import json
@@ -42,6 +54,9 @@ HEXDB_BASE = "https://hexdb.io/api/v1"
 # Module-level session - keeps the urllib3 connection pool alive across calls,
 # avoiding Python 3.13 dummy-thread GC noise.
 _session = requests.Session()
+
+# FR24 fallback timeout (seconds).  Kept short - this is a last-resort lookup.
+FR24_TIMEOUT = 30
 
 # ---------------------------------------------------------------------------
 # Bundled ICAO→IATA lookup table
@@ -212,11 +227,91 @@ def _parse_aircraft_type(data: dict) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _fr24_route_fallback(callsign: str) -> RouteInfo:
+    """Fallback route lookup via FlightRadar24 when hexdb.io has no data.
+
+    Uses the FlightRadarAPI library (same as overhead_fr24.py) to query the
+    FR24 real-time feed, filtering by the airline ICAO code (first 3 chars of
+    the callsign) and then scanning for a matching callsign.
+
+    The feed.js response includes origin/destination IATA codes directly in
+    the flight list, so no call to the clickhandler details endpoint is
+    needed — this keeps the FR24 usage minimal.
+
+    Returns a :class:`RouteInfo` with origin/destination fields populated
+    from the FR24 flight list.  ``plane`` is always "" (aircraft type is
+    not fetched here).  Never raises.
+    """
+    if not callsign or len(callsign) < 3:
+        return RouteInfo()
+
+    # Lazy import — FlightRadarAPI drags in curl_cffi + brotli (~4.7s on Pi).
+    # Only pay that cost when a fallback is actually needed.
+    try:
+        from FlightRadar24.api import FlightRadar24API
+    except ImportError:
+        try:
+            from FlightRadarAPI import FlightRadar24API
+        except ImportError:
+            logger.debug("FR24 fallback: FlightRadarAPI not installed")
+            return RouteInfo()
+
+    # Cloudflare may block stale cookies, so create a fresh API instance each
+    # time.  This is a rare fallback path, so the overhead is acceptable.
+    try:
+        api = FlightRadar24API(timeout=FR24_TIMEOUT)
+
+        # Exclude ground traffic to reduce result size
+        tracker = api.get_flight_tracker_config()
+        tracker.gnd = 0
+        api.set_flight_tracker_config(tracker)
+
+        airline_icao = callsign[:3].upper()
+        flights = api.get_flights(airline=airline_icao)
+
+        for flight in flights:
+            if (flight.callsign or "").strip().upper() == callsign.upper():
+                origin = (flight.origin_airport_iata or "").strip()
+                destination = (flight.destination_airport_iata or "").strip()
+                if not origin and not destination:
+                    continue
+
+                route = RouteInfo(origin=origin, destination=destination)
+
+                if origin:
+                    details = _airport_details(origin)
+                    route.origin_name = details.get("name", "")
+                    route.origin_municipality = details.get("municipality", "")
+                    route.origin_country = details.get("country_name", "")
+
+                if destination:
+                    details = _airport_details(destination)
+                    route.destination_name = details.get("name", "")
+                    route.destination_municipality = details.get("municipality", "")
+                    route.destination_country = details.get("country_name", "")
+
+                logger.debug(
+                    "FR24 fallback found route for %r: %s->%s",
+                    callsign,
+                    origin,
+                    destination,
+                )
+                return route
+
+        logger.debug("FR24 fallback: no matching flight for %r", callsign)
+
+    except Exception as e:
+        logger.debug("FR24 fallback failed for %r: %s", callsign, e)
+
+    return RouteInfo()
+
+
 def _lookup_route(callsign: str) -> RouteInfo:
     """Return route fields for *callsign* via GET /api/v1/route/icao/{callsign}.
 
     Cached by callsign.  Returns a RouteInfo with origin/destination fields
     (plane is always "" here - aircraft type is looked up separately).
+    Falls back to FR24 when hexdb returns no origin/destination.
     Never raises.
     """
     cached = routes_cache.get(callsign)
@@ -232,33 +327,41 @@ def _lookup_route(callsign: str) -> RouteInfo:
         resp = _session.get(f"{HEXDB_BASE}/route/icao/{callsign}", timeout=10)
         if resp.status_code == 404:
             logger.debug("hexdb: unknown callsign %r", callsign)
-            return RouteInfo()
-        resp.raise_for_status()
+        else:
+            resp.raise_for_status()
 
-        data = resp.json()
-        route_str = data.get("route", "")
-        origin_icao, dest_icao = _parse_route(route_str)
+            data = resp.json()
+            route_str = data.get("route", "")
+            origin_icao, dest_icao = _parse_route(route_str)
 
-        if origin_icao:
-            origin_iata = _icao_to_iata_code(origin_icao)
-            route.origin = origin_iata
-            if origin_iata:
-                details = _airport_details(origin_iata)
-                route.origin_name = details.get("name", "")
-                route.origin_municipality = details.get("municipality", "")
-                route.origin_country = details.get("country_name", "")
+            if origin_icao:
+                origin_iata = _icao_to_iata_code(origin_icao)
+                route.origin = origin_iata
+                if origin_iata:
+                    details = _airport_details(origin_iata)
+                    route.origin_name = details.get("name", "")
+                    route.origin_municipality = details.get("municipality", "")
+                    route.origin_country = details.get("country_name", "")
 
-        if dest_icao:
-            dest_iata = _icao_to_iata_code(dest_icao)
-            route.destination = dest_iata
-            if dest_iata:
-                details = _airport_details(dest_iata)
-                route.destination_name = details.get("name", "")
-                route.destination_municipality = details.get("municipality", "")
-                route.destination_country = details.get("country_name", "")
+            if dest_icao:
+                dest_iata = _icao_to_iata_code(dest_icao)
+                route.destination = dest_iata
+                if dest_iata:
+                    details = _airport_details(dest_iata)
+                    route.destination_name = details.get("name", "")
+                    route.destination_municipality = details.get("municipality", "")
+                    route.destination_country = details.get("country_name", "")
 
     except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.debug("hexdb route lookup failed for %r: %s", callsign, e)
+
+    # ── FR24 fallback ────────────────────────────────────────────────
+    # If hexdb gave us nothing useful, try FR24 before giving up.
+    if not route.origin and not route.destination:
+        logger.debug("hexdb had no route for %r — trying FR24 fallback", callsign)
+        fr24_route = _fr24_route_fallback(callsign)
+        if fr24_route.origin or fr24_route.destination:
+            route = fr24_route
 
     if route.origin or route.destination:
         routes_cache.put(callsign, route.to_dict())
