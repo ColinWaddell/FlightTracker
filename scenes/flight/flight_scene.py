@@ -703,7 +703,7 @@ class FlightScene:
         self.panel.draw_square(
             self.canvas,
             0,
-            PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT + 1,
+            PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT, # + 1, Fixes bug where parentheses do not erase properly
             screen.WIDTH,
             screen.HEIGHT,
             TC(THEME_BG),
