@@ -16,7 +16,7 @@ from display.rgbpanel import Colour
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
 
 COLOURS = [Colour(v, v, 0) for v in range(255, 0, -1)] + ([Colour(0, 0, 0)] * 50)
-RINGS = 4
+RINGS = 3
 
 
 class RaysAnimation(BaseAnimation):
