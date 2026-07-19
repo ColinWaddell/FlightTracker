@@ -189,7 +189,7 @@ def render_splash(
         from setup.colours import WHITE
 
         dim = WHITE.__class__(180, 180, 180)
-        panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading...")
+        panel.draw_text(canvas, loading_font, 1, 20, dim, "Loading")
         panel.draw_text(
             canvas, loading_font, 1, 28, dim, f"v{'.'.join(map(str, VERSION))}"
         )
