@@ -40,28 +40,23 @@ class SleetAnimation(BaseAnimation):
 
         for frame_idx in range(cycle):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             # Rain drops (fast fall)
             for i, dx in enumerate(rain_xs):
                 phase = (i * 2) % h
                 row = (frame_idx + phase) % h
-                prev_row = (row - 1 + h) % h
                 set_pixels.append((dx, row, _RAIN_R, _RAIN_G, _RAIN_B))
-                clear_pixels.append((dx, prev_row))
 
             # Snow flakes (slow fall + sway)
             for i, bx in enumerate(snow_xs):
                 phase = (i * 3) % cycle
                 pos = (frame_idx + phase) % cycle
                 row = pos // 2
-                prev_row = ((pos - 1) % cycle) // 2
                 sway = _sway[frame_idx % 4]
                 x = bx + sway
                 if 0 <= x < self.width:
                     set_pixels.append((x, row, _SNOW_R, _SNOW_G, _SNOW_B))
-                    clear_pixels.append((x, prev_row))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

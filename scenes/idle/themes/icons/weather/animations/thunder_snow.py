@@ -21,12 +21,14 @@ _FLASH_PERIOD = {0: 40, 1: 30, 2: 24}
 _FLASH_DURATION = 3
 
 _BOLT = [
-    (7, 0), (8, 0),
+    (7, 0),
+    (8, 0),
     (8, 1),
     (7, 2),
     (7, 3),
     (8, 4),
-    (8, 5), (7, 5),
+    (8, 5),
+    (7, 5),
 ]
 
 _FLASH_COLOURS = {
@@ -60,29 +62,23 @@ class ThunderSnowAnimation(BaseAnimation):
             flash_phase = frame_idx % period
 
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             # Snow flakes
             for i, bx in enumerate(xs):
                 phase = (i * 3) % snow_cycle
                 pos = (frame_idx + phase) % snow_cycle
                 row = pos // 2
-                prev_row = ((pos - 1) % snow_cycle) // 2
                 sway = _sway[frame_idx % 4]
                 x = bx + sway
                 if 0 <= x < self.width:
                     if (x, row) not in bolt_set or flash_phase >= _FLASH_DURATION:
                         set_pixels.append((x, row, _SNOW_R, _SNOW_G, _SNOW_B))
-                    clear_pixels.append((x, prev_row))
 
             # Lightning flash
             if flash_phase < _FLASH_DURATION:
                 for x, y in bolt:
                     set_pixels.append((x, y, fr, fg, fb))
-            elif flash_phase == _FLASH_DURATION:
-                for x, y in bolt:
-                    clear_pixels.append((x, y))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

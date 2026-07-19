@@ -45,21 +45,18 @@ class SnowAnimation(BaseAnimation):
 
         for frame_idx in range(cycle):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for i, bx in enumerate(xs):
                 phase = (i * 3) % cycle
                 pos = (frame_idx + phase) % cycle
                 row = pos // 2  # fall 1px every 2 frames
-                prev_row = ((pos - 1) % cycle) // 2
 
                 sway = _sway[frame_idx % 4]
                 x = bx + sway
 
                 if 0 <= x < self.width:
                     set_pixels.append((x, row, _R, _G, _B))
-                    clear_pixels.append((x, prev_row))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

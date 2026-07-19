@@ -45,7 +45,6 @@ class MistAnimation(BaseAnimation):
         for frame_idx in range(cycle):
             drift = frame_idx // 2  # actual pixel offset
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for y_start, y_end, scale in scaled_bands:
                 r = int(_R * scale)
@@ -59,9 +58,7 @@ class MistAnimation(BaseAnimation):
                         # Denser pattern than fog: 5 on, 1 off
                         if pattern_pos < 5 or (7 <= pattern_pos < 12):
                             set_pixels.append((x, y, r, g, b))
-                        else:
-                            clear_pixels.append((x, y))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

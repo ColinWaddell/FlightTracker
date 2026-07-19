@@ -20,8 +20,8 @@ _B = 220
 
 # Drop x-positions per intensity (spread across 16px width)
 _DROP_XS = {
-    0: [4, 11],          # light: 2 drops
-    1: [2, 6, 9, 13],    # medium: 4 drops
+    0: [4, 11],  # light: 2 drops
+    1: [2, 6, 9, 13],  # medium: 4 drops
     2: [1, 4, 7, 9, 12, 14],  # heavy: 6 drops
 }
 
@@ -44,16 +44,13 @@ class RainAnimation(BaseAnimation):
 
         for frame_idx in range(h):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for i, dx in enumerate(xs):
                 phase = (i * 2) % h  # stagger drops
                 row = (frame_idx + phase) % h
-                prev_row = (row - 1 + h) % h
 
                 set_pixels.append((dx, row, _R, _G, _B))
-                clear_pixels.append((dx, prev_row))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

@@ -46,16 +46,13 @@ class DustyAnimation(BaseAnimation):
 
         for frame_idx in range(cycle):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for i, py in enumerate(ys):
                 phase = (i * 3) % cycle
                 x = (frame_idx * speed + phase) % w
-                prev_x = ((frame_idx - 1) * speed + phase) % w
 
                 set_pixels.append((x, py, _R, _G, _B))
-                clear_pixels.append((prev_x, py))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

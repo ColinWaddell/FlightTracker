@@ -52,7 +52,6 @@ class FogAnimation(BaseAnimation):
 
         for frame_idx in range(cycle):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for y_start, y_end, scale in scaled_bands:
                 r = int(_R * scale)
@@ -66,9 +65,7 @@ class FogAnimation(BaseAnimation):
                         pattern_pos = (x - frame_idx) % w
                         if pattern_pos < 4 or (8 <= pattern_pos < 11):
                             set_pixels.append((x, y, r, g, b))
-                        else:
-                            clear_pixels.append((x, y))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

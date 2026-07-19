@@ -20,12 +20,14 @@ _FLASH_DURATION = 3  # frames the bolt stays visible
 # Lightning bolt zigzag (local coords within 16×6 area)
 # A simple Z-shaped bolt
 _BOLT = [
-    (7, 0), (8, 0),
+    (7, 0),
+    (8, 0),
     (8, 1),
     (7, 2),
     (7, 3),
     (8, 4),
-    (8, 5), (7, 5),
+    (8, 5),
+    (7, 5),
 ]
 
 # Flash colours per intensity (yellow-white)
@@ -54,16 +56,9 @@ class ThunderAnimation(BaseAnimation):
             is_flash = frame_idx < _FLASH_DURATION
             if is_flash:
                 set_pixels = [(x, y, r, g, b) for x, y in bolt]
-                # Clear happens on the frame *after* the last flash frame
-                clear_pixels = []
-            elif frame_idx == _FLASH_DURATION:
-                # Clear the bolt
-                set_pixels = []
-                clear_pixels = [(x, y) for x, y in bolt]
             else:
                 set_pixels = []
-                clear_pixels = []
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

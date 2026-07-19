@@ -1,13 +1,10 @@
 """ForecastSprite — a static weather icon plus an animated effect layer.
 
-A sprite occupies a 16×18 pixel region on the canvas:
-
-    rows  0–11  static icon (16×12 PNG, drawn once at creation)
-    rows 12–17  animation area (6px, ticked every frame)
-
-For condition codes that have no static icon (fog, mist, dusty — where
-``codes.py`` specifies ``None`` for the icon), the animation engine
-fills the full 18px height.
+A sprite occupies a 15×18 pixel region on the canvas.  The static icon
+(a 15×12 PNG) is drawn once at creation with its top-left corner at
+``(0, 3)`` — i.e. inset 3px from the top of the sprite.  The animation
+then plays over the **entire** 15×18 area, which means an animation may
+draw on top of the icon.
 
 Lifecycle:
     1. Instantiate with icon name, animation name, intensity, day/night.
@@ -15,7 +12,9 @@ Lifecycle:
     3. Call ``destroy()`` to blank the sprite area before discarding.
 
 The sprite internally tracks its frame counter and delegates animation
-to the engine selected from the registry.
+to the engine selected from the registry.  A snapshot of the sprite's
+RGB state (icon drawn, nothing animated yet) is passed to the animation
+engine so it can restore icon pixels it overwrites between frames.
 """
 
 from __future__ import annotations
@@ -33,10 +32,14 @@ from scenes.idle.themes.icons.weather.animations.registry import get_animation_c
 # Dimensions
 # -----------------------------------------------------------------------
 
-SPRITE_WIDTH = 16
+SPRITE_WIDTH = 15
 SPRITE_HEIGHT = 18
-ICON_HEIGHT = 12
-ANIMATION_HEIGHT = SPRITE_HEIGHT - ICON_HEIGHT  # 6px
+ICON_HEIGHT = 12  # height of the icon PNG itself
+ICON_OFFSET_Y = 3  # y offset of the icon within the sprite
+# The animation occupies the full sprite area, so the animation height
+# equals the sprite height.  Kept as an export for callers that layout
+# around the sprite.
+ANIMATION_HEIGHT = SPRITE_HEIGHT
 
 # -----------------------------------------------------------------------
 # Icon asset loading (module-level cache, shared with forecast theme)
@@ -52,6 +55,38 @@ def _load_icon(filename: str) -> Image.Image:
         path = _ICON_DIR / f"{filename}.png"
         _image_cache[filename] = Image.open(path).convert("RGBA")
     return _image_cache[filename]
+
+
+def _build_original(
+    width: int,
+    height: int,
+    icon_image: Optional[Image.Image],
+    icon_offset: tuple[int, int],
+) -> list[list[tuple[int, int, int]]]:
+    """Snapshot the sprite's RGB state before any animation runs.
+
+    The grid is ``height`` rows of ``width`` columns of ``(r, g, b)``
+    triples.  Pixels outside the icon are black; pixels inside the icon
+    carry the icon's own RGB (matching what ``draw_image`` writes to the
+    canvas, which skips fully-transparent pixels).
+    """
+    grid: list[list[tuple[int, int, int]]] = [
+        [(0, 0, 0)] * width for _ in range(height)
+    ]
+    if icon_image is None:
+        return grid
+
+    ox, oy = icon_offset
+    iw, ih = icon_image.size
+    px = icon_image.load()
+    for ly in range(height):
+        for lx in range(width):
+            ix, iy = lx - ox, ly - oy
+            if 0 <= ix < iw and 0 <= iy < ih:
+                r, g, b, a = px[ix, iy]
+                if a > 0:
+                    grid[ly][lx] = (r, g, b)
+    return grid
 
 
 # -----------------------------------------------------------------------
@@ -100,35 +135,29 @@ class ForecastSprite:
 
         # --- Draw the static icon (once) ---
         self._has_icon = icon_name is not None
+        icon_image: Optional[Image.Image] = None
+        icon_offset = (0, 0)
         if self._has_icon:
-            img = _load_icon(icon_name)
-            self.panel.draw_image(self.canvas, x, y, img)
+            icon_image = _load_icon(icon_name)
+            icon_offset = (0, ICON_OFFSET_Y)
+            self.panel.draw_image(self.canvas, x, y + ICON_OFFSET_Y, icon_image)
 
-        # --- Instantiate the animation engine ---
+        # --- Snapshot the pre-animation state ---
+        original = _build_original(SPRITE_WIDTH, SPRITE_HEIGHT, icon_image, icon_offset)
+
+        # --- Instantiate the animation engine (always full sprite area) ---
         self.animation: Optional[BaseAnimation] = None
         anim_cls = get_animation_class(animation_name)
         if anim_cls is not None:
-            if self._has_icon:
-                # Animation plays below the icon
-                anim_x = x
-                anim_y = y + ICON_HEIGHT
-                anim_w = SPRITE_WIDTH
-                anim_h = ANIMATION_HEIGHT
-            else:
-                # No icon — animation fills the full sprite area
-                anim_x = x
-                anim_y = y
-                anim_w = SPRITE_WIDTH
-                anim_h = SPRITE_HEIGHT
-
             self.animation = anim_cls(
-                x=anim_x,
-                y=anim_y,
-                width=anim_w,
-                height=anim_h,
+                x=x,
+                y=y,
+                width=SPRITE_WIDTH,
+                height=SPRITE_HEIGHT,
                 intensity=intensity,
                 panel=panel,
                 canvas=canvas,
+                original=original,
             )
 
     # ------------------------------------------------------------------

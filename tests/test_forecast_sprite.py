@@ -2,14 +2,13 @@
 
 from unittest.mock import MagicMock
 
-import pytest
-
 from scenes.idle.themes.icons.weather.forecast_sprite import (
     ANIMATION_HEIGHT,
-    ForecastSprite,
     ICON_HEIGHT,
+    ICON_OFFSET_Y,
     SPRITE_HEIGHT,
     SPRITE_WIDTH,
+    ForecastSprite,
 )
 
 
@@ -22,7 +21,7 @@ def _make_panel_and_canvas():
 
 class TestSpriteDimensions:
     def test_sprite_width(self):
-        assert SPRITE_WIDTH == 16
+        assert SPRITE_WIDTH == 15
 
     def test_sprite_height(self):
         assert SPRITE_HEIGHT == 18
@@ -30,11 +29,15 @@ class TestSpriteDimensions:
     def test_icon_height(self):
         assert ICON_HEIGHT == 12
 
-    def test_animation_height(self):
-        assert ANIMATION_HEIGHT == 6
+    def test_icon_offset_y(self):
+        assert ICON_OFFSET_Y == 3
 
-    def test_icon_plus_animation_equals_sprite(self):
-        assert ICON_HEIGHT + ANIMATION_HEIGHT == SPRITE_HEIGHT
+    def test_animation_height(self):
+        # The animation now occupies the full sprite area.
+        assert ANIMATION_HEIGHT == SPRITE_HEIGHT
+
+    def test_icon_fits_within_sprite(self):
+        assert ICON_OFFSET_Y + ICON_HEIGHT <= SPRITE_HEIGHT
 
 
 class TestSpriteCreation:
@@ -83,7 +86,7 @@ class TestSpriteCreation:
         )
         assert sprite._has_icon is False
         assert sprite.animation is not None
-        # Animation should fill full sprite height when no icon
+        # Animation always fills the full sprite area.
         assert sprite.animation.height == SPRITE_HEIGHT
 
     def test_creates_sprite_with_no_icon_and_no_animation(self):
@@ -117,7 +120,7 @@ class TestSpriteCreation:
         assert panel.draw_image.called
         call_args = panel.draw_image.call_args
         assert call_args.args[1] == 5  # x
-        assert call_args.args[2] == 7  # y
+        assert call_args.args[2] == 7 + ICON_OFFSET_Y  # y (icon inset)
 
     def test_icon_not_drawn_when_none(self):
         panel, canvas = _make_panel_and_canvas()
@@ -133,7 +136,7 @@ class TestSpriteCreation:
         )
         assert not panel.draw_image.called
 
-    def test_animation_area_below_icon(self):
+    def test_animation_area_is_full_sprite(self):
         panel, canvas = _make_panel_and_canvas()
         sprite = ForecastSprite(
             canvas=canvas,
@@ -145,9 +148,12 @@ class TestSpriteCreation:
             intensity=1,
             is_day=True,
         )
+        # The animation now occupies the entire sprite area (it may draw
+        # over the icon).
         assert sprite.animation.x == 10
-        assert sprite.animation.y == 5 + ICON_HEIGHT  # below the icon
-        assert sprite.animation.height == ANIMATION_HEIGHT
+        assert sprite.animation.y == 5
+        assert sprite.animation.width == SPRITE_WIDTH
+        assert sprite.animation.height == SPRITE_HEIGHT
 
 
 class TestSpriteDraw:
@@ -212,7 +218,7 @@ class TestSpriteDestroy:
         )
         panel.reset_mock()
         sprite.destroy()
-        # Should blank the full sprite area (16x18 = 288 pixels)
+        # Should blank the full sprite area (15x18 = 270 pixels)
         blank_calls = [
             call
             for call in panel.set_pixel.call_args_list

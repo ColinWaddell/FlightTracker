@@ -30,9 +30,6 @@ import datetime
 from scenes.idle.idle_scene import BaseIdleScene
 from scenes.idle.themes.icons.weather.codes import code_to_weather
 from scenes.idle.themes.icons.weather.forecast_sprite import (
-    ANIMATION_HEIGHT,
-    ICON_HEIGHT,
-    SPRITE_HEIGHT,
     SPRITE_WIDTH,
     ForecastSprite,
 )

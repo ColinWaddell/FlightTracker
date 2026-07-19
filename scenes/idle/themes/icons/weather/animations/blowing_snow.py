@@ -46,21 +46,17 @@ class BlowingSnowAnimation(BaseAnimation):
 
         for frame_idx in range(cycle):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             for i, py in enumerate(ys):
                 phase = (i * 4) % cycle
                 # Move right-to-left: x decreases
-                x = (w - 1 - (frame_idx * speed + phase) % w)
-                prev_x = (w - 1 - ((frame_idx - 1) * speed + phase) % w)
+                x = w - 1 - (frame_idx * speed + phase) % w
 
                 # Slow downward drift
                 row = (py + (frame_idx // _FALL_SPEED)) % h
-                prev_row = (py + ((frame_idx - 1) // _FALL_SPEED)) % h
 
                 set_pixels.append((x, row, _R, _G, _B))
-                clear_pixels.append((prev_x, prev_row))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames

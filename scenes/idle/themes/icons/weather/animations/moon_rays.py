@@ -36,7 +36,6 @@ class MoonRaysAnimation(BaseAnimation):
         frames: list[dict] = []
         for frame_idx in range(_PULSE_LEN):
             set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
 
             scale = _PULSE[frame_idx]
             r = int(_R * scale)
@@ -46,9 +45,7 @@ class MoonRaysAnimation(BaseAnimation):
             for x in xs:
                 for y in range(ray_height):
                     set_pixels.append((x, y, r, g, b))
-                    if scale <= 0.15:
-                        clear_pixels.append((x, y))
 
-            frames.append({"set": set_pixels, "clear": clear_pixels})
+            frames.append({"set": set_pixels})
 
         self._frames = frames
