@@ -116,6 +116,8 @@ def build_display_class():
             cfg = Config.instance()
             if cfg.is_in_brightness_schedule():
                 self.panel.set_brightness(cfg.schedule_brightness_percent)
+                if cfg.schedule_brightness_percent == 0:
+                    self.panel.clear(self.canvas)
             else:
                 self.panel.set_brightness(cfg.brightness_percent)
 
@@ -129,6 +131,7 @@ def build_display_class():
             self.panel.clear(self.canvas)
 
             frame = 0
+            cfg = Config.instance()
             try:
                 while True:
                     start = perf_counter()
@@ -136,9 +139,9 @@ def build_display_class():
                     if not (frame % self.brightness_update_interval):
                         self.update_brightness()
 
-                    self.scene_manager.kick()
-
-                    self.loading.tick(frame)
+                    if not cfg.is_in_device_standby():
+                        self.scene_manager.kick()
+                        self.loading.tick(frame)
 
                     self.panel.swap(self.canvas)
 
