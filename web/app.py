@@ -218,7 +218,8 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
-        "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
+        "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
+        == "quality",
         "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
         # Data source

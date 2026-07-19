@@ -4,6 +4,19 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.7] - 2026-07-19
+
+### Fixed
+- Simulator draws text at correct location now
+- Scheduled brightness at 0 should be proper dark now
+
+### Added
+- Can override airport info when generating airport cache json
+- When brightness is 0 at scheduled hours we no longer poll data sources
+- Things for GitHub (PR template, etc)
+- Proper info about the PWM generation enabled option
+
+
 ## [v2.1.6] - 2026-07-18
 
 ### Fixed
