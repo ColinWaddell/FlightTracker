@@ -15,8 +15,30 @@ from __future__ import annotations
 from display.rgbpanel import Colour
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
 
-COLOURS = [Colour(v, v, 0) for v in range(255, 0, -1)] + ([Colour(0, 0, 0)] * 50)
-RINGS = 3
+RING0 = [
+    Colour(255, 255, 0),
+    Colour(200, 200, 0),
+    Colour(150, 150, 150),
+    Colour(0, 0, 0),
+    Colour(0, 0, 0),
+    Colour(0, 0, 0),
+]
+RING1 = [
+    Colour(0, 0, 0),
+    Colour(255, 255, 0),
+    Colour(200, 200, 0),
+    Colour(150, 150, 150),
+    Colour(0, 0, 0),
+    Colour(0, 0, 0),
+]
+RING2 = [
+    Colour(0, 0, 0),
+    Colour(0, 0, 0),
+    Colour(255, 255, 0),
+    Colour(200, 200, 0),
+    Colour(150, 150, 150),
+    Colour(0, 0, 0),
+]
 
 
 class RaysAnimation(BaseAnimation):
@@ -25,10 +47,14 @@ class RaysAnimation(BaseAnimation):
     frame_count = 0
 
     def draw(self, frame_idx: int) -> None:
-        for ring in range(RINGS):
-            self.draw_circle(7, 7, 5 + ring, COLOURS[self.frame_count + ring])
+        index = self.frame_count // 10
 
-        if self.frame_count >= (len(COLOURS) - RINGS):
+        if index >= 4:
             self.frame_count = 0
+            index = 0
         else:
             self.frame_count = self.frame_count + 1
+
+        self.draw_circle(7, 7, 5, RING0[index])
+        self.draw_circle(7, 7, 6, RING1[index])
+        self.draw_circle(7, 7, 7, RING2[index])
