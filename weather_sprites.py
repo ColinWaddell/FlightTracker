@@ -19,7 +19,8 @@ from display.panel_factory import get_panel
 from scenes.idle.themes.icons.weather.codes import code_to_weather
 from scenes.idle.themes.icons.weather.forecast_sprite import (
     SPRITE_WIDTH,
-    ForecastSprite,
+    blank_area,
+    create_animation,
 )
 
 # ======================================================================
@@ -56,22 +57,25 @@ SPRITE_Y = 7
 
 
 def build_sprites(canvas, panel):
-    """Instantiate 3 ForecastSprite instances from CONDITION_CODES."""
-    sprites = []
+    """Instantiate animations for each CONDITION_CODE."""
+    animations = []
+    positions = []
     for i, code in enumerate(CONDITION_CODES):
         icon_name, animation_name, intensity = code_to_weather(code, NIGHT_MODE)
-        sprite = ForecastSprite(
-            canvas=canvas,
+        x = SPRITE_X_POSITIONS[i]
+        anim = create_animation(
             panel=panel,
-            x=SPRITE_X_POSITIONS[i],
+            canvas=canvas,
+            x=x,
             y=SPRITE_Y,
             icon_name=icon_name,
             animation_name=animation_name,
             intensity=intensity,
-            is_day=not NIGHT_MODE,
         )
-        sprites.append(sprite)
-    return sprites
+        if anim is not None:
+            animations.append(anim)
+            positions.append((x, SPRITE_Y))
+    return animations, positions
 
 
 def draw_labels(canvas, panel):
@@ -101,18 +105,18 @@ def draw_labels(canvas, panel):
         panel.draw_text(canvas, label_font, bot_x, 31, TC(THEME_TEXT), intensity_text)
 
 
-def run_loop(sprites, canvas, panel):
+def run_loop(animations, canvas, panel):
     """Main render loop — mimics display.run() at FRAME_PERIOD cadence."""
-    print(f"Showing {len(sprites)} sprites — press Ctrl+C to exit.")
+    print(f"Showing {len(animations)} animations — press Ctrl+C to exit.")
     print(f"Condition codes: {CONDITION_CODES} (night={NIGHT_MODE})")
 
     try:
         while True:
             start = perf_counter()
 
-            # Tick each sprite's animation
-            for sprite in sprites:
-                sprite.draw()
+            # Tick each animation
+            for anim in animations:
+                anim.tick()
 
             panel.swap(canvas)
 
@@ -139,8 +143,8 @@ def main():
     panel.clear(canvas)
     panel.swap(canvas)
 
-    # Build sprites (this draws the static icons immediately)
-    sprites = build_sprites(canvas, panel)
+    # Build animations (this draws the static icons immediately)
+    animations, positions = build_sprites(canvas, panel)
 
     # Draw labels if enabled
     draw_labels(canvas, panel)
@@ -149,11 +153,11 @@ def main():
     panel.swap(canvas)
 
     # Enter the animation loop
-    run_loop(sprites, canvas, panel)
+    run_loop(animations, canvas, panel)
 
     # Clean up on exit
-    for sprite in sprites:
-        sprite.destroy()
+    for x, y in positions:
+        blank_area(panel, canvas, x, y)
     panel.clear(canvas)
     panel.swap(canvas)
 

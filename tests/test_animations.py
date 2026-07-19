@@ -1,10 +1,10 @@
-"""Tests for the animation engines.
+"""Tests for the live-draw weather animation engines.
 
-Each animation engine should produce a non-empty frame table with valid
-pixel coordinates.  ``tick()`` lights the current frame's pixels and
-auto-restores the previous frame's pixels to their original values
-(black outside the icon, icon colour inside).  ``reset()`` restores any
-currently active pixels.
+Each engine implements ``draw(frame_idx)``, called every frame by
+``tick()``.  The base class does no automatic restoration — engines are
+responsible for clearing pixels they no longer want.  These tests mock
+the panel and assert on the ``set_pixel`` / ``draw_*`` calls that
+``tick()`` produces.
 """
 
 from unittest.mock import MagicMock
@@ -52,12 +52,12 @@ ALL_ANIMATIONS = [
 ]
 
 
-def _make_animation(cls, width=15, height=18, intensity=1):
+def _make_animation(cls, width=15, height=15, intensity=1):
     """Create an animation instance with a mock panel/canvas.
 
-    The default area matches the real sprite size (15x18).  An
-    all-black ``original`` grid is supplied so the auto-restore path
-    behaves like the old blank-on-clear behaviour.
+    The default area matches the real sprite size (15x15).  An
+    all-black ``original`` grid is supplied so engines that query
+    ``original_pixel()`` get black outside the (absent) icon.
     """
     panel = MagicMock()
     canvas = MagicMock()
@@ -108,43 +108,6 @@ class TestRegistry:
 
 
 # ---------------------------------------------------------------------------
-# Frame table validity (parametrised over all engines + intensities)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("cls", ALL_ANIMATIONS)
-@pytest.mark.parametrize("intensity", [0, 1, 2])
-class TestFrameTableValidity:
-    def test_frames_non_empty(self, cls, intensity):
-        anim = _make_animation(cls, intensity=intensity)
-        assert anim.frame_count > 0
-
-    def test_set_pixels_in_bounds(self, cls, intensity):
-        anim = _make_animation(cls, width=15, height=18, intensity=intensity)
-        for frame in anim._frames:
-            for entry in frame.get("set", ()):
-                x, y, r, g, b = entry
-                assert 0 <= x < 15, f"x={x} out of bounds"
-                assert 0 <= y < 18, f"y={y} out of bounds"
-                assert 0 <= r <= 255
-                assert 0 <= g <= 255
-                assert 0 <= b <= 255
-
-    def test_no_clear_key_in_frames(self, cls, intensity):
-        # The new contract uses auto-restore; engines must not emit a
-        # "clear" key.  (RaysAnimation is mid-rewrite and temporarily
-        # exempted.)
-        if cls is RaysAnimation:
-            return
-        anim = _make_animation(cls, intensity=intensity)
-        for frame in anim._frames:
-            assert "clear" not in frame, (
-                f"{cls.__name__} still emits a 'clear' key — "
-                f"restoration is now handled by BaseAnimation"
-            )
-
-
-# ---------------------------------------------------------------------------
 # tick() behaviour
 # ---------------------------------------------------------------------------
 
@@ -156,29 +119,44 @@ class TestTick:
         anim.tick()
         assert anim.frame == initial + 1
 
-    def test_tick_wraps_around(self):
-        anim = _make_animation(RainAnimation)
-        count = anim.frame_count
-        for _ in range(count + 5):
-            anim.tick()
-        # Frame should have wrapped (not overflowed)
-        assert anim.frame == count + 5
-
     def test_tick_calls_set_pixel(self):
         anim = _make_animation(RainAnimation)
         anim.tick()
         assert anim.panel.set_pixel.called
 
-    def test_tick_with_empty_frames_does_nothing(self):
+    def test_tick_with_no_draw_does_nothing(self):
         panel = MagicMock()
 
         class _EmptyAnim(BaseAnimation):
-            def _build_frames(self):
-                self._frames = []
+            def draw(self, frame_idx):
+                pass
 
-        anim = _EmptyAnim(0, 0, 15, 18, 1, panel, MagicMock())
+        anim = _EmptyAnim(0, 0, 15, 15, 1, panel, MagicMock())
         anim.tick()
         assert not panel.set_pixel.called
+
+
+# ---------------------------------------------------------------------------
+# Bounds checking (parametrised over all engines + intensities)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("cls", ALL_ANIMATIONS)
+@pytest.mark.parametrize("intensity", [0, 1, 2])
+class TestBounds:
+    def test_set_pixels_in_bounds(self, cls, intensity):
+        anim = _make_animation(cls, intensity=intensity)
+        # Tick a few frames to exercise the draw path.
+        for _ in range(5):
+            anim.tick()
+        for call in anim.panel.set_pixel.call_args_list:
+            # set_pixel(canvas, x, y, r, g, b)
+            _, x, y, r, g, b = call.args
+            assert 0 <= x < 15, f"x={x} out of bounds"
+            assert 0 <= y < 15, f"y={y} out of bounds"
+            assert 0 <= r <= 255
+            assert 0 <= g <= 255
+            assert 0 <= b <= 255
 
 
 # ---------------------------------------------------------------------------
@@ -187,23 +165,6 @@ class TestTick:
 
 
 class TestReset:
-    def test_reset_restores_active_pixels(self):
-        anim = _make_animation(RainAnimation)
-        # Tick once so the animation has lit some pixels.
-        anim.tick()
-        active_before = set(anim._active)
-        assert active_before, "animation should have lit some pixels"
-        anim.reset()
-        # Every active pixel should have been restored to its original
-        # (black, per the _make_animation helper) value.
-        restored = [
-            call
-            for call in anim.panel.set_pixel.call_args_list
-            if call.args[3:] == (0, 0, 0)
-        ]
-        assert len(restored) >= len(active_before)
-        assert anim._active == set()
-
     def test_reset_sets_frame_to_zero(self):
         anim = _make_animation(RainAnimation)
         anim.tick()
@@ -212,26 +173,22 @@ class TestReset:
         anim.reset()
         assert anim.frame == 0
 
-    def test_reset_with_empty_frames(self):
-        panel = MagicMock()
-
-        class _EmptyAnim(BaseAnimation):
-            def _build_frames(self):
-                self._frames = []
-
-        anim = _EmptyAnim(0, 0, 15, 18, 1, panel, MagicMock())
+    def test_reset_does_not_touch_canvas(self):
+        # The base reset() does not blank the canvas — the caller is
+        # responsible for blanking the area at teardown.
+        anim = _make_animation(RainAnimation)
+        anim.tick()
+        anim.panel.reset_mock()
         anim.reset()
-        assert anim.frame == 0
+        assert not anim.panel.set_pixel.called
 
 
 # ---------------------------------------------------------------------------
-# Original-pixel restoration
+# Original-pixel lookup
 # ---------------------------------------------------------------------------
 
 
-class TestOriginalRestore:
-    """The base class restores overwritten pixels to their original value."""
-
+class TestOriginalPixel:
     def _make_with_original(self, original):
         panel = MagicMock()
         canvas = MagicMock()
@@ -249,39 +206,57 @@ class TestOriginalRestore:
         )
 
     def test_original_pixel_returns_cached_value(self):
-        original = [[(10, 20, 30)] * 15 for _ in range(18)]
+        original = [[(10, 20, 30)] * 15 for _ in range(15)]
         anim = self._make_with_original(original)
         assert anim.original_pixel(0, 0) == (10, 20, 30)
-        assert anim.original_pixel(14, 17) == (10, 20, 30)
+        assert anim.original_pixel(14, 14) == (10, 20, 30)
 
     def test_original_pixel_out_of_bounds_is_black(self):
-        anim = self._make_with_original([[(0, 0, 0)] * 15 for _ in range(18)])
+        anim = self._make_with_original([[(0, 0, 0)] * 15 for _ in range(15)])
         assert anim.original_pixel(-1, 0) == (0, 0, 0)
         assert anim.original_pixel(0, 99) == (0, 0, 0)
 
-    def test_tick_restores_previous_frame_to_original(self):
-        # Build an original where every pixel is a distinct colour so we
-        # can assert the restore calls match the cached values.
-        original = [[(r, g, b) for r in range(15)] for g in range(18) for b in [0]]
-        # Reshape to [y][x] = (r, g, b) with a simple deterministic fill.
-        original = [
-            [((x * 10) % 256, (y * 10) % 256, 0) for x in range(15)] for y in range(18)
-        ]
+    def test_engine_can_restore_icon_pixel(self):
+        # An engine that overwrites an icon pixel can restore it via
+        # original_pixel().  Verify the helper returns the cached colour.
+        original = [[(100, 150, 200)] * 15 for _ in range(15)]
         anim = self._make_with_original(original)
-        anim.tick()  # lights frame 0
-        anim.tick()  # should restore frame-0 pixels, then light frame 1
+        r, g, b = anim.original_pixel(7, 7)
+        assert (r, g, b) == (100, 150, 200)
 
-        # Find the restore calls: set_pixel calls whose colour matches an
-        # original pixel value (non-zero, since rain sets blue-ish pixels).
-        restore_calls = []
-        for call in anim.panel.set_pixel.call_args_list:
-            _, _, _, r, g, b = call.args
-            if (r, g, b) != (80, 130, 220):  # not a rain-set pixel
-                restore_calls.append((r, g, b))
-        # At least some restore calls should match original colours.
-        originals_flat = {original[y][x] for y in range(18) for x in range(15)}
-        restored = {c for c in restore_calls if c in originals_flat}
-        assert restored, "tick() should have restored some pixels to original"
+
+# ---------------------------------------------------------------------------
+# Drawing helpers (local-coordinate wrappers)
+# ---------------------------------------------------------------------------
+
+
+class TestDrawingHelpers:
+    def test_set_pixel_applies_offset(self):
+        anim = _make_animation(RainAnimation, width=15, height=15)
+        anim.x, anim.y = 10, 20
+        anim.set_pixel(3, 4, 1, 2, 3)
+        anim.panel.set_pixel.assert_called_once_with(anim.canvas, 13, 24, 1, 2, 3)
+
+    def test_draw_line_applies_offset(self):
+        anim = _make_animation(RainAnimation)
+        anim.x, anim.y = 5, 6
+        colour = anim.make_colour(1, 2, 3)
+        anim.draw_line(0, 0, 3, 4, colour)
+        anim.panel.draw_line.assert_called_once_with(anim.canvas, 5, 6, 8, 10, colour)
+
+    def test_draw_circle_applies_offset(self):
+        anim = _make_animation(RainAnimation)
+        anim.x, anim.y = 5, 6
+        colour = anim.make_colour(1, 2, 3)
+        anim.draw_circle(7, 8, 2, colour)
+        anim.panel.draw_circle.assert_called_once_with(anim.canvas, 12, 14, 2, colour)
+
+    def test_draw_square_applies_offset(self):
+        anim = _make_animation(RainAnimation)
+        anim.x, anim.y = 5, 6
+        colour = anim.make_colour(1, 2, 3)
+        anim.draw_square(0, 0, 3, 4, colour)
+        anim.panel.draw_square.assert_called_once_with(anim.canvas, 5, 6, 8, 10, colour)
 
 
 # ---------------------------------------------------------------------------
@@ -293,10 +268,20 @@ class TestIntensityVariation:
     def test_rain_intensity_changes_drop_count(self):
         light = _make_animation(RainAnimation, intensity=0)
         heavy = _make_animation(RainAnimation, intensity=2)
-        # Heavy rain should have more set pixels per frame than light
-        light_pixels = sum(len(f.get("set", ())) for f in light._frames)
-        heavy_pixels = sum(len(f.get("set", ())) for f in heavy._frames)
+        light.panel.reset_mock()
+        heavy.panel.reset_mock()
+        light.tick()
+        heavy.tick()
+        # Heavy rain should set more pixels per frame than light.
+        light_pixels = len(light.panel.set_pixel.call_args_list)
+        heavy_pixels = len(heavy.panel.set_pixel.call_args_list)
         assert heavy_pixels > light_pixels
+
+    def test_intensity_clamped_to_valid_range(self):
+        anim = _make_animation(RainAnimation, intensity=5)
+        assert anim.intensity == 2
+        anim_neg = _make_animation(RainAnimation, intensity=-1)
+        assert anim_neg.intensity == 0
 
     def test_intensity_clamped_to_valid_range(self):
         anim = _make_animation(RainAnimation, intensity=5)

@@ -1,8 +1,8 @@
 """Sun rays animation — subtle pulsing rays radiating from the icon.
 
-Since the sun icon sits in the static area above, the rays animation
-plays in the 6px area below.  Short vertical ray segments pulse in
-brightness to suggest radiating light.
+Short ray segments radiate outward from the sprite centre and pulse in
+brightness to suggest radiating light.  The rays sit at fixed positions,
+so each frame simply overwrites the same pixels — no clearing needed.
 
 Intensity controls ray count and brightness:
     0 — 3 rays, subtle pulse
@@ -12,34 +12,23 @@ Intensity controls ray count and brightness:
 
 from __future__ import annotations
 
+from display.rgbpanel import Colour
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
 
-RAYS = [[1, 9], [2, 9], [3, 9], [7, 5], [7, 4], [7, 3], [11, 9], [12, 9], [13, 9]]
-
-_PULSE = (0.15, 0.25, 0.35, 0.45, 0.35, 0.25)
-_PULSE_LEN = len(_PULSE)
-_R = 255
-_G = 255
-_B = 0
+COLOURS = [Colour(v, v, 0) for v in range(255, 0, -1)] + ([Colour(0, 0, 0)] * 50)
+RINGS = 4
 
 
 class RaysAnimation(BaseAnimation):
-    """Pulsing sun rays below the sun icon."""
+    """Pulsing sun rays radiating from the icon centre."""
 
-    def _build_frames(self) -> None:
-        frames: list[dict] = []
-        for frame_idx in range(_PULSE_LEN):
-            set_pixels: list[tuple] = []
-            clear_pixels: list[tuple] = []
+    frame_count = 0
 
-            scale = _PULSE[frame_idx]
-            r = int(_R * scale)
-            g = int(_G * scale)
-            b = int(_B * scale)
+    def draw(self, frame_idx: int) -> None:
+        for ring in range(RINGS):
+            self.draw_circle(7, 7, 5 + ring, COLOURS[self.frame_count + ring])
 
-            for x, y in RAYS:
-                set_pixels.append((x, y, r, g, b))
-
-            frames.append({"set": set_pixels, "clear": clear_pixels})
-
-        self._frames = frames
+        if self.frame_count >= (len(COLOURS) - RINGS):
+            self.frame_count = 0
+        else:
+            self.frame_count = self.frame_count + 1

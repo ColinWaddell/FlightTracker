@@ -37,48 +37,49 @@ _FLASH_COLOURS = {
     2: (255, 255, 180),
 }
 
-_sway = (-1, 0, 1, 0)
-_DEFAULT_HEIGHT = 6
+_SWAY = (-1, 0, 1, 0)
 
 
 class ThunderSnowAnimation(BaseAnimation):
     """Snow with periodic lightning flashes."""
 
-    def _build_frames(self) -> None:
-        h = self.height if self.height > 0 else _DEFAULT_HEIGHT
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._was_flashing = False
+
+    def draw(self, frame_idx: int) -> None:
+        h = self.height
         xs = _FLAKE_XS.get(self.intensity, _FLAKE_XS[1])
         period = _FLASH_PERIOD.get(self.intensity, 30)
         fr, fg, fb = _FLASH_COLOURS.get(self.intensity, _FLASH_COLOURS[1])
 
-        bolt = [(x, int(y * h / _DEFAULT_HEIGHT)) for x, y in _BOLT]
-        bolt_set = set(bolt)
-
+        flash_phase = frame_idx % period
         snow_cycle = h * 2
-        # Overall cycle = lcm(snow_cycle, period)
-        cycle = snow_cycle * period
-        frames: list[dict] = []
+        bolt_set = set(_BOLT)
 
-        for frame_idx in range(cycle):
-            flash_phase = frame_idx % period
+        # Snow flakes
+        for i, bx in enumerate(xs):
+            phase = (i * 3) % snow_cycle
+            pos = (frame_idx + phase) % snow_cycle
+            row = pos // 2
+            prev_row = ((pos - 1) % snow_cycle) // 2
+            sway = _SWAY[frame_idx % 4]
+            prev_sway = _SWAY[(frame_idx - 1) % 4]
+            x = bx + sway
+            prev_x = bx + prev_sway
+            if 0 <= prev_x < self.width:
+                if (prev_x, prev_row) not in bolt_set or flash_phase >= _FLASH_DURATION:
+                    self.set_pixel(prev_x, prev_row, 0, 0, 0)
+            if 0 <= x < self.width:
+                if (x, row) not in bolt_set or flash_phase >= _FLASH_DURATION:
+                    self.set_pixel(x, row, _SNOW_R, _SNOW_G, _SNOW_B)
 
-            set_pixels: list[tuple] = []
-
-            # Snow flakes
-            for i, bx in enumerate(xs):
-                phase = (i * 3) % snow_cycle
-                pos = (frame_idx + phase) % snow_cycle
-                row = pos // 2
-                sway = _sway[frame_idx % 4]
-                x = bx + sway
-                if 0 <= x < self.width:
-                    if (x, row) not in bolt_set or flash_phase >= _FLASH_DURATION:
-                        set_pixels.append((x, row, _SNOW_R, _SNOW_G, _SNOW_B))
-
-            # Lightning flash
-            if flash_phase < _FLASH_DURATION:
-                for x, y in bolt:
-                    set_pixels.append((x, y, fr, fg, fb))
-
-            frames.append({"set": set_pixels})
-
-        self._frames = frames
+        # Lightning flash
+        if flash_phase < _FLASH_DURATION:
+            for x, y in _BOLT:
+                self.set_pixel(x, y, fr, fg, fb)
+            self._was_flashing = True
+        elif self._was_flashing:
+            for x, y in _BOLT:
+                self.set_pixel(x, y, 0, 0, 0)
+            self._was_flashing = False

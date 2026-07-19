@@ -27,36 +27,29 @@ _PARTICLE_YS = {
 
 _WIND_SPEED = {0: 2, 1: 3, 2: 4}  # px per frame leftward
 _FALL_SPEED = 3  # frames per 1px downward
-_DEFAULT_HEIGHT = 6
+_REF_HEIGHT = 6
 
 
 class BlowingSnowAnimation(BaseAnimation):
     """Wind-driven horizontal snow."""
 
-    def _build_frames(self) -> None:
-        h = self.height if self.height > 0 else _DEFAULT_HEIGHT
+    def draw(self, frame_idx: int) -> None:
+        h = self.height
         w = self.width
         ys = _PARTICLE_YS.get(self.intensity, _PARTICLE_YS[1])
         speed = _WIND_SPEED.get(self.intensity, 3)
 
-        ys = [int(y * h / _DEFAULT_HEIGHT) for y in ys if y < _DEFAULT_HEIGHT]
+        ys = [int(y * h / _REF_HEIGHT) for y in ys if y < _REF_HEIGHT]
 
-        cycle = w  # horizontal wrap cycle
-        frames: list[dict] = []
+        for i, py in enumerate(ys):
+            phase = (i * 4) % w
+            # Move right-to-left: x decreases
+            x = w - 1 - (frame_idx * speed + phase) % w
+            prev_x = w - 1 - ((frame_idx - 1) * speed + phase) % w
 
-        for frame_idx in range(cycle):
-            set_pixels: list[tuple] = []
+            # Slow downward drift
+            row = (py + (frame_idx // _FALL_SPEED)) % h
+            prev_row = (py + ((frame_idx - 1) // _FALL_SPEED)) % h
 
-            for i, py in enumerate(ys):
-                phase = (i * 4) % cycle
-                # Move right-to-left: x decreases
-                x = w - 1 - (frame_idx * speed + phase) % w
-
-                # Slow downward drift
-                row = (py + (frame_idx // _FALL_SPEED)) % h
-
-                set_pixels.append((x, row, _R, _G, _B))
-
-            frames.append({"set": set_pixels})
-
-        self._frames = frames
+            self.set_pixel(prev_x, prev_row, 0, 0, 0)
+            self.set_pixel(x, row, _R, _G, _B)

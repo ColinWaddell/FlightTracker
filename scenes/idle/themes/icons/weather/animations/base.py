@@ -1,41 +1,23 @@
-"""Base class for all weather animation engines.
+"""Base class for live-draw weather animation engines.
 
-An animation engine owns a rectangular region of the sprite — which may
-overlap the static icon — and produces a looping sequence of frames.
-Each frame is a set of pixels to light; restoration of the previous
-frame's pixels is handled automatically by the base class.
+An animation engine owns a rectangular area of the canvas (which may
+overlap the static icon) and is called every frame to draw its current
+state.  The base class does **no** automatic restoration between frames
+— the engine is fully responsible for clearing pixels it no longer
+wants and for restoring icon pixels it has overwritten.
 
-Restoration model
------------------
-The base class is given an ``original`` grid: a snapshot of the sprite's
-RGB state *after* the icon was drawn and *before* any animation touched
-it.  For pixels outside the icon this is black ``(0,0,0)``; for pixels
-inside the icon it is the icon's own colour.
+The caller (theme) is responsible for the surrounding lifecycle:
+blanking the area, drawing the icon once, snapshotting the pre-animation
+colours into ``original``, and blanking again at teardown.
 
-On every ``tick()`` the base first restores every pixel the previous
-frame lit back to its ``original`` value, then draws the current frame's
-``set`` pixels.  This means:
+Engines can query ``original_pixel(lx, ly)`` to read back what a pixel
+looked like before any animation touched it — useful for restoring icon
+pixels (``self.set_pixel(lx, ly, *self.original_pixel(lx, ly))``) or
+for blending effects that tint the icon rather than overwrite it.
 
-* a pixel that should return to **black** → its original is ``(0,0,0)``,
-  so restoring blanks it;
-* a pixel drawn **over the icon** → its original is the icon colour, so
-  restoring re-paints the icon.
-
-Engines therefore never need to declare which pixels to clear — they
-only declare what to ``set`` each frame.  A pixel only remains lit if
-it appears in the current frame's ``set`` list; anything not re-set is
-restored automatically.
-
-Frame tables are expressed in *local* coordinates (0,0 = top-left of the
-animation area).  The engine translates them to absolute canvas
-coordinates at draw time using ``self.x`` and ``self.y``.
-
-Subclasses must populate ``self._frames`` — a list of dicts with a
-single key:
-
-    ``"set"``: list of (x, y, r, g, b) tuples — pixels to light
-
-The ``"set"`` key is optional (defaults to empty).
+All drawing helpers take **local** coordinates (0,0 = top-left of the
+animation area); the base translates them to absolute canvas coordinates
+using ``self.x`` and ``self.y``.
 """
 
 from __future__ import annotations
@@ -49,7 +31,7 @@ OriginalGrid = list[list[tuple[int, int, int]]]
 
 
 class BaseAnimation:
-    """Abstract base for delta-based weather animations.
+    """Live-draw animation engine.
 
     Args:
         x:        Absolute canvas x of the animation area top-left.
@@ -57,11 +39,11 @@ class BaseAnimation:
         width:    Animation area width in pixels.
         height:   Animation area height in pixels.
         intensity: 0 = light, 1 = medium, 2 = heavy.
-        panel:    RGBPanel instance for drawing.
+        panel:    RGBPanel instance (provides draw_circle, draw_line, etc.).
         canvas:   Canvas object from the panel driver.
-        original: Snapshot of the sprite's RGB state before the
-                  animation started (``original[ly][lx]``).  When
-                  ``None`` the area is assumed to be all-black.
+        original: Snapshot of the area's RGB state after the icon was
+                  drawn, before any animation.  ``original[ly][lx]``.
+                  When ``None`` the area is assumed all-black.
     """
 
     def __init__(
@@ -83,30 +65,9 @@ class BaseAnimation:
         self.panel = panel
         self.canvas = canvas
         self.frame: int = 0
-        self._frames: list[dict] = []
-        # Snapshot of the sprite before the animation started drawing.
         self._original: OriginalGrid = original or [
             [(0, 0, 0)] * width for _ in range(height)
         ]
-        # Local coordinates of pixels currently lit by the animation.
-        self._active: set[tuple[int, int]] = set()
-        self._build_frames()
-
-    # ------------------------------------------------------------------
-    # Subclass hook
-    # ------------------------------------------------------------------
-
-    def _build_frames(self) -> None:
-        """Populate ``self._frames`` with the lookup table.
-
-        Override in subclasses.  Each entry is::
-
-            {"set": [(x, y, r, g, b), ...]}
-
-        Coordinates are local (0-based within the animation area).
-        No ``"clear"`` key is used — restoration is automatic.
-        """
-        raise NotImplementedError
 
     # ------------------------------------------------------------------
     # Original-state lookup
@@ -121,43 +82,76 @@ class BaseAnimation:
             return self._original[ly][lx]
         return (0, 0, 0)
 
-    def _restore(self, pixels) -> None:
-        """Restore the given local pixels to their original RGB values."""
-        for lx, ly in pixels:
-            r, g, b = self.original_pixel(lx, ly)
-            self.panel.set_pixel(self.canvas, self.x + lx, self.y + ly, r, g, b)
+    # ------------------------------------------------------------------
+    # Drawing helpers (local coordinates — offset applied automatically)
+    # ------------------------------------------------------------------
+
+    def set_pixel(self, lx: int, ly: int, r: int, g: int, b: int) -> None:
+        """Set a single pixel at local (lx, ly) to (r, g, b)."""
+        self.panel.set_pixel(self.canvas, self.x + lx, self.y + ly, r, g, b)
+
+    def draw_line(self, x0: int, y0: int, x1: int, y1: int, colour) -> None:
+        """Draw a line between two local-coordinate points."""
+        self.panel.draw_line(
+            self.canvas,
+            self.x + x0,
+            self.y + y0,
+            self.x + x1,
+            self.y + y1,
+            colour,
+        )
+
+    def draw_circle(self, cx: int, cy: int, radius: int, colour) -> None:
+        """Draw a circle outline centred at local (cx, cy)."""
+        self.panel.draw_circle(self.canvas, self.x + cx, self.y + cy, radius, colour)
+
+    def draw_square(self, x0: int, y0: int, x1: int, y1: int, colour) -> None:
+        """Draw a filled rectangle between two local-coordinate corners."""
+        self.panel.draw_square(
+            self.canvas,
+            self.x + x0,
+            self.y + y0,
+            self.x + x1,
+            self.y + y1,
+            colour,
+        )
+
+    def draw_text(self, font, lx: int, ly: int, colour, text: str) -> int:
+        """Draw text at local (lx, ly).  Returns the advance width."""
+        return self.panel.draw_text(
+            self.canvas, font, self.x + lx, self.y + ly, colour, text
+        )
+
+    def make_colour(self, r: int, g: int, b: int):
+        """Create a Colour object via the panel driver."""
+        return self.panel.make_colour(r, g, b)
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    @property
-    def frame_count(self) -> int:
-        """Number of frames in the animation loop."""
-        return len(self._frames)
-
     def tick(self) -> None:
-        """Advance one frame: restore previous pixels, then draw new ones."""
-        if not self._frames:
-            return
-
-        current = self._frames[self.frame % len(self._frames)]
-
-        # Restore everything we lit last frame to its original state.
-        if self._active:
-            self._restore(self._active)
-            self._active.clear()
-
-        # Light this frame's pixels and remember them for next time.
-        for lx, ly, r, g, b in current.get("set", ()):
-            self.panel.set_pixel(self.canvas, self.x + lx, self.y + ly, r, g, b)
-            self._active.add((lx, ly))
-
+        """Advance one frame: call ``draw()`` and increment the counter."""
+        self.draw(self.frame)
         self.frame += 1
 
+    def draw(self, frame_idx: int) -> None:
+        """Draw this frame onto the canvas in local coordinates.
+
+        Override in subclasses.  The base does **not** restore the area
+        between frames — you must clear pixels you no longer want
+        (via ``self.set_pixel(lx, ly, 0, 0, 0)`` or
+        ``self.set_pixel(lx, ly, *self.original_pixel(lx, ly))`` for
+        pixels that sit on the icon).
+        """
+        raise NotImplementedError
+
     def reset(self) -> None:
-        """Restore all active pixels to original, then reset frame to 0."""
-        if self._active:
-            self._restore(self._active)
-            self._active.clear()
+        """Reset the frame counter.
+
+        Does **not** touch the canvas — if the engine needs to clear its
+        pixels on teardown it should override this and do so explicitly.
+        The caller is expected to blank the area when discarding the
+        animation.
+        """
         self.frame = 0

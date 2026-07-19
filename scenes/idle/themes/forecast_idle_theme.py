@@ -31,7 +31,8 @@ from scenes.idle.idle_scene import BaseIdleScene
 from scenes.idle.themes.icons.weather.codes import code_to_weather
 from scenes.idle.themes.icons.weather.forecast_sprite import (
     SPRITE_WIDTH,
-    ForecastSprite,
+    blank_area,
+    create_animation,
 )
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts, frames
@@ -102,10 +103,11 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_time: str | None = None
         self.last_date: str | None = None
         self.last_day: str | None = None
-        self.sprites: list[ForecastSprite] = []
+        self.animations: list = []
+        self._anim_positions: list[tuple[int, int]] = []
 
     def theme_reset(self) -> None:
-        self._destroy_sprites()
+        self._destroy_animations()
         self.last_slots = None
         self.last_time = None
         self.last_date = None
@@ -125,9 +127,9 @@ class ForecastIdleTheme(BaseIdleScene):
     def draw(self) -> None:
         self.frame += 1
 
-        # Tick sprite animations every frame
-        for sprite in self.sprites:
-            sprite.draw()
+        # Tick animations every frame
+        for anim in self.animations:
+            anim.tick()
 
         # Throttle data evaluation to ~1 fps
         if self.frame % int(frames.PER_SECOND):
@@ -162,8 +164,8 @@ class ForecastIdleTheme(BaseIdleScene):
         if slots == self.last_slots:
             return
 
-        # Destroy old sprites and clear canvas for full redraw
-        self._destroy_sprites()
+        # Destroy old animations and clear canvas for full redraw
+        self._destroy_animations()
         self.panel.clear(self.canvas)
 
         # Re-draw clock/date/day after clear (they were drawn above but
@@ -175,7 +177,7 @@ class ForecastIdleTheme(BaseIdleScene):
         self.draw_date()
         self.draw_day()
 
-        # Create new sprites and draw labels
+        # Create new animations and draw labels
         for i, slot in enumerate(slots):
             condition_code, is_day, top_label, bottom_label, temp_c = slot
             x = ICON_POSITIONS_X[i]
@@ -184,17 +186,18 @@ class ForecastIdleTheme(BaseIdleScene):
                 condition_code, not is_day
             )
 
-            sprite = ForecastSprite(
-                canvas=self.canvas,
+            anim = create_animation(
                 panel=self.panel,
+                canvas=self.canvas,
                 x=x,
                 y=ICON_POSITIONS_Y,
                 icon_name=icon_name,
                 animation_name=animation_name,
                 intensity=intensity,
-                is_day=is_day,
             )
-            self.sprites.append(sprite)
+            if anim is not None:
+                self.animations.append(anim)
+                self._anim_positions.append((x, ICON_POSITIONS_Y))
 
             # Draw top label (day name or hour)
             if top_label:
@@ -229,11 +232,12 @@ class ForecastIdleTheme(BaseIdleScene):
 
         self.last_slots = slots
 
-    def _destroy_sprites(self) -> None:
-        """Destroy all sprites and clear the list."""
-        for sprite in self.sprites:
-            sprite.destroy()
-        self.sprites = []
+    def _destroy_animations(self) -> None:
+        """Blank each animation's area and clear the list."""
+        for x, y in self._anim_positions:
+            blank_area(self.panel, self.canvas, x, y)
+        self.animations = []
+        self._anim_positions = []
 
     # ------------------------------------------------------------------
     # Clock (copied from ClassicIdleTheme)

@@ -16,7 +16,7 @@ _R = 200
 _G = 170
 _B = 100
 
-# Particle y-positions per intensity (within 6px area)
+# Particle y-positions per intensity (relative to a 6px reference height)
 _PARTICLE_YS = {
     0: [1, 3, 4],
     1: [0, 1, 2, 3, 5],
@@ -24,35 +24,25 @@ _PARTICLE_YS = {
 }
 
 _SPEED = {0: 2, 1: 3, 2: 4}  # px per frame
-_DEFAULT_HEIGHT = 6
+_REF_HEIGHT = 6
 
 
 class DustyAnimation(BaseAnimation):
     """Fast horizontal dust drift."""
 
-    def _build_frames(self) -> None:
-        h = self.height if self.height > 0 else _DEFAULT_HEIGHT
+    def draw(self, frame_idx: int) -> None:
+        h = self.height
         w = self.width
         ys = _PARTICLE_YS.get(self.intensity, _PARTICLE_YS[1])
         speed = _SPEED.get(self.intensity, 3)
 
         # Scale y-positions to actual height
-        ys = [int(y * h / _DEFAULT_HEIGHT) for y in ys if y < _DEFAULT_HEIGHT]
+        ys = [int(y * h / _REF_HEIGHT) for y in ys if y < _REF_HEIGHT]
 
-        # Each particle scrolls right at `speed` px/frame, wraps at width.
-        # Stagger particles with phase offsets.
-        cycle = w  # one full scroll
-        frames: list[dict] = []
+        for i, py in enumerate(ys):
+            phase = (i * 3) % w
+            x = (frame_idx * speed + phase) % w
+            prev_x = ((frame_idx - 1) * speed + phase) % w
 
-        for frame_idx in range(cycle):
-            set_pixels: list[tuple] = []
-
-            for i, py in enumerate(ys):
-                phase = (i * 3) % cycle
-                x = (frame_idx * speed + phase) % w
-
-                set_pixels.append((x, py, _R, _G, _B))
-
-            frames.append({"set": set_pixels})
-
-        self._frames = frames
+            self.set_pixel(prev_x, py, 0, 0, 0)
+            self.set_pixel(x, py, _R, _G, _B)

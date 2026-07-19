@@ -38,44 +38,41 @@ _FLASH_COLOURS = {
     2: (255, 255, 180),
 }
 
-_DEFAULT_HEIGHT = 6
-
 
 class ThunderRainAnimation(BaseAnimation):
     """Rain with periodic lightning flashes."""
 
-    def _build_frames(self) -> None:
-        h = self.height if self.height > 0 else _DEFAULT_HEIGHT
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._was_flashing = False
+
+    def draw(self, frame_idx: int) -> None:
+        h = self.height
         xs = _DROP_XS.get(self.intensity, _DROP_XS[1])
         period = _FLASH_PERIOD.get(self.intensity, 30)
         fr, fg, fb = _FLASH_COLOURS.get(self.intensity, _FLASH_COLOURS[1])
 
-        bolt = [(x, int(y * h / _DEFAULT_HEIGHT)) for x, y in _BOLT]
-        bolt_set = set(bolt)
+        rain_phase = frame_idx % h
+        flash_phase = frame_idx % period
+        bolt_set = set(_BOLT)
 
-        # Cycle length = lcm(h, period).  Use period * h to be safe.
-        cycle = period * h
-        frames: list[dict] = []
+        # Rain drops
+        for i, dx in enumerate(xs):
+            phase = (i * 2) % h
+            row = (rain_phase + phase) % h
+            prev_row = (row - 1 + h) % h
+            # Don't overwrite bolt pixels during flash
+            if (dx, prev_row) not in bolt_set or flash_phase >= _FLASH_DURATION:
+                self.set_pixel(dx, prev_row, 0, 0, 0)
+            if (dx, row) not in bolt_set or flash_phase >= _FLASH_DURATION:
+                self.set_pixel(dx, row, _RAIN_R, _RAIN_G, _RAIN_B)
 
-        for frame_idx in range(cycle):
-            rain_phase = frame_idx % h
-            flash_phase = frame_idx % period
-
-            set_pixels: list[tuple] = []
-
-            # Rain drops
-            for i, dx in enumerate(xs):
-                phase = (i * 2) % h
-                row = (rain_phase + phase) % h
-                # Don't overwrite bolt pixels during flash
-                if (dx, row) not in bolt_set or flash_phase >= _FLASH_DURATION:
-                    set_pixels.append((dx, row, _RAIN_R, _RAIN_G, _RAIN_B))
-
-            # Lightning flash
-            if flash_phase < _FLASH_DURATION:
-                for x, y in bolt:
-                    set_pixels.append((x, y, fr, fg, fb))
-
-            frames.append({"set": set_pixels})
-
-        self._frames = frames
+        # Lightning flash
+        if flash_phase < _FLASH_DURATION:
+            for x, y in _BOLT:
+                self.set_pixel(x, y, fr, fg, fb)
+            self._was_flashing = True
+        elif self._was_flashing:
+            for x, y in _BOLT:
+                self.set_pixel(x, y, 0, 0, 0)
+            self._was_flashing = False

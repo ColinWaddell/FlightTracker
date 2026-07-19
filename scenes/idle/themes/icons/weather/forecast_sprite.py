@@ -1,20 +1,20 @@
-"""ForecastSprite — a static weather icon plus an animated effect layer.
+"""Weather sprite helpers — icon drawing + animation lifecycle.
 
-A sprite occupies a 15×18 pixel region on the canvas.  The static icon
-(a 15×12 PNG) is drawn once at creation with its top-left corner at
-``(0, 3)`` — i.e. inset 3px from the top of the sprite.  The animation
-then plays over the **entire** 15×18 area, which means an animation may
-draw on top of the icon.
+This module provides the helpers the forecast theme uses to manage
+weather sprites.  There is no ``ForecastSprite`` class — the theme owns
+the lifecycle directly:
 
-Lifecycle:
-    1. Instantiate with icon name, animation name, intensity, day/night.
-    2. Call ``draw()`` every frame to advance the animation.
-    3. Call ``destroy()`` to blank the sprite area before discarding.
+    1. ``blank_area()``      — clear the sprite region to black.
+    2. ``draw_icon()``       — draw the static icon PNG once.
+    3. ``build_original()``  — snapshot the pre-animation colours.
+    4. ``create_animation()``— instantiate the animation engine.
+    5. ``anim.tick()``       — call every frame to advance the animation.
+    6. ``blank_area()``      — clear again at teardown.
 
-The sprite internally tracks its frame counter and delegates animation
-to the engine selected from the registry.  A snapshot of the sprite's
-RGB state (icon drawn, nothing animated yet) is passed to the animation
-engine so it can restore icon pixels it overwrites between frames.
+The animation engine receives the ``original`` snapshot so it can query
+``original_pixel(lx, ly)`` to restore icon pixels it overwrites.  The
+engine is fully responsible for clearing its own pixels between frames
+— the base class does no automatic restoration.
 """
 
 from __future__ import annotations
@@ -33,12 +33,10 @@ from scenes.idle.themes.icons.weather.animations.registry import get_animation_c
 # -----------------------------------------------------------------------
 
 SPRITE_WIDTH = 15
-SPRITE_HEIGHT = 18
+SPRITE_HEIGHT = 15
 ICON_HEIGHT = 12  # height of the icon PNG itself
-ICON_OFFSET_Y = 3  # y offset of the icon within the sprite
-# The animation occupies the full sprite area, so the animation height
-# equals the sprite height.  Kept as an export for callers that layout
-# around the sprite.
+ICON_OFFSET_Y = 0  # y offset of the icon within the sprite
+# Kept as an export for callers that layout around the sprite.
 ANIMATION_HEIGHT = SPRITE_HEIGHT
 
 # -----------------------------------------------------------------------
@@ -57,19 +55,54 @@ def _load_icon(filename: str) -> Image.Image:
     return _image_cache[filename]
 
 
-def _build_original(
+# -----------------------------------------------------------------------
+# Lifecycle helpers
+# -----------------------------------------------------------------------
+
+
+def blank_area(panel: RGBPanel, canvas, x: int, y: int) -> None:
+    """Blank the full sprite region (SPRITE_WIDTH × SPRITE_HEIGHT) to black."""
+    for py in range(y, y + SPRITE_HEIGHT):
+        for px in range(x, x + SPRITE_WIDTH):
+            panel.set_pixel(canvas, px, py, 0, 0, 0)
+
+
+def draw_icon(
+    panel: RGBPanel, canvas, x: int, y: int, icon_name: Optional[str]
+) -> Optional[Image.Image]:
+    """Draw the static icon PNG at (x, y + ICON_OFFSET_Y).
+
+    Returns the loaded icon ``Image`` (for passing to ``build_original``),
+    or ``None`` if ``icon_name`` is ``None``.
+    """
+    if icon_name is None:
+        return None
+    icon_image = _load_icon(icon_name)
+    panel.draw_image(canvas, x, y + ICON_OFFSET_Y, icon_image)
+    return icon_image
+
+
+def build_original(
+    icon_image: Optional[Image.Image],
+) -> list[list[tuple[int, int, int]]]:
+    """Snapshot the sprite's RGB state before any animation runs.
+
+    The grid is ``SPRITE_HEIGHT`` rows of ``SPRITE_WIDTH`` columns of
+    ``(r, g, b)`` triples.  Pixels outside the icon are black; pixels
+    inside the icon carry the icon's own RGB (matching what ``draw_image``
+    writes to the canvas, which skips fully-transparent pixels).
+    """
+    return _build_original_grid(
+        SPRITE_WIDTH, SPRITE_HEIGHT, icon_image, (0, ICON_OFFSET_Y)
+    )
+
+
+def _build_original_grid(
     width: int,
     height: int,
     icon_image: Optional[Image.Image],
     icon_offset: tuple[int, int],
 ) -> list[list[tuple[int, int, int]]]:
-    """Snapshot the sprite's RGB state before any animation runs.
-
-    The grid is ``height`` rows of ``width`` columns of ``(r, g, b)``
-    triples.  Pixels outside the icon are black; pixels inside the icon
-    carry the icon's own RGB (matching what ``draw_image`` writes to the
-    canvas, which skips fully-transparent pixels).
-    """
     grid: list[list[tuple[int, int, int]]] = [
         [(0, 0, 0)] * width for _ in range(height)
     ]
@@ -89,116 +122,37 @@ def _build_original(
     return grid
 
 
-# -----------------------------------------------------------------------
-# ForecastSprite
-# -----------------------------------------------------------------------
+def create_animation(
+    panel: RGBPanel,
+    canvas,
+    x: int,
+    y: int,
+    icon_name: Optional[str],
+    animation_name: Optional[str],
+    intensity: int,
+) -> Optional[BaseAnimation]:
+    """Full sprite setup: blank, draw icon, snapshot, instantiate engine.
 
+    Returns the animation engine (ready to ``tick()`` every frame), or
+    ``None`` if ``animation_name`` is ``None`` (static condition).
 
-class ForecastSprite:
-    """A weather forecast sprite: static icon + animated effect.
-
-    Args:
-        canvas:         Panel canvas object.
-        panel:          RGBPanel instance.
-        x:              Absolute canvas x of the sprite top-left.
-        y:              Absolute canvas y of the sprite top-left.
-        icon_name:      Static icon name (without ``.png``), or ``None``
-                        if the condition has no static icon.
-        animation_name: Animation name from ``codes.py``, or ``None``
-                        for static conditions (no animation).
-        intensity:      0 = light, 1 = medium, 2 = heavy.
-        is_day:         Currently unused by the sprite itself (day/night
-                        icon selection is done by the caller), but kept
-                        for future per-day/night animation variants.
+    The caller is responsible for blanking the area again when
+    discarding the animation (see ``blank_area``).
     """
+    blank_area(panel, canvas, x, y)
+    icon_image = draw_icon(panel, canvas, x, y, icon_name)
+    original = build_original(icon_image)
 
-    def __init__(
-        self,
-        canvas,
-        panel: RGBPanel,
-        x: int,
-        y: int,
-        icon_name: Optional[str],
-        animation_name: Optional[str],
-        intensity: int,
-        is_day: bool = True,
-    ) -> None:
-        self.canvas = canvas
-        self.panel = panel
-        self.x = x
-        self.y = y
-        self.icon_name = icon_name
-        self.animation_name = animation_name
-        self.intensity = intensity
-        self.is_day = is_day
-        self.frame: int = 0
-
-        # --- Draw the static icon (once) ---
-        self._has_icon = icon_name is not None
-        icon_image: Optional[Image.Image] = None
-        icon_offset = (0, 0)
-        if self._has_icon:
-            icon_image = _load_icon(icon_name)
-            icon_offset = (0, ICON_OFFSET_Y)
-            self.panel.draw_image(self.canvas, x, y + ICON_OFFSET_Y, icon_image)
-
-        # --- Snapshot the pre-animation state ---
-        original = _build_original(SPRITE_WIDTH, SPRITE_HEIGHT, icon_image, icon_offset)
-
-        # --- Instantiate the animation engine (always full sprite area) ---
-        self.animation: Optional[BaseAnimation] = None
-        anim_cls = get_animation_class(animation_name)
-        if anim_cls is not None:
-            self.animation = anim_cls(
-                x=x,
-                y=y,
-                width=SPRITE_WIDTH,
-                height=SPRITE_HEIGHT,
-                intensity=intensity,
-                panel=panel,
-                canvas=canvas,
-                original=original,
-            )
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def draw(self) -> None:
-        """Advance the animation by one frame.
-
-        Called every frame (~12.5 fps) by the theme or test harness.
-        Only touches the delta pixels — no full-area clear.
-        """
-        if self.animation is not None:
-            self.animation.tick()
-        self.frame += 1
-
-    def destroy(self) -> None:
-        """Blank the entire sprite area (16×18).
-
-        Call this before discarding the sprite to avoid leaving stale
-        pixels on the canvas.
-        """
-        # Blank the animation area first (engine knows its exact pixels)
-        if self.animation is not None:
-            self.animation.reset()
-
-        # Blank the full sprite region to be safe
-        for py in range(self.y, self.y + SPRITE_HEIGHT):
-            for px in range(self.x, self.x + SPRITE_WIDTH):
-                self.panel.set_pixel(self.canvas, px, py, 0, 0, 0)
-
-    @property
-    def animation_frame(self) -> int:
-        """Current frame index within the animation loop (0-based)."""
-        if self.animation is not None:
-            return self.animation.frame % self.animation.frame_count
-        return 0
-
-    @property
-    def animation_frame_count(self) -> int:
-        """Total number of frames in the animation loop."""
-        if self.animation is not None:
-            return self.animation.frame_count
-        return 0
+    anim_cls = get_animation_class(animation_name)
+    if anim_cls is None:
+        return None
+    return anim_cls(
+        x=x,
+        y=y,
+        width=SPRITE_WIDTH,
+        height=SPRITE_HEIGHT,
+        intensity=intensity,
+        panel=panel,
+        canvas=canvas,
+        original=original,
+    )

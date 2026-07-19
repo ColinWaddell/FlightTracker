@@ -5,8 +5,9 @@ Intensity controls flake count and adds slight horizontal sway:
     1 (medium) — 3 flakes
     2 (heavy)  — 5 flakes, denser
 
-Flakes fall 1px every 2 frames (achieved by alternating set/clear frames)
-and sway ±1px horizontally via a baked-in sine pattern.
+Flakes fall 1px every 2 frames and sway ±1px horizontally via a baked-in
+sine pattern.  Each frame clears the flake's previous position and
+lights the new one.
 """
 
 from __future__ import annotations
@@ -25,38 +26,30 @@ _FLAKE_XS = {
     2: [2, 5, 8, 11, 14],
 }
 
-_DEFAULT_HEIGHT = 6
+# Sway pattern: -1, 0, 1, 0 repeating (period 4)
+_SWAY = (-1, 0, 1, 0)
 
 
 class SnowAnimation(BaseAnimation):
     """Drifting snow flakes."""
 
-    def _build_frames(self) -> None:
-        h = self.height if self.height > 0 else _DEFAULT_HEIGHT
+    def draw(self, frame_idx: int) -> None:
+        h = self.height
         xs = _FLAKE_XS.get(self.intensity, _FLAKE_XS[1])
-        num_flakes = len(xs)
-
-        # Sway pattern: -1, 0, 1, 0 repeating (period 4)
-        _sway = (-1, 0, 1, 0)
-
-        # Fall speed: 1px per 2 frames → cycle length = h * 2
         cycle = h * 2
-        frames: list[dict] = []
 
-        for frame_idx in range(cycle):
-            set_pixels: list[tuple] = []
+        for i, bx in enumerate(xs):
+            phase = (i * 3) % cycle
+            pos = (frame_idx + phase) % cycle
+            row = pos // 2  # fall 1px every 2 frames
+            prev_row = ((pos - 1) % cycle) // 2
 
-            for i, bx in enumerate(xs):
-                phase = (i * 3) % cycle
-                pos = (frame_idx + phase) % cycle
-                row = pos // 2  # fall 1px every 2 frames
+            sway = _SWAY[frame_idx % 4]
+            x = bx + sway
+            prev_sway = _SWAY[(frame_idx - 1) % 4]
+            prev_x = bx + prev_sway
 
-                sway = _sway[frame_idx % 4]
-                x = bx + sway
-
-                if 0 <= x < self.width:
-                    set_pixels.append((x, row, _R, _G, _B))
-
-            frames.append({"set": set_pixels})
-
-        self._frames = frames
+            if 0 <= prev_x < self.width:
+                self.set_pixel(prev_x, prev_row, 0, 0, 0)
+            if 0 <= x < self.width:
+                self.set_pixel(x, row, _R, _G, _B)
