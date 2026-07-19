@@ -173,6 +173,7 @@ def _draw_text(canvas, font: SimulatorFont, x: int, y: int, colour, text: str) -
         return 0
 
     r, g, b = colour.red, colour.green, colour.blue
+    y = y - 1
     cursor_x = x
     start_x = x
 
@@ -245,8 +246,10 @@ def _draw_circle(canvas, cx: int, cy: int, radius: int, colour) -> None:
 
 def _draw_square(canvas, x0: int, y0: int, x1: int, y1: int, colour) -> None:
     r, g, b = colour.red, colour.green, colour.blue
-    for x in range(x0, x1):
-        _draw_line(canvas, x, y0, x, y1, Colour(r, g, b))
+    left, right = (x0, x1) if x0 <= x1 else (x1, x0)
+    top, bottom = (y0, y1) if y0 <= y1 else (y1, y0)
+    for x in range(left, right):
+        _draw_line(canvas, x, top, x, bottom, Colour(r, g, b))
 
 
 # ---------------------------------------------------------------------------
