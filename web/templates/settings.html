@@ -626,11 +626,11 @@
             <div class="btn-group w-100" role="group" aria-label="Adafruit HAT mode">
               <input type="radio" class="btn-check" name="hat_pwm_enabled" id="hat_pwm_quality" value="quality" autocomplete="off"
                      {% if cfg.hat_pwm_enabled %}checked{% endif %} />
-              <label class="btn btn-outline-primary btn-sm" for="hat_pwm_quality"><i class="bi bi-check-circle me-1"></i>Quality Mode (Adafruit PWM Enabled)</label>
+              <label class="btn btn-outline-primary btn-sm" for="hat_pwm_quality">Quality Mode (Adafruit PWM Enabled)</label>
 
               <input type="radio" class="btn-check" name="hat_pwm_enabled" id="hat_pwm_convenience" value="convenience" autocomplete="off"
                      {% if not cfg.hat_pwm_enabled %}checked{% endif %} />
-              <label class="btn btn-outline-primary btn-sm" for="hat_pwm_convenience"><i class="bi bi-x-circle me-1"></i>Convenience Mode</label>
+              <label class="btn btn-outline-primary btn-sm" for="hat_pwm_convenience">Convenience Mode</label>
             </div>
             <div class="form-text text-muted small">If you soldered the bridge and selected Quality during setup, choose Quality Mode here to enable Adafruit PWM mode. Otherwise choose Convenience Mode. These options have no effect on a Pi 5; they only apply to older Pi models using the rgbmatrix library.</div>
           </div>
