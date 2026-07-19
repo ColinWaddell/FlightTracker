@@ -706,6 +706,9 @@ class Config:
         return self.screen_schedule_enabled and time_in_window(start, end)
 
     def is_in_device_standby(self) -> bool:
+        if not self.screen_schedule_enabled:
+            return False
+
         in_brightness_schedule = self.is_in_brightness_schedule()
         scheduled_0_brightness = self.schedule_brightness_percent == 0
         return in_brightness_schedule and scheduled_0_brightness
