@@ -8124,11 +8124,6 @@
     "municipality": "Cardiff",
     "name": "Cardiff International Airport"
   },
-  "CWP": {
-    "country_name": "Pakistan",
-    "municipality": "Campbellpore",
-    "name": "Campbellpore Airport"
-  },
   "CWR": {
     "country_name": "Australia",
     "municipality": "",
@@ -8193,11 +8188,6 @@
     "country_name": "United States",
     "municipality": "Calexico",
     "name": "Calexico International Airport"
-  },
-  "CXM": {
-    "country_name": "Angola",
-    "municipality": "Camaxilo",
-    "name": "Camaxilo Airport"
   },
   "CXN": {
     "country_name": "Somalia",
@@ -20054,6 +20044,11 @@
     "municipality": "Benteng",
     "name": "Selayar - Haji Aroeppala Airport"
   },
+  "KSS": {
+    "country_name": "Mali",
+    "municipality": "Sikasso",
+    "name": "Sikasso (Dignangan) Airport"
+  },
   "KSU": {
     "country_name": "Norway",
     "municipality": "Kvernberget",
@@ -22299,6 +22294,11 @@
     "municipality": "Fort Benning",
     "name": "Lawson Army Air Field"
   },
+  "LSG": {
+    "country_name": "China",
+    "municipality": "Leshan (Wutongqiao)",
+    "name": "Leshan Airport"
+  },
   "LSH": {
     "country_name": "Myanmar",
     "municipality": "Lashio",
@@ -22445,8 +22445,8 @@
     "name": "Lethem Airport"
   },
   "LTN": {
-    "country_name": "United Kingdom",
-    "municipality": "Luton, Luton",
+    "country_n ame": "United Kingdom",
+    "municipality": "Luton, Bedfordshire",
     "name": "London Luton Airport"
   },
   "LTO": {
@@ -38529,11 +38529,6 @@
     "municipality": "Britton",
     "name": "Britton Municipal Airport"
   },
-  "TTQ": {
-    "country_name": "Costa Rica",
-    "municipality": "Tortuguero",
-    "name": "Barra del Tortuguero"
-  },
   "TTR": {
     "country_name": "Indonesia",
     "municipality": "Makale",
@@ -41722,7 +41717,7 @@
   "WSI": {
     "country_name": "Australia",
     "municipality": "Sydney",
-    "name": "Nancy Bird Walton, Western Sydney International Airport"
+    "name": "Western Sydney International (Nancy-Bird Walton) Airport"
   },
   "WSK": {
     "country_name": "China",
