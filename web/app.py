@@ -339,7 +339,7 @@ def settings():
                         "settings.html",
                         cfg=merged_cfg,
                         airports_json=airports_json(),
-                        error="A password is required before saving, even if you plan on disabling the web-interface.",
+                        error="To change any setting you must update the default web-interface password, even if you plan on disabling the web-interface.",
                         csrf_token=csrf_token(),
                         in_schedule=cfg.is_in_brightness_schedule(),
                         schedule_window=cfg.brightness_schedule_window,
