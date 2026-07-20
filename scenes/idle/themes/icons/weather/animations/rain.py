@@ -55,12 +55,11 @@ _FALL_SPEED = 1
 class _Drop:
     """A single falling rain drop."""
 
-    __slots__ = ("x", "y", "prev_y")
+    __slots__ = ("x", "y")
 
     def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
-        self.prev_y = y
 
 
 class RainAnimation(BaseAnimation):
@@ -81,9 +80,8 @@ class RainAnimation(BaseAnimation):
 
         # Seed a few initial drops at random positions so the animation
         # starts mid-fall rather than from an empty box.  More drops for
-        # higher intensity.  ``prev_y`` is set to ``y`` so the first
-        # clear on the next tick targets the correct pixel.  The drops
-        # are drawn on the first ``draw()`` call (see ``_first_frame``).
+        # higher intensity.  The drops are drawn on the first ``draw()``
+        # call (see ``_first_frame``).
         initial_count = self.intensity + 1
         for _ in range(initial_count):
             x = random.choice(self._columns)
@@ -102,14 +100,15 @@ class RainAnimation(BaseAnimation):
                 self.set_pixel(drop.x, drop.y, _R, _G, _B)
             return
 
-        # --- Pass 1: clear every drop's previous pixel ----------------
+        # --- Pass 1: clear every drop's current pixel -----------------
+        # The drop was drawn at ``drop.y`` last frame, so that's the
+        # pixel we need to clear — not ``prev_y``.
         for drop in self._drops:
-            self.set_pixel(drop.x, drop.prev_y, 0, 0, 0)
+            self.set_pixel(drop.x, drop.y, 0, 0, 0)
 
         # --- Pass 2: advance each drop --------------------------------
         survivors: list[_Drop] = []
         for drop in self._drops:
-            drop.prev_y = drop.y
             drop.y += _FALL_SPEED
             if drop.y <= _BOX_BOTTOM:
                 survivors.append(drop)
