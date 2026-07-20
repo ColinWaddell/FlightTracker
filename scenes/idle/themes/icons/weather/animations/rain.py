@@ -36,7 +36,7 @@ _BOX_BOTTOM = 14     # inclusive
 
 # Columns available per intensity (subset of the box's x-range).
 _COLUMNS = {
-    0: [4, 10],              # light: 2 columns
+    0: [4, 6, 10],              # light: 2 columns
     1: [4, 6, 8, 10],        # medium: 4 columns
     2: [3, 5, 6, 8, 9, 11],  # heavy: 6 columns
 }

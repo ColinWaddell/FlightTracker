@@ -1,61 +1,37 @@
-"""Thunder animation — periodic lightning flash.
+"""Thunder animation — random lightning bolts flashing under the cloud.
 
-The animation area is mostly dark.  Every ``_FLASH_PERIOD`` frames a
-zigzag lightning bolt flashes for ``_FLASH_DURATION`` frames, then
-clears.
+Lightning bolts flash briefly in the bounding box beneath the cloud icon.
+Each flash picks a random bolt shape and random horizontal position, so
+no two flashes look the same and there is no detectable loop.
 
-Intensity controls flash brightness and frequency:
-    0 — dim flash, longer period
-    1 — medium flash
-    2 — bright flash, shorter period
+The thunder box is fixed (shared with rain/snow/sleet):
+    top-left     [3, 11]
+    bottom-right [11, 14]
+
+Each flash lasts 5 frames: 3 frames at full brightness, then 2 frames
+of dimmer afterglow, then dark.  Between flashes the box is empty.
+
+Intensity controls:
+    - flash frequency (per-frame chance of a new flash)
+    - bolt brightness
+
+    0 (light)  — rare flashes, dimmer bolts
+    1 (medium) — occasional flashes, bright bolts
+    2 (heavy)  — frequent flashes, brightest bolts
 """
 
 from __future__ import annotations
 
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
-
-_FLASH_PERIOD = {0: 40, 1: 30, 2: 24}  # frames between flashes
-_FLASH_DURATION = 3  # frames the bolt stays visible
-
-# Lightning bolt zigzag (local coords).  A simple Z-shaped bolt.
-_BOLT = [
-    (7, 0),
-    (8, 0),
-    (8, 1),
-    (7, 2),
-    (7, 3),
-    (8, 4),
-    (8, 5),
-    (7, 5),
-]
-
-# Flash colours per intensity (yellow-white)
-_COLOURS = {
-    0: (180, 180, 100),
-    1: (220, 220, 140),
-    2: (255, 255, 180),
-}
+from scenes.idle.themes.icons.weather.animations.thunder_mixin import ThunderMixin
 
 
-class ThunderAnimation(BaseAnimation):
-    """Periodic lightning flash with no precipitation."""
+class ThunderAnimation(ThunderMixin, BaseAnimation):
+    """Random lightning bolts flashing under the cloud."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._was_flashing = False
+        self._thunder_init()
 
     def draw(self, frame_idx: int) -> None:
-        period = _FLASH_PERIOD.get(self.intensity, 30)
-        flash_phase = frame_idx % period
-        is_flash = flash_phase < _FLASH_DURATION
-        r, g, b = _COLOURS.get(self.intensity, _COLOURS[1])
-
-        if is_flash:
-            for x, y in _BOLT:
-                self.set_pixel(x, y, r, g, b)
-            self._was_flashing = True
-        elif self._was_flashing:
-            # Clear the bolt on the first dark frame after a flash.
-            for x, y in _BOLT:
-                self.set_pixel(x, y, 0, 0, 0)
-            self._was_flashing = False
+        self._thunder_tick()

@@ -29,7 +29,7 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
 
 # Weather condition codes to display (from codes.py CODE_MAPPINGS).
 # Pick any 3 codes to see their icons + animations side by side.
-CONDITION_CODES = [1000, 1003, 1183]
+CONDITION_CODES = [1087, 1273, 1279]
 
 # Force night mode (uses night icon/animation variants from codes.py).
 NIGHT_MODE = False
