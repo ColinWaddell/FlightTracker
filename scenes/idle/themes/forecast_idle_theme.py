@@ -37,6 +37,7 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts, frames
 from setup.configuration import Config
+from setup.screen import WIDTH as SCREEN_WIDTH
 from setup.themes import (
     TC,
     THEME_BG,
@@ -77,9 +78,9 @@ CLOCK_AMPM_FONT = fonts.extrasmall
 CLOCK_POSITION = (0, 5)
 AMPM_POSITION_Y = 5
 
-# Date
-DATE_FONT = fonts.small
-DATE_POSITION = (1, 31)
+# Date — sits on the same line as the clock, positioned after it.
+DATE_FONT = CLOCK_FONT
+DATE_POSITION_Y = CLOCK_POSITION[1]
 # Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
 # Formats 0 and 1 both render as DD/MM (day before month);
 # format 2 renders as MM/DD (month before day).
@@ -101,6 +102,7 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_slots: list[tuple] | None = None
         self.last_time: str | None = None
         self.last_date: str | None = None
+        self._last_date_x: int = 0
         self.last_day: str | None = None
         self.animations: list = []
         self._anim_positions: list[tuple[int, int]] = []
@@ -307,11 +309,13 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_date(self) -> None:
-        """Draw day abbreviation + date (e.g. WED2/3) in two colours.
+        """Draw day abbreviation + date (e.g. WED2/3) right-aligned.
 
-        The day short-name uses THEME_CURRENT_DAY and the date uses
-        THEME_CURRENT_DATE.  The date is DD/MM or MM/DD depending on
-        the configured date format.  Leading zeros are stripped.
+        The date sits on the same line as the clock, right-aligned to
+        the panel width.  The day short-name uses THEME_CURRENT_DAY and
+        the date uses THEME_CURRENT_DATE.  The date is DD/MM or MM/DD
+        depending on the configured date format.  Leading zeros are
+        stripped.
 
         Caches the full drawn string so we only redraw when it changes.
         """
@@ -332,16 +336,23 @@ class ForecastIdleTheme(BaseIdleScene):
         if self.last_date == current_date:
             return
 
+        # Calculate x-position: right-aligned to the panel width.
+        total_width = (
+            font_text_width(DATE_FONT, day_name)
+            + font_text_width(DATE_FONT, date_str)
+        )
+        date_x = SCREEN_WIDTH - total_width
+
         # Undraw old value (both segments in background colour)
         if self.last_date is not None:
             old_day_name = self.last_date[:3]
             old_date_str = self.last_date[3:]
-            x = DATE_POSITION[0]
+            x = self._last_date_x
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
                 x,
-                DATE_POSITION[1],
+                DATE_POSITION_Y,
                 TC(THEME_BG),
                 old_day_name,
             )
@@ -350,20 +361,21 @@ class ForecastIdleTheme(BaseIdleScene):
                 self.canvas,
                 DATE_FONT,
                 x,
-                DATE_POSITION[1],
+                DATE_POSITION_Y,
                 TC(THEME_BG),
                 old_date_str,
             )
 
         self.last_date = current_date
+        self._last_date_x = date_x
 
         # Draw new value: day name in THEME_CURRENT_DAY, date in THEME_CURRENT_DATE
-        x = DATE_POSITION[0]
+        x = date_x
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
             x,
-            DATE_POSITION[1],
+            DATE_POSITION_Y,
             TC(THEME_CURRENT_DAY),
             day_name,
         )
@@ -372,7 +384,7 @@ class ForecastIdleTheme(BaseIdleScene):
             self.canvas,
             DATE_FONT,
             x,
-            DATE_POSITION[1],
+            DATE_POSITION_Y,
             TC(THEME_CURRENT_DATE),
             date_str,
         )
