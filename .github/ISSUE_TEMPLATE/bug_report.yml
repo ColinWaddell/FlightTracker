@@ -53,6 +53,7 @@ body:
       description: Which flight data source are you using?
       options:
         - FlightRadar24 (online)
+        - OpenSkyNetwork (online)
         - tar1090 (local / self-hosted)
         - Not sure
     validations:

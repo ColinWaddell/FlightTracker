@@ -239,7 +239,8 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
-        "hat_pwm_enabled": bool_val(form.get("hat_pwm_enabled")),
+        "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
+        == "quality",
         "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
         # Data source
@@ -359,7 +360,7 @@ def settings():
                         "settings.html",
                         cfg=merged_cfg,
                         airports_json=airports_json(),
-                        error="A password is required before saving, even if you plan on disabling the web-interface.",
+                        error="To change any setting you must update the default web-interface password, even if you plan on disabling the web-interface.",
                         csrf_token=csrf_token(),
                         in_schedule=cfg.is_in_brightness_schedule(),
                         schedule_window=cfg.brightness_schedule_window,
