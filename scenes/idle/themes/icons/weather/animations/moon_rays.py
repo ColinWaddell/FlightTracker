@@ -19,32 +19,55 @@ from __future__ import annotations
 
 import random
 
-from setup import frames
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
+from setup import frames
 
 # Fixed time step per frame (seconds).
 DT = frames.PERIOD
 
-# Moonlight colour (pale blue-white)
-R = 180
-G = 190
-B = 220
+# Moonray colour
+R = 255
+G = 240
+B = 60
 
 # Pixel coordinates of the moon in the sprite.
-MOON_LOCATION = [
-    [10, 0], [11, 0],
-    [9, 1], [10, 1],
-    [9, 2], [10, 2],
-    [10, 3], [11, 3],
-    [11, 4], [12, 4], [13, 4],
+MOON_LOCATION_0 = [
+    [10, 1],
+    [11, 1],
+    [9, 2],
+    [10, 2],
+    [9, 3],
+    [10, 3],
+    [10, 4],
+    [11, 4],
+    [11, 5],
     [12, 5],
+    [13, 5],
+    [12, 6],
+]
+
+MOON_LOCATION_1 = [
+    [5, 1],
+    [4, 2],
+    [3, 3],
+    [7, 7],
+    [3, 8],
+    [4, 9],
+    [5, 8],
+    [10, 10],
+    [11, 9],
+    [12, 8],
+    [4, 5],
+    [5, 7],
+    [8, 8],
+    [10, 9],
 ]
 
 # Per-intensity: chance per frame that a dark pixel starts sparkling.
 SPARKLE_CHANCE = {
-    0: 0.008,   # light:  rare (~1/sec per pixel)
-    1: 0.015,   # medium: occasional (~2/sec per pixel)
-    2: 0.03,    # heavy:  frequent (~3.75/sec per pixel)
+    0: 0.008,  # light:  rare (~1/sec per pixel)
+    1: 0.015,  # medium: occasional (~2/sec per pixel)
+    2: 0.03,  # heavy:  frequent (~3.75/sec per pixel)
 }
 
 # Brightness range a sparkle rises to (0–1).
@@ -90,16 +113,19 @@ class MoonRaysAnimation(BaseAnimation):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.sparkle_chance = SPARKLE_CHANCE.get(
-            self.intensity, SPARKLE_CHANCE[1]
-        )
+        self.sparkle_chance = SPARKLE_CHANCE.get(self.intensity, SPARKLE_CHANCE[1])
         self.peak_range = SPARKLE_PEAK.get(self.intensity, SPARKLE_PEAK[1])
         self.rise_range = RISE_SPEED.get(self.intensity, RISE_SPEED[1])
         self.fade_range = FADE_SPEED.get(self.intensity, FADE_SPEED[1])
 
+        # Pixel set depends on intensity (intensity 2 reuses the denser set).
+        moon_location = {0: MOON_LOCATION_0, 1: MOON_LOCATION_1}.get(
+            self.intensity, MOON_LOCATION_1
+        )
+
         # Per-pixel sparkle state.
         self.state: dict[tuple[int, int], _Sparkle] = {
-            (x, y): _Sparkle() for x, y in MOON_LOCATION
+            (x, y): _Sparkle() for x, y in moon_location
         }
 
     def draw(self, frame_idx: int) -> None:
@@ -115,9 +141,7 @@ class MoonRaysAnimation(BaseAnimation):
                     sparkle.speed = random.uniform(*self.fade_range)
             elif sparkle.brightness > FADED:
                 # Fading back to dark.
-                sparkle.brightness -= sparkle.brightness * min(
-                    1.0, sparkle.speed * DT
-                )
+                sparkle.brightness -= sparkle.brightness * min(1.0, sparkle.speed * DT)
                 if sparkle.brightness < FADED:
                     sparkle.brightness = 0.0
             else:

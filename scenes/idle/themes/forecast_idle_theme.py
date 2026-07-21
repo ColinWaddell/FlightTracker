@@ -327,25 +327,21 @@ class ForecastIdleTheme(BaseIdleScene):
         month = now.month
 
         day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        if day_first:
-            date_str = f"{day}/{month}"
-        else:
-            date_str = f"{month}/{day}"
+        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
 
         current_date = day_name + date_str
         if self.last_date == current_date:
             return
 
         # Calculate x-position: right-aligned to the panel width.
-        total_width = (
-            font_text_width(DATE_FONT, day_name)
-            + font_text_width(DATE_FONT, date_str)
+        total_width = font_text_width(DATE_FONT, day_name) + font_text_width(
+            DATE_FONT, date_str
         )
         date_x = SCREEN_WIDTH - total_width
 
         # Undraw old value (both segments in background colour)
         if self.last_date is not None:
-            old_day_name = self.last_date[:3]
+            old_day_name = self.last_date[:3] + " "
             old_date_str = self.last_date[3:]
             x = self._last_date_x
             self.panel.draw_text(
@@ -418,10 +414,7 @@ class ForecastIdleTheme(BaseIdleScene):
         if not hourly:
             return None
 
-        if duration == "12hour":
-            indices = [0, 4, 8]
-        else:  # "3hour" (default)
-            indices = [0, 1, 2]
+        indices = [0, 4, 8] if duration == "12hour" else [0, 1, 2]
 
         slots = []
         for idx in indices:
@@ -439,11 +432,7 @@ class ForecastIdleTheme(BaseIdleScene):
         return slots
 
     def _daily_slots(
-        self,
-        weather: dict,
-        now: datetime.datetime,
-        lat,
-        lng
+        self, weather: dict, now: datetime.datetime, lat, lng
     ) -> list[tuple] | None:
         """Return 3 daily forecast slots (today + next 2 days).
 
