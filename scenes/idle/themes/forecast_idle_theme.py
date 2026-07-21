@@ -46,8 +46,6 @@ from setup.themes import (
     THEME_FORECAST_TOP_TEXT,
     THEME_TIME,
     THEME_TIME_AMPM,
-    THEME_WEATHER_10C,
-    THEME_WEATHER_20C,
 )
 from utilities.sun_times import is_daytime
 
@@ -450,9 +448,6 @@ class ForecastIdleTheme(BaseIdleScene):
         if len(daily) < 3:
             return None
 
-        min_colour = TC(THEME_WEATHER_10C)
-        max_colour = TC(THEME_WEATHER_20C)
-
         slots = []
         for day_offset in range(3):
             if day_offset == 0:
@@ -470,8 +465,8 @@ class ForecastIdleTheme(BaseIdleScene):
             min_str = self._format_temp_value(temp_min)
             max_str = self._format_temp_value(temp_max)
             bottom_label = [
-                (min_str, min_colour),
-                (max_str, max_colour),
+                (min_str, temperature_to_colour(temp_min)),
+                (max_str, temperature_to_colour(temp_max)),
             ]
             # Use the average temperature for colouring
             temp_avg = (temp_min + temp_max) / 2
