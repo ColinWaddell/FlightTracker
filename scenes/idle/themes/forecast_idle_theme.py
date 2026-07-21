@@ -86,6 +86,9 @@ DATE_POSITION_Y = CLOCK_POSITION[1]
 # format 2 renders as MM/DD (month before day).
 DATE_DAY_FIRST = {0: True, 1: True, 2: False}
 
+# Pixel gap between the day abbreviation and the date on the clock line.
+DAY_DATE_SPACE_PX = 2
+
 # Day of week
 DAY_FONT = fonts.small
 DAY_POSITION = (2, 23)
@@ -329,34 +332,39 @@ class ForecastIdleTheme(BaseIdleScene):
         day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
         date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
 
-        current_date = day_name + date_str
+        current_date = day_name + " " + date_str
         if self.last_date == current_date:
             return
 
-        # Calculate x-position: right-aligned to the panel width.
-        total_width = font_text_width(DATE_FONT, day_name) + font_text_width(
-            DATE_FONT, date_str
-        )
-        date_x = SCREEN_WIDTH - total_width
+        # Right-align the date to the panel width, then place the day
+        # name DAY_DATE_SPACE_PX pixels to its left.
+        date_width = font_text_width(DATE_FONT, date_str)
+        date_x = SCREEN_WIDTH - date_width
+        day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
 
         # Undraw old value (both segments in background colour)
         if self.last_date is not None:
-            old_day_name = self.last_date[:3] + " "
-            old_date_str = self.last_date[3:]
-            x = self._last_date_x
+            old_day_name = self.last_date[:3]
+            old_date_str = self.last_date[4:]  # skip the space at index 3
+            old_date_width = font_text_width(DATE_FONT, old_date_str)
+            old_date_x = SCREEN_WIDTH - old_date_width
+            old_day_x = (
+                old_date_x
+                - DAY_DATE_SPACE_PX
+                - font_text_width(DATE_FONT, old_day_name)
+            )
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
-                x,
+                old_day_x,
                 DATE_POSITION_Y,
                 TC(THEME_BG),
                 old_day_name,
             )
-            x += font_text_width(DATE_FONT, old_day_name)
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
-                x,
+                old_date_x,
                 DATE_POSITION_Y,
                 TC(THEME_BG),
                 old_date_str,
@@ -366,20 +374,18 @@ class ForecastIdleTheme(BaseIdleScene):
         self._last_date_x = date_x
 
         # Draw new value: day name in THEME_CURRENT_DAY, date in THEME_CURRENT_DATE
-        x = date_x
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
-            x,
+            day_x,
             DATE_POSITION_Y,
             TC(THEME_CURRENT_DAY),
             day_name,
         )
-        x += font_text_width(DATE_FONT, day_name)
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
-            x,
+            date_x,
             DATE_POSITION_Y,
             TC(THEME_CURRENT_DATE),
             date_str,
