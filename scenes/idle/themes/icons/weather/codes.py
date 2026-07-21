@@ -1,7 +1,6 @@
 CODE_MAPPINGS = {
     1000: ["sun", "moon", "rays", "moon_rays", 0],
-    1003: ["sun", "moon", "rays", "moon_rays", 1],
-    # 1003: ["cloud_sun", "cloud_moon", "rays", "moon_rays", 1],
+    1003: ["cloud_sun", "cloud_moon", "rays", "moon_rays", 1],
     1006: ["cloud", "cloud_moon", None, None, 0],
     1009: ["cloud_dark", "cloud_dark", None, None, 0],
     1012: [None, None, "dusty", "dusty", 0],

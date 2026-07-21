@@ -53,6 +53,9 @@ THEME_WEATHER_20C = "WEATHER_20C"
 THEME_WEATHER_25C = "WEATHER_25C"
 THEME_WEATHER_35C = "WEATHER_35C"
 
+# Forecast theme
+THEME_FORECAST_TOP_TEXT = "FORECAST_TOP_TEXT"
+
 # ---------------------------------------------------------------------------
 # Theme definitions
 # ---------------------------------------------------------------------------
@@ -85,6 +88,7 @@ THEME_DEFAULT = {
     THEME_WEATHER_20C: colours.PEACH_SOFT,
     THEME_WEATHER_25C: colours.PEACH_RED,
     THEME_WEATHER_35C: colours.SCARLET_RED,
+    THEME_FORECAST_TOP_TEXT: colours.PEACH,
 }
 
 THEME_MONOCHROME = {
@@ -115,6 +119,7 @@ THEME_MONOCHROME = {
     THEME_WEATHER_20C: colours.NAVAJO_WHITE,
     THEME_WEATHER_25C: colours.WHITE,
     THEME_WEATHER_35C: colours.WHITE_SMOKE,
+    THEME_FORECAST_TOP_TEXT: colours.WHITE,
 }
 
 THEME_PASTEL = {
@@ -145,6 +150,7 @@ THEME_PASTEL = {
     THEME_WEATHER_20C: colours.PEACH_SOFT,
     THEME_WEATHER_25C: colours.PEACH_PUFF,
     THEME_WEATHER_35C: colours.HOT_PINK,
+    THEME_FORECAST_TOP_TEXT: colours.PEACH_PUFF,
 }
 
 THEME_CLASSIC = {
@@ -175,6 +181,7 @@ THEME_CLASSIC = {
     THEME_WEATHER_20C: colours.YELLOW,
     THEME_WEATHER_25C: colours.ORANGE,
     THEME_WEATHER_35C: colours.RED,
+    THEME_FORECAST_TOP_TEXT: colours.PEACH,
 }
 
 THEMES = [THEME_DEFAULT, THEME_MONOCHROME, THEME_PASTEL, THEME_CLASSIC]

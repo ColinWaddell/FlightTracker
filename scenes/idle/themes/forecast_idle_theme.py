@@ -43,7 +43,7 @@ from setup.themes import (
     THEME_BG,
     THEME_CURRENT_DATE,
     THEME_CURRENT_DAY,
-    THEME_TEXT,
+    THEME_FORECAST_TOP_TEXT,
     THEME_TIME,
     THEME_TIME_AMPM,
     THEME_WEATHER_10C,
@@ -210,7 +210,7 @@ class ForecastIdleTheme(BaseIdleScene):
                     LABEL_FONT,
                     label_x,
                     TOP_LABEL_Y,
-                    TC(THEME_TEXT),
+                    TC(THEME_FORECAST_TOP_TEXT),
                     top_label,
                 )
 
