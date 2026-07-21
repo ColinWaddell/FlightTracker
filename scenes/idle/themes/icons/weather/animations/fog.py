@@ -1,61 +1,98 @@
-"""Fog animation — slow horizontal-drifting wispy bands.
+"""Fog animation — subtle patchy background with prominent sinusoidal lines.
 
-Fog fills the animation area with semi-transparent horizontal bands that
-drift slowly to the right.  Intensity controls band count and opacity:
-    0 — 1 band, dim
-    1 — 2 bands, medium
-    2 — 3 bands, brighter
+Fog uses the same configuration as mist — a patchy shimmer background
+with prominent undulating sinusoidal lines on top.
 
-For no-icon codes (fog has ``None`` icon in ``codes.py``), the animation
-fills the full sprite height.
+Uses the shared ``FogMistAnimation`` engine from ``fog_mist.py``.
+
+Intensity controls:
+    - the number of sinusoidal lines
+    - line brightness
+    - the number of background rows
+
+    0 (light)  — 2 lines, 8 bg rows, dim
+    1 (medium) — 3 lines, 10 bg rows, medium
+    2 (heavy)  — 4 lines, 12 bg rows, bright
 """
 
 from __future__ import annotations
 
-from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
+from scenes.idle.themes.icons.weather.animations.fog_mist import (
+    FogMistAnimation,
+    FogMistConfig,
+)
 
 # Fog colour (grey-white)
-_R = 160
-_G = 160
-_B = 170
+COLOUR = (160, 160, 170)
 
-# Band definitions per intensity: list of (y_start, y_end, brightness_scale)
-# Coordinates are relative to a 6px reference height and scaled at draw time.
-_BANDS = {
-    0: [(0, 1, 0.5)],
-    1: [(0, 1, 0.6), (3, 4, 0.5)],
-    2: [(0, 1, 0.7), (2, 3, 0.6), (4, 5, 0.5)],
+# Background rows per intensity — same coverage as mist.
+BG_ROWS = {
+    0: [3, 4, 5, 6, 7, 8, 9, 10],                # 8 rows
+    1: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],         # 10 rows
+    2: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],  # 12 rows
 }
 
-_REF_HEIGHT = 6
+# Shimmer target range
+BG_TARGET_RANGE = {
+    0: (0.1, 0.4),     # light:  dim
+    1: (0.15, 0.5),    # medium: medium
+    2: (0.2, 0.6),     # heavy:  bright
+}
+
+# Shimmer transition speed
+BG_SPEED_RANGE = {
+    0: (0.3, 0.7),
+    1: (0.4, 0.9),
+    2: (0.5, 1.1),
+}
+
+# Sinusoidal lines — same as mist.
+LINE_COUNT = {
+    0: 2,
+    1: 3,
+    2: 4,
+}
+
+LINE_AMPLITUDE = {
+    0: 1.2,
+    1: 1.5,
+    2: 2.0,
+}
+
+LINE_FREQUENCY = {
+    0: 0.6,
+    1: 0.7,
+    2: 0.8,
+}
+
+LINE_SPEED = {
+    0: 2.0,
+    1: 2.5,
+    2: 3.0,
+}
+
+# Lines are brighter than the background.
+LINE_BRIGHTNESS = {
+    0: 0.55,
+    1: 0.65,
+    2: 0.75,
+}
 
 
-class FogAnimation(BaseAnimation):
-    """Slow drifting fog bands."""
+CONFIG = FogMistConfig(
+    colour=COLOUR,
+    bg_rows=BG_ROWS,
+    bg_target_range=BG_TARGET_RANGE,
+    bg_speed_range=BG_SPEED_RANGE,
+    line_count=LINE_COUNT,
+    line_amplitude=LINE_AMPLITUDE,
+    line_frequency=LINE_FREQUENCY,
+    line_speed=LINE_SPEED,
+    line_brightness=LINE_BRIGHTNESS,
+)
 
-    def draw(self, frame_idx: int) -> None:
-        h = self.height
-        w = self.width
-        bands = _BANDS.get(self.intensity, _BANDS[1])
 
-        # Scale band y-positions to actual height
-        scaled_bands = []
-        for y_start, y_end, scale in bands:
-            sy = int(y_start * h / _REF_HEIGHT)
-            ey = int(y_end * h / _REF_HEIGHT)
-            scaled_bands.append((sy, ey, scale))
+class FogAnimation(FogMistAnimation):
+    """Patchy fog with prominent sinusoidal lines."""
 
-        for y_start, y_end, scale in scaled_bands:
-            r = int(_R * scale)
-            g = int(_G * scale)
-            b = int(_B * scale)
-            for y in range(y_start, y_end + 1):
-                if y >= h:
-                    continue
-                # Band pattern: 4 on, 2 off, scrolling right 1px/frame
-                for x in range(w):
-                    pattern_pos = (x - frame_idx) % w
-                    if pattern_pos < 4 or (8 <= pattern_pos < 11):
-                        self.set_pixel(x, y, r, g, b)
-                    else:
-                        self.set_pixel(x, y, 0, 0, 0)
+    CONFIG = CONFIG

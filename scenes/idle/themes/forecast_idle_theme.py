@@ -61,8 +61,8 @@ ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 sprites on a 64px panel
 # Sprite is 18px tall (12px icon + 6px animation).
 # Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
 # within 32px panel → 4px spare, split as 2px top margin + 2px bottom.
-ICON_POSITIONS_Y = 7  # y position for sprite top-left
-TOP_LABEL_Y = 5  # baseline for the label above the sprite
+ICON_POSITIONS_Y = 11  # y position for sprite top-left
+TOP_LABEL_Y = 10  # baseline for the label above the sprite
 BOTTOM_LABEL_Y = 31  # baseline for the label below the sprite
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -143,9 +143,9 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
-        self.draw_clock()
-        self.draw_date()
-        self.draw_day()
+        # self.draw_clock()
+        # self.draw_date()
+        # self.draw_day()
 
         weather = self.weather.get()
         if weather is None:
@@ -173,9 +173,9 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_time = None
         self.last_date = None
         self.last_day = None
-        self.draw_clock()
-        self.draw_date()
-        self.draw_day()
+        # self.draw_clock()
+        # self.draw_date()
+        # self.draw_day()
 
         # Create new animations and draw labels
         for i, slot in enumerate(slots):
@@ -434,7 +434,7 @@ class ForecastIdleTheme(BaseIdleScene):
         slots = []
         for day_offset in range(3):
             day_data = daily[day_offset]
-            condition_code = day_data.get("condition_code", 0)
+            condition_code = 1063 #day_data.get("condition_code", 0)
             temp_min = day_data.get("mintemp_c", 0.0)
             temp_max = day_data.get("maxtemp_c", 0.0)
             day_date = now + datetime.timedelta(days=day_offset)
@@ -447,7 +447,7 @@ class ForecastIdleTheme(BaseIdleScene):
             ]
             # Use the average temperature for colouring
             temp_avg = (temp_min + temp_max) / 2
-            slots.append((condition_code, True, top_label, bottom_label, temp_avg))
+            slots.append((condition_code, False, top_label, bottom_label, temp_avg))
 
         return slots
 

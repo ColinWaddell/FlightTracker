@@ -29,7 +29,8 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
 
 # Weather condition codes to display (from codes.py CODE_MAPPINGS).
 # Pick any 3 codes to see their icons + animations side by side.
-CONDITION_CODES = [1114 , 1273, 1279]
+CONDITION_CODES = [1030, 1036 , 1042 ] # Misty
+# CONDITION_CODES = [1135, 1135 , 1135 ] # Foggy
 
 # Force night mode (uses night icon/animation variants from codes.py).
 NIGHT_MODE = False
