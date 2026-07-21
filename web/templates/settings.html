@@ -430,26 +430,6 @@
         <!-- ====== Classic theme settings ====== -->
         <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme != 'astronomy' and cfg.idle_screen_theme != 'forecast' %}block{% else %}none{% endif %}">
 
-        <div id="group-clock" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-clock me-2"></i>Clock &amp; Date</p>
-
-          <div class="mb-2 form-check">
-            <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
-                   {% if cfg.clock_24hr %}checked{% endif %} />
-            <label class="form-check-label" for="clock_24hr">24-hour clock</label>
-          </div>
-
-
-          <div class="mb-2">
-            <label class="form-label small">Date format</label>
-            <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
-              <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
-              <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
-              <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
-            </select>
-          </div>
-        </div>
-
         <!-- ====== Weather ====== -->
         <div id="group-weather" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather</p>
@@ -739,6 +719,23 @@
             </select>
             <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
           </div>
+
+          <p>Clock and Date</p>
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
+                   {% if cfg.clock_24hr %}checked{% endif %} />
+            <label class="form-check-label" for="clock_24hr">24-hour clock</label>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">Date format</label>
+            <select class="form-select form-select-sm" name="date_format" style="max-width:200px">
+              <option value="0" {% if cfg.date_format == 0 %}selected{% endif %}>YYYY-MM-DD</option>
+              <option value="1" {% if cfg.date_format == 1 %}selected{% endif %}>DD-MM-YYYY</option>
+              <option value="2" {% if cfg.date_format == 2 %}selected{% endif %}>MM-DD-YYYY</option>
+            </select>
+          </div>
+
         </div>
 
         </div><!-- /page-hardware -->

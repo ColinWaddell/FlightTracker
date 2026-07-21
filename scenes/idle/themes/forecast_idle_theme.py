@@ -61,9 +61,9 @@ ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 sprites on a 64px panel
 # Sprite is 18px tall (12px icon + 6px animation).
 # Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
 # within 32px panel → 4px spare, split as 2px top margin + 2px bottom.
-ICON_POSITIONS_Y = 11  # y position for sprite top-left
-TOP_LABEL_Y = 10  # baseline for the label above the sprite
-BOTTOM_LABEL_Y = 31  # baseline for the label below the sprite
+ICON_POSITIONS_Y = 12  # y position for sprite top-left
+TOP_LABEL_Y = 11  # baseline for the label above the sprite
+BOTTOM_LABEL_Y = 32  # baseline for the label below the sprite
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -72,18 +72,18 @@ _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 # ---------------------------------------------------------------------------
 
 # Clock
-CLOCK_FONT = fonts.regular
+CLOCK_FONT = fonts.extrasmall
 CLOCK_AMPM_FONT = fonts.extrasmall
-CLOCK_POSITION = (1, 8)
-AMPM_POSITION_Y = 6
+CLOCK_POSITION = (0, 5)
+AMPM_POSITION_Y = 5
 
 # Date
 DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
 DATE_FORMATS = [
     "%Y-%m-%d",  # 0 = YYYY-MM-DD
-    "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
-    "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
+    "%d-%m-%Y",   # 1 = DD-MM-YYYY (leading zeros stripped in draw_date)
+    "%m-%d-%Y",   # 2 = MM-DD-YYYY (leading zeros stripped in draw_date)
 ]
 
 # Day of week
@@ -143,7 +143,7 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
-        # self.draw_clock()
+        self.draw_clock()
         # self.draw_date()
         # self.draw_day()
 
@@ -173,7 +173,7 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_time = None
         self.last_date = None
         self.last_day = None
-        # self.draw_clock()
+        self.draw_clock()
         # self.draw_date()
         # self.draw_day()
 
@@ -250,7 +250,10 @@ class ForecastIdleTheme(BaseIdleScene):
             time_str = now.strftime("%H:%M")
             ampm_str = None
         else:
-            time_str = now.strftime("%-I:%M")
+            # Strip leading zero from 12-hour format (cross-platform:
+            # %-I is Linux-only, %#I is Windows-only).
+            hour = int(now.strftime("%I"))
+            time_str = f"{hour}:{now.strftime('%M')}"
             ampm_str = now.strftime("%p")
 
         current_time = time_str + (ampm_str or "")
@@ -313,7 +316,11 @@ class ForecastIdleTheme(BaseIdleScene):
             if cfg.date_format < len(DATE_FORMATS)
             else DATE_FORMATS[0]
         )
-        current_date = datetime.datetime.now().strftime(fmt)
+        # Strip leading zeros from day/month (cross-platform: %-d is
+        # Linux-only, %#d is Windows-only, so we lstrip manually).
+        current_date = datetime.datetime.now().strftime(fmt).replace("-0", "-")
+        if current_date.startswith("0"):
+            current_date = current_date[1:]
         if self.last_date == current_date:
             return
 
@@ -386,7 +393,7 @@ class ForecastIdleTheme(BaseIdleScene):
         now = datetime.datetime.now()
 
         if duration == "3day":
-            return self._daily_slots(weather, now)
+            return self._daily_slots(weather, now, lat, lng)
 
         # 3hour and 12hour use hourly data
         hourly = weather.get("hourly", [])
@@ -417,6 +424,8 @@ class ForecastIdleTheme(BaseIdleScene):
         self,
         weather: dict,
         now: datetime.datetime,
+        lat,
+        lng
     ) -> list[tuple] | None:
         """Return 3 daily forecast slots (today + next 2 days).
 
@@ -433,8 +442,14 @@ class ForecastIdleTheme(BaseIdleScene):
 
         slots = []
         for day_offset in range(3):
+            if day_offset == 0:
+                now = datetime.datetime.now()
+                is_day = is_daytime(lat, lng, now)
+            else:
+                is_day = True
+
             day_data = daily[day_offset]
-            condition_code = 1063 #day_data.get("condition_code", 0)
+            condition_code = day_data.get("condition_code", 0)
             temp_min = day_data.get("mintemp_c", 0.0)
             temp_max = day_data.get("maxtemp_c", 0.0)
             day_date = now + datetime.timedelta(days=day_offset)
@@ -447,7 +462,7 @@ class ForecastIdleTheme(BaseIdleScene):
             ]
             # Use the average temperature for colouring
             temp_avg = (temp_min + temp_max) / 2
-            slots.append((condition_code, False, top_label, bottom_label, temp_avg))
+            slots.append((condition_code, is_day, top_label, bottom_label, temp_avg))
 
         return slots
 
@@ -477,8 +492,9 @@ class ForecastIdleTheme(BaseIdleScene):
         cfg = Config.instance()
         if cfg.clock_24hr:
             return str(slot_time.hour)
-        # 12-hour format: 1-12 with no leading zero
+        # 12-hour format: 1-12 with no leading zero, plus AM/PM suffix
         hour = slot_time.hour % 12
         if hour == 0:
             hour = 12
-        return str(hour)
+        ampm = "AM" if slot_time.hour < 12 else "PM"
+        return f"{hour}{ampm}"

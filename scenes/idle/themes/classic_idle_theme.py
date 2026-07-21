@@ -49,8 +49,8 @@ DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
 DATE_FORMATS = [
     "%Y-%m-%d",  # 0 = YYYY-MM-DD
-    "%-d-%-m-%Y",  # 1 = DD-MM-YYYY
-    "%-m-%-d-%Y",  # 2 = MM-DD-YYYY
+    "%d-%m-%Y",   # 1 = DD-MM-YYYY (leading zeros stripped in draw_date)
+    "%m-%d-%Y",   # 2 = MM-DD-YYYY (leading zeros stripped in draw_date)
 ]
 
 # Day of week
@@ -112,7 +112,10 @@ class ClassicIdleTheme(BaseIdleScene):
             time_str = now.strftime("%H:%M")
             ampm_str = None
         else:
-            time_str = now.strftime("%-I:%M")
+            # Strip leading zero from 12-hour format (cross-platform:
+            # %-I is Linux-only, %#I is Windows-only).
+            hour = int(now.strftime("%I"))
+            time_str = f"{hour}:{now.strftime('%M')}"
             ampm_str = now.strftime("%p")
 
         current_time = time_str + (ampm_str or "")
@@ -175,7 +178,11 @@ class ClassicIdleTheme(BaseIdleScene):
             if cfg.date_format < len(DATE_FORMATS)
             else DATE_FORMATS[0]
         )
-        current_date = datetime.datetime.now().strftime(fmt)
+        # Strip leading zeros from day/month (cross-platform: %-d is
+        # Linux-only, %#d is Windows-only, so we lstrip manually).
+        current_date = datetime.datetime.now().strftime(fmt).replace("-0", "-")
+        if current_date.startswith("0"):
+            current_date = current_date[1:]
         if self.last_date == current_date:
             return
 
