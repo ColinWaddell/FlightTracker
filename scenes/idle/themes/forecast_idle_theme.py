@@ -80,11 +80,10 @@ AMPM_POSITION_Y = 5
 # Date
 DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
-DATE_FORMATS = [
-    "%Y-%m-%d",  # 0 = YYYY-MM-DD
-    "%d-%m-%Y",   # 1 = DD-MM-YYYY (leading zeros stripped in draw_date)
-    "%m-%d-%Y",   # 2 = MM-DD-YYYY (leading zeros stripped in draw_date)
-]
+# Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+# Formats 0 and 1 both render as DD/MM (day before month);
+# format 2 renders as MM/DD (month before day).
+DATE_DAY_FIRST = {0: True, 1: True, 2: False}
 
 # Day of week
 DAY_FONT = fonts.small
@@ -144,8 +143,7 @@ class ForecastIdleTheme(BaseIdleScene):
 
     def draw_content(self, count: int) -> None:
         self.draw_clock()
-        # self.draw_date()
-        # self.draw_day()
+        self.draw_date()
 
         weather = self.weather.get()
         if weather is None:
@@ -174,8 +172,7 @@ class ForecastIdleTheme(BaseIdleScene):
         self.last_date = None
         self.last_day = None
         self.draw_clock()
-        # self.draw_date()
-        # self.draw_day()
+        self.draw_date()
 
         # Create new animations and draw labels
         for i, slot in enumerate(slots):
@@ -310,65 +307,74 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_date(self) -> None:
+        """Draw day abbreviation + date (e.g. WED2/3) in two colours.
+
+        The day short-name uses THEME_CURRENT_DAY and the date uses
+        THEME_CURRENT_DATE.  The date is DD/MM or MM/DD depending on
+        the configured date format.  Leading zeros are stripped.
+
+        Caches the full drawn string so we only redraw when it changes.
+        """
         cfg = Config.instance()
-        fmt = (
-            DATE_FORMATS[cfg.date_format]
-            if cfg.date_format < len(DATE_FORMATS)
-            else DATE_FORMATS[0]
-        )
-        # Strip leading zeros from day/month (cross-platform: %-d is
-        # Linux-only, %#d is Windows-only, so we lstrip manually).
-        current_date = datetime.datetime.now().strftime(fmt).replace("-0", "-")
-        if current_date.startswith("0"):
-            current_date = current_date[1:]
+        now = datetime.datetime.now()
+
+        day_name = _DAY_ABBREVS[now.weekday()].upper()
+        day = now.day
+        month = now.month
+
+        day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
+        if day_first:
+            date_str = f"{day}/{month}"
+        else:
+            date_str = f"{month}/{day}"
+
+        current_date = day_name + date_str
         if self.last_date == current_date:
             return
 
+        # Undraw old value (both segments in background colour)
         if self.last_date is not None:
+            old_day_name = self.last_date[:3]
+            old_date_str = self.last_date[3:]
+            x = DATE_POSITION[0]
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
-                DATE_POSITION[0],
+                x,
                 DATE_POSITION[1],
                 TC(THEME_BG),
-                self.last_date,
+                old_day_name,
             )
+            x += font_text_width(DATE_FONT, old_day_name)
+            self.panel.draw_text(
+                self.canvas,
+                DATE_FONT,
+                x,
+                DATE_POSITION[1],
+                TC(THEME_BG),
+                old_date_str,
+            )
+
         self.last_date = current_date
+
+        # Draw new value: day name in THEME_CURRENT_DAY, date in THEME_CURRENT_DATE
+        x = DATE_POSITION[0]
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
-            DATE_POSITION[0],
+            x,
             DATE_POSITION[1],
-            TC(THEME_CURRENT_DATE),
-            current_date,
+            TC(THEME_CURRENT_DAY),
+            day_name,
         )
-
-    # ------------------------------------------------------------------
-    # Day of week (copied from ClassicIdleTheme)
-    # ------------------------------------------------------------------
-
-    def draw_day(self) -> None:
-        current_day = datetime.datetime.now().strftime("%A")
-        if self.last_day == current_day:
-            return
-
-        if self.last_day is not None:
-            self.panel.draw_text(
-                self.canvas,
-                DAY_FONT,
-                DAY_POSITION[0],
-                DAY_POSITION[1],
-                TC(THEME_BG),
-                self.last_day,
-            )
-        self.last_day = current_day
+        x += font_text_width(DATE_FONT, day_name)
         self.panel.draw_text(
             self.canvas,
-            DAY_FONT,
-            DAY_POSITION[0],
-            DAY_POSITION[1],
-            TC(THEME_CURRENT_DAY),
-            current_day,
+            DATE_FONT,
+            x,
+            DATE_POSITION[1],
+            TC(THEME_CURRENT_DATE),
+            date_str,
         )
 
     # ------------------------------------------------------------------
