@@ -26,27 +26,11 @@ from setup import frames
 DT = frames.PERIOD
 
 # Moonray colour
-R = 255
-G = 240
-B = 60
+RGB_INTENSITY_0 = [255, 240, 60]
+RGB_INTENSITY_1 = [255, 255, 255]
 
 # Pixel coordinates of the moon in the sprite.
-MOON_LOCATION_0 = [
-    [10, 1],
-    [11, 1],
-    [9, 2],
-    [10, 2],
-    [9, 3],
-    [10, 3],
-    [10, 4],
-    [11, 4],
-    [11, 5],
-    [12, 5],
-    [13, 5],
-    [12, 6],
-]
-
-MOON_LOCATION_1 = [
+MOON_INTENSITY_0 = [
     [5, 1],
     [4, 2],
     [3, 3],
@@ -61,6 +45,21 @@ MOON_LOCATION_1 = [
     [5, 7],
     [8, 8],
     [10, 9],
+]
+
+MOON_INTENSITY_1 = [
+    [10, 0],
+    [11, 0],
+    [9, 1],
+    [10, 1],
+    [9, 2],
+    [10, 2],
+    [10, 3],
+    [11, 3],
+    [11, 4],
+    [12, 4],
+    [13, 4],
+    [12, 5],
 ]
 
 # Per-intensity: chance per frame that a dark pixel starts sparkling.
@@ -119,8 +118,8 @@ class MoonRaysAnimation(BaseAnimation):
         self.fade_range = FADE_SPEED.get(self.intensity, FADE_SPEED[1])
 
         # Pixel set depends on intensity (intensity 2 reuses the denser set).
-        moon_location = {0: MOON_LOCATION_0, 1: MOON_LOCATION_1}.get(
-            self.intensity, MOON_LOCATION_1
+        moon_location = {0: MOON_INTENSITY_0, 1: MOON_INTENSITY_1}.get(
+            self.intensity, MOON_INTENSITY_1
         )
 
         # Per-pixel sparkle state.
@@ -160,6 +159,7 @@ class MoonRaysAnimation(BaseAnimation):
             # original pixel is restored; when at peak (shimmer=1) the
             # sparkle colour dominates.
             orig_r, orig_g, orig_b = self.original_pixel(x, y)
+            (R, G, B) = RGB_INTENSITY_0 if self.intensity == 0 else RGB_INTENSITY_1
             r = max(0, int(orig_r + (R - orig_r) * shimmer))
             g = max(0, int(orig_g + (G - orig_g) * shimmer))
             b = max(0, int(orig_b + (B - orig_b) * shimmer))

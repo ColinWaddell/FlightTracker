@@ -21,8 +21,8 @@ from __future__ import annotations
 
 import random
 
-from setup import frames
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
+from setup import frames
 
 # Fixed time step per frame (seconds).  The forecast theme ticks
 # animations every frame at ~12.5 fps (frames.PERIOD == 0.08).
@@ -33,7 +33,7 @@ _DT = frames.PERIOD
 # full base colour and a shimmer of 1 darkens it.  Large variation
 # values give a dramatic brightness swing.  The same mostly-yellow
 # palette is used for all intensity levels.
-_PALETTE = ((255, 230, 40), (0, 120, 40))   # mostly yellow
+_PALETTE = ((255, 230, 40), (0, 120, 40))  # mostly yellow
 
 # Single ring radius centred on (7, 7) — outline only, not a filled disc.
 _CENTRE = (7, 6)
@@ -50,46 +50,32 @@ _REACHED = 0.01
 
 
 CIRCLE_POINTS_0 = [
-    [5,1],
-    [6,1],
-    [7,1],
-    [8,1],
-    [9,1],
-    [5,11],
-    [6,11],
-    [7,11],
-    [8,11],
-    [9,11],
-    [2,4],
-    [2,5],
-    [2,6],
-    [2,7],
-    [2,8],
-    [12,4],
-    [12,5],
-    [12,6],
-    [12,7],
-    [12,8],
-    [3, 3],
-    [10,2],
-    [11,3],
-    [3,9],
-    [4,10],
-    [10,10],
-    [11,9],
-    [4,2],
+    [5, 2],
+    [6, 2],
+    [7, 2],
+    [8, 2],
+    [9, 2],
+    [10, 3],
+    [11, 4],
+    [11, 5],
+    [11, 6],
+    [11, 7],
+    [11, 8],
+    [10, 9],
+    [9, 10],
+    [8, 10],
+    [7, 10],
+    [6, 10],
+    [5, 10],
+    [4, 9],
+    [3, 8],
+    [3, 7],
+    [3, 6],
+    [3, 5],
+    [3, 4],
 ]
 
-CIRCLE_POINTS_1 = [
-    [8,1],
-    [9, 0],
-    [10, 0],
-    [11, 0],
-    [12, 1],
-    [13, 2],
-    [13, 3],
-    [13, 4]
-]
+CIRCLE_POINTS_1 = [[8, 1], [9, 0], [10, 0], [11, 0], [12, 1], [13, 2], [13, 3], [13, 4]]
 
 # Per-intensity ring pixel sets.
 _CIRCLE_POINTS = {
