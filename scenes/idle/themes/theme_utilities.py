@@ -189,7 +189,17 @@ def _parse_day(raw_day: dict) -> dict:
 
 
 def _parse_hourly(raw_forecast_days: list) -> list[dict]:
-    """Flatten all forecast hours into dicts with temp, precip, and condition code."""
+    """Flatten all forecast hours into dicts with temp, precip, and condition code.
+
+    The API returns 24 hours per day starting at 0:00 local time.  We
+    only need the forecast from the current hour onwards, so the first
+    ``current_hour`` entries (hours already elapsed today) are dropped.
+    All time information in the API is in local time.
+    """
+    import datetime
+
+    current_hour = datetime.datetime.now().hour
+
     out = []
     for day in raw_forecast_days:
         for h in day.get("hour", []):
@@ -202,7 +212,10 @@ def _parse_hourly(raw_forecast_days: list) -> list[dict]:
                     ),
                 }
             )
-    return out
+
+    # Drop hours that have already elapsed today (e.g. if it's 2 AM,
+    # discard elements 0 and 1 so the list starts at the current hour).
+    return out[current_hour:]
 
 
 def _parse_weather(raw: dict) -> dict:
