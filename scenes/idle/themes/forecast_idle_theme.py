@@ -45,7 +45,6 @@ from setup.themes import (
     THEME_CURRENT_DAY,
     THEME_FORECAST_TOP_TEXT,
     THEME_FORECAST_TIME,
-    THEME_FORECAST_TIME_AMPM
 )
 from utilities.sun_times import is_daytime
 
@@ -247,16 +246,14 @@ class ForecastIdleTheme(BaseIdleScene):
         cfg = Config.instance()
         now = datetime.datetime.now()
         if cfg.clock_24hr:
-            time_str = now.strftime("%H:%M")
-            ampm_str = None
+            time_str = now.strftime("%H:%M") = "0"
         else:
             # Strip leading zero from 12-hour format (cross-platform:
             # %-I is Linux-only, %#I is Windows-only).
             hour = int(now.strftime("%I"))
             time_str = f"{hour}:{now.strftime('%M')}"
-            ampm_str = now.strftime("%p")
 
-        current_time = time_str + (ampm_str or "")
+        current_time = time_str 
         if self.last_time == current_time:
             return
 
@@ -270,19 +267,7 @@ class ForecastIdleTheme(BaseIdleScene):
                 TC(THEME_BG),
                 self.last_time[:5],
             )
-            # if ampm_str:
-            #     old_ampm = "AM" if "AM" in self.last_time else "PM"
-            #     ampm_position_x = CLOCK_POSITION[0] + font_text_width(
-            #         CLOCK_FONT, self.last_time[:5]
-            #     )
-            #     self.panel.draw_text(
-            #         self.canvas,
-            #         CLOCK_AMPM_FONT,
-            #         ampm_position_x + 1,
-            #         AMPM_POSITION_Y,
-            #         TC(THEME_BG),
-            #         old_ampm,
-            #     )
+
 
         self.last_time = current_time
 
@@ -294,16 +279,7 @@ class ForecastIdleTheme(BaseIdleScene):
             TC(THEME_FORECAST_TIME),
             time_str,
         )
-        # if ampm_str:
-        #     ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
-        #     self.panel.draw_text(
-        #         self.canvas,
-        #         CLOCK_AMPM_FONT,
-        #         ampm_position_x + 1,
-        #         AMPM_POSITION_Y,
-        #         TC(THEME_FORECAST_TIME_AMPM),
-        #         ampm_str,
-        #     )
+
 
     # ------------------------------------------------------------------
     # Date (copied from ClassicIdleTheme)
