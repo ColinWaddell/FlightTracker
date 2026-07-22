@@ -26,7 +26,7 @@ from setup import frames
 DT = frames.PERIOD
 
 # Moonray colour
-RGB_INTENSITY_0 = [255, 240, 60]
+RGB_INTENSITY_0 = [255, 255, 30]
 RGB_INTENSITY_1 = [255, 255, 255]
 
 # Pixel coordinates of the moon in the sprite.
