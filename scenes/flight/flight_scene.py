@@ -26,6 +26,7 @@ from enum import Enum, auto
 
 from setup import fonts, screen
 from setup.configuration import Config
+from display.scroller import Scroller, render_spans_to_image
 from setup.themes import (
     TC,
     THEME_ARROW,
@@ -109,8 +110,6 @@ def tick_to_offset(tick: int) -> int:
 INITIAL_TICKS = 100
 PAUSE_TICKS = 25
 
-FULL_LINE_Y = (7, 15)
-
 IATA_ORIGIN_X = 1
 IATA_DESTINATION_X = 40
 ARROW_TIP_X = 34
@@ -134,10 +133,6 @@ def abbreviate(name: str) -> str:
     for long, short in ABBREVIATIONS.items():
         name = name.replace(long, short)
     return " ".join(name.split())
-
-
-def font_text_width(font, text: str) -> int:
-    return sum(font.CharacterWidth(ord(c)) for c in text)
 
 
 class BounceState(Enum):
@@ -242,14 +237,33 @@ class FlightScene:
         self.journey_mode: str | None = None
         self.origin_scroll = LineScroller()
         self.dest_scroll = LineScroller()
+        self._origin_scroller = Scroller(
+            panel, canvas,
+            x=0, y=0, width=screen.WIDTH, height=8,
+            bg_colour=TC(THEME_BG), speed=0,
+        )
+        self._dest_scroller = Scroller(
+            panel, canvas,
+            x=0, y=8, width=screen.WIDTH, height=8,
+            bg_colour=TC(THEME_BG), speed=0,
+        )
         self.journey_loop_completed = False
         self.last_origin: str | None = None
         self.last_dest: str | None = None
         self.origin_name = ""
         self.dest_name = ""
 
-        # Plane details state
-        self.plane_position: int = screen.WIDTH
+        # Plane details state — Scroller handles scrolling + dirty updates
+        self._plane_scroller = Scroller(
+            panel, canvas,
+            x=0, y=PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT,
+            width=screen.WIDTH, height=PLANE_TEXT_HEIGHT + 1,
+            bg_colour=TC(THEME_BG),
+            speed=1,
+            gap_pixels=screen.WIDTH,  # full screen gap between repeats
+        )
+        self._plane_spans: list | None = None
+        self._last_plane_offset = 0
         self.last_details_mode: int | None = None
 
         # Callsign bar cache - only redraw when these change
@@ -356,12 +370,16 @@ class FlightScene:
         self.journey_mode = None
         self.origin_scroll.reset()
         self.dest_scroll.reset()
+        self._origin_scroller.reset()
+        self._dest_scroller.reset()
         self.journey_loop_completed = False
         self.last_origin = None
         self.last_dest = None
         self.origin_name = ""
         self.dest_name = ""
-        self.plane_position = screen.WIDTH
+        self._plane_scroller.reset()
+        self._plane_spans = None
+        self._last_plane_offset = 0
         self.last_callsign_drawn = None
         self.last_index_drawn = None
         self.last_flight_count_drawn = None
@@ -482,18 +500,19 @@ class FlightScene:
             self.panel.draw_square(
                 self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
             )
+            self._origin_scroller.force_full_redraw()
+            self._dest_scroller.force_full_redraw()
             self.journey_first_draw = False
 
-        for line_idx, scroller in enumerate((self.origin_scroll, self.dest_scroll)):
-            prev_x = scroller.position
-            new_x = scroller.tick()
-            if (
-                prev_x != new_x
-                or scroller.state == BounceState.REVEAL
-                or scroller.state == BounceState.RETRACT
-            ):
-                self.undraw_full_line(cfg, flight, line_idx, prev_x)
-            self.draw_full_line(cfg, flight, line_idx, new_x)
+        for line_idx, (linescroller, scroller) in enumerate(
+            ((self.origin_scroll, self._origin_scroller),
+             (self.dest_scroll, self._dest_scroller))
+        ):
+            position = linescroller.tick()
+            # LineScroller position is 0 or negative (scrolls left).
+            # Scroller offset is positive — use abs(position).
+            scroller.set_offset(abs(position))
+            scroller.tick()
 
         if (
             self.origin_scroll.scroll_max > 0
@@ -582,58 +601,39 @@ class FlightScene:
         self.origin_name = (origin_name or "Unknown") + " "
         self.dest_name = (dest_name or "Unknown") + " "
 
-        for scroller, iata, name, arrow in (
-            (self.origin_scroll, origin, self.origin_name, ">"),
-            (self.dest_scroll, destination, self.dest_name, "<"),
+        # Pre-render each full line to a PIL Image and load into the scrollers.
+        # The line text is "{IATA}{arrow}{name}" rendered with small_symbols font.
+        # Each span has its own colour, so we build the image span by span.
+        from display.scroller import render_spans_to_image
+
+        origin_spans = [
+            (TC(THEME_LOCATION_ORIGIN), fonts.small_symbols, origin),
+            (TC(THEME_LOCATION_ORIGIN_ARROW), fonts.small_symbols, ">"),
+            (TC(THEME_LOCATION_ORIGIN_FULL), fonts.small_symbols, self.origin_name),
+        ]
+        dest_spans = [
+            (TC(THEME_LOCATION_DESTINATION), fonts.small_symbols, destination),
+            (TC(THEME_LOCATION_DESTINATION_ARROW), fonts.small_symbols, "<"),
+            (TC(THEME_LOCATION_DESTINATION_FULL), fonts.small_symbols, self.dest_name),
+        ]
+
+        origin_img = render_spans_to_image(
+            origin_spans, height=8, bg_colour=TC(THEME_BG)
+        )
+        dest_img = render_spans_to_image(
+            dest_spans, height=8, bg_colour=TC(THEME_BG)
+        )
+
+        self._origin_scroller.set_content(origin_img)
+        self._dest_scroller.set_content(dest_img)
+
+        # Configure the LineScroller bounce state machines
+        for scroller, img in (
+            (self.origin_scroll, origin_img),
+            (self.dest_scroll, dest_img),
         ):
             scroller.reset()
-            w = font_text_width(fonts.small, f"{iata}{arrow}{name}")
-            scroller.scroll_max = max(0, w - screen.WIDTH)
-
-    def draw_full_line(self, cfg, flight: Flight, line_idx: int, x_offset: int) -> None:
-        if line_idx == 0:
-            iata = flight.origin or cfg.journey_blank_filler
-            name = self.origin_name
-            arrow = ">"
-            colour_code = TC(THEME_LOCATION_ORIGIN)
-            colour_name = TC(THEME_LOCATION_ORIGIN_FULL)
-            colour_arrow = TC(THEME_LOCATION_ORIGIN_ARROW)
-        else:
-            iata = flight.destination or cfg.journey_blank_filler
-            name = self.dest_name
-            arrow = "<"
-            colour_code = TC(THEME_LOCATION_DESTINATION)
-            colour_name = TC(THEME_LOCATION_DESTINATION_FULL)
-            colour_arrow = TC(THEME_LOCATION_DESTINATION_ARROW)
-
-        y = FULL_LINE_Y[line_idx]
-        x = x_offset
-        x += self.panel.draw_text(
-            self.canvas, fonts.small_symbols, x, y, colour_code, iata
-        )
-        x += self.panel.draw_text(
-            self.canvas, fonts.small_symbols, x, y, colour_arrow, arrow
-        )
-        self.panel.draw_text(self.canvas, fonts.small_symbols, x, y, colour_name, name)
-
-    def undraw_full_line(
-        self, cfg, flight: Flight, line_idx: int, x_offset: int
-    ) -> None:
-        iata = (
-            (flight.origin or cfg.journey_blank_filler)
-            if line_idx == 0
-            else (flight.destination or cfg.journey_blank_filler)
-        )
-        name = self.origin_name if line_idx == 0 else self.dest_name
-        arrow = ">" if line_idx == 0 else "<"
-        self.panel.draw_text(
-            self.canvas,
-            fonts.small_symbols,
-            x_offset,
-            FULL_LINE_Y[line_idx],
-            TC(THEME_BG),
-            f"{iata}{arrow}{name}",
-        )
+            scroller.scroll_max = max(0, img.width - screen.WIDTH)
 
     # ------------------------------------------------------------------
     # Plane details (scrolling bar)
@@ -681,42 +681,35 @@ class FlightScene:
             (ico, f, "*"),
         ]
 
-    def spans_width(self, spans: list) -> int:
-        return sum(font.CharacterWidth(ord(c)) for _, font, text in spans for c in text)
-
-    def draw_spans(self, spans: list, x: int, y: int) -> int:
-        start_x = x
-        for colour, font, text in spans:
-            x += self.panel.draw_text(self.canvas, font, x, y, colour, text)
-        return x - start_x
-
     def draw_plane_details(self) -> None:
         cfg = Config.instance()
         current_mode = cfg.details
 
         if current_mode != self.last_details_mode:
-            self.plane_position = screen.WIDTH
+            self._plane_scroller.reset()
+            self._plane_spans = None
+            self._last_plane_offset = 0
             self.last_details_mode = current_mode
 
         spans = self.build_spans(cfg)
 
-        self.panel.draw_square(
-            self.canvas,
-            0,
-            PLANE_DISTANCE_FROM_TOP - PLANE_TEXT_HEIGHT,
-            screen.WIDTH,
-            screen.HEIGHT,
-            TC(THEME_BG),
-        )
+        # Re-render content only when spans change
+        if spans != self._plane_spans:
+            self._plane_spans = spans
+            content = render_spans_to_image(
+                spans, height=self._plane_scroller.height,
+                bg_colour=TC(THEME_BG),
+            )
+            self._plane_scroller.set_content(content)
+            self._last_plane_offset = 0
 
-        total_width = self.draw_spans(
-            spans, self.plane_position, PLANE_DISTANCE_FROM_TOP
-        )
+        offset = self._plane_scroller.tick()
 
-        self.plane_position -= 1
-        if self.plane_position + total_width < 0:
-            self.plane_position = screen.WIDTH
+        # Detect wrap: offset went from high to low (wrapped around)
+        if offset < self._last_plane_offset:
             if len(self.flights) > 1 and self.journey_loop_completed:
                 self.flight_index = (self.flight_index + 1) % len(self.flights)
                 self.all_looped_flag = (not self.flight_index) or self.all_looped_flag
                 self.reset()
+
+        self._last_plane_offset = offset

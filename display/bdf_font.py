@@ -4,9 +4,11 @@ Minimal BDF font parser and renderer.
 Reads .bdf (Bitmap Distribution Format) font files and provides:
   - BDFFont: holds parsed glyphs indexed by codepoint
   - draw_text(): renders a string onto a PIL Image, returns advance width
+  - draw_text_to_target(): renders onto any object with set_pixel(),
+    for drivers whose canvas is not a PIL Image
 
-This lets us use the existing .bdf font files on Pi 5 (piomatter/PIL)
-without converting them to another format.
+This lets us use the existing .bdf font files on all drivers
+(piomatter/PIL, simulator, rgbmatrix) without converting them.
 """
 
 
@@ -96,6 +98,21 @@ class BDFFont:
         """Return glyph data for a codepoint, or None if not found."""
         return self.glyphs.get(codepoint)
 
+    def CharacterWidth(self, codepoint: int) -> int:
+        """Return the advance width for a codepoint, or 0 if not found.
+
+        Mirrors the interface of hzeller's graphics.Font.CharacterWidth()
+        so callers can use BDFFont as a drop-in replacement.
+        """
+        glyph = self.glyphs.get(codepoint)
+        if glyph is None:
+            return 0
+        dwidth = glyph["dwidth"]
+        if dwidth is not None:
+            return dwidth
+        bbx = glyph["bbx"]
+        return bbx[0] if bbx else 0
+
 
 def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
     """
@@ -118,36 +135,97 @@ def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
             advance += 1
             continue
 
-        bbx_w, bbx_h, bbx_x, bbx_y = glyph["bbx"] if glyph["bbx"] else (0, 0, 0, 0)
-        dwidth = glyph["dwidth"] if glyph["dwidth"] else bbx_w
-
-        # Convert bitmap hex rows to pixels.
-        rows = glyph["bitmap"]
-        for row_idx, hex_row in enumerate(rows):
-            hex_row = hex_row.strip()
-            if not hex_row:
-                continue
-
-            bits = int(hex_row, 16)
-            total_bits = len(hex_row) * 4  # each hex char = 4 bits
-
-            # Align to bbx_w bits (shift right to get the top bbx_w bits)
-            if total_bits > bbx_w:
-                bits >>= total_bits - bbx_w
-
-            for bit_idx in range(bbx_w):
-                if bits & (1 << (bbx_w - 1 - bit_idx)):
-                    px = x + advance + bbx_x + bit_idx
-                    # y is baseline; bitmap row 0 is top of glyph.
-                    # bbx_y is offset from baseline to bottom of bbox.
-                    # Top of glyph = y - (bbx_h + bbx_y) + row_idx
-                    py = y - (bbx_h + bbx_y) + row_idx
-                    if 0 <= px < canvas.width and 0 <= py < canvas.height:
-                        canvas.putpixel((px, py), (cr, cg, cb))
-
-        advance += dwidth
+        advance += _draw_glyph_pil(canvas, glyph, x + advance, y, cr, cg, cb)
 
     return advance
+
+
+def draw_text_to_target(target, font: BDFFont, x: int, y: int, colour, text: str,
+                        target_width: int, target_height: int) -> int:
+    """
+    Draw *text* onto a pixel target at (x, y) using *font*.
+
+    The target must implement set_pixel(x, y, r, g, b).
+    This is used by drivers whose canvas is not a PIL Image
+    (e.g. the rgbmatrix FrameCanvas and the SimulatorCanvas).
+
+    The y coordinate is the **baseline** position, matching the
+    rgbmatrix graphics.DrawText convention.
+
+    Returns the total advance width (pixels consumed).
+    """
+    cr, cg, cb = _unpack_colour(colour)
+    advance = 0
+
+    for ch in text:
+        codepoint = ord(ch)
+        glyph = font.get_glyph(codepoint)
+
+        if glyph is None:
+            advance += 1
+            continue
+
+        advance += _draw_glyph_target(
+            target, glyph, x + advance, y, cr, cg, cb,
+            target_width, target_height
+        )
+
+    return advance
+
+
+def _draw_glyph_pil(canvas, glyph, x: int, y: int, cr, cg, cb) -> int:
+    """Render a single glyph onto a PIL Image. Returns dwidth."""
+    bbx_w, bbx_h, bbx_x, bbx_y = glyph["bbx"] if glyph["bbx"] else (0, 0, 0, 0)
+    dwidth = glyph["dwidth"] if glyph["dwidth"] else bbx_w
+
+    rows = glyph["bitmap"]
+    for row_idx, hex_row in enumerate(rows):
+        hex_row = hex_row.strip()
+        if not hex_row:
+            continue
+
+        bits = int(hex_row, 16)
+        total_bits = len(hex_row) * 4
+
+        if total_bits > bbx_w:
+            bits >>= total_bits - bbx_w
+
+        for bit_idx in range(bbx_w):
+            if bits & (1 << (bbx_w - 1 - bit_idx)):
+                px = x + bbx_x + bit_idx
+                py = y - (bbx_h + bbx_y) + row_idx
+                if 0 <= px < canvas.width and 0 <= py < canvas.height:
+                    canvas.putpixel((px, py), (cr, cg, cb))
+
+    return dwidth
+
+
+def _draw_glyph_target(target, glyph, x: int, y: int, cr, cg, cb,
+                        target_width: int, target_height: int) -> int:
+    """Render a single glyph onto a set_pixel target. Returns dwidth."""
+    bbx_w, bbx_h, bbx_x, bbx_y = glyph["bbx"] if glyph["bbx"] else (0, 0, 0, 0)
+    dwidth = glyph["dwidth"] if glyph["dwidth"] else bbx_w
+
+    rows = glyph["bitmap"]
+    for row_idx, hex_row in enumerate(rows):
+        hex_row = hex_row.strip()
+        if not hex_row:
+            continue
+
+        bits = int(hex_row, 16)
+        total_bits = len(hex_row) * 4
+
+        if total_bits > bbx_w:
+            bits >>= total_bits - bbx_w
+
+        for bit_idx in range(bbx_w):
+            if bits & (1 << (bbx_w - 1 - bit_idx)):
+                px = x + bbx_x + bit_idx
+                py = y - (bbx_h + bbx_y) + row_idx
+                if 0 <= px < target_width and 0 <= py < target_height:
+                    target.set_pixel(px, py, cr, cg, cb)
+
+    return dwidth
 
 
 def _unpack_colour(colour):

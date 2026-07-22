@@ -7,6 +7,7 @@ behind the unified RGBPanel interface.
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
+from display.bdf_font import BDFFont, draw_text_to_target
 from display.rgbpanel import RGBPanel
 
 
@@ -50,6 +51,8 @@ class RGBMatrixPanel(RGBPanel):
 
         self.matrix = RGBMatrix(options=options)
         self._brightness = brightness
+        self._width = width
+        self._height = height
 
     def create_canvas(self):
         canvas = self.matrix.CreateFrameCanvas()
@@ -57,9 +60,7 @@ class RGBMatrixPanel(RGBPanel):
         return canvas
 
     def load_font(self, path):
-        font = graphics.Font()
-        font.LoadFont(path)
-        return font
+        return BDFFont(path)
 
     def _to_color(self, colour):
         """Convert a Colour namedtuple to rgbmatrix graphics.Color if needed."""
@@ -68,7 +69,20 @@ class RGBMatrixPanel(RGBPanel):
         return graphics.Color(colour.red, colour.green, colour.blue)
 
     def draw_text(self, canvas, font, x, y, colour, text):
-        return graphics.DrawText(canvas, font, x, y, self._to_color(colour), text)
+        # BDFFont: render via SetPixel on the FrameCanvas.
+        # draw_text_to_target expects a target with set_pixel(x, y, r, g, b),
+        # but FrameCanvas uses SetPixel (capital S).  We wrap it.
+        class _CanvasAdapter:
+            def __init__(self, fc):
+                self._fc = fc
+            def set_pixel(self, px, py, r, g, b):
+                self._fc.SetPixel(px, py, r, g, b)
+
+        target = _CanvasAdapter(canvas)
+        return draw_text_to_target(
+            target, font, x, y, colour, text,
+            target_width=self._width, target_height=self._height
+        )
 
     def draw_line(self, canvas, x0, y0, x1, y1, colour):
         graphics.DrawLine(canvas, x0, y0, x1, y1, self._to_color(colour))

@@ -16,6 +16,7 @@ import os
 import sys
 from datetime import datetime
 
+from display.bdf_font import BDFFont, draw_text_to_target
 from display.rgbpanel import Colour, RGBPanel
 
 # ---------------------------------------------------------------------------
@@ -68,134 +69,8 @@ class SimulatorCanvas:
 
 
 # ---------------------------------------------------------------------------
-# BDF font parser
-# ---------------------------------------------------------------------------
-
-
-class _Glyph:
-    __slots__ = ("dwidth", "bbx_w", "bbx_h", "bbx_xoff", "bbx_yoff", "rows")
-
-    def __init__(self, dwidth, bbx_w, bbx_h, bbx_xoff, bbx_yoff, rows):
-        self.dwidth = dwidth
-        self.bbx_w = bbx_w
-        self.bbx_h = bbx_h
-        self.bbx_xoff = bbx_xoff
-        self.bbx_yoff = bbx_yoff
-        self.rows = rows
-
-
-def _parse_bdf(path: str) -> dict[int, _Glyph]:
-    """Parse a BDF font file and return a dict mapping code-point → _Glyph."""
-    glyphs: dict[int, _Glyph] = {}
-
-    with open(path, encoding="latin-1") as fh:
-        lines = fh.readlines()
-
-    encoding = -1
-    dwidth = 0
-    bbx_w = bbx_h = bbx_xoff = bbx_yoff = 0
-    bitmap_lines: list[str] = []
-    in_bitmap = False
-
-    for line in lines:
-        line = line.rstrip()
-
-        if line.startswith("ENCODING "):
-            encoding = int(line.split()[1])
-        elif line.startswith("DWIDTH "):
-            dwidth = int(line.split()[1])
-        elif line.startswith("BBX "):
-            parts = line.split()
-            bbx_w, bbx_h, bbx_xoff, bbx_yoff = (
-                int(parts[1]),
-                int(parts[2]),
-                int(parts[3]),
-                int(parts[4]),
-            )
-        elif line == "BITMAP":
-            in_bitmap = True
-            bitmap_lines = []
-        elif line == "ENDCHAR":
-            if in_bitmap and encoding >= 0:
-                rows = []
-                bytes_per_row = (bbx_w + 7) // 8
-                for hex_row in bitmap_lines:
-                    padded = hex_row.ljust(bytes_per_row * 2, "0")
-                    val = int(padded[: bytes_per_row * 2], 16)
-                    rows.append(val)
-                glyphs[encoding] = _Glyph(
-                    dwidth,
-                    bbx_w,
-                    bbx_h,
-                    bbx_xoff,
-                    bbx_yoff,
-                    rows,
-                )
-            in_bitmap = False
-            encoding = -1
-        elif in_bitmap:
-            bitmap_lines.append(line.strip())
-
-    return glyphs
-
-
-class SimulatorFont:
-    """BDF bitmap font for the simulator."""
-
-    def __init__(self):
-        self._glyphs: dict[int, _Glyph] = {}
-        self._loaded = False
-
-    def LoadFont(self, path: str) -> None:
-        try:
-            self._glyphs = _parse_bdf(path)
-            self._loaded = True
-        except Exception as exc:
-            print(f"[SimulatorFont] failed to load {path!r}: {exc}")
-
-    def CharacterWidth(self, codepoint: int) -> int:
-        glyph = self._glyphs.get(codepoint)
-        return glyph.dwidth if glyph else 0
-
-    def _glyph(self, char: str) -> _Glyph | None:
-        cp = ord(char)
-        return self._glyphs.get(cp) or self._glyphs.get(ord("?"))
-
-
-# ---------------------------------------------------------------------------
 # Drawing helpers (operate on SimulatorCanvas)
 # ---------------------------------------------------------------------------
-
-
-def _draw_text(canvas, font: SimulatorFont, x: int, y: int, colour, text: str) -> int:
-    """Render text onto canvas. Returns total x advance (pixels)."""
-    if not font._loaded or not text:
-        return 0
-
-    r, g, b = colour.red, colour.green, colour.blue
-    y = y - 1
-    cursor_x = x
-    start_x = x
-
-    for ch in text:
-        glyph = font._glyph(ch)
-        if glyph is None:
-            continue
-
-        top_y = y - glyph.bbx_yoff - glyph.bbx_h + 1
-        bytes_per_row = (glyph.bbx_w + 7) // 8
-        total_bits = bytes_per_row * 8
-
-        for i, row_val in enumerate(glyph.rows):
-            sy = top_y + i
-            for bit in range(glyph.bbx_w):
-                if row_val & (1 << (total_bits - 1 - bit)):
-                    sx = cursor_x + glyph.bbx_xoff + bit
-                    canvas.set_pixel(sx, sy, r, g, b)
-
-        cursor_x += glyph.dwidth
-
-    return cursor_x - start_x
 
 
 def _draw_line(canvas, x0: int, y0: int, x1: int, y1: int, colour) -> None:
@@ -301,12 +176,16 @@ class SimulatorPanel(RGBPanel):
         return canvas
 
     def load_font(self, path):
-        font = SimulatorFont()
-        font.LoadFont(path)
-        return font
+        return BDFFont(path)
 
     def draw_text(self, canvas, font, x, y, colour, text):
-        return _draw_text(canvas, font, x, y, colour, text)
+        # SimulatorCanvas has set_pixel(x, y, r, g, b) so we can use
+        # draw_text_to_target directly.  The -1 y adjustment matches the
+        # previous _draw_text behaviour (baseline offset quirk).
+        return draw_text_to_target(
+            canvas, font, x, y - 1, colour, text,
+            target_width=canvas.cols, target_height=canvas.rows
+        )
 
     def draw_line(self, canvas, x0, y0, x1, y1, colour):
         _draw_line(canvas, x0, y0, x1, y1, colour)
