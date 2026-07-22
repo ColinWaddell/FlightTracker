@@ -44,9 +44,8 @@ from setup.themes import (
     THEME_CURRENT_DATE,
     THEME_CURRENT_DAY,
     THEME_FORECAST_TOP_TEXT,
-    THEME_TIME,
-    THEME_TIME_AMPM,
-    THEME_FORECAST_TIME
+    THEME_FORECAST_TIME,
+    THEME_FORECAST_TIME_AMPM
 )
 from utilities.sun_times import is_daytime
 
@@ -302,7 +301,7 @@ class ForecastIdleTheme(BaseIdleScene):
                 CLOCK_AMPM_FONT,
                 ampm_position_x + 1,
                 AMPM_POSITION_Y,
-                TC(THEME_TIME_AMPM),
+                TC(THEME_FORECAST_TIME_AMPM),
                 ampm_str,
             )
 
