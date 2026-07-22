@@ -246,7 +246,7 @@ class ForecastIdleTheme(BaseIdleScene):
         cfg = Config.instance()
         now = datetime.datetime.now()
         if cfg.clock_24hr:
-            time_str = now.strftime("%H:%M") = "0"
+            time_str = now.strftime("%H:%M")
         else:
             # Strip leading zero from 12-hour format (cross-platform:
             # %-I is Linux-only, %#I is Windows-only).
@@ -304,16 +304,18 @@ class ForecastIdleTheme(BaseIdleScene):
         month = now.month
 
         day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
+        date_str = (f"{day}/{month}" if day_first else f"{month}/{day}")
 
         current_date = day_name + " " + date_str
         if self.last_date == current_date:
             return
 
         # Right-align the date to the panel width, then place the day
-        # name DAY_DATE_SPACE_PX pixels to its left.
+        # name DAY_DATE_SPACE_PX pixels to its left.  The font has a
+        # blank right column so we shift 1px past the panel edge without
+        # cropping any letters.
         date_width = font_text_width(DATE_FONT, date_str)
-        date_x = SCREEN_WIDTH - date_width
+        date_x = SCREEN_WIDTH + 1 - date_width
         day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
 
         # Undraw old value (both segments in background colour)
@@ -321,7 +323,7 @@ class ForecastIdleTheme(BaseIdleScene):
             old_day_name = self.last_date[:3]
             old_date_str = self.last_date[4:]  # skip the space at index 3
             old_date_width = font_text_width(DATE_FONT, old_date_str)
-            old_date_x = SCREEN_WIDTH - old_date_width
+            old_date_x = SCREEN_WIDTH + 1 - old_date_width
             old_day_x = (
                 old_date_x
                 - DAY_DATE_SPACE_PX
