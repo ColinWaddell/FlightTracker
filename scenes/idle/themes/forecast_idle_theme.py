@@ -61,7 +61,7 @@ ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 sprites on a 64px panel
 # Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
 # within 32px panel → 4px spare, split as 2px top margin + 2px bottom.
 ICON_POSITIONS_Y = 12  # y position for sprite top-left
-TOP_LABEL_Y = 11  # baseline for the label above the sprite
+TOP_LABEL_Y = 12  # baseline for the label above the sprite
 BOTTOM_LABEL_Y = 32  # baseline for the label below the sprite
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -71,9 +71,9 @@ _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 # ---------------------------------------------------------------------------
 
 # Clock
-CLOCK_FONT = fonts.extrasmall
-CLOCK_AMPM_FONT = fonts.extrasmall
-CLOCK_POSITION = (0, 5)
+CLOCK_FONT = fonts.small
+CLOCK_AMPM_FONT = fonts.small
+CLOCK_POSITION = (0, 6)
 AMPM_POSITION_Y = 5
 
 # Date — sits on the same line as the clock, positioned after it.
@@ -85,7 +85,7 @@ DATE_POSITION_Y = CLOCK_POSITION[1]
 DATE_DAY_FIRST = {0: True, 1: True, 2: False}
 
 # Pixel gap between the day abbreviation and the date on the clock line.
-DAY_DATE_SPACE_PX = 2
+DAY_DATE_SPACE_PX = 0
 
 # Day of week
 DAY_FONT = fonts.small
@@ -270,19 +270,19 @@ class ForecastIdleTheme(BaseIdleScene):
                 TC(THEME_BG),
                 self.last_time[:5],
             )
-            if ampm_str:
-                old_ampm = "AM" if "AM" in self.last_time else "PM"
-                ampm_position_x = CLOCK_POSITION[0] + font_text_width(
-                    CLOCK_FONT, self.last_time[:5]
-                )
-                self.panel.draw_text(
-                    self.canvas,
-                    CLOCK_AMPM_FONT,
-                    ampm_position_x + 1,
-                    AMPM_POSITION_Y,
-                    TC(THEME_BG),
-                    old_ampm,
-                )
+            # if ampm_str:
+            #     old_ampm = "AM" if "AM" in self.last_time else "PM"
+            #     ampm_position_x = CLOCK_POSITION[0] + font_text_width(
+            #         CLOCK_FONT, self.last_time[:5]
+            #     )
+            #     self.panel.draw_text(
+            #         self.canvas,
+            #         CLOCK_AMPM_FONT,
+            #         ampm_position_x + 1,
+            #         AMPM_POSITION_Y,
+            #         TC(THEME_BG),
+            #         old_ampm,
+            #     )
 
         self.last_time = current_time
 
@@ -294,16 +294,16 @@ class ForecastIdleTheme(BaseIdleScene):
             TC(THEME_FORECAST_TIME),
             time_str,
         )
-        if ampm_str:
-            ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
-            self.panel.draw_text(
-                self.canvas,
-                CLOCK_AMPM_FONT,
-                ampm_position_x + 1,
-                AMPM_POSITION_Y,
-                TC(THEME_FORECAST_TIME_AMPM),
-                ampm_str,
-            )
+        # if ampm_str:
+        #     ampm_position_x = CLOCK_POSITION[0] + font_text_width(CLOCK_FONT, time_str)
+        #     self.panel.draw_text(
+        #         self.canvas,
+        #         CLOCK_AMPM_FONT,
+        #         ampm_position_x + 1,
+        #         AMPM_POSITION_Y,
+        #         TC(THEME_FORECAST_TIME_AMPM),
+        #         ampm_str,
+        #     )
 
     # ------------------------------------------------------------------
     # Date (copied from ClassicIdleTheme)
