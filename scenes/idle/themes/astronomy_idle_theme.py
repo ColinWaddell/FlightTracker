@@ -291,7 +291,7 @@ class AstronomyIdleTheme(BaseIdleScene):
             self.panel.draw_square(
                 self.canvas,
                 0, STRIP_Y_ORIGIN,
-                SCREEN_WIDTH - 1, STRIP_BOTTOM_Y + 1,
+                SCREEN_WIDTH - 1, STRIP_Y_ORIGIN + STRIP_HEIGHT - 1,
                 TC(THEME_BG),
             )
 
@@ -358,8 +358,18 @@ class AstronomyIdleTheme(BaseIdleScene):
             left_label = "W"
             right_label = "E"
 
-        # Draw labels ON the horizon line (same y as the line)
-        label_y = STRIP_BOTTOM_Y + 1
+        # Draw labels at the very bottom of the screen
+        label_y = 31
+
+        # Erase previous labels at both edges (3px wide each)
+        self.panel.draw_square(
+            self.canvas, 0, label_y, 4, label_y, TC(THEME_BG)
+        )
+        right_x = SCREEN_WIDTH - font_text_width(label_font, right_label)
+        self.panel.draw_square(
+            self.canvas, right_x, label_y, SCREEN_WIDTH - 1, label_y,
+            TC(THEME_BG),
+        )
 
         # Left label at x=0
         self.panel.draw_text(
@@ -367,8 +377,6 @@ class AstronomyIdleTheme(BaseIdleScene):
         )
 
         # Right label
-        right_width = font_text_width(label_font, right_label)
-        right_x = SCREEN_WIDTH - right_width
         self.panel.draw_text(
             self.canvas, label_font, right_x, label_y, colour, right_label
         )
