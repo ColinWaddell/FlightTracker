@@ -411,6 +411,7 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     python3-setuptools \
     libcap2-bin \
     libffi-dev \
+    libopenblas0 \
     unzip || exit 1
 
 success "System update complete."

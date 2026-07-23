@@ -54,6 +54,7 @@ sudo systemctl restart FlightTracker.service
 ```bash
 sudo apt-get update
 sudo apt-get dist-upgrade
+sudo apt-get install libopenblas0
 ```
 
 ### 2. Install the RGB matrix driver

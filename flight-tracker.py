@@ -87,6 +87,27 @@ def _render_ip_address(panel, canvas, y):
     panel.draw_text(canvas, test_font, 1, y, GREY, ip)
     panel.swap(canvas)
 
+def _check_libopenblas() -> bool:
+    """Return True if libopenblas.so.0 is available on the system."""
+    import ctypes
+
+    try:
+        ctypes.CDLL("libopenblas.so.0")
+        return True
+    except OSError:
+        return False
+
+def _render_openblas_warning(panel, canvas):
+    """Show a message telling the user to install libopenblas0."""
+    from setup.colours import WHITE, GREEN
+    from time import sleep
+
+    panel.clear(canvas)
+    panel.draw_text(canvas, test_font, 1, 6, WHITE, "please run:")
+    panel.draw_text(canvas, test_font, 1, 16, GREEN, "sudo apt install")
+    panel.draw_text(canvas, test_font, 1, 26, GREEN, "libopenblas0")
+    panel.swap(canvas)
+    sleep(2)
 
 def _render_celestrack_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, ORANGE, RED
@@ -140,12 +161,18 @@ def render_tests(panel, canvas):
 
     cfg = Config.instance()
 
+    # Check for libopenblas0 first — numpy won't work without it
+    if not _check_libopenblas():
+        _render_openblas_warning(panel, canvas)
+        return False
+
     _render_data_source_test(panel, canvas, cfg, 5)
     _render_celestrack_test(panel, canvas, cfg, 13)
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)
     sleep(2)
+    return True
 
 
 def render_splash(
@@ -359,7 +386,10 @@ def run_flight_tracker():
     )
 
     # -- Phase 2: Show start-up tests --------------------------
-    render_tests(panel, canvas)
+    if not render_tests(panel, canvas):
+        # Critical dependency missing (e.g. libopenblas0)
+        logger.error("Startup tests failed — missing system dependency. Exiting.")
+        sys.exit(1)
 
     # -- Phase 3: Show splash (loading state, no QR) --------------------------
     render_splash(panel, canvas, Image, loading_font)

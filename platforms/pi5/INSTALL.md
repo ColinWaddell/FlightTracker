@@ -29,6 +29,7 @@ The installer detects your hardware, clones the repo, creates a virtual environm
 ```bash
 sudo apt-get update
 sudo apt-get dist-upgrade
+sudo apt-get install libopenblas0
 ```
 
 ### 2. Clone and install FlightTracker
