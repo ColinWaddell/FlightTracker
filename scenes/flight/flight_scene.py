@@ -701,7 +701,8 @@ class FlightScene:
                 bg_colour=TC(THEME_BG),
             )
             self._plane_scroller.set_content(content)
-            self._last_plane_offset = 0
+            self._plane_scroller.set_offset(screen.WIDTH)
+            self._last_plane_offset = screen.WIDTH
 
         offset = self._plane_scroller.tick()
 
