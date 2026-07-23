@@ -24,6 +24,7 @@ requests==2.32.4
 rich==15.0.0
 ruff==0.15.21
 sgp4==2.26
+skyfield>=1.50
 soupsieve==2.7
 typing_extensions==4.14.1
 urllib3==2.5.0

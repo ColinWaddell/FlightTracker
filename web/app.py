@@ -199,7 +199,12 @@ def parse_settings_form(form, cfg) -> dict:
                     == "12hour"
                     else "3hour"
                 ),
-            }
+            },
+            "astronomy": {
+                "bodies": form.getlist("astro_bodies"),
+                "label_duration": max(1, min(10, int_val(form.get("astro_label_duration"), 3))),
+                "horizon_labels": bool_val(form.get("astro_horizon_labels")),
+            },
         },
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),
@@ -614,6 +619,12 @@ def cache_clear_apply():
         routes_cache.clear()
         if TLE_CACHE_PATH.exists():
             TLE_CACHE_PATH.unlink()
+        # Clear skyfield ephemeris cache so it re-downloads on restart
+        from utilities.planet_tracker import PlanetTracker
+        eph_path = PlanetTracker.ephemeris_path()
+        if os.path.exists(eph_path):
+            os.unlink(eph_path)
+            logger.info("Cleared ephemeris cache: %s", eph_path)
     except OSError as exc:
         logger.error("Cache clear failed: %s", exc)
         return (

@@ -78,7 +78,21 @@ DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
 # Per-theme configuration (nested dict under "theme" in config.json)
 DEFAULT_FORECAST_DURATION = "3hour"  # 3hour / 12hour / 3day
 DEFAULT_THEME_FORECAST = {"duration": DEFAULT_FORECAST_DURATION}
-DEFAULT_THEME = {"forecast": DEFAULT_THEME_FORECAST}
+
+# Astronomy theme
+DEFAULT_ASTRONOMY_BODIES = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus"]
+DEFAULT_ASTRONOMY_LABEL_DURATION = 3  # seconds per body label
+DEFAULT_ASTRONOMY_HORIZON_LABELS = True  # show E/W/S/N markers
+DEFAULT_THEME_ASTRONOMY = {
+    "bodies": list(DEFAULT_ASTRONOMY_BODIES),
+    "label_duration": DEFAULT_ASTRONOMY_LABEL_DURATION,
+    "horizon_labels": DEFAULT_ASTRONOMY_HORIZON_LABELS,
+}
+
+DEFAULT_THEME = {
+    "forecast": DEFAULT_THEME_FORECAST,
+    "astronomy": DEFAULT_THEME_ASTRONOMY,
+}
 
 # Brightness schedule
 DEFAULT_SCREEN_SCHEDULE_ENABLED = False
@@ -575,6 +589,33 @@ class Config:
         merged = {**DEFAULT_THEME_FORECAST, **forecast}
         if merged.get("duration") not in ("3hour", "12hour", "3day"):
             merged["duration"] = DEFAULT_FORECAST_DURATION
+        return merged
+
+    @property
+    def theme_astronomy(self) -> dict:
+        """Astronomy theme settings, merged over defaults."""
+        val = self.data_store.get("theme", {})
+        if not isinstance(val, dict):
+            val = {}
+        astro = val.get("astronomy", {})
+        if not isinstance(astro, dict):
+            astro = {}
+        merged = {**DEFAULT_THEME_ASTRONOMY, **astro}
+        # Validate bodies list
+        valid_bodies = {"sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus"}
+        bodies = merged.get("bodies", [])
+        if not isinstance(bodies, list):
+            bodies = list(DEFAULT_ASTRONOMY_BODIES)
+        merged["bodies"] = [b for b in bodies if b in valid_bodies]
+        if not merged["bodies"]:
+            merged["bodies"] = list(DEFAULT_ASTRONOMY_BODIES)
+        # Validate label_duration
+        try:
+            merged["label_duration"] = max(1, min(10, int(merged["label_duration"])))
+        except (TypeError, ValueError):
+            merged["label_duration"] = DEFAULT_ASTRONOMY_LABEL_DURATION
+        # Validate horizon_labels
+        merged["horizon_labels"] = bool(merged["horizon_labels"])
         return merged
 
     @property
