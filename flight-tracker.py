@@ -124,6 +124,91 @@ def _render_openblas_warning(panel, canvas):
     while True:
         time.sleep(60)
 
+def _render_ephemeris_check(panel, canvas, y):
+    """Check if de421.bsp exists; download if missing.
+
+    Shows status on the display during download.  Blocks until
+    the file is available or download fails.
+    """
+    from setup.colours import GREY, GREEN, RED, YELLOW
+    from time import sleep
+
+    panel.draw_text(canvas, test_font, 1, y, GREY, "EPH: ")
+    panel.swap(canvas)
+
+    from utilities.planet_tracker import PlanetTracker
+    eph_path = PlanetTracker.ephemeris_path()
+
+    if os.path.exists(eph_path):
+        # Already cached
+        result_text = "OK"
+        result_colour = GREEN
+        result_width = len(result_text) * 4
+        panel.draw_text(
+            canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
+        )
+        panel.swap(canvas)
+        return True
+
+    # Need to download — show "DL" status
+    panel.draw_text(canvas, test_font, 56, y, YELLOW, "DL")
+    panel.swap(canvas)
+
+    # Download in a background thread so we can show a progress indicator
+    import threading
+    done = threading.Event()
+    error_msg = [None]
+
+    def download():
+        try:
+            from skyfield.api import load
+            from setup.configuration import PLATFORM_DATA_DIR
+            load.path = str(PLATFORM_DATA_DIR)
+            load('de421.bsp')
+            done.set()
+        except Exception as exc:
+            error_msg[0] = str(exc)
+            done.set()
+
+    t = threading.Thread(target=download, daemon=True)
+    t.start()
+
+    # Show a pulsing dot while downloading
+    dot_state = False
+    frame = 0
+    while not done.is_set():
+        frame += 1
+        if frame % 15 == 0:
+            dot_state = not dot_state
+            if dot_state:
+                panel.draw_text(canvas, test_font, 52, y, YELLOW, "*")
+            else:
+                # Erase the dot
+                from setup.colours import BLACK
+                panel.draw_square(canvas, 52, y, 55, y + 5, BLACK)
+            panel.swap(canvas)
+        time.sleep(0.1)
+
+    t.join()
+
+    if error_msg[0] is not None:
+        result_text = "FAIL"
+        result_colour = RED
+    else:
+        result_text = "OK"
+        result_colour = GREEN
+
+    # Clear the DL indicator
+    from setup.colours import BLACK
+    panel.draw_square(canvas, 50, y, 63, y + 5, BLACK)
+    result_width = len(result_text) * 4
+    panel.draw_text(
+        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
+    )
+    panel.swap(canvas)
+    sleep(1)
+    return error_msg[0] is None
+
 def _render_celestrack_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, ORANGE, RED
 
@@ -183,6 +268,11 @@ def render_tests(panel, canvas):
 
     _render_data_source_test(panel, canvas, cfg, 5)
     _render_celestrack_test(panel, canvas, cfg, 13)
+
+    # Ephemeris check (only if astronomy theme is enabled)
+    if cfg.idle_screen_theme == "astronomy":
+        _render_ephemeris_check(panel, canvas, 21)
+
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)

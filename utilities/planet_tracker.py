@@ -105,10 +105,12 @@ class PlanetTracker:
 
     @staticmethod
     def ephemeris_path() -> str:
-        """Return the expected path of the ephemeris file."""
+        """Return the expected path of the ephemeris file.
+
+        Stored alongside the TLE cache and config in the platform data dir.
+        """
         from setup.configuration import PLATFORM_DATA_DIR
-        cache_dir = os.path.join(str(PLATFORM_DATA_DIR), "skyfield")
-        return os.path.join(cache_dir, EPHEMERIS_FILENAME)
+        return os.path.join(str(PLATFORM_DATA_DIR), EPHEMERIS_FILENAME)
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -150,8 +152,7 @@ class PlanetTracker:
             return
 
         from setup.configuration import PLATFORM_DATA_DIR
-        cache_dir = os.path.join(str(PLATFORM_DATA_DIR), "skyfield")
-        os.makedirs(cache_dir, exist_ok=True)
+        cache_dir = str(PLATFORM_DATA_DIR)
 
         ephemeris_path = os.path.join(cache_dir, EPHEMERIS_FILENAME)
 
