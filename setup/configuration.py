@@ -14,7 +14,7 @@ import math
 import os
 import shutil
 import sys
-from datetime import datetime, time
+from datetime import datetime, time, date
 from pathlib import Path
 from typing import Any
 
@@ -377,6 +377,12 @@ class Config:
 
     def __init__(self):
         self.data_store: dict[str, Any] = {}
+        # Sunrise/sunset cache (recomputed once per day)
+        self._sun_cache_date = None
+        self._sun_cache_sunrise = None
+        self._sun_cache_sunset = None
+        self._sun_cache_lat: float | None = None
+        self._sun_cache_lng: float | None = None
         self.load()
 
     # ------------------------------------------------------------------
@@ -719,12 +725,28 @@ class Config:
         (sunset, sunrise); in manual mode it is the user-configured times.
         Returns (00:00, 00:00) when the schedule is disabled.
         """
-        if self.screen_schedule_auto:
+        if not self.screen_schedule_auto:
+            return self.screen_schedule_start, self.screen_schedule_end
+
+        # Cache sunrise/sunset — they only change once per day
+        today = date.today()
+        if (
+            self._sun_cache_date != today
+            or self._sun_cache_lat is None
+            or self._sun_cache_lng is None
+            or self._sun_cache_lat != self.observer_lat
+            or self._sun_cache_lng != self.observer_lng
+        ):
             sunrise, sunset = approx_sunrise_sunset(
                 self.observer_lat, self.observer_lng
             )
-            return sunset, sunrise
-        return self.screen_schedule_start, self.screen_schedule_end
+            self._sun_cache_date = today
+            self._sun_cache_sunrise = sunrise
+            self._sun_cache_sunset = sunset
+            self._sun_cache_lat = self.observer_lat
+            self._sun_cache_lng = self.observer_lng
+
+        return self._sun_cache_sunset, self._sun_cache_sunrise
 
     @property
     def clock_24hr(self) -> bool:

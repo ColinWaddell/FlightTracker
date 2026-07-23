@@ -82,6 +82,9 @@ class Scroller:
         # Paused state — when True, tick() renders but does not advance.
         self._paused = False
 
+        # Reusable viewport buffer (avoids per-frame allocation)
+        self._viewport = np.full((self.height, self.width, 3), self._bg, dtype=np.uint8)
+
     # ------------------------------------------------------------------
     # Content management
     # ------------------------------------------------------------------
@@ -180,14 +183,17 @@ class Scroller:
     def _build_viewport(self) -> np.ndarray:
         """Build the current viewport as a (height, width, 3) uint8 array.
 
+        Reuses an internal buffer to avoid allocating a new array every frame.
+
         Position is the x-coordinate of the content's left edge relative
         to the viewport.  Content pixel (cx, cy) appears at viewport
         column (position + cx) when 0 <= position + cx < width.
         """
-        viewport = np.full((self.height, self.width, 3), self._bg, dtype=np.uint8)
+        # Reset the buffer to background colour in-place
+        self._viewport[:] = self._bg
 
         if self._content is None or self._content_width == 0:
-            return viewport
+            return self._viewport
 
         pos = self._position
 
@@ -201,9 +207,9 @@ class Scroller:
             # Content is visible — copy the overlapping region
             src_start = start - pos  # content x offset
             src_end = end - pos
-            viewport[:, start:end] = self._content[:, src_start:src_end]
+            self._viewport[:, start:end] = self._content[:, src_start:src_end]
 
-        return viewport
+        return self._viewport
 
     def _render_diff(self, frame: np.ndarray) -> None:
         """Write only changed pixels to the canvas."""
@@ -214,7 +220,7 @@ class Scroller:
             changed = np.any(frame != self._prev, axis=2)
 
         if not changed.any():
-            self._prev = frame
+            self._prev = frame.copy()
             return
 
         # Get coordinates of changed pixels, ordered column-by-column
@@ -235,7 +241,7 @@ class Scroller:
                 int(b),
             )
 
-        self._prev = frame
+        self._prev = frame.copy()
 
     # ------------------------------------------------------------------
     # Clearing
