@@ -32,6 +32,11 @@ TLE_CACHE_PATH = migrate_legacy_json(
 )
 HTTP_TIMEOUT = 15
 
+# Backoff after a failed refresh: starts at 1 minute, doubles each failure,
+# capped at 1 hour. Reset to the minimum on a successful refresh.
+BACKOFF_MIN = 60.0
+BACKOFF_MAX = 3600.0
+
 GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
 
 
@@ -108,6 +113,9 @@ class TLEManager:
         self.tles: list[tuple[str, str, str]] = []
         self.fetched_at: float = 0.0
         self.ready = threading.Event()
+        # Backoff state for failed refreshes.
+        self.backoff_seconds: float = 0.0
+        self.next_attempt_at: float = 0.0
 
     def start(self) -> None:
         threading.Thread(target=self.run_loop, daemon=True, name="tle-manager").start()
@@ -129,6 +137,8 @@ class TLEManager:
         """Force a refresh on next cycle (e.g. after config change)."""
         with self.lock:
             self.fetched_at = 0.0
+            self.backoff_seconds = 0.0
+            self.next_attempt_at = 0.0
         self.ready.clear()
 
     def run_loop(self) -> None:
@@ -141,11 +151,20 @@ class TLEManager:
             self.ready.set()
 
         while True:
+            now = time.time()
             with self.lock:
-                age = time.time() - self.fetched_at
-            if age >= TLE_CACHE_TTL:
+                age = now - self.fetched_at
+                due = age >= TLE_CACHE_TTL and now >= self.next_attempt_at
+                in_backoff = self.backoff_seconds > 0.0
+            if due:
                 self.do_fetch()
-            time.sleep(300)  # check every 5 minutes
+                # After a fetch, re-read state to decide how long to sleep.
+                with self.lock:
+                    in_backoff = self.backoff_seconds > 0.0
+                    wait = self.next_attempt_at - time.time() if in_backoff else 300.0
+            else:
+                wait = max(0.0, self.next_attempt_at - now) if in_backoff else 300.0
+            time.sleep(max(1.0, min(wait, 300.0)))  # check at most every 5 min
 
     def do_fetch(self) -> None:
         norad_ids = Config.instance().satellite_norad_ids
@@ -166,12 +185,25 @@ class TLEManager:
             with self.lock:
                 self.tles = results
                 self.fetched_at = time.time()
+                self.backoff_seconds = 0.0
+                self.next_attempt_at = 0.0
             logger.info(
                 "TLE refresh complete - %d/%d satellite(s) updated",
                 len(results),
                 len(norad_ids),
             )
         else:
-            logger.warning("TLE refresh returned no results - keeping existing cache")
+            with self.lock:
+                self.backoff_seconds = (
+                    BACKOFF_MIN
+                    if self.backoff_seconds <= 0.0
+                    else min(self.backoff_seconds * 2.0, BACKOFF_MAX)
+                )
+                self.next_attempt_at = time.time() + self.backoff_seconds
+            logger.warning(
+                "TLE refresh returned no results - keeping existing cache; "
+                "next retry in %.0fs",
+                self.backoff_seconds,
+            )
 
         self.ready.set()
