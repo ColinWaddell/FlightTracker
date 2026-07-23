@@ -26,8 +26,8 @@ from __future__ import annotations
 import math
 import random
 
-from setup import frames
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
+from setup import frames
 
 # Fixed time step per frame (seconds).
 DT = frames.PERIOD
@@ -90,6 +90,9 @@ class FogMistConfig:
 
     Attributes:
         colour:           (r, g, b) base colour for both layers.
+        background_enabled: bool — if False, the patchy shimmer
+                          background is skipped entirely and only the
+                          sinusoidal lines are drawn.
         bg_rows:          dict[intensity -> list[y]] — rows that get the
                           patchy shimmer background.
         bg_target_range:  dict[intensity -> (min, max)] — shimmer target
@@ -120,8 +123,10 @@ class FogMistConfig:
         line_frequency: dict[int, float],
         line_speed: dict[int, float],
         line_brightness: dict[int, float],
+        background_enabled: bool = True,
     ) -> None:
         self.colour = colour
+        self.background_enabled = background_enabled
         self.bg_rows = bg_rows
         self.bg_target_range = bg_target_range
         self.bg_speed_range = bg_speed_range
@@ -146,37 +151,33 @@ class FogMistAnimation(BaseAnimation):
         cfg = self.CONFIG
 
         # --- Background shimmer state -------------------------------
-        bg_rows = cfg.bg_rows.get(self.intensity, cfg.bg_rows[1])
-        target_range = cfg.bg_target_range.get(
-            self.intensity, cfg.bg_target_range[1]
-        )
-        speed_range = cfg.bg_speed_range.get(
-            self.intensity, cfg.bg_speed_range[1]
-        )
-
         self.bg_pixels: list[tuple[int, int]] = []
-        for y in bg_rows:
-            if BOX_TOP <= y <= BOX_BOTTOM:
-                for x in range(BOX_LEFT, BOX_RIGHT + 1):
-                    self.bg_pixels.append((x, y))
+        self.bg_state: dict[tuple[int, int], dict[str, float]] = {}
+        if cfg.background_enabled:
+            bg_rows = cfg.bg_rows.get(self.intensity, cfg.bg_rows[1])
+            target_range = cfg.bg_target_range.get(
+                self.intensity, cfg.bg_target_range[1]
+            )
+            speed_range = cfg.bg_speed_range.get(self.intensity, cfg.bg_speed_range[1])
 
-        self.bg_state: dict[tuple[int, int], dict[str, float]] = {
-            (x, y): {
-                "value": random.uniform(*target_range),
-                "target": random.uniform(*target_range),
-                "speed": random.uniform(*speed_range),
+            for y in bg_rows:
+                if BOX_TOP <= y <= BOX_BOTTOM:
+                    for x in range(BOX_LEFT, BOX_RIGHT + 1):
+                        self.bg_pixels.append((x, y))
+
+            self.bg_state = {
+                (x, y): {
+                    "value": random.uniform(*target_range),
+                    "target": random.uniform(*target_range),
+                    "speed": random.uniform(*speed_range),
+                }
+                for x, y in self.bg_pixels
             }
-            for x, y in self.bg_pixels
-        }
 
         # --- Sine lines --------------------------------------------
         line_count = cfg.line_count.get(self.intensity, cfg.line_count[1])
-        amplitude = cfg.line_amplitude.get(
-            self.intensity, cfg.line_amplitude[1]
-        )
-        frequency = cfg.line_frequency.get(
-            self.intensity, cfg.line_frequency[1]
-        )
+        amplitude = cfg.line_amplitude.get(self.intensity, cfg.line_amplitude[1])
+        frequency = cfg.line_frequency.get(self.intensity, cfg.line_frequency[1])
         line_speed = cfg.line_speed.get(self.intensity, cfg.line_speed[1])
 
         # Spread lines evenly across the animation area, each with a
@@ -205,37 +206,34 @@ class FogMistAnimation(BaseAnimation):
         r, g, b = cfg.colour
         t = frame_idx * DT
 
-        target_range = cfg.bg_target_range.get(
-            self.intensity, cfg.bg_target_range[1]
-        )
-        speed_range = cfg.bg_speed_range.get(
-            self.intensity, cfg.bg_speed_range[1]
-        )
+        target_range = cfg.bg_target_range.get(self.intensity, cfg.bg_target_range[1])
+        speed_range = cfg.bg_speed_range.get(self.intensity, cfg.bg_speed_range[1])
         line_brightness = cfg.line_brightness.get(
             self.intensity, cfg.line_brightness[1]
         )
 
         # --- Layer 1: patchy shimmer background ---------------------
-        for x, y in self.bg_pixels:
-            pixel = self.bg_state[(x, y)]
-            value = pixel["value"]
-            target = pixel["target"]
+        if cfg.background_enabled:
+            for x, y in self.bg_pixels:
+                pixel = self.bg_state[(x, y)]
+                value = pixel["value"]
+                target = pixel["target"]
 
-            value += (target - value) * min(1.0, pixel["speed"] * DT)
+                value += (target - value) * min(1.0, pixel["speed"] * DT)
 
-            if abs(target - value) < REACHED:
-                target = random.uniform(*target_range)
-                pixel["target"] = target
-                pixel["speed"] = random.uniform(*speed_range)
+                if abs(target - value) < REACHED:
+                    target = random.uniform(*target_range)
+                    pixel["target"] = target
+                    pixel["speed"] = random.uniform(*speed_range)
 
-            pixel["value"] = value
+                pixel["value"] = value
 
-            shimmer = value * value * (3.0 - 2.0 * value)
-            br = max(0, int(r * shimmer))
-            bg = max(0, int(g * shimmer))
-            bb = max(0, int(b * shimmer))
+                shimmer = value * value * (3.0 - 2.0 * value)
+                br = max(0, int(r * shimmer))
+                bg = max(0, int(g * shimmer))
+                bb = max(0, int(b * shimmer))
 
-            self.set_pixel(x, y, br, bg, bb)
+                self.set_pixel(x, y, br, bg, bb)
 
         # --- Layer 2: sinusoidal lines ------------------------------
         # Clear previous line positions.

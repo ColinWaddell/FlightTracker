@@ -29,16 +29,16 @@ COLOUR = (170, 170, 180)
 # Background rows per intensity — mist covers more than before but
 # less than fog at each intensity level.
 BG_ROWS = {
-    0: [3, 4, 5, 6, 7, 8, 9, 10],                # 8 rows
-    1: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],         # 10 rows
+    0: [3, 4, 5, 6, 7, 8, 9, 10],  # 8 rows
+    1: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],  # 10 rows
     2: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],  # 12 rows
 }
 
 # Shimmer target range
 BG_TARGET_RANGE = {
-    0: (0.1, 0.4),     # light:  dim
-    1: (0.15, 0.5),    # medium: medium
-    2: (0.2, 0.6),     # heavy:  bright
+    0: (0.1, 0.4),  # light:  dim
+    1: (0.15, 0.5),  # medium: medium
+    2: (0.2, 0.6),  # heavy:  bright
 }
 
 # Shimmer transition speed — slightly faster than fog.
@@ -84,6 +84,7 @@ LINE_BRIGHTNESS = {
 CONFIG = FogMistConfig(
     colour=COLOUR,
     bg_rows=BG_ROWS,
+    background_enabled=False,
     bg_target_range=BG_TARGET_RANGE,
     bg_speed_range=BG_SPEED_RANGE,
     line_count=LINE_COUNT,
