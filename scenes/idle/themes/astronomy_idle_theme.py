@@ -386,13 +386,20 @@ class AstronomyIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def _get_visible_bodies(self) -> list:
-        """Return the list of currently visible body positions."""
+        """Return bodies that are above horizon AND on the visible strip."""
         cfg = Config.instance()
         lat = cfg.observer_lat
         lng = cfg.observer_lng
         bodies = cfg.theme_astronomy.get("bodies", [])
         positions = self.tracker.get_positions(lat, lng, bodies)
-        return [p for p in positions if p.above_horizon]
+        result = []
+        for p in positions:
+            if not p.above_horizon:
+                continue
+            x = PlanetTracker.azimuth_to_strip_x(p.az_deg, lat, SCREEN_WIDTH)
+            if x is not None:
+                result.append(p)
+        return result
 
     def _draw_label_area(self, now: float) -> None:
         """Draw the cycling planet name with crossfade and connector line."""
