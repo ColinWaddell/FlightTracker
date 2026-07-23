@@ -363,6 +363,9 @@ class Config:
 
     def __init__(self):
         self.data_store: dict[str, Any] = {}
+        # Cache for approx_sunrise_sunset, keyed by (date, lat, lng) so the
+        # trig math only runs once per day or when the location changes.
+        self._sun_cache: dict[tuple, tuple[time, time]] = {}
         self.load()
 
     # ------------------------------------------------------------------
@@ -679,10 +682,16 @@ class Config:
         Returns (00:00, 00:00) when the schedule is disabled.
         """
         if self.screen_schedule_auto:
-            sunrise, sunset = approx_sunrise_sunset(
-                self.observer_lat, self.observer_lng
-            )
-            return sunset, sunrise
+            lat = round(self.observer_lat, 4)
+            lng = round(self.observer_lng, 4)
+            today = datetime.now().date()
+            key = (today, lat, lng)
+            cached = self._sun_cache.get(key)
+            if cached is None:
+                sunrise, sunset = approx_sunrise_sunset(lat, lng)
+                cached = (sunset, sunrise)
+                self._sun_cache[key] = cached
+            return cached
         return self.screen_schedule_start, self.screen_schedule_end
 
     @property
