@@ -80,7 +80,7 @@ DEFAULT_FORECAST_DURATION = "3hour"  # 3hour / 12hour / 3day
 DEFAULT_THEME_FORECAST = {"duration": DEFAULT_FORECAST_DURATION}
 
 # Astronomy theme
-DEFAULT_ASTRONOMY_BODIES = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn"]
+DEFAULT_ASTRONOMY_BODIES = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus"]
 DEFAULT_ASTRONOMY_LABEL_DURATION = 3  # seconds per body label
 DEFAULT_ASTRONOMY_HORIZON_LABELS = True  # show E/W/S/N markers
 DEFAULT_THEME_ASTRONOMY = {
