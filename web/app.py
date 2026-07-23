@@ -239,7 +239,9 @@ def parse_settings_form(form, cfg) -> dict:
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
         == "quality",
-        "loading_led_enabled": bool_val(form.get("loading_led_enabled")),
+        "loading_indicator": (
+            lambda v: v if v in ("none", "pixel", "gpio") else "pixel"
+        )(str_val(form.get("loading_indicator"), "pixel").lower()),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
         # Data source
         "data_source": (lambda v: v if v in ("fr24", "tar1090", "osn") else "fr24")(

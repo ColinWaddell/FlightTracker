@@ -47,10 +47,17 @@ _ICON_DIR = Path(__file__).parent
 _image_cache: dict[str, Image.Image] = {}
 
 
-def _load_icon(filename: str) -> Image.Image:
-    """Load a weather icon PNG, caching the result for reuse."""
+def _load_icon(filename: str) -> Optional[Image.Image]:
+    """Load a weather icon PNG, caching the result for reuse.
+
+    Returns ``None`` if the filename is empty or the PNG doesn't exist.
+    """
+    if not filename:
+        return None
     if filename not in _image_cache:
         path = _ICON_DIR / f"{filename}.png"
+        if not path.exists():
+            return None
         _image_cache[filename] = Image.open(path).convert("RGBA")
     return _image_cache[filename]
 
@@ -78,6 +85,8 @@ def draw_icon(
     if icon_name is None:
         return None
     icon_image = _load_icon(icon_name)
+    if icon_image is None:
+        return None
     panel.draw_image(canvas, x, y + ICON_OFFSET_Y, icon_image)
     return icon_image
 

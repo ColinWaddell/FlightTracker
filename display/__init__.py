@@ -46,8 +46,10 @@ def build_display_class():
         REFRESH_INTERVAL = 30
         logger.info("Data source: FlightRadar24, refresh every %ds", REFRESH_INTERVAL)
 
-    if cfg.loading_led_enabled:
+    if cfg.loading_indicator == "gpio":
         from scenes.loadingled import LoadingLEDIndicator as IndicatorClass
+    elif cfg.loading_indicator == "none":
+        from scenes.loadingnull import NullLoadingIndicator as IndicatorClass
     else:
         from scenes.loadingpulse import LoadingPulseIndicator as IndicatorClass
 

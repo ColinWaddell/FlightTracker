@@ -102,7 +102,7 @@ DEFAULT_WEB_PASSWORD_HASH = ""  # SHA-256 hex; empty = default password "flightt
 # Hardware
 DEFAULT_GPIO_SLOWDOWN = 1
 DEFAULT_HAT_PWM_ENABLED = True
-DEFAULT_LOADING_LED_ENABLED = False
+DEFAULT_LOADING_INDICATOR = "pixel"  # none / pixel / gpio
 DEFAULT_LOADING_LED_GPIO_PIN = ""
 
 # Data source
@@ -182,7 +182,7 @@ DEFAULTS: dict[str, Any] = {
     # Hardware
     "gpio_slowdown": DEFAULT_GPIO_SLOWDOWN,
     "hat_pwm_enabled": DEFAULT_HAT_PWM_ENABLED,
-    "loading_led_enabled": DEFAULT_LOADING_LED_ENABLED,
+    "loading_indicator": DEFAULT_LOADING_INDICATOR,
     "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
     # Data source
     "data_source": DEFAULT_DATA_SOURCE,
@@ -321,13 +321,18 @@ def migrate_config(mod) -> dict[str, Any]:
         "HAT_PWM_ENABLED": "hat_pwm_enabled",
         "JOURNEY_BLANK_FILLER": "journey_blank_filler",
         "TAR1090_URL": "tar1090_url",
-        "LOADING_LED_ENABLED": "loading_led_enabled",
-        "LOADING_LED_GPIO_PIN": "loading_led_gpio_pin",
     }
     for old, new in simple_map.items():
         val = get(old)
         if val is not None:
             data[new] = val
+
+    # Loading indicator: migrate legacy LOADING_LED_ENABLED bool -> string mode
+    if get("LOADING_LED_ENABLED"):
+        data["loading_indicator"] = "gpio"
+        pin = get("LOADING_LED_GPIO_PIN")
+        if pin is not None:
+            data["loading_led_gpio_pin"] = pin
 
     # If a tar1090 URL was configured, switch data_source to tar1090
     if get("TAR1090_URL"):
@@ -746,10 +751,12 @@ class Config:
         return bool(self.data_store.get("hat_pwm_enabled", DEFAULT_HAT_PWM_ENABLED))
 
     @property
-    def loading_led_enabled(self) -> bool:
-        return bool(
-            self.data_store.get("loading_led_enabled", DEFAULT_LOADING_LED_ENABLED)
-        )
+    def loading_indicator(self) -> str:
+        """Loading indicator mode: 'none', 'pixel', or 'gpio'."""
+        val = str(
+            self.data_store.get("loading_indicator", DEFAULT_LOADING_INDICATOR)
+        ).lower()
+        return val if val in ("none", "pixel", "gpio") else DEFAULT_LOADING_INDICATOR
 
     @property
     def loading_led_gpio_pin(self) -> int:

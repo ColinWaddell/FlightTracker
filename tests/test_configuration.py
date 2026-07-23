@@ -5,15 +5,17 @@ from datetime import datetime, time
 
 from setup.configuration import (
     _next_backup_path,
-    approx_sunrise_sunset,
     migrate_config,
     migrate_legacy_json,
+)
+from utilities.sun_times import (
+    approx_sunrise_sunset,
+    is_daytime,
     mins_to_time,
     parse_time,
     time_in_window,
     time_to_mins,
 )
-from utilities.sun_times import is_daytime
 
 # ---------------------------------------------------------------------------
 # _next_backup_path
@@ -288,15 +290,25 @@ class TestMigrateConfig:
             GPIO_SLOWDOWN=4,
             HAT_PWM_ENABLED=True,
             JOURNEY_BLANK_FILLER="-",
-            LOADING_LED_ENABLED=True,
-            LOADING_LED_GPIO_PIN=18,
         )
         data = migrate_config(mod)
         assert data["gpio_slowdown"] == 4
         assert data["hat_pwm_enabled"] is True
         assert data["journey_blank_filler"] == "-"
-        assert data["loading_led_enabled"] is True
+
+    def test_loading_led_migration_enabled(self):
+        mod = self._make_legacy_module(
+            LOADING_LED_ENABLED=True,
+            LOADING_LED_GPIO_PIN=18,
+        )
+        data = migrate_config(mod)
+        assert data["loading_indicator"] == "gpio"
         assert data["loading_led_gpio_pin"] == 18
+
+    def test_loading_led_migration_disabled(self):
+        mod = self._make_legacy_module(LOADING_LED_ENABLED=False)
+        data = migrate_config(mod)
+        assert data["loading_indicator"] == "pixel"
 
     def test_empty_legacy(self):
         mod = self._make_legacy_module()
@@ -398,3 +410,39 @@ class TestColourTheme:
         cfg = Config.__new__(Config)
         cfg.data_store = {"colour_theme": 2}
         assert cfg.colour_theme == 2
+
+
+# ---------------------------------------------------------------------------
+# loading_indicator property
+# ---------------------------------------------------------------------------
+
+
+class TestLoadingIndicator:
+    def test_default_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.loading_indicator == "pixel"
+
+    def test_valid_modes(self):
+        from setup.configuration import Config
+
+        for mode in ("none", "pixel", "gpio"):
+            cfg = Config.__new__(Config)
+            cfg.data_store = {"loading_indicator": mode}
+            assert cfg.loading_indicator == mode
+
+    def test_invalid_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"loading_indicator": "bogus"}
+        assert cfg.loading_indicator == "pixel"
+
+    def test_case_insensitive(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"loading_indicator": "GPIO"}
+        assert cfg.loading_indicator == "gpio"

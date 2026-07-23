@@ -671,19 +671,23 @@
 
           <hr class="my-3" />
 
-          <div class="mb-2 form-check">
-            <input type="checkbox" class="form-check-input" name="loading_led_enabled" id="loading_led_enabled"
-                   {% if cfg.loading_led_enabled %}checked{% endif %}
-                   onchange="document.getElementById('led_pin_field').style.display=this.checked?'block':'none'" />
-            <label class="form-check-label" for="loading_led_enabled">Status LED (GPIO)</label>
+          <div class="mb-3">
+            <label class="form-label small">Loading indicator</label>
+            <select class="form-select form-select-sm" name="loading_indicator" id="loading_indicator" style="max-width:200px"
+                    onchange="document.getElementById('led_pin_field').style.display=this.value==='gpio'?'block':'none'">
+              <option value="none" {% if cfg.loading_indicator == 'none' %}selected{% endif %}>None</option>
+              <option value="pixel" {% if cfg.loading_indicator == 'pixel' %}selected{% endif %}>Pixel</option>
+              <option value="gpio" {% if cfg.loading_indicator == 'gpio' %}selected{% endif %}>GPIO LED</option>
+            </select>
+            <div class="form-text text-muted small">Choose how FlightTracker indicates it is searching for flights. &quot;Pixel&quot; blinks an on-screen pixel, &quot;GPIO LED&quot; blinks an external LED, &quot;None&quot; disables the indicator.</div>
           </div>
 
-          <div id="led_pin_field" style="display:{% if cfg.loading_led_enabled %}block{% else %}none{% endif %}">
+          <div id="led_pin_field" style="display:{% if cfg.loading_indicator == 'gpio' %}block{% else %}none{% endif %}">
             <label class="form-label small mt-2">GPIO pin</label>
             <input type="number" min="1" max="40" class="form-control form-control-sm"
                    name="loading_led_gpio_pin" value="{{ cfg.loading_led_gpio_pin }}"
                    style="max-width:80px" />
-            <div class="form-text text-muted small">An external LED can be used to indicate the search for flights. Requires LED driving circuitry. Leave blank if not required.</div>
+            <div class="form-text text-muted small">An external LED can be used to indicate the search for flights. Requires LED driving circuitry.</div>
           </div>
         </div>
 

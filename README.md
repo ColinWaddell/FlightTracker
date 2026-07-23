@@ -205,8 +205,8 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `web_password_hash` | SHA-256 hash for the web UI password | `""` |
 | `gpio_slowdown` | `1`-`4`; increase if the display flickers | `1` |
 | `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires a solder bridge) | `true` |
-| `loading_led_enabled` | Blink a GPIO LED while loading flight data | `false` |
-| `loading_led_gpio_pin` | GPIO pin number for the loading LED | `""` |
+| `loading_indicator` | Loading indicator mode: `"none"`, `"pixel"` (on-screen blink), or `"gpio"` (external LED) | `"pixel"` |
+| `loading_led_gpio_pin` | GPIO pin number for the loading LED (only used when `loading_indicator` is `"gpio"`) | `""` |
 | `data_source` | `"fr24"` for FlightRadar24, `"tar1090"` for a local receiver | `"fr24"` |
 | `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json` | `""` |
 | `max_flight_lookup` | Number of nearby flights to track at once | `5` |
