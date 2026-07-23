@@ -507,8 +507,9 @@ class FlightScene:
         ):
             position = linescroller.tick()
             # LineScroller position is 0 or negative (scrolls left).
-            # Scroller offset is positive — use abs(position).
-            scroller.set_offset(abs(position))
+            # Scroller position is the content's left edge x-coordinate,
+            # so a negative LineScroller position maps directly.
+            scroller.set_offset(position)
             scroller.tick()
 
         if (
@@ -689,7 +690,9 @@ class FlightScene:
 
         spans = self.build_spans(cfg)
 
-        # Re-render content only when spans change
+        # Re-render content only when spans change.
+        # set_content() automatically positions the content at the
+        # right edge of the viewport so it scrolls in from the right.
         if spans != self._plane_spans:
             self._plane_spans = spans
             content = render_spans_to_image(
@@ -697,15 +700,11 @@ class FlightScene:
                 bg_colour=TC(THEME_BG),
             )
             self._plane_scroller.set_content(content)
-            self._plane_scroller.set_offset(-screen.WIDTH)
 
-        offset = self._plane_scroller.tick()
-
-        # Detect when content has fully scrolled off the left edge.
-        # Content starts at offset=-screen.WIDTH (off the right edge) and
-        # advances left.  When offset reaches content_width, all content
-        # has passed the left edge and the viewport is blank.
-        if offset >= self._plane_scroller.content_width:
+        # tick() advances position left by speed, renders the viewport,
+        # and returns True when the content has fully scrolled off the left.
+        done = self._plane_scroller.tick()
+        if done:
             if len(self.flights) > 1 and self.journey_loop_completed:
                 self.flight_index = (self.flight_index + 1) % len(self.flights)
                 self.all_looped_flag = (not self.flight_index) or self.all_looped_flag

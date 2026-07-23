@@ -1,14 +1,16 @@
 """
 Scroller - pre-rendered content scroller with built-in dirty-pixel updates.
 
-Pre-renders content to a PIL Image, then slides a viewport across it.
+Pre-renders content to a PIL Image, then slides it across a viewport.
 Each frame, only pixels that changed since the previous frame are written
 to the panel — no full-region blanking required.
 
 Supports two modes:
 
-  - **Linear scroll** (default): offset auto-advances each tick, content
-    wraps when exhausted.  Used for the plane-details strip.
+  - **Linear scroll** (default): position auto-advances each tick.
+    Content starts at the right edge of the viewport and moves left.
+    When the content has fully scrolled off the left edge, ``tick()``
+    returns ``True`` to signal completion.  Used for the plane-details strip.
 
   - **Manual offset**: caller sets the offset directly via ``set_offset()``
     and calls ``tick()`` to render.  Used for the journey bounce scroller
@@ -32,9 +34,8 @@ class Scroller:
         x, y        : viewport position on the real canvas (top-left)
         width       : viewport width in pixels
         height      : viewport height in pixels
-        bg_colour   : background colour ( Colour namedtuple or (r,g,b) tuple )
+        bg_colour   : background colour (Colour namedtuple or (r,g,b) tuple)
         speed       : pixels to advance per tick (linear mode only)
-        gap_pixels  : blank pixels between wrap-around repetitions (linear mode)
     """
 
     def __init__(
@@ -47,6 +48,7 @@ class Scroller:
         height: int,
         bg_colour=None,
         speed: int = 1,
+        # Deprecated — kept for backward compatibility but ignored.
         gap_pixels: int = 0,
     ):
         self.panel = panel
@@ -56,7 +58,6 @@ class Scroller:
         self.width = width
         self.height = height
         self.speed = speed
-        self.gap_pixels = gap_pixels
 
         if bg_colour is None:
             bg_colour = TC(THEME_BG)
@@ -66,13 +67,19 @@ class Scroller:
         # Content state
         self._content: np.ndarray | None = None  # shape (height, content_w, 3)
         self._content_width = 0
-        self._offset = 0  # current scroll offset (pixels into content)
+
+        # Position: the x-coordinate of the content's left edge
+        # relative to the viewport's left edge.
+        #   width  = content starts at the right edge (off-screen)
+        #   0      = content left-aligned with viewport
+        #  -width  = content has fully scrolled off the left edge
+        self._position = 0
 
         # Previous frame buffer — what we last drew to the canvas.
         # Initialised to None so the first tick does a full draw.
         self._prev: np.ndarray | None = None
 
-        # Paused state — when True, tick() renders but does not advance offset.
+        # Paused state — when True, tick() renders but does not advance.
         self._paused = False
 
     # ------------------------------------------------------------------
@@ -83,7 +90,8 @@ class Scroller:
         """Set the content strip from a PIL Image.
 
         The image height must match the scroller height.
-        Resets offset to 0 and forces a full redraw on the next tick.
+        Resets position to the right edge of the viewport (content enters
+        from the right) and forces a full redraw on the next tick.
         """
         if image.height != self.height:
             raise ValueError(
@@ -94,7 +102,7 @@ class Scroller:
             image = image.convert("RGB")
         self._content = np.asarray(image, dtype=np.uint8)
         self._content_width = image.width
-        self._offset = 0
+        self._position = self.width  # start at the right edge
         self._prev = None  # force full redraw
 
     def set_content_blank(self) -> None:
@@ -111,10 +119,11 @@ class Scroller:
 
     @property
     def offset(self) -> int:
-        return self._offset
+        """Current position (negative = scrolled left of viewport)."""
+        return self._position
 
     # ------------------------------------------------------------------
-    # Offset control
+    # Offset control (manual / bounce mode)
     # ------------------------------------------------------------------
 
     def set_offset(self, offset: int) -> None:
@@ -123,11 +132,11 @@ class Scroller:
         The next ``tick()`` will render at this offset.
         Does not advance further (the caller controls position).
         """
-        self._offset = offset
+        self._position = offset
 
     def reset(self) -> None:
-        """Reset to offset 0 and force a full redraw on next tick."""
-        self._offset = 0
+        """Reset position to 0 and force a full redraw on next tick."""
+        self._position = 0
         self._prev = None
 
     def pause(self) -> None:
@@ -140,30 +149,22 @@ class Scroller:
     # Rendering
     # ------------------------------------------------------------------
 
-    def tick(self) -> int:
+    def tick(self) -> bool:
         """Render the current viewport to the canvas.
 
-        In linear mode (default), advances the offset by ``speed`` first.
-        In manual mode (after ``set_offset()``), renders at the current offset.
+        In linear mode (default), advances the position left by ``speed``
+        first.  In manual mode (after ``set_offset()``), renders at the
+        current position.
 
-        Only pixels that differ from the previous frame are written
-        to the canvas via ``panel.set_pixel()``.
-
-        Returns the offset used for this frame.
+        Returns True when the content has fully scrolled off the left edge
+        (linear mode only).  In manual mode always returns False.
         """
         if self._content is None:
-            return self._offset
+            return False
 
-        # Advance offset in linear mode
+        # Advance position leftward in linear mode
         if not self._paused:
-            self._offset += self.speed
-            # Wrap only when there are gap pixels (continuous loop mode).
-            # With gap_pixels=0 the caller is responsible for detecting
-            # scroll completion and resetting/reloading content.
-            if self.gap_pixels > 0:
-                period = self._content_width + self.gap_pixels
-                if period > 0:
-                    self._offset = self._offset % period
+            self._position -= self.speed
 
         # Build the viewport frame (what should be visible now)
         frame = self._build_viewport()
@@ -171,32 +172,36 @@ class Scroller:
         # Diff against previous frame and write only changed pixels
         self._render_diff(frame)
 
-        return self._offset
+        # Signal completion when content has fully left the left edge
+        if not self._paused:
+            return self._position + self._content_width <= 0
+        return False
 
     def _build_viewport(self) -> np.ndarray:
-        """Build the current viewport as a (height, width, 3) uint8 array."""
+        """Build the current viewport as a (height, width, 3) uint8 array.
+
+        Position is the x-coordinate of the content's left edge relative
+        to the viewport.  Content pixel (cx, cy) appears at viewport
+        column (position + cx) when 0 <= position + cx < width.
+        """
         viewport = np.full((self.height, self.width, 3), self._bg, dtype=np.uint8)
 
         if self._content is None or self._content_width == 0:
             return viewport
 
-        # Total scroll period: content_width + gap_pixels
-        period = self._content_width + self.gap_pixels
+        pos = self._position
 
-        # With gap_pixels=0 the offset may exceed content_width (caller
-        # handles completion detection), so just clamp to background.
-        if self.gap_pixels > 0:
-            offset = self._offset % period if period > 0 else 0
-        else:
-            offset = self._offset
+        # Calculate the overlap between content and viewport
+        # Content spans [pos, pos + content_width)
+        # Viewport spans [0, width)
+        start = max(0, pos)
+        end = min(self.width, pos + self._content_width)
 
-        # Copy content pixels into the viewport, handling wrap-around
-        for vp_x in range(self.width):
-            src_x = offset + vp_x
-            if 0 <= src_x < self._content_width:
-                # Content pixel
-                viewport[:, vp_x] = self._content[:, src_x]
-            # else: gap or past-end pixel (already background)
+        if start < end:
+            # Content is visible — copy the overlapping region
+            src_start = start - pos  # content x offset
+            src_end = end - pos
+            viewport[:, start:end] = self._content[:, src_start:src_end]
 
         return viewport
 
@@ -262,7 +267,7 @@ def _unpack_colour(colour):
 
 
 # ---------------------------------------------------------------------------
-# Content rendering helper
+# Content rendering helpers
 # ---------------------------------------------------------------------------
 
 

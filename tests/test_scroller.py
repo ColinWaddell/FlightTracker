@@ -154,20 +154,67 @@ class TestDrawTextToTarget:
 class TestScrollerLinear:
     """Tests for linear (auto-advancing) scroll mode."""
 
+    def test_set_content_starts_at_right_edge(self, mock_panel):
+        """After set_content, position should be at the right edge of the viewport."""
+        scroller = Scroller(
+            mock_panel, canvas=MagicMock(),
+            x=0, y=0, width=10, height=4,
+            bg_colour=(0, 0, 0), speed=1,
+        )
+        content = Image.new("RGB", (20, 4), (255, 0, 0))
+        scroller.set_content(content)
+        assert scroller.offset == 10  # at the right edge
+
+    def test_first_tick_advances_left(self, mock_panel):
+        scroller = Scroller(
+            mock_panel, canvas=MagicMock(),
+            x=0, y=0, width=10, height=4,
+            bg_colour=(0, 0, 0), speed=1,
+        )
+        content = Image.new("RGB", (20, 4), (255, 0, 0))
+        scroller.set_content(content)
+        # set_content sets position to width=10, tick subtracts speed=1
+        done = scroller.tick()
+        assert scroller.offset == 9
+        assert done is False  # content is still visible
+
+    def test_tick_returns_true_when_scrolled_off(self, mock_panel):
+        """tick() returns True when content has fully scrolled off the left edge."""
+        scroller = Scroller(
+            mock_panel, canvas=MagicMock(),
+            x=0, y=0, width=10, height=4,
+            bg_colour=(0, 0, 0), speed=1,
+        )
+        # Content 5px wide, viewport 10px wide.
+        # set_content sets position=10.  Content is visible while
+        # position + content_width > 0, i.e. position > -5.
+        # Completion when position + content_width <= 0, i.e. position <= -5.
+        content = Image.new("RGB", (5, 4), (255, 0, 0))
+        scroller.set_content(content)
+
+        # Position goes: 10, 9, 8, ... 0, -1, ... -5 (done)
+        for expected in range(9, -5, -1):
+            done = scroller.tick()
+            assert scroller.offset == expected
+        # One more tick to reach -5
+        done = scroller.tick()
+        assert scroller.offset == -5
+        assert done is True
+
     def test_first_tick_draws_all_pixels(self, mock_panel):
         scroller = Scroller(
             mock_panel, canvas=MagicMock(),
             x=0, y=0, width=10, height=4,
             bg_colour=(0, 0, 0), speed=1,
         )
-        # Create a 20x4 content image with a distinctive pattern
         content = Image.new("RGB", (20, 4), (0, 0, 0))
         for x in range(20):
             content.putpixel((x, 0), (255, 0, 0))
         scroller.set_content(content)
 
         scroller.tick()
-        # First tick should draw all viewport pixels (10x4 = 40)
+        # First tick: content is at position 9, so 1px of content visible
+        # at viewport column 9.  But first frame is a full draw (10x4=40).
         assert mock_panel.set_pixel.call_count == 40
 
     def test_second_tick_draws_only_changed(self, mock_panel):
@@ -179,16 +226,19 @@ class TestScrollerLinear:
         content = Image.new("RGB", (20, 4), (0, 0, 0))
         for x in range(20):
             for y in range(4):
-                content.putpixel((x, y), (x * 10, 0, 0))
+                content.putpixel((x, y), (x * 10 + 50, 0, 0))  # offset so col 0 != bg
         scroller.set_content(content)
 
-        scroller.tick()  # full draw
+        scroller.tick()  # full draw (position 9: 1 content col visible)
         mock_panel.set_pixel.reset_mock()
-        scroller.tick()  # should only draw changed pixels
+        scroller.tick()  # position 8: 2 content cols visible
 
-        # With a 1px scroll, every pixel in the viewport changes (content is unique per column)
-        # so all 40 pixels should be redrawn
-        assert mock_panel.set_pixel.call_count == 40
+        # Position 8: viewport columns 8 and 9 have content.
+        # Position 9: viewport column 9 had content.
+        # Diff: column 8 is new (was background, now content) = 4 pixels.
+        # Column 9 changed content (col 1 vs col 0) = 4 pixels.
+        # Total = 8 changed pixels.
+        assert mock_panel.set_pixel.call_count == 8
 
     def test_static_content_draws_nothing_after_first(self, mock_panel):
         scroller = Scroller(
@@ -206,7 +256,7 @@ class TestScrollerLinear:
         scroller.tick()  # nothing changed
         assert mock_panel.set_pixel.call_count == 0
 
-    def test_offset_advances_by_speed(self, mock_panel):
+    def test_speed_advances_position(self, mock_panel):
         scroller = Scroller(
             mock_panel, canvas=MagicMock(),
             x=0, y=0, width=10, height=4,
@@ -214,54 +264,11 @@ class TestScrollerLinear:
         )
         content = Image.new("RGB", (30, 4), (0, 0, 0))
         scroller.set_content(content)
-        # set_content resets offset to 0, tick advances by speed=2
-        offset = scroller.tick()
-        assert offset == 2
+        # set_content sets position=10, tick subtracts speed=2
+        scroller.tick()
+        assert scroller.offset == 8
 
-    def test_wrap_around(self, mock_panel):
-        scroller = Scroller(
-            mock_panel, canvas=MagicMock(),
-            x=0, y=0, width=5, height=2,
-            bg_colour=(0, 0, 0), speed=1, gap_pixels=1,
-        )
-        # Content 5px wide, gap 1px, period = 6
-        # Offsets cycle: 1,2,3,4,5,0,1,2,...
-        content = Image.new("RGB", (5, 2), (50, 50, 50))
-        scroller.set_content(content)
-
-        scroller.tick()
-        assert scroller.offset == 1
-        scroller.tick()
-        assert scroller.offset == 2
-        scroller.tick()
-        assert scroller.offset == 3
-        scroller.tick()
-        assert scroller.offset == 4
-        scroller.tick()
-        assert scroller.offset == 5
-        scroller.tick()
-        assert scroller.offset == 0  # wrapped
-        scroller.tick()
-        assert scroller.offset == 1  # next cycle
-
-    def test_gap_pixels(self, mock_panel):
-        scroller = Scroller(
-            mock_panel, canvas=MagicMock(),
-            x=0, y=0, width=5, height=2,
-            bg_colour=(0, 0, 0), speed=1, gap_pixels=3,
-        )
-        content = Image.new("RGB", (5, 2), (255, 255, 255))
-        scroller.set_content(content)
-
-        # Period = 5 + 3 = 8, offsets: 1,2,3,4,5,6,7,0,1,2...
-        offsets = []
-        for _ in range(10):
-            offsets.append(scroller.tick())
-        assert offsets[7] == 0  # wrapped
-        assert offsets[8] == 1
-        assert offsets[9] == 2
-
-    def test_set_content_resets_offset(self, mock_panel):
+    def test_set_content_resets_position(self, mock_panel):
         scroller = Scroller(
             mock_panel, canvas=MagicMock(),
             x=0, y=0, width=10, height=4,
@@ -271,11 +278,11 @@ class TestScrollerLinear:
         scroller.set_content(content1)
         scroller.tick()
         scroller.tick()
-        assert scroller.offset == 2
+        assert scroller.offset == 8  # 10 - 2
 
         content2 = Image.new("RGB", (20, 4), (0, 255, 0))
         scroller.set_content(content2)
-        assert scroller.offset == 0
+        assert scroller.offset == 10  # reset to width
 
     def test_set_content_wrong_height_raises(self, mock_panel):
         scroller = Scroller(
@@ -297,12 +304,11 @@ class TestScrollerLinear:
         # Should write 8x3 = 24 background pixels at the viewport position
         assert mock_panel.set_pixel.call_count == 24
         # Check positions include the x,y offset
-        # set_pixel(canvas, x, y, r, g, b) — canvas is arg 0, x is arg 1
         call_args = mock_panel.set_pixel.call_args_list[0]
         assert call_args[0][1] == 5  # x offset
         assert call_args[0][2] == 10  # y offset
 
-    def test_pause_prevents_offset_advance(self, mock_panel):
+    def test_pause_prevents_position_advance(self, mock_panel):
         scroller = Scroller(
             mock_panel, canvas=MagicMock(),
             x=0, y=0, width=10, height=4,
@@ -320,7 +326,7 @@ class TestScrollerLinear:
 
         scroller.resume()
         scroller.tick()
-        assert scroller.offset > offset_after_first  # advanced again
+        assert scroller.offset < offset_after_first  # advanced (moved left)
 
 
 class TestScrollerManual:
@@ -338,17 +344,18 @@ class TestScrollerManual:
             content.putpixel((x, 0), (x, 0, 0))
         scroller.set_content(content)
 
-        scroller.set_offset(5)
+        # In manual mode, set_offset positions the content's left edge.
+        # set_offset(-5) means content starts 5px left of viewport,
+        # so viewport column 0 shows content column 5.
+        scroller.set_offset(-5)
         scroller.tick()
 
-        # Check that the first pixel drawn corresponds to content column 5
+        # Check that the first viewport column shows content column 5
         calls = mock_panel.set_pixel.call_args_list
-        # Find the call at (0, 0) - top-left of viewport
         top_left_calls = [c for c in calls if c[0][1] == 0 and c[0][2] == 0]
         if top_left_calls:
-            # Should be content column 5 = (5, 0, 0)
             call = top_left_calls[0]
-            assert call[0][3] == 5  # r value
+            assert call[0][3] == 5  # r value = content column 5
 
     def test_reset_forces_full_redraw(self, mock_panel):
         scroller = Scroller(
