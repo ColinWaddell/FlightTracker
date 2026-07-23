@@ -162,7 +162,7 @@ class SatelliteScene:
     # ------------------------------------------------------------------
 
     def recompute_passes(self, cfg) -> None:
-        tles = self.tle_manager.get(timeout=5.0)
+        tles = self.tle_manager.try_get()
         if not tles:
             logger.warning("Satellite pass computation skipped - no TLE data available")
             return

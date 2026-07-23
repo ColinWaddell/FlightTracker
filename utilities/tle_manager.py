@@ -118,6 +118,13 @@ class TLEManager:
         with self.lock:
             return list(self.tles)
 
+    def try_get(self) -> list[tuple[str, str, str]] | None:
+        """Non-blocking: return cached TLEs if ready, else None."""
+        if not self.ready.is_set():
+            return None
+        with self.lock:
+            return list(self.tles)
+
     def invalidate(self) -> None:
         """Force a refresh on next cycle (e.g. after config change)."""
         with self.lock:
