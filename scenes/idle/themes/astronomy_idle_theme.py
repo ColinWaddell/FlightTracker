@@ -291,7 +291,7 @@ class AstronomyIdleTheme(BaseIdleScene):
             self.panel.draw_square(
                 self.canvas,
                 0, STRIP_Y_ORIGIN,
-                SCREEN_WIDTH - 1, STRIP_Y_ORIGIN + STRIP_HEIGHT - 1,
+                SCREEN_WIDTH - 1, STRIP_BOTTOM_Y + 1,
                 TC(THEME_BG),
             )
 
@@ -359,7 +359,7 @@ class AstronomyIdleTheme(BaseIdleScene):
             right_label = "E"
 
         # Draw labels ON the horizon line (same y as the line)
-        label_y = STRIP_BOTTOM_Y
+        label_y = STRIP_BOTTOM_Y + 1
 
         # Left label at x=0
         self.panel.draw_text(
