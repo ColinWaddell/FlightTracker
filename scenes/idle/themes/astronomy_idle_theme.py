@@ -119,6 +119,8 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._phase_start: float = 0.0
         self._last_label_text: str | None = None
         self._last_connector_x: int | None = None
+        self._last_connector_y_start: int | None = None
+        self._last_connector_y_end: int | None = None
 
     def theme_reset(self) -> None:
         self.last_time = None
@@ -130,6 +132,8 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._phase_start = 0.0
         self._last_label_text = None
         self._last_connector_x = None
+        self._last_connector_y_start = None
+        self._last_connector_y_end = None
 
     # ------------------------------------------------------------------
     # draw() — per-frame animation for smooth fades
@@ -467,6 +471,14 @@ class AstronomyIdleTheme(BaseIdleScene):
                     connector_x, line_end,
                     connector_colour,
                 )
+                self._last_connector_y_start = line_start
+                self._last_connector_y_end = line_end
+            else:
+                self._last_connector_y_start = None
+                self._last_connector_y_end = None
+        else:
+            self._last_connector_y_start = None
+            self._last_connector_y_end = None
 
         # Draw label text, centred on the screen
         label_width = font_text_width(LABEL_FONT, label_text)
@@ -487,10 +499,9 @@ class AstronomyIdleTheme(BaseIdleScene):
     def _erase_label(self) -> None:
         """Erase the previously drawn label text and in-strip connector.
 
-        The connector lives inside the strip (dot to horizon bar),
-        so we erase it with a background-coloured line at the same x.
-        It never touches the dot (starts 1px below) or the horizon bar
-        (ends 1px above), so erasing is safe.
+        Only erases the exact pixels of the connector line (from
+        dot_y+1 to horizon-1), never the full strip height.  This
+        ensures planet dots and the horizon bar are never damaged.
         """
         if self._last_label_text is not None:
             label_width = font_text_width(LABEL_FONT, self._last_label_text)
@@ -504,19 +515,21 @@ class AstronomyIdleTheme(BaseIdleScene):
                 self._last_label_text,
             )
 
-        if self._last_connector_x is not None:
-            # Erase the in-strip connector line
-            line_y_start = STRIP_Y_ORIGIN
-            line_y_end = STRIP_BOTTOM_Y - 1
+        if (self._last_connector_x is not None
+                and self._last_connector_y_start is not None
+                and self._last_connector_y_end is not None):
+            # Erase only the exact connector pixels
             self.panel.draw_line(
                 self.canvas,
-                self._last_connector_x, line_y_start,
-                self._last_connector_x, line_y_end,
+                self._last_connector_x, self._last_connector_y_start,
+                self._last_connector_x, self._last_connector_y_end,
                 TC(THEME_BG),
             )
 
         self._last_label_text = None
         self._last_connector_x = None
+        self._last_connector_y_start = None
+        self._last_connector_y_end = None
 
     # ------------------------------------------------------------------
     # draw_content — called by base class if draw() not overridden
