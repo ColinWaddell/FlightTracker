@@ -157,10 +157,13 @@ class Scroller:
         # Advance offset in linear mode
         if not self._paused:
             self._offset += self.speed
-            # Normalise offset into [0, period) to avoid unbounded growth
-            period = self._content_width + self.gap_pixels
-            if period > 0:
-                self._offset = self._offset % period
+            # Wrap only when there are gap pixels (continuous loop mode).
+            # With gap_pixels=0 the caller is responsible for detecting
+            # scroll completion and resetting/reloading content.
+            if self.gap_pixels > 0:
+                period = self._content_width + self.gap_pixels
+                if period > 0:
+                    self._offset = self._offset % period
 
         # Build the viewport frame (what should be visible now)
         frame = self._build_viewport()
@@ -180,8 +183,12 @@ class Scroller:
         # Total scroll period: content_width + gap_pixels
         period = self._content_width + self.gap_pixels
 
-        # Normalise offset into [0, period) for wrapping
-        offset = self._offset % period if period > 0 else 0
+        # With gap_pixels=0 the offset may exceed content_width (caller
+        # handles completion detection), so just clamp to background.
+        if self.gap_pixels > 0:
+            offset = self._offset % period if period > 0 else 0
+        else:
+            offset = self._offset
 
         # Copy content pixels into the viewport, handling wrap-around
         for vp_x in range(self.width):
@@ -189,7 +196,7 @@ class Scroller:
             if src_x < self._content_width:
                 # Content pixel
                 viewport[:, vp_x] = self._content[:, src_x]
-            # else: gap pixel (already background)
+            # else: gap or past-end pixel (already background)
 
         return viewport
 

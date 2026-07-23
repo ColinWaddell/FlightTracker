@@ -222,13 +222,13 @@ class TestScrollerLinear:
         scroller = Scroller(
             mock_panel, canvas=MagicMock(),
             x=0, y=0, width=5, height=2,
-            bg_colour=(0, 0, 0), speed=1,
+            bg_colour=(0, 0, 0), speed=1, gap_pixels=1,
         )
-        # Content exactly 5px wide (same as viewport)
+        # Content 5px wide, gap 1px, period = 6
+        # Offsets cycle: 1,2,3,4,5,0,1,2,...
         content = Image.new("RGB", (5, 2), (50, 50, 50))
         scroller.set_content(content)
 
-        # Period = 5, so offsets cycle: 1,2,3,4,0,1,2,...
         scroller.tick()
         assert scroller.offset == 1
         scroller.tick()
@@ -237,6 +237,8 @@ class TestScrollerLinear:
         assert scroller.offset == 3
         scroller.tick()
         assert scroller.offset == 4
+        scroller.tick()
+        assert scroller.offset == 5
         scroller.tick()
         assert scroller.offset == 0  # wrapped
         scroller.tick()
