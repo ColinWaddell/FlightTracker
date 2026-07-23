@@ -260,10 +260,8 @@ class FlightScene:
             width=screen.WIDTH, height=PLANE_TEXT_HEIGHT + 1,
             bg_colour=TC(THEME_BG),
             speed=1,
-            gap_pixels=screen.WIDTH,  # full screen gap between repeats
         )
         self._plane_spans: list | None = None
-        self._last_plane_offset = 0
         self.last_details_mode: int | None = None
 
         # Callsign bar cache - only redraw when these change
@@ -379,7 +377,6 @@ class FlightScene:
         self.dest_name = ""
         self._plane_scroller.reset()
         self._plane_spans = None
-        self._last_plane_offset = 0
         self.last_callsign_drawn = None
         self.last_index_drawn = None
         self.last_flight_count_drawn = None
@@ -688,7 +685,6 @@ class FlightScene:
         if current_mode != self.last_details_mode:
             self._plane_scroller.reset()
             self._plane_spans = None
-            self._last_plane_offset = 0
             self.last_details_mode = current_mode
 
         spans = self.build_spans(cfg)
@@ -702,15 +698,14 @@ class FlightScene:
             )
             self._plane_scroller.set_content(content)
             self._plane_scroller.set_offset(screen.WIDTH)
-            self._last_plane_offset = screen.WIDTH
 
         offset = self._plane_scroller.tick()
 
-        # Detect wrap: offset went from high to low (wrapped around)
-        if offset < self._last_plane_offset:
+        # Detect when content has fully scrolled off the left edge.
+        # At that point the viewport is entirely background — no need
+        # to wait for the gap pixels to scroll past too.
+        if offset >= self._plane_scroller.content_width:
             if len(self.flights) > 1 and self.journey_loop_completed:
                 self.flight_index = (self.flight_index + 1) % len(self.flights)
                 self.all_looped_flag = (not self.flight_index) or self.all_looped_flag
                 self.reset()
-
-        self._last_plane_offset = offset
