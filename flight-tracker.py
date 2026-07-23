@@ -98,16 +98,31 @@ def _check_libopenblas() -> bool:
         return False
 
 def _render_openblas_warning(panel, canvas):
-    """Show a message telling the user to install libopenblas0."""
-    from setup.colours import WHITE, GREEN
-    from time import sleep
+    """Show a message telling the user to install libopenblas0.
+
+    Stays on screen permanently — app exits after displaying.
+    """
+    from setup.colours import WHITE, GREEN, LIGHT_GREEN, CYAN
 
     panel.clear(canvas)
     panel.draw_text(canvas, test_font, 1, 6, WHITE, "please run:")
     panel.draw_text(canvas, test_font, 1, 16, GREEN, "sudo apt install")
-    panel.draw_text(canvas, test_font, 1, 26, GREEN, "libopenblas0")
+
+    # Colour-coded package name for readability
+    x = 1
+    panel.draw_text(canvas, test_font, x, 26, GREEN, "lib")
+    x += 12   # 3 chars * 4px
+    panel.draw_text(canvas, test_font, x, 26, LIGHT_GREEN, "open")
+    x += 16   # 4 chars * 4px
+    panel.draw_text(canvas, test_font, x, 26, GREEN, "blas")
+    x += 16   # 4 chars * 4px
+    panel.draw_text(canvas, test_font, x, 26, CYAN, "0")
+
     panel.swap(canvas)
-    sleep(2)
+
+    # Keep on screen permanently
+    while True:
+        time.sleep(60)
 
 def _render_celestrack_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, ORANGE, RED
