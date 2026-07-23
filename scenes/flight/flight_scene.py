@@ -493,10 +493,11 @@ class FlightScene:
 
         if self.journey_mode != "full" or self.journey_first_draw:
             self.journey_mode = "full"
-            self.setup_full_mode(cfg, flight)
+            # Clear the journey area before setup draws the static text.
             self.panel.draw_square(
                 self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
             )
+            self.setup_full_mode(cfg, flight)
             self._origin_scroller.force_full_redraw()
             self._dest_scroller.force_full_redraw()
             self.journey_first_draw = False
@@ -599,39 +600,72 @@ class FlightScene:
         self.origin_name = (origin_name or "Unknown") + " "
         self.dest_name = (dest_name or "Unknown") + " "
 
-        # Pre-render each full line to a PIL Image and load into the scrollers.
-        # The line text is "{IATA}{arrow}{name}" rendered with small_symbols font.
-        # Each span has its own colour, so we build the image span by span.
-        from display.scroller import render_spans_to_image
+        from display.scroller import render_text_to_image
 
-        origin_spans = [
-            (TC(THEME_LOCATION_ORIGIN), fonts.small_symbols, origin),
-            (TC(THEME_LOCATION_ORIGIN_ARROW), fonts.small_symbols, ">"),
-            (TC(THEME_LOCATION_ORIGIN_FULL), fonts.small_symbols, self.origin_name),
-        ]
-        dest_spans = [
-            (TC(THEME_LOCATION_DESTINATION), fonts.small_symbols, destination),
-            (TC(THEME_LOCATION_DESTINATION_ARROW), fonts.small_symbols, "<"),
-            (TC(THEME_LOCATION_DESTINATION_FULL), fonts.small_symbols, self.dest_name),
-        ]
+        # Measure the static part (IATA code + arrow) for each line.
+        # The arrow glyph (" >" or " <") is 9px wide in small_symbols.
+        origin_static_w = sum(
+            fonts.small_symbols.CharacterWidth(ord(c)) for c in origin
+        ) + fonts.small_symbols.CharacterWidth(ord(">"))
+        dest_static_w = sum(
+            fonts.small_symbols.CharacterWidth(ord(c)) for c in destination
+        ) + fonts.small_symbols.CharacterWidth(ord("<"))
 
-        origin_img = render_spans_to_image(
-            origin_spans, height=8, bg_colour=TC(THEME_BG)
+        # The scrolling viewport for the airport name starts just after
+        # the static part and extends to the right edge of the screen.
+        origin_viewport_x = origin_static_w
+        origin_viewport_w = screen.WIDTH - origin_viewport_x
+        dest_viewport_x = dest_static_w
+        dest_viewport_w = screen.WIDTH - dest_viewport_x
+
+        # Draw the static IATA code + arrow directly onto the canvas.
+        # Origin line (y=0-7, baseline y=7)
+        self.panel.draw_text(
+            self.canvas, fonts.small_symbols, 0, 7,
+            TC(THEME_LOCATION_ORIGIN), origin,
         )
-        dest_img = render_spans_to_image(
-            dest_spans, height=8, bg_colour=TC(THEME_BG)
+        self.panel.draw_text(
+            self.canvas, fonts.small_symbols,
+            sum(fonts.small_symbols.CharacterWidth(ord(c)) for c in origin), 7,
+            TC(THEME_LOCATION_ORIGIN_ARROW), ">",
+        )
+        # Destination line (y=8-15, baseline y=15)
+        self.panel.draw_text(
+            self.canvas, fonts.small_symbols, 0, 15,
+            TC(THEME_LOCATION_DESTINATION), destination,
+        )
+        self.panel.draw_text(
+            self.canvas, fonts.small_symbols,
+            sum(fonts.small_symbols.CharacterWidth(ord(c)) for c in destination), 15,
+            TC(THEME_LOCATION_DESTINATION_ARROW), "<",
         )
 
-        self._origin_scroller.set_content(origin_img)
-        self._dest_scroller.set_content(dest_img)
+        # Pre-render just the airport name to a PIL image for the scrollers.
+        origin_name_img = render_text_to_image(
+            self.origin_name, fonts.small_symbols, height=8,
+            colour=TC(THEME_LOCATION_ORIGIN_FULL), bg_colour=TC(THEME_BG),
+        )
+        dest_name_img = render_text_to_image(
+            self.dest_name, fonts.small_symbols, height=8,
+            colour=TC(THEME_LOCATION_DESTINATION_FULL), bg_colour=TC(THEME_BG),
+        )
 
-        # Configure the LineScroller bounce state machines
-        for scroller, img in (
-            (self.origin_scroll, origin_img),
-            (self.dest_scroll, dest_img),
-        ):
-            scroller.reset()
-            scroller.scroll_max = max(0, img.width - screen.WIDTH)
+        # Reconfigure the scrollers for the name-only viewport.
+        self._origin_scroller.x = origin_viewport_x
+        self._origin_scroller.width = origin_viewport_w
+        self._origin_scroller.set_content(origin_name_img)
+
+        self._dest_scroller.x = dest_viewport_x
+        self._dest_scroller.width = dest_viewport_w
+        self._dest_scroller.set_content(dest_name_img)
+
+        # Configure the LineScroller bounce state machines.
+        # scroll_max is how far the name can scroll left while still
+        # filling the viewport.
+        self.origin_scroll.reset()
+        self.dest_scroll.reset()
+        self.origin_scroll.scroll_max = max(0, origin_name_img.width - origin_viewport_w)
+        self.dest_scroll.scroll_max = max(0, dest_name_img.width - dest_viewport_w)
 
     # ------------------------------------------------------------------
     # Plane details (scrolling bar)
