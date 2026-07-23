@@ -330,20 +330,6 @@ class AstronomyIdleTheme(BaseIdleScene):
                     r, g, b = colour.red, colour.green, colour.blue
                     self.panel.set_pixel(self.canvas, x, y, r, g, b)
 
-                # Draw in-strip connector from 1px below dot to
-                # 1px above the horizon line.
-                from setup.themes import THEME_ASTRO_CONNECTOR
-                connector_colour = TC(THEME_ASTRO_CONNECTOR)
-                seg_start = y + 1
-                seg_end = STRIP_BOTTOM_Y - 1
-                if seg_end >= seg_start:
-                    self.panel.draw_line(
-                        self.canvas,
-                        x, seg_start,
-                        x, seg_end,
-                        connector_colour,
-                    )
-
             self._strip_drawn = True
             self._last_positions = list(positions)
 
@@ -462,22 +448,23 @@ class AstronomyIdleTheme(BaseIdleScene):
             TC("ASTRO_CONNECTOR"), bg_colour, alpha
         )
 
-        # Erase previous label and connector (only in the label area,
-        # NOT the strip area — dots and horizon line must survive)
+        # Erase previous label text and in-strip connector line
         self._erase_label()
 
-        # Draw connector line from just below the horizon line to
-        # just above the label text.  The in-strip portion (dot to
-        # horizon) is drawn during _draw_horizon_strip and only
-        # changes when positions are recomputed (~60s).
+        # Draw connector line inside the strip: from 1px below the
+        # planet dot down to 1px above the horizon bar.  This line
+        # fades in/out with the label text.
         if connector_x is not None:
-            below_start = STRIP_BOTTOM_Y + 1
-            below_end = LABEL_Y - LABEL_FONT_HEIGHT
-            if below_end >= below_start:
+            dot_y = PlanetTracker.elevation_to_strip_y(
+                body.el_deg, STRIP_HEIGHT, STRIP_Y_ORIGIN
+            )
+            line_start = dot_y + 1
+            line_end = STRIP_BOTTOM_Y - 1
+            if line_end >= line_start:
                 self.panel.draw_line(
                     self.canvas,
-                    connector_x, below_start,
-                    connector_x, below_end,
+                    connector_x, line_start,
+                    connector_x, line_end,
                     connector_colour,
                 )
 
@@ -498,11 +485,12 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._last_connector_x = connector_x
 
     def _erase_label(self) -> None:
-        """Erase the previously drawn label and connector line.
+        """Erase the previously drawn label text and in-strip connector.
 
-        Only erases the gap between the strip and the label, plus the
-        label text itself.  Does NOT touch the strip area (dots, horizon
-        line, cardinal labels) — those are managed by _draw_horizon_strip.
+        The connector lives inside the strip (dot to horizon bar),
+        so we erase it with a background-coloured line at the same x.
+        It never touches the dot (starts 1px below) or the horizon bar
+        (ends 1px above), so erasing is safe.
         """
         if self._last_label_text is not None:
             label_width = font_text_width(LABEL_FONT, self._last_label_text)
@@ -517,11 +505,9 @@ class AstronomyIdleTheme(BaseIdleScene):
             )
 
         if self._last_connector_x is not None:
-            # Erase only the below-strip portion of the connector.
-            # The in-strip portion is erased when the strip is redrawn
-            # (~60s) and the horizon line pixel is part of the strip.
-            line_y_start = STRIP_BOTTOM_Y + 1
-            line_y_end = LABEL_Y
+            # Erase the in-strip connector line
+            line_y_start = STRIP_Y_ORIGIN
+            line_y_end = STRIP_BOTTOM_Y - 1
             self.panel.draw_line(
                 self.canvas,
                 self._last_connector_x, line_y_start,
