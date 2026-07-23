@@ -1,151 +1,194 @@
 """
-Minimal BDF font parser and renderer.
+Unified BDF font parser and renderer.
 
 Reads .bdf (Bitmap Distribution Format) font files and provides:
-  - BDFFont: holds parsed glyphs indexed by codepoint
-  - draw_text(): renders a string onto a PIL Image, returns advance width
+  - Glyph:  a single parsed glyph (dwidth, bounding box, pre-decoded bitmap rows)
+  - BDFFont: holds parsed glyphs indexed by codepoint, with metrics helpers
+  - draw_text(): renders a string onto a canvas, returns advance width
 
-This lets us use the existing .bdf font files on Pi 5 (piomatter/PIL)
-without converting them to another format.
+The parser pre-decodes each bitmap row into an integer at load time so
+rendering is a simple bit-test loop with no per-frame hex conversion.
+
+draw_text() works with any canvas that exposes one of:
+  - set_pixel(x, y, r, g, b)   (SimulatorCanvas / rgbpanel_simulator)
+  - putpixel((x, y), (r, g, b)) (PIL Image / rgbpanel_piomatter)
+
+This lets the same .bdf font files and the same renderer be used on
+Pi 5 (piomatter/PIL) and on the desktop simulator without duplication.
 """
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class Glyph:
+    """A single BDF glyph with a pre-decoded bitmap.
+
+    Attributes:
+        dwidth:    device-width advance (pixels to move right after drawing)
+        bbx_w:     bounding-box width
+        bbx_h:     bounding-box height
+        bbx_xoff:  bounding-box x offset from the pen position
+        bbx_yoff:  bounding-box y offset from the baseline (positive = below)
+        rows:      list of ints, one per bitmap row (MSB = leftmost pixel)
+    """
+
+    dwidth: int
+    bbx_w: int
+    bbx_h: int
+    bbx_xoff: int
+    bbx_yoff: int
+    rows: list[int] = field(default_factory=list)
 
 
 class BDFFont:
-    """A parsed BDF font with glyph lookup by codepoint."""
+    """A parsed BDF font with glyph lookup by codepoint.
+
+    Compatible with the rgbmatrix ``graphics.Font`` surface used elsewhere
+    in the codebase: ``CharacterWidth(codepoint)`` returns the advance width
+    for a single character, matching the C++ binding's method of the same
+    name.
+    """
 
     def __init__(self, path: str):
-        self.glyphs = {}  # codepoint -> glyph dict
+        self.glyphs: dict[int, Glyph] = {}
         self.bounding_box = (0, 0, 0, 0)  # width, height, x_offset, y_offset
         self.ascent = 0
         self.descent = 0
         self._load(path)
 
     def _load(self, path: str):
-        with open(path, encoding="utf-8", errors="replace") as f:
+        with open(path, encoding="latin-1") as f:
             lines = [line.rstrip("\n") for line in f]
 
-        i = 0
-        current_glyph = None
+        encoding = -1
+        dwidth = 0
+        bbx_w = bbx_h = bbx_xoff = bbx_yoff = 0
+        bitmap_lines: list[str] = []
         in_bitmap = False
-        bitmap_rows = []
 
-        while i < len(lines):
-            line = lines[i].strip()
-            i += 1
+        for line in lines:
+            line = line.rstrip()
 
-            if not line:
-                continue
-
-            parts = line.split()
-
-            if parts[0] == "FONTBOUNDINGBOX" and len(parts) >= 5:
+            if line.startswith("FONTBOUNDINGBOX "):
+                parts = line.split()
                 self.bounding_box = (
                     int(parts[1]),
                     int(parts[2]),
                     int(parts[3]),
                     int(parts[4]),
                 )
-
-            elif parts[0] == "FONT_ASCENT":
-                self.ascent = int(parts[1])
-
-            elif parts[0] == "FONT_DESCENT":
-                self.descent = int(parts[1])
-
-            elif parts[0] == "STARTCHAR":
-                current_glyph = {
-                    "encoding": None,
-                    "bbx": None,
-                    "dwidth": None,
-                    "bitmap": [],
-                }
-                in_bitmap = False
-
-            elif parts[0] == "ENCODING" and current_glyph is not None:
-                current_glyph["encoding"] = int(parts[1])
-
-            elif parts[0] == "DWIDTH" and current_glyph is not None:
-                current_glyph["dwidth"] = int(parts[1])
-
-            elif parts[0] == "BBX" and current_glyph is not None:
-                current_glyph["bbx"] = (
+            elif line.startswith("FONT_ASCENT "):
+                self.ascent = int(line.split()[1])
+            elif line.startswith("FONT_DESCENT "):
+                self.descent = int(line.split()[1])
+            elif line.startswith("ENCODING "):
+                encoding = int(line.split()[1])
+            elif line.startswith("DWIDTH "):
+                dwidth = int(line.split()[1])
+            elif line.startswith("BBX "):
+                parts = line.split()
+                bbx_w, bbx_h, bbx_xoff, bbx_yoff = (
                     int(parts[1]),
                     int(parts[2]),
                     int(parts[3]),
                     int(parts[4]),
                 )
-
-            elif parts[0] == "BITMAP":
+            elif line == "BITMAP":
                 in_bitmap = True
-                bitmap_rows = []
-
-            elif parts[0] == "ENDCHAR":
+                bitmap_lines = []
+            elif line == "ENDCHAR":
+                if in_bitmap and encoding >= 0:
+                    rows = []
+                    bytes_per_row = (bbx_w + 7) // 8
+                    for hex_row in bitmap_lines:
+                        padded = hex_row.ljust(bytes_per_row * 2, "0")
+                        val = int(padded[: bytes_per_row * 2], 16)
+                        rows.append(val)
+                    self.glyphs[encoding] = Glyph(
+                        dwidth,
+                        bbx_w,
+                        bbx_h,
+                        bbx_xoff,
+                        bbx_yoff,
+                        rows,
+                    )
                 in_bitmap = False
-                if current_glyph is not None:
-                    current_glyph["bitmap"] = bitmap_rows
-                    enc = current_glyph["encoding"]
-                    if enc is not None:
-                        self.glyphs[enc] = current_glyph
-                    current_glyph = None
-
+                encoding = -1
             elif in_bitmap:
-                # Each line is a hex string representing one row of pixels.
-                bitmap_rows.append(line)
+                bitmap_lines.append(line.strip())
 
-    def get_glyph(self, codepoint: int):
-        """Return glyph data for a codepoint, or None if not found."""
+    def get_glyph(self, codepoint: int) -> Glyph | None:
+        """Return the :class:`Glyph` for *codepoint*, or ``None``."""
         return self.glyphs.get(codepoint)
+
+    def CharacterWidth(self, codepoint: int) -> int:
+        """Return the advance width for *codepoint* (0 if missing).
+
+        Mirrors the ``graphics.Font.CharacterWidth`` method from the
+        rgbmatrix C++ binding so callers can use any font object
+        uniformly.
+        """
+        glyph = self.glyphs.get(codepoint)
+        return glyph.dwidth if glyph else 0
+
+    def text_width(self, text: str) -> int:
+        """Return the total advance width of *text* in pixels."""
+        return sum(self.CharacterWidth(ord(c)) for c in text)
 
 
 def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
-    """
-    Draw *text* onto a PIL Image *canvas* at (x, y) using *font*.
+    """Draw *text* onto *canvas* at (x, y) using *font*.
 
     The y coordinate is the **baseline** position, matching the
-    rgbmatrix graphics.DrawText convention.
+    rgbmatrix ``graphics.DrawText`` convention.
+
+    The canvas may be either:
+      - a PIL ``Image`` (uses ``putpixel``)
+      - a ``SimulatorCanvas`` or any object with ``set_pixel(x, y, r, g, b)``
 
     Returns the total advance width (pixels consumed).
     """
+    if not text:
+        return 0
+
     cr, cg, cb = _unpack_colour(colour)
+
+    # Detect canvas type once.
+    set_pixel = getattr(canvas, "set_pixel", None)
+    if set_pixel is not None:
+
+        def _put(px, py):
+            set_pixel(px, py, cr, cg, cb)
+
+    else:
+        putpixel = canvas.putpixel
+
+        def _put(px, py):
+            putpixel((px, py), (cr, cg, cb))
+
     advance = 0
 
     for ch in text:
-        codepoint = ord(ch)
-        glyph = font.get_glyph(codepoint)
+        glyph = font.get_glyph(ord(ch))
 
         if glyph is None:
             # Missing glyph - skip by 1 pixel
             advance += 1
             continue
 
-        bbx_w, bbx_h, bbx_x, bbx_y = glyph["bbx"] if glyph["bbx"] else (0, 0, 0, 0)
-        dwidth = glyph["dwidth"] if glyph["dwidth"] else bbx_w
+        top_y = y - glyph.bbx_yoff - glyph.bbx_h + 1
+        total_bits = ((glyph.bbx_w + 7) // 8) * 8
 
-        # Convert bitmap hex rows to pixels.
-        rows = glyph["bitmap"]
-        for row_idx, hex_row in enumerate(rows):
-            hex_row = hex_row.strip()
-            if not hex_row:
-                continue
+        for i, row_val in enumerate(glyph.rows):
+            sy = top_y + i
+            for bit in range(glyph.bbx_w):
+                if row_val & (1 << (total_bits - 1 - bit)):
+                    _put(x + advance + glyph.bbx_xoff + bit, sy)
 
-            bits = int(hex_row, 16)
-            total_bits = len(hex_row) * 4  # each hex char = 4 bits
-
-            # Align to bbx_w bits (shift right to get the top bbx_w bits)
-            if total_bits > bbx_w:
-                bits >>= total_bits - bbx_w
-
-            for bit_idx in range(bbx_w):
-                if bits & (1 << (bbx_w - 1 - bit_idx)):
-                    px = x + advance + bbx_x + bit_idx
-                    # y is baseline; bitmap row 0 is top of glyph.
-                    # bbx_y is offset from baseline to bottom of bbox.
-                    # Top of glyph = y - (bbx_h + bbx_y) + row_idx
-                    py = y - (bbx_h + bbx_y) + row_idx
-                    if 0 <= px < canvas.width and 0 <= py < canvas.height:
-                        canvas.putpixel((px, py), (cr, cg, cb))
-
-        advance += dwidth
+        advance += glyph.dwidth
 
     return advance
 
