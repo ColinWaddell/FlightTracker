@@ -84,7 +84,6 @@ class PiomatterPanel(RGBPanel):
         return BDFFont(path)
 
     def draw_text(self, canvas, font, x, y, colour, text):
-        y = y - 1
         return bdf_draw_text(canvas, font, x, y, colour, text)
 
     def draw_line(self, canvas, x0, y0, x1, y1, colour):

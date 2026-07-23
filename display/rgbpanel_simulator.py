@@ -180,10 +180,9 @@ class SimulatorPanel(RGBPanel):
 
     def draw_text(self, canvas, font, x, y, colour, text):
         # SimulatorCanvas has set_pixel(x, y, r, g, b) so we can use
-        # draw_text_to_target directly.  The -1 y adjustment matches the
-        # previous _draw_text behaviour (baseline offset quirk).
+        # draw_text_to_target directly.
         return draw_text_to_target(
-            canvas, font, x, y - 1, colour, text,
+            canvas, font, x, y, colour, text,
             target_width=canvas.cols, target_height=canvas.rows
         )
 
