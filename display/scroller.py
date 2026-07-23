@@ -217,8 +217,12 @@ class Scroller:
             self._prev = frame
             return
 
-        # Get coordinates of changed pixels
+        # Get coordinates of changed pixels, ordered column-by-column
         ys, xs = np.where(changed)
+        # Sort by column (x) then row (y) so updates go top-to-bottom
+        # within each column before moving to the next column.
+        order = np.argsort(xs, kind="stable")
+        ys, xs = ys[order], xs[order]
 
         for py, px in zip(ys, xs):
             r, g, b = frame[py, px]
