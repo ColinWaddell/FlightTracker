@@ -558,10 +558,8 @@
     if (!sel) return;
     const theme = sel.value;
     const classic = document.getElementById("idle-theme-classic");
-    const astronomy = document.getElementById("idle-theme-astronomy");
     const forecast = document.getElementById("idle-theme-forecast");
     if (classic) classic.style.display = theme === "classic" ? "block" : "none";
-    if (astronomy) astronomy.style.display = theme === "astronomy" ? "block" : "none";
     if (forecast) forecast.style.display = theme === "forecast" ? "block" : "none";
   };
 

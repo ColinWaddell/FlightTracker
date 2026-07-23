@@ -92,7 +92,7 @@ DEFAULT_CLOCK_24HR = True
 DEFAULT_DATE_FORMAT = 0  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
 
 # Idle screen theme
-DEFAULT_IDLE_SCREEN_THEME = "classic"  # classic / astronomy / forecast
+DEFAULT_IDLE_SCREEN_THEME = "classic"  # classic / forecast
 
 # Web interface
 DEFAULT_WEB_INTERFACE_ENABLED = True
@@ -209,10 +209,8 @@ DEFAULTS: dict[str, Any] = {
 # ---------------------------------------------------------------------------
 from utilities.sun_times import (  # noqa: E402
     approx_sunrise_sunset,
-    mins_to_time,
     parse_time,
     time_in_window,
-    time_to_mins,
 )
 
 
@@ -704,15 +702,11 @@ class Config:
 
     @property
     def idle_screen_theme(self) -> str:
-        """Idle screen theme name: 'classic', 'astronomy', 'forecast'."""
+        """Idle screen theme name: 'classic', 'forecast'."""
         val = str(
             self.data_store.get("idle_screen_theme", DEFAULT_IDLE_SCREEN_THEME)
         ).lower()
-        return (
-            val
-            if val in ("classic", "astronomy", "forecast")
-            else DEFAULT_IDLE_SCREEN_THEME
-        )
+        return val if val in ("classic", "forecast") else DEFAULT_IDLE_SCREEN_THEME
 
     @property
     def web_interface_enabled(self) -> bool:

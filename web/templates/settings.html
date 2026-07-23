@@ -420,7 +420,6 @@
             <select class="form-select form-select-sm" name="idle_screen_theme" id="idle_screen_theme" style="max-width:200px"
                     onchange="updateIdleThemeSections()">
               <option value="classic" {% if cfg.idle_screen_theme == 'classic' %}selected{% endif %}>Classic</option>
-              <option value="astronomy" {% if cfg.idle_screen_theme == 'astronomy' %}selected{% endif %}>Astronomy</option>
               <option value="forecast" {% if cfg.idle_screen_theme == 'forecast' %}selected{% endif %}>Forecast</option>
             </select>
             <div class="form-text text-muted small">Choose what to display on the idle screen when no flights or satellites are overhead.</div>
@@ -428,7 +427,7 @@
         </div>
 
         <!-- ====== Classic theme settings ====== -->
-        <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme != 'astronomy' and cfg.idle_screen_theme != 'forecast' %}block{% else %}none{% endif %}">
+        <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme != 'forecast' %}block{% else %}none{% endif %}">
 
         <!-- ====== Weather ====== -->
         <div id="group-weather" class="card mb-3 p-3">
@@ -493,25 +492,6 @@
         </div>
 
         </div><!-- /idle-theme-classic -->
-
-        <!-- ====== Astronomy theme settings ====== -->
-        <div id="idle-theme-astronomy" style="display:{% if cfg.idle_screen_theme == 'astronomy' %}block{% else %}none{% endif %}">
-          <div class="card mb-3 p-3">
-            <p class="section-heading"><i class="bi bi-moon-stars me-2"></i>Astronomy</p>
-            <p class="text-muted small mb-0">Test card for astronomy</p>
-          </div>
-          <div class="card mb-3 p-3">
-            <p class="section-heading"><i class="bi bi-moon me-2"></i>Moon Phase</p>
-            <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="test_astronomy_moon" />
-              <label class="form-check-label" for="test_astronomy_moon">Show moon phase (test)</label>
-            </div>
-            <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="test_astronomy_planets" />
-              <label class="form-check-label" for="test_astronomy_planets">Show visible planets (test)</label>
-            </div>
-          </div>
-        </div><!-- /idle-theme-astronomy -->
 
         <!-- ====== Forecast theme settings ====== -->
         <div id="idle-theme-forecast" style="display:{% if cfg.idle_screen_theme == 'forecast' %}block{% else %}none{% endif %}">

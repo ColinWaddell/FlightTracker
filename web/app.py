@@ -224,8 +224,6 @@ def parse_settings_form(form, cfg) -> dict:
         "idle_screen_theme": (
             "forecast"
             if str_val(form.get("idle_screen_theme"), "classic").lower() == "forecast"
-            else "astronomy"
-            if str_val(form.get("idle_screen_theme"), "classic").lower() == "astronomy"
             else "classic"
         ),
         # Web interface

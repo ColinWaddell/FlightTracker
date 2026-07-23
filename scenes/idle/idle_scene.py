@@ -105,13 +105,11 @@ class BaseIdleScene:
 
 def _load_themes() -> dict:
     """Lazy-load theme classes to avoid circular imports."""
-    from scenes.idle.themes.astronomy_idle_theme import AstronomyIdleTheme
     from scenes.idle.themes.classic_idle_theme import ClassicIdleTheme
     from scenes.idle.themes.forecast_idle_theme import ForecastIdleTheme
 
     return {
         "classic": ClassicIdleTheme,
-        "astronomy": AstronomyIdleTheme,
         "forecast": ForecastIdleTheme,
     }
 
