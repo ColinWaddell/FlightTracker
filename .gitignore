@@ -158,4 +158,5 @@ cython_debug/
 
 # NPM
 package-lock.json
-package.jsonde421.bsp
+package.json
+de421.bsp
