@@ -121,6 +121,7 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._last_connector_x: int | None = None
         self._last_connector_y_start: int | None = None
         self._last_connector_y_end: int | None = None
+        self._loading_drawn = False
 
     def theme_reset(self) -> None:
         self.last_time = None
@@ -134,6 +135,7 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._last_connector_x = None
         self._last_connector_y_start = None
         self._last_connector_y_end = None
+        self._loading_drawn = False
 
     # ------------------------------------------------------------------
     # draw() — per-frame animation for smooth fades
@@ -149,6 +151,11 @@ class AstronomyIdleTheme(BaseIdleScene):
 
         now = time.monotonic()
 
+        # Check if ephemeris is still loading
+        if self.tracker.loading:
+            self._draw_loading()
+            return
+
         # Throttle clock/strip to ~1 fps
         if self.frame % int(frames.PER_SECOND) == 0:
             count = self.frame // int(frames.PER_SECOND)
@@ -156,6 +163,50 @@ class AstronomyIdleTheme(BaseIdleScene):
 
         # Draw the label area every frame for smooth fading
         self._draw_label_area(now)
+
+    # ------------------------------------------------------------------
+    # Loading state
+    # ------------------------------------------------------------------
+
+    def _draw_loading(self) -> None:
+        """Show a loading message while the ephemeris downloads."""
+        # Only draw once (static message, no animation needed)
+        if self._loading_drawn:
+            return
+
+        self.panel.draw_square(
+            self.canvas,
+            0, 0,
+            SCREEN_WIDTH - 1, 31,
+            TC(THEME_BG),
+        )
+
+        from setup.themes import THEME_FORECAST_TIME
+        loading_font = fonts.small
+        msg = "LOADING"
+        msg_width = font_text_width(loading_font, msg)
+        msg_x = (SCREEN_WIDTH - msg_width) // 2
+        self.panel.draw_text(
+            self.canvas,
+            loading_font,
+            msg_x, 16,
+            TC(THEME_FORECAST_TIME),
+            msg,
+        )
+
+        sub_font = fonts.extrasmall
+        sub_msg = "EPHEMERIS"
+        sub_width = font_text_width(sub_font, sub_msg)
+        sub_x = (SCREEN_WIDTH - sub_width) // 2
+        self.panel.draw_text(
+            self.canvas,
+            sub_font,
+            sub_x, 24,
+            TC(THEME_FORECAST_TIME),
+            sub_msg,
+        )
+
+        self._loading_drawn = True
 
     # ------------------------------------------------------------------
     # Slow content (1 fps): clock, date, horizon strip

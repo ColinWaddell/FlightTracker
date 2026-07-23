@@ -619,6 +619,12 @@ def cache_clear_apply():
         routes_cache.clear()
         if TLE_CACHE_PATH.exists():
             TLE_CACHE_PATH.unlink()
+        # Clear skyfield ephemeris cache so it re-downloads on restart
+        from utilities.planet_tracker import PlanetTracker
+        eph_path = PlanetTracker.ephemeris_path()
+        if os.path.exists(eph_path):
+            os.unlink(eph_path)
+            logger.info("Cleared ephemeris cache: %s", eph_path)
     except OSError as exc:
         logger.error("Cache clear failed: %s", exc)
         return (

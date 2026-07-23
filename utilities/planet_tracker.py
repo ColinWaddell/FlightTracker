@@ -8,7 +8,8 @@ observer's location.  Results are cached and refreshed every
 REFRESH_INTERVAL_SECONDS so the frame loop never blocks on orbital math.
 
 The ephemeris file (~17 MB) is downloaded once and cached in the
-platform data directory.
+platform data directory.  Loading happens in a background thread so
+the display can show a loading message during the initial download.
 """
 
 from __future__ import annotations
@@ -70,13 +71,17 @@ class PlanetTracker:
     Thread-safe singleton that computes body positions from the observer's
     location.  Caches results and refreshes every REFRESH_INTERVAL_SECONDS.
 
+    The ephemeris loads in a background thread; while loading, ``loading``
+    is True and ``get_positions()`` returns an empty list.  The theme
+    can check ``loading`` to show a message on the display.
+
     Usage::
 
         tracker = PlanetTracker.instance()
-        positions = tracker.get_positions(lat, lng, bodies)
-        for pos in positions:
-            if pos.above_horizon:
-                ...
+        if tracker.loading:
+            # show loading message
+        else:
+            positions = tracker.get_positions(lat, lng, bodies)
     """
 
     _instance: PlanetTracker | None = None
@@ -89,6 +94,22 @@ class PlanetTracker:
                 cls._instance = cls()
             return cls._instance
 
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Discard the singleton so the next call creates a fresh tracker.
+
+        Used after cache-clear to force a re-download of the ephemeris.
+        """
+        with cls._instance_lock:
+            cls._instance = None
+
+    @staticmethod
+    def ephemeris_path() -> str:
+        """Return the expected path of the ephemeris file."""
+        from setup.configuration import PLATFORM_DATA_DIR
+        cache_dir = os.path.join(str(PLATFORM_DATA_DIR), "skyfield")
+        return os.path.join(cache_dir, EPHEMERIS_FILENAME)
+
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._positions: list[BodyPosition] = []
@@ -99,41 +120,52 @@ class PlanetTracker:
         self._ephemeris = None
         self._timescale = None
         self._wgs84 = None
+        self.loading = False
+        self.load_error: str | None = None
+        self._load_thread: threading.Thread | None = None
 
     # ------------------------------------------------------------------
-    # Lazy skyfield initialisation
+    # Lazy skyfield initialisation (background thread)
     # ------------------------------------------------------------------
 
     def _ensure_skyfield(self) -> None:
-        """Import skyfield lazily and load the ephemeris if not already done."""
-        if self._ephemeris is not None:
+        """Start background ephemeris loading if not already started."""
+        if self._ephemeris is not None or self.loading or self.load_error:
             return
 
+        self.loading = True
+        self._load_thread = threading.Thread(
+            target=self._load_ephemeris, daemon=True, name="ephemeris-loader"
+        )
+        self._load_thread.start()
+
+    def _load_ephemeris(self) -> None:
+        """Download/load the ephemeris in a background thread."""
         try:
             from skyfield.api import load, wgs84
         except ImportError:
             logger.warning("skyfield not installed; PlanetTracker disabled")
+            self.loading = False
+            self.load_error = "skyfield not installed"
             return
 
-        # Cache the ephemeris in the platform data directory.
-        from setup.configuration import Config, PLATFORM_DATA_DIR
+        from setup.configuration import PLATFORM_DATA_DIR
         cache_dir = os.path.join(str(PLATFORM_DATA_DIR), "skyfield")
         os.makedirs(cache_dir, exist_ok=True)
 
         ephemeris_path = os.path.join(cache_dir, EPHEMERIS_FILENAME)
 
         try:
-            # load() will use the local file if it exists, or download if not.
-            # We set the download directory so skyfield caches it properly.
             load.path = cache_dir
             self._ephemeris = load(EPHEMERIS_FILENAME)
+            self._timescale = load.timescale()
+            self._wgs84 = wgs84
+            logger.info("PlanetTracker: ephemeris loaded from %s", ephemeris_path)
         except Exception as exc:
             logger.warning("Failed to load ephemeris: %s", exc)
-            return
-
-        self._timescale = load.timescale()
-        self._wgs84 = wgs84
-        logger.info("PlanetTracker: ephemeris loaded from %s", ephemeris_path)
+            self.load_error = str(exc)
+        finally:
+            self.loading = False
 
     # ------------------------------------------------------------------
     # Position computation
@@ -149,10 +181,10 @@ class PlanetTracker:
 
         Returns a list of BodyPosition for all requested bodies (including
         those below the horizon).  Returns an empty list if skyfield is
-        unavailable.
+        unavailable or still loading.
         """
         self._ensure_skyfield()
-        if self._ephemeris is None:
+        if self._ephemeris is None or self.loading:
             return []
 
         now = time.monotonic()
@@ -292,4 +324,3 @@ class PlanetTracker:
         # Higher elevation = higher on screen = lower y
         y = strip_y_origin + strip_height - 1 - int(round(frac * (strip_height - 1)))
         return y
-
