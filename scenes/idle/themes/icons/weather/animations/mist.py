@@ -51,14 +51,14 @@ BG_SPEED_RANGE = {
 # Sinusoidal lines — mist has more, brighter lines.
 LINE_COUNT = {
     0: 2,
-    1: 3,
-    2: 4,
+    1: 2,
+    2: 2,
 }
 
 LINE_AMPLITUDE = {
-    0: 1.2,
-    1: 1.5,
-    2: 2.0,
+    0: 1.0,
+    1: 0.9,
+    2: 1.1,
 }
 
 LINE_FREQUENCY = {
@@ -68,16 +68,16 @@ LINE_FREQUENCY = {
 }
 
 LINE_SPEED = {
-    0: 2.0,
-    1: 2.5,
-    2: 3.0,
+    0: 1.5,
+    1: 1.8,
+    2: 2.0,
 }
 
 # Lines are brighter than the background in mist.
 LINE_BRIGHTNESS = {
-    0: 0.55,
-    1: 0.65,
-    2: 0.75,
+    0: 0.45,
+    1: 0.40,
+    2: 0.45,
 }
 
 
