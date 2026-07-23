@@ -193,7 +193,7 @@ class Scroller:
         # Copy content pixels into the viewport, handling wrap-around
         for vp_x in range(self.width):
             src_x = offset + vp_x
-            if src_x < self._content_width:
+            if 0 <= src_x < self._content_width:
                 # Content pixel
                 viewport[:, vp_x] = self._content[:, src_x]
             # else: gap or past-end pixel (already background)

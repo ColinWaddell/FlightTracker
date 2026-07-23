@@ -697,13 +697,14 @@ class FlightScene:
                 bg_colour=TC(THEME_BG),
             )
             self._plane_scroller.set_content(content)
-            self._plane_scroller.set_offset(screen.WIDTH)
+            self._plane_scroller.set_offset(-screen.WIDTH)
 
         offset = self._plane_scroller.tick()
 
         # Detect when content has fully scrolled off the left edge.
-        # At that point the viewport is entirely background — no need
-        # to wait for the gap pixels to scroll past too.
+        # Content starts at offset=-screen.WIDTH (off the right edge) and
+        # advances left.  When offset reaches content_width, all content
+        # has passed the left edge and the viewport is blank.
         if offset >= self._plane_scroller.content_width:
             if len(self.flights) > 1 and self.journey_loop_completed:
                 self.flight_index = (self.flight_index + 1) % len(self.flights)
