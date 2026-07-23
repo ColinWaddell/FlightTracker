@@ -138,6 +138,28 @@ def get_update_info() -> dict:
     }
 
 
+def get_release_notes(tag: str) -> str | None:
+    """Fetch the release notes (body) for a given tag from GitHub.
+
+    Returns the markdown body, or None if no release is attached to the tag
+    or the request fails.
+    """
+    url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/tags/{tag}"
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": f"{GITHUB_OWNER}/{GITHUB_REPO} update-checker",
+                "Accept": "application/vnd.github+json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return data.get("body") or None
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Platform detection
 # ---------------------------------------------------------------------------

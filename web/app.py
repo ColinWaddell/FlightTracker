@@ -541,6 +541,22 @@ def update_check():
     return info, 200
 
 
+@app.route("/update/notes", methods=["POST"])
+@login_required
+def update_notes():
+    """Fetch release notes for a given tag."""
+    if not validate_csrf(request.form):
+        return {"error": "Invalid CSRF token."}, 403
+    tag = request.form.get("tag", "").strip()
+    if not tag:
+        return {"error": "No tag specified."}, 400
+    from utilities.updater import get_release_notes
+    notes = get_release_notes(tag)
+    if notes is None:
+        return {"error": "No release notes available for this tag."}, 404
+    return {"notes": notes}, 200
+
+
 @app.route("/update/apply", methods=["POST"])
 @login_required
 def update_apply():

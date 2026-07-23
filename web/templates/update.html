@@ -59,10 +59,14 @@
     </div>
 
     {% if info.update_available and info.tag %}
-    <div class="mb-3">
+    <div class="mb-3" id="release-notes-container">
+      <div class="text-muted small mb-1"><i class="bi bi-file-text me-1"></i>Release notes</div>
+      <div id="release-notes" class="border rounded p-3 bg-light small" style="max-height:300px;overflow-y:auto;">
+        <span class="text-muted">Loading release notes...</span>
+      </div>
       <a href="https://github.com/ColinWaddell/FlightTracker/releases/tag/{{ info.tag }}"
-         target="_blank" class="text-decoration-none small">
-        <i class="bi bi-box-arrow-up-right me-1"></i>View release notes on GitHub
+         target="_blank" class="text-decoration-none small ms-1 mt-1 d-inline-block">
+        <i class="bi bi-box-arrow-up-right me-1"></i>View on GitHub
       </a>
     </div>
     {% endif %}
@@ -98,6 +102,69 @@
 
 <script>
 const csrfToken = "{{ csrf_token }}";
+const initialTag = "{{ info.tag if info.update_available else '' }}";
+
+// Render markdown to HTML (lightweight — handles headings, bold, italic,
+// code blocks, lists, links, and paragraphs)
+function renderMarkdown(md) {
+  if (!md) return '<span class="text-muted">No release notes available.</span>';
+  // Escape HTML first for safety
+  let html = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Code blocks
+  html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-dark text-light p-2 rounded small"><code>$1</code></pre>');
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Headings
+  html = html.replace(/^### (.+)$/gm, '<h6 class="fw-semibold mt-2 mb-1">$1</h6>');
+  html = html.replace(/^## (.+)$/gm, '<h5 class="fw-semibold mt-2 mb-1">$1</h5>');
+  html = html.replace(/^# (.+)$/gm, '<h5 class="fw-semibold mt-2 mb-1">$1</h5>');
+  // Bold and italic
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Links [text](url)
+  html = html.replace(/\[([^]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+  // List items (group consecutive lines into <ul>)
+  html = html.replace(/((?:^- .+$\n?)+)/gm, match => {
+    const items = match.trim().split('\n').map(l => '<li class="mb-1">' + l.replace(/^- /, '') + '</li>').join('');
+    return '<ul class="mb-1">' + items + '</ul>';
+  });
+  html = html.replace(/((?:^[0-9]+\. .+$\n?)+)/gm, match => {
+    const items = match.trim().split('\n').map(l => '<li class="mb-1">' + l.replace(/^[0-9]+\. /, '') + '</li>').join('');
+    return '<ul class="mb-1">' + items + '</ul>';
+  });
+  // Wrap orphan non-empty lines that aren't already HTML tags in <p>
+  html = html.split('\n').map(line => {
+    const t = line.trim();
+    if (t && !t.startsWith('<') && !t.startsWith('&lt;')) return '<p class="mb-1">' + t + '</p>';
+    return line;
+  }).join('\n');
+  return html;
+}
+
+async function loadReleaseNotes(tag) {
+  const container = document.getElementById('release-notes');
+  if (!container || !tag) return;
+  container.innerHTML = '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Loading release notes...</span>';
+  try {
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    formData.append('tag', tag);
+    const resp = await fetch('/update/notes', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (data.error) {
+      container.innerHTML = '<span class="text-muted">' + data.error + '</span>';
+    } else {
+      container.innerHTML = renderMarkdown(data.notes);
+    }
+  } catch (err) {
+    container.innerHTML = '<span class="text-muted">Unable to load release notes.</span>';
+  }
+}
+
+// Load notes on page load if update is available
+if (initialTag) {
+  loadReleaseNotes(initialTag);
+}
 
 document.getElementById("check-btn").addEventListener("click", async function() {
   const btn = this;
@@ -134,6 +201,18 @@ document.getElementById("check-btn").addEventListener("click", async function() 
             '</form>';
           btn.insertAdjacentHTML("afterend", formHtml);
         }
+
+        // Load release notes inline
+        if (!document.getElementById('release-notes-container')) {
+          const notesHtml =
+            '<div class="mb-3" id="release-notes-container">' +
+            '<div class="text-muted small mb-1"><i class="bi bi-file-text me-1"></i>Release notes</div>' +
+            '<div id="release-notes" class="border rounded p-3 bg-light small" style="max-height:300px;overflow-y:auto;"></span></div>' +
+            '<a href="https://github.com/ColinWaddell/FlightTracker/releases/tag/' + data.tag + '" target="_blank" class="text-decoration-none small ms-1 mt-1 d-inline-block"><i class="bi bi-box-arrow-up-right me-1"></i>View on GitHub</a>' +
+            '</div>';
+          document.getElementById('status-area').insertAdjacentHTML('afterend', notesHtml);
+        }
+        loadReleaseNotes(data.tag);
       } else {
         statusArea.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Up to date</span>';
       }
