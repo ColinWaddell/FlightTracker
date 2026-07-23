@@ -18,7 +18,7 @@ BLINKER_POSITIONS = {
 }
 
 BLINKER_STEPS = 10
-BLINKER_COLOUR = colours.WHITE
+BLINKER_COLOUR = colours.DARK_GREY
 
 
 def _blinker_position() -> tuple[int, int]:
