@@ -12,6 +12,7 @@ mdurl==0.1.2
 pycparser==3.0
 Pygments==2.20.0
 sgp4>=2.22
+skyfield>=1.50
 qrcode[pil]>=7.4.2
 Pillow>=10.0.0
 numpy>=2.0.0

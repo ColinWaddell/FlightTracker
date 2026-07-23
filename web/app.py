@@ -199,7 +199,12 @@ def parse_settings_form(form, cfg) -> dict:
                     == "12hour"
                     else "3hour"
                 ),
-            }
+            },
+            "astronomy": {
+                "bodies": form.getlist("astro_bodies"),
+                "label_duration": max(1, min(10, int_val(form.get("astro_label_duration"), 3))),
+                "horizon_labels": bool_val(form.get("astro_horizon_labels")),
+            },
         },
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),

@@ -498,17 +498,50 @@
         <div id="idle-theme-astronomy" style="display:{% if cfg.idle_screen_theme == 'astronomy' %}block{% else %}none{% endif %}">
           <div class="card mb-3 p-3">
             <p class="section-heading"><i class="bi bi-moon-stars me-2"></i>Astronomy</p>
-            <p class="text-muted small mb-0">Test card for astronomy</p>
+            <p class="text-muted small mb-0">Display planet positions on a horizon strip. The viewing direction is automatically determined from your latitude.</p>
           </div>
           <div class="card mb-3 p-3">
-            <p class="section-heading"><i class="bi bi-moon me-2"></i>Moon Phase</p>
-            <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="test_astronomy_moon" />
-              <label class="form-check-label" for="test_astronomy_moon">Show moon phase (test)</label>
+            <p class="section-heading"><i class="bi bi-globe me-2"></i>Celestial Bodies</p>
+            <p class="text-muted small mb-2">Select which bodies to display on the horizon strip.</p>
+            <div class="row">
+              <div class="col-md-6">
+                {% for body_key, body_label in [('sun', 'Sun'), ('moon', 'Moon'), ('mercury', 'Mercury'), ('venus', 'Venus')] %}
+                <div class="mb-2 form-check">
+                  <input type="checkbox" class="form-check-input" name="astro_bodies" value="{{ body_key }}" id="astro_body_{{ body_key }}"
+                         {% if body_key in cfg.theme.get('astronomy', {}).get('bodies', []) %}checked{% endif %} />
+                  <label class="form-check-label" for="astro_body_{{ body_key }}">{{ body_label }}</label>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="col-md-6">
+                {% for body_key, body_label in [('mars', 'Mars'), ('jupiter', 'Jupiter'), ('saturn', 'Saturn'), ('uranus', 'Uranus')] %}
+                <div class="mb-2 form-check">
+                  <input type="checkbox" class="form-check-input" name="astro_bodies" value="{{ body_key }}" id="astro_body_{{ body_key }}"
+                         {% if body_key in cfg.theme.get('astronomy', {}).get('bodies', []) %}checked{% endif %} />
+                  <label class="form-check-label" for="astro_body_{{ body_key }}">{{ body_label }}</label>
+                </div>
+                {% endfor %}
+              </div>
             </div>
+          </div>
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Label Duration</p>
+            <div class="mb-3">
+              <label class="form-label small">How long each planet name stays on screen</label>
+              <select class="form-select form-select-sm" name="astro_label_duration" id="astro_label_duration" style="max-width:200px">
+                {% for val, label in [(1, '1 second'), (2, '2 seconds'), (3, '3 seconds'), (5, '5 seconds'), (8, '8 seconds')] %}
+                <option value="{{ val }}" {% if cfg.theme.get('astronomy', {}).get('label_duration', 3) == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text text-muted small">Controls the cycling speed of planet name labels.</div>
+            </div>
+          </div>
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-cardinal-points me-2"></i>Horizon Labels</p>
             <div class="mb-2 form-check">
-              <input type="checkbox" class="form-check-input" id="test_astronomy_planets" />
-              <label class="form-check-label" for="test_astronomy_planets">Show visible planets (test)</label>
+              <input type="checkbox" class="form-check-input" name="astro_horizon_labels" value="1" id="astro_horizon_labels"
+                     {% if cfg.theme.get('astronomy', {}).get('horizon_labels', true) %}checked{% endif %} />
+              <label class="form-check-label" for="astro_horizon_labels">Show cardinal direction markers (E/W/S/N)</label>
             </div>
           </div>
         </div><!-- /idle-theme-astronomy -->
