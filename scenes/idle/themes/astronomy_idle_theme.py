@@ -330,11 +330,29 @@ class AstronomyIdleTheme(BaseIdleScene):
                     r, g, b = colour.red, colour.green, colour.blue
                     self.panel.set_pixel(self.canvas, x, y, r, g, b)
 
+                # Draw in-strip connector from 1px below dot to
+                # 1px above the horizon line.
+                from setup.themes import THEME_ASTRO_CONNECTOR
+                connector_colour = TC(THEME_ASTRO_CONNECTOR)
+                seg_start = y + 1
+                seg_end = STRIP_BOTTOM_Y - 1
+                if seg_end >= seg_start:
+                    self.panel.draw_line(
+                        self.canvas,
+                        x, seg_start,
+                        x, seg_end,
+                        connector_colour,
+                    )
+
             self._strip_drawn = True
             self._last_positions = list(positions)
 
     def _draw_horizon_labels(self, lat: float) -> None:
-        """Draw E/W and centre (S or N) labels on the horizon line."""
+        """Draw E/W labels on the horizon line.
+
+        Labels are drawn ON the horizon line (same y), replacing the
+        line pixels at those positions.  No centre N/S marker.
+        """
         from setup.themes import THEME_ASTRO_HORIZON_LABEL
 
         northern = PlanetTracker.is_northern_hemisphere(lat)
@@ -342,29 +360,20 @@ class AstronomyIdleTheme(BaseIdleScene):
         colour = TC(THEME_ASTRO_HORIZON_LABEL)
 
         if northern:
-            # East on left, South in centre, West on right
+            # East on left, West on right
             left_label = "E"
-            centre_label = "S"
             right_label = "W"
         else:
-            # West on left, North in centre, East on right
+            # West on left, East on right
             left_label = "W"
-            centre_label = "N"
             right_label = "E"
 
-        # Position labels just above the horizon line
-        label_y = STRIP_BOTTOM_Y - 1
+        # Draw labels ON the horizon line (same y as the line)
+        label_y = STRIP_BOTTOM_Y
 
         # Left label at x=0
         self.panel.draw_text(
             self.canvas, label_font, 0, label_y, colour, left_label
-        )
-
-        # Centre label
-        centre_width = font_text_width(label_font, centre_label)
-        centre_x = (SCREEN_WIDTH - centre_width) // 2
-        self.panel.draw_text(
-            self.canvas, label_font, centre_x, label_y, colour, centre_label
         )
 
         # Right label
@@ -458,16 +467,17 @@ class AstronomyIdleTheme(BaseIdleScene):
         self._erase_label()
 
         # Draw connector line from just below the horizon line to
-        # just above the label text.  This stays in the gap between
-        # the strip and the label, never touching the strip itself.
+        # just above the label text.  The in-strip portion (dot to
+        # horizon) is drawn during _draw_horizon_strip and only
+        # changes when positions are recomputed (~60s).
         if connector_x is not None:
-            line_y_start = STRIP_BOTTOM_Y + 1
-            line_y_end = LABEL_Y - LABEL_FONT_HEIGHT
-            if line_y_end >= line_y_start:
+            below_start = STRIP_BOTTOM_Y + 1
+            below_end = LABEL_Y - LABEL_FONT_HEIGHT
+            if below_end >= below_start:
                 self.panel.draw_line(
                     self.canvas,
-                    connector_x, line_y_start,
-                    connector_x, line_y_end,
+                    connector_x, below_start,
+                    connector_x, below_end,
                     connector_colour,
                 )
 
@@ -507,7 +517,9 @@ class AstronomyIdleTheme(BaseIdleScene):
             )
 
         if self._last_connector_x is not None:
-            # Only erase the gap between strip bottom and label area
+            # Erase only the below-strip portion of the connector.
+            # The in-strip portion is erased when the strip is redrawn
+            # (~60s) and the horizon line pixel is part of the strip.
             line_y_start = STRIP_BOTTOM_Y + 1
             line_y_end = LABEL_Y
             self.panel.draw_line(
