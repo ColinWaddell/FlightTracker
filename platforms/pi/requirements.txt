@@ -13,6 +13,7 @@ pycparser==3.0
 Pygments==2.20.0
 sgp4>=2.22
 qrcode[pil]>=7.4.2
+Pillow>=10.0.0
 requests==2.32.4
 rich==15.0.0
 RPi.GPIO==0.7.1
