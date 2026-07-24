@@ -32,56 +32,82 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts, frames
 from setup.configuration import Config
+from setup.screen import WIDTH as SCREEN_WIDTH
 from setup.themes import (
     TC,
     THEME_BG,
-    THEME_CONDITIONS_DATE,
-    THEME_CONDITIONS_DAY,
+    THEME_CONDITIONS_DESCRIPTION,
     THEME_CONDITIONS_HUMIDITY,
     THEME_CONDITIONS_SUNRISE,
     THEME_CONDITIONS_SUNSET,
     THEME_CONDITIONS_TIME,
     THEME_CONDITIONS_WIND,
+    THEME_CURRENT_DATE,
+    THEME_CURRENT_DAY,
 )
 from utilities.sun_times import is_daytime
+
+# Wind direction icon loading (module-level cache).
+from pathlib import Path
+from PIL import Image
+
+_DIRECTIONS_DIR = Path(__file__).parent / "icons" / "directions"
+_direction_cache: dict[str, Image.Image] = {}
+
+# 8 cardinal directions indexed by 45-degree sectors.
+_CARDINAL_DIRECTIONS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+
+
+def _load_direction_icon(name: str) -> Image.Image | None:
+    """Load a direction icon PNG from icons/directions/, cached for reuse."""
+    if not name:
+        return None
+    if name not in _direction_cache:
+        path = _DIRECTIONS_DIR / f"{name}.png"
+        if not path.exists():
+            return None
+        _direction_cache[name] = Image.open(path).convert("RGBA")
+    return _direction_cache[name]
+
 
 # ---------------------------------------------------------------------------
 # Layout constants
 # ---------------------------------------------------------------------------
 
-# Clock / date / day (bottom bar).
+# Background image drawn once on scene entry.
+CONDITIONS_BG_POS = (15, 6)
+
+# Clock / date / day (top bar).
 CLOCK_FONT = fonts.small
 CLOCK_POSITION = (0, 6)
-DAY_GAP_PX = 2  # gap between time and abbreviated day name
-DATE_FONT = fonts.extrasmall  # 4x6 - smaller font for full date
-DATE_POSITION_Y = CLOCK_POSITION[1] + 8  # line below clock
+DATE_FONT = CLOCK_FONT
+DATE_POSITION_Y = CLOCK_POSITION[1]
+# Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+# Formats 0 and 1 both render as DD/MM (day before month);
+# format 2 renders as MM/DD (month before day).
+DATE_DAY_FIRST = {0: True, 1: True, 2: False}
+DAY_DATE_SPACE_PX = 0
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-# 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
-DATE_FORMATS = {
-    0: lambda y, m, d: f"{y}-{m:02d}-{d:02d}",
-    1: lambda y, m, d: f"{d:02d}-{m:02d}-{y}",
-    2: lambda y, m, d: f"{m:02d}-{d:02d}-{y}",
-}
 
 # Sprite - top left.
-SPRITE_POSITION = (63 - 15, 0)
+SPRITE_POSITION = (0, 6)
 
-# Text column - to the right of the sprite.
-TEXT_X = SPRITE_WIDTH + 1  # one pixel gap after the sprite
-TEXT_FONT = fonts.extrasmall  # 4x6
-TEXT_LINE_HEIGHT = 6
-
-# Row Y positions for the text lines (top section, right of sprite).
-ROW_TEMP_Y = 6
-ROW_HUMIDITY_Y = ROW_TEMP_Y + TEXT_LINE_HEIGHT
-ROW_WIND_Y = ROW_HUMIDITY_Y + TEXT_LINE_HEIGHT
+# Text positions for the weather data fields.
+TEXT_FONT = fonts.small
+TEMPERATURE_POSITION = [48, 13]
+HUMIDITY_POSITION = [23, 20]
+WIND_POSITION = [23, 13]
+WIND_ARROW_POSITION = [16, 7]
 
 # Sunrise / sunset - very bottom of the display.
+SUN_FONT = fonts.extrasmall
 SUN_ROW_Y = 32  # baseline for 4x6 font at the bottom of 32px panel
+DESCRIPTION_FONT = fonts.extrasmall
+DESCRIPTION_Y = SUN_ROW_Y - 6  # baseline for description text, directly above sun row
 SUN_ICON_WIDTH = 5  # width of the sunrise/sunset PNG sprites
 SUN_ICON_HEIGHT = 5  # height of the sunrise/sunset PNG sprites
 SUN_ICON_GAP = 1  # gap between icon and text
-SUN_GAP = 2  # gap between sunrise and sunset segments
+SUN_GAP = 1  # gap between sunrise and sunset segments
 
 
 class ConditionsIdleTheme(BaseIdleScene):
@@ -93,11 +119,12 @@ class ConditionsIdleTheme(BaseIdleScene):
 
     def theme_init(self) -> None:
         self.last_time: str | None = None
-        self.last_day: str | None = None
         self.last_date: str | None = None
         self.last_temp_str: str | None = None
         self.last_humidity_str: str | None = None
         self.last_wind_str: str | None = None
+        self.last_wind_dir: str | None = None
+        self.last_description: str | None = None
         self.last_sun_str: str | None = None
         self.last_sprite_key: tuple | None = None
         self.animation = None
@@ -106,13 +133,22 @@ class ConditionsIdleTheme(BaseIdleScene):
     def theme_reset(self) -> None:
         self._destroy_animation()
         self.last_time = None
-        self.last_day = None
         self.last_date = None
         self.last_temp_str = None
         self.last_humidity_str = None
         self.last_wind_str = None
+        self.last_wind_dir = None
+        self.last_description = None
         self.last_sun_str = None
         self.last_sprite_key = None
+
+    def on_enter(self) -> None:
+        """Called on scene transition. Clear, draw background image, then reset."""
+        self.panel.clear(self.canvas)
+        bg_image = _load_icon("conditions")
+        if bg_image is not None:
+            self.panel.draw_image(self.canvas, *CONDITIONS_BG_POS, bg_image)
+        self.reset()
 
     # ------------------------------------------------------------------
     # draw() - overridden for per-frame sprite animation
@@ -142,7 +178,6 @@ class ConditionsIdleTheme(BaseIdleScene):
 
     def draw_content(self, count: int) -> None:
         self.draw_clock()
-        self.draw_day()
         self.draw_date()
 
         weather = self.weather.get()
@@ -153,10 +188,11 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.draw_temperature(weather)
         self.draw_humidity(weather)
         self.draw_wind(weather)
+        self.draw_description(weather)
         self.draw_sun(weather)
 
     # ------------------------------------------------------------------
-    # Clock (bottom bar, left)
+    # Clock (top-left)
     # ------------------------------------------------------------------
 
     def draw_clock(self) -> None:
@@ -192,76 +228,71 @@ class ConditionsIdleTheme(BaseIdleScene):
         )
 
     # ------------------------------------------------------------------
-    # Day abbreviation (beside clock, 2px gap)
-    # ------------------------------------------------------------------
-
-    def draw_day(self) -> None:
-        now = datetime.datetime.now()
-        day_name = _DAY_ABBREVS[now.weekday()].upper()
-
-        if self.last_day == day_name:
-            return
-
-        day_x = (
-            CLOCK_POSITION[0]
-            + font_text_width(CLOCK_FONT, self.last_time or "")
-            + DAY_GAP_PX
-        )
-
-        if self.last_day is not None:
-            self.panel.draw_text(
-                self.canvas,
-                CLOCK_FONT,
-                day_x,
-                CLOCK_POSITION[1],
-                TC(THEME_BG),
-                self.last_day,
-            )
-
-        self.last_day = day_name
-        self.panel.draw_text(
-            self.canvas,
-            CLOCK_FONT,
-            day_x,
-            CLOCK_POSITION[1],
-            TC(THEME_CONDITIONS_DAY),
-            day_name,
-        )
-
-    # ------------------------------------------------------------------
-    # Date (stacked below clock, left-aligned)
+    # Day + date (top-right, right-aligned on clock line)
     # ------------------------------------------------------------------
 
     def draw_date(self) -> None:
+        """Draw day abbreviation + date right-aligned on the clock line."""
         cfg = Config.instance()
         now = datetime.datetime.now()
 
+        day_name = _DAY_ABBREVS[now.weekday()].upper()
         day = now.day
         month = now.month
-        year = now.year
 
-        date_str = DATE_FORMATS.get(cfg.date_format, DATE_FORMATS[0])(year, month, day)
+        day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
+        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
 
-        if self.last_date == date_str:
+        current_date = day_name + " " + date_str
+        if self.last_date == current_date:
             return
 
+        date_width = font_text_width(DATE_FONT, date_str)
+        date_x = SCREEN_WIDTH + 1 - date_width
+        day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
+
         if self.last_date is not None:
+            old_day_name = self.last_date[:3]
+            old_date_str = self.last_date[4:]
+            old_date_width = font_text_width(DATE_FONT, old_date_str)
+            old_date_x = SCREEN_WIDTH + 1 - old_date_width
+            old_day_x = (
+                old_date_x
+                - DAY_DATE_SPACE_PX
+                - font_text_width(DATE_FONT, old_day_name)
+            )
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
-                0,
+                old_day_x,
                 DATE_POSITION_Y,
                 TC(THEME_BG),
-                self.last_date,
+                old_day_name,
+            )
+            self.panel.draw_text(
+                self.canvas,
+                DATE_FONT,
+                old_date_x,
+                DATE_POSITION_Y,
+                TC(THEME_BG),
+                old_date_str,
             )
 
-        self.last_date = date_str
+        self.last_date = current_date
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
-            0,
+            day_x,
             DATE_POSITION_Y,
-            TC(THEME_CONDITIONS_DATE),
+            TC(THEME_CURRENT_DAY),
+            day_name,
+        )
+        self.panel.draw_text(
+            self.canvas,
+            DATE_FONT,
+            date_x,
+            DATE_POSITION_Y,
+            TC(THEME_CURRENT_DATE),
             date_str,
         )
 
@@ -325,8 +356,8 @@ class ConditionsIdleTheme(BaseIdleScene):
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
-                TEXT_X,
-                ROW_TEMP_Y,
+                TEMPERATURE_POSITION[0],
+                TEMPERATURE_POSITION[1],
                 TC(THEME_BG),
                 self.last_temp_str,
             )
@@ -335,8 +366,8 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.panel.draw_text(
             self.canvas,
             TEXT_FONT,
-            TEXT_X,
-            ROW_TEMP_Y,
+            TEMPERATURE_POSITION[0],
+            TEMPERATURE_POSITION[1],
             temperature_to_colour(temp_c),
             temp_str,
         )
@@ -350,7 +381,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         if humidity is None:
             return
 
-        humidity_str = f"H{int(humidity)}%"
+        humidity_str = f"{int(humidity)}%"
 
         if humidity_str == self.last_humidity_str:
             return
@@ -359,8 +390,8 @@ class ConditionsIdleTheme(BaseIdleScene):
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
-                TEXT_X,
-                ROW_HUMIDITY_Y,
+                HUMIDITY_POSITION[0],
+                HUMIDITY_POSITION[1],
                 TC(THEME_BG),
                 self.last_humidity_str,
             )
@@ -369,8 +400,8 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.panel.draw_text(
             self.canvas,
             TEXT_FONT,
-            TEXT_X,
-            ROW_HUMIDITY_Y,
+            HUMIDITY_POSITION[0],
+            HUMIDITY_POSITION[1],
             TC(THEME_CONDITIONS_HUMIDITY),
             humidity_str,
         )
@@ -382,7 +413,6 @@ class ConditionsIdleTheme(BaseIdleScene):
     def draw_wind(self, weather: dict) -> None:
         cfg = Config.instance()
         wind_kph = weather.get("wind_kph")
-        wind_dir = weather.get("wind_dir", "")
         if wind_kph is None:
             return
 
@@ -392,29 +422,105 @@ class ConditionsIdleTheme(BaseIdleScene):
         else:
             wind_val = wind_kph
             wind_unit = "k"
-        wind_str = f"{round(wind_val)}{wind_unit} {wind_dir}"
+        wind_str = f"{round(wind_val)}{wind_unit}"
 
-        if wind_str == self.last_wind_str:
+        # Determine cardinal direction from wind_degrees.
+        wind_degrees = weather.get("wind_degree")
+        cardinal = (
+            self._degrees_to_cardinal(wind_degrees)
+            if wind_degrees is not None
+            else None
+        )
+
+        if wind_str == self.last_wind_str and cardinal == self.last_wind_dir:
             return
 
-        if self.last_wind_str is not None:
+        # Undraw old wind text.
+        if self.last_wind_str is not None and wind_str != self.last_wind_str:
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
-                TEXT_X,
-                ROW_WIND_Y,
+                WIND_POSITION[0],
+                WIND_POSITION[1],
                 TC(THEME_BG),
                 self.last_wind_str,
             )
 
+        # Undraw old wind direction icon.
+        if self.last_wind_dir is not None and cardinal != self.last_wind_dir:
+            old_icon = _load_direction_icon(self.last_wind_dir)
+            if old_icon is not None:
+                self._erase_image(old_icon, WIND_ARROW_POSITION)
+
         self.last_wind_str = wind_str
+        self.last_wind_dir = cardinal
+
+        # Draw wind text.
         self.panel.draw_text(
             self.canvas,
             TEXT_FONT,
-            TEXT_X,
-            ROW_WIND_Y,
+            WIND_POSITION[0],
+            WIND_POSITION[1],
             TC(THEME_CONDITIONS_WIND),
             wind_str,
+        )
+
+        # Draw wind direction icon.
+        if cardinal is not None:
+            icon = _load_direction_icon(cardinal)
+            if icon is not None:
+                self.panel.draw_image(
+                    self.canvas,
+                    WIND_ARROW_POSITION[0],
+                    WIND_ARROW_POSITION[1],
+                    icon,
+                )
+
+    @staticmethod
+    def _degrees_to_cardinal(degrees: float) -> str:
+        """Convert a wind bearing in degrees to one of 8 cardinal directions."""
+        index = round(degrees / 45.0) % 8
+        return _CARDINAL_DIRECTIONS[index]
+
+    def _erase_image(self, image, position: list[int]) -> None:
+        """Erase a previously drawn image by setting its pixels to background."""
+        bg = TC(THEME_BG)
+        x, y = position
+        for py in range(image.height):
+            for px in range(image.width):
+                if image.getpixel((px, py))[3] > 0:
+                    self.panel.set_pixel(
+                        self.canvas, x + px, y + py, bg.red, bg.green, bg.blue
+                    )
+
+    # ------------------------------------------------------------------
+
+    def draw_description(self, weather: dict) -> None:
+        description = weather.get("description")
+        if not description:
+            return
+
+        if self.last_description == description:
+            return
+
+        if self.last_description is not None:
+            self.panel.draw_text(
+                self.canvas,
+                DESCRIPTION_FONT,
+                0,
+                DESCRIPTION_Y,
+                TC(THEME_BG),
+                self.last_description,
+            )
+
+        self.last_description = description
+        self.panel.draw_text(
+            self.canvas,
+            DESCRIPTION_FONT,
+            0,
+            DESCRIPTION_Y,
+            TC(THEME_CONDITIONS_DESCRIPTION),
+            description,
         )
 
     # ------------------------------------------------------------------
@@ -473,13 +579,13 @@ class ConditionsIdleTheme(BaseIdleScene):
             # Draw text.
             self.panel.draw_text(
                 self.canvas,
-                TEXT_FONT,
+                SUN_FONT,
                 x,
                 SUN_ROW_Y,
                 TC(seg_key),
                 t_str,
             )
-            x += font_text_width(TEXT_FONT, t_str)
+            x += font_text_width(SUN_FONT, t_str)
 
     def _undraw_sun_row(self, old_str: str, num_parts: int) -> None:
         """Erase old sunrise/sunset text and icons in background colour."""
@@ -499,13 +605,13 @@ class ConditionsIdleTheme(BaseIdleScene):
             seg_text = segments[i] if i < len(segments) else ""
             self.panel.draw_text(
                 self.canvas,
-                TEXT_FONT,
+                SUN_FONT,
                 x,
                 SUN_ROW_Y,
                 bg,
                 seg_text,
             )
-            x += font_text_width(TEXT_FONT, seg_text)
+            x += font_text_width(SUN_FONT, seg_text)
 
     @staticmethod
     def _parse_astro_time(value: str) -> datetime.time | None:

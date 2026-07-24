@@ -174,6 +174,7 @@ def _parse_current(raw_current: dict) -> dict:
     out["condition_code"] = _coerce(
         raw_current.get("condition", {}).get("code"), int, 0
     )
+    out["description"] = raw_current.get("condition", {}).get("text")
     return out
 
 
