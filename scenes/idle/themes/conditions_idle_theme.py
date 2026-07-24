@@ -43,31 +43,31 @@ from setup.themes import (
     THEME_CONDITIONS_TIME,
     THEME_CONDITIONS_WIND,
 )
-from utilities.sun_times import is_daytime, parse_time
+from utilities.sun_times import is_daytime
 
 # ---------------------------------------------------------------------------
 # Layout constants
 # ---------------------------------------------------------------------------
 
-# Clock / date / day (top row) - mirrors the forecast theme.
+# Clock / date / day (bottom bar).
 CLOCK_FONT = fonts.small
-CLOCK_POSITION = (0, 6)
+CLOCK_POSITION = (0, 31)
 DATE_FONT = CLOCK_FONT
 DATE_POSITION_Y = CLOCK_POSITION[1]
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 DATE_DAY_FIRST = {0: True, 1: True, 2: False}
 DAY_DATE_SPACE_PX = 0
 
-# Sprite - far left, below the top row.
-SPRITE_POSITION = (0, 12)
+# Sprite - top left.
+SPRITE_POSITION = (0, 0)
 
 # Text column - to the right of the sprite.
 TEXT_X = SPRITE_WIDTH + 1  # one pixel gap after the sprite
 TEXT_FONT = fonts.extrasmall  # 4x6
 TEXT_LINE_HEIGHT = 6
 
-# Row Y positions for the text lines (below the top row).
-ROW_TEMP_Y = 12
+# Row Y positions for the text lines (top section, right of sprite).
+ROW_TEMP_Y = 6
 ROW_HUMIDITY_Y = ROW_TEMP_Y + TEXT_LINE_HEIGHT
 ROW_WIND_Y = ROW_HUMIDITY_Y + TEXT_LINE_HEIGHT
 ROW_SUN_Y = ROW_WIND_Y + TEXT_LINE_HEIGHT
@@ -142,7 +142,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.draw_sun(weather)
 
     # ------------------------------------------------------------------
-    # Clock (top row, left)
+    # Clock (bottom bar, left)
     # ------------------------------------------------------------------
 
     def draw_clock(self) -> None:
@@ -178,7 +178,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         )
 
     # ------------------------------------------------------------------
-    # Date + day (top row, right-aligned)
+    # Date + day (bottom bar, right-aligned)
     # ------------------------------------------------------------------
 
     def draw_date(self) -> None:
@@ -408,26 +408,27 @@ class ConditionsIdleTheme(BaseIdleScene):
         if not sunrise_str and not sunset_str:
             return
 
-        # WeatherAPI returns "06:30 AM" / "07:45 PM"; parse to HH:MM.
-        sunrise = parse_time(sunrise_str) if sunrise_str else None
-        sunset = parse_time(sunset_str) if sunset_str else None
+        # WeatherAPI returns "05:07 AM" / "07:45 PM" (12-hour with AM/PM).
+        sunrise = self._parse_astro_time(sunrise_str) if sunrise_str else None
+        sunset = self._parse_astro_time(sunset_str) if sunset_str else None
 
-        # Show the next event: sunset during the day, sunrise at night.
         cfg = Config.instance()
-        is_day = is_daytime(cfg.observer_lat, cfg.observer_lng)
-        if is_day and sunset is not None:
-            label = "SS"
-            t = sunset
-            colour_key = THEME_CONDITIONS_SUNSET
-        elif sunrise is not None:
-            label = "SR"
-            t = sunrise
-            colour_key = THEME_CONDITIONS_SUNRISE
-        else:
+        fmt = "%H:%M" if cfg.clock_24hr else None
+
+        # Build "SR hh:mm SS hh:mm" showing both events side by side.
+        parts: list[tuple[str, object]] = []
+        if sunrise is not None:
+            t_str = sunrise.strftime(fmt) if fmt else self._format_12h(sunrise)
+            parts.append((f"SR{t_str}", THEME_CONDITIONS_SUNRISE))
+        if sunset is not None:
+            t_str = sunset.strftime(fmt) if fmt else self._format_12h(sunset)
+            parts.append((f"SS{t_str}", THEME_CONDITIONS_SUNSET))
+
+        if not parts:
             return
 
-        time_str = t.strftime("%H:%M") if cfg.clock_24hr else self._format_12h(t)
-        sun_str = f"{label} {time_str}"
+        # Join segments with a space; cache the combined string.
+        sun_str = " ".join(seg[0] for seg in parts)
 
         if sun_str == self.last_sun_str:
             return
@@ -443,14 +444,30 @@ class ConditionsIdleTheme(BaseIdleScene):
             )
 
         self.last_sun_str = sun_str
-        self.panel.draw_text(
-            self.canvas,
-            TEXT_FONT,
-            TEXT_X,
-            ROW_SUN_Y,
-            TC(colour_key),
-            sun_str,
-        )
+        seg_x = TEXT_X
+        for seg_text, seg_key in parts:
+            self.panel.draw_text(
+                self.canvas,
+                TEXT_FONT,
+                seg_x,
+                ROW_SUN_Y,
+                TC(seg_key),
+                seg_text,
+            )
+            seg_x += font_text_width(TEXT_FONT, seg_text) + 1
+
+    @staticmethod
+    def _parse_astro_time(value: str) -> datetime.time | None:
+        """Parse a WeatherAPI astro time string (e.g. "05:07 AM").
+
+        WeatherAPI returns 12-hour times with an AM/PM suffix, which the
+        shared ``parse_time`` helper (expecting plain ``HH:MM``) cannot
+        handle.  Returns ``None`` on failure.
+        """
+        try:
+            return datetime.datetime.strptime(value.strip(), "%I:%M %p").time()
+        except (ValueError, AttributeError, TypeError):
+            return None
 
     @staticmethod
     def _format_12h(t: datetime.time) -> str:

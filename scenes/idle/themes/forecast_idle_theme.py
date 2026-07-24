@@ -43,8 +43,8 @@ from setup.themes import (
     THEME_BG,
     THEME_CURRENT_DATE,
     THEME_CURRENT_DAY,
-    THEME_FORECAST_TOP_TEXT,
     THEME_FORECAST_TIME,
+    THEME_FORECAST_TOP_TEXT,
 )
 from utilities.sun_times import is_daytime
 
@@ -253,7 +253,7 @@ class ForecastIdleTheme(BaseIdleScene):
             hour = int(now.strftime("%I"))
             time_str = f"{hour}:{now.strftime('%M')}"
 
-        current_time = time_str 
+        current_time = time_str
         if self.last_time == current_time:
             return
 
@@ -268,7 +268,6 @@ class ForecastIdleTheme(BaseIdleScene):
                 self.last_time[:5],
             )
 
-
         self.last_time = current_time
 
         self.panel.draw_text(
@@ -279,7 +278,6 @@ class ForecastIdleTheme(BaseIdleScene):
             TC(THEME_FORECAST_TIME),
             time_str,
         )
-
 
     # ------------------------------------------------------------------
     # Date (copied from ClassicIdleTheme)
@@ -304,7 +302,7 @@ class ForecastIdleTheme(BaseIdleScene):
         month = now.month
 
         day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        date_str = (f"{day}/{month}" if day_first else f"{month}/{day}")
+        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
 
         current_date = day_name + " " + date_str
         if self.last_date == current_date:
