@@ -8,13 +8,20 @@ mapping, and assorted constants/helpers used across themes.
 
 from __future__ import annotations
 
+import datetime
 import json
 import threading
 import urllib.request
 
 from display.rgbpanel import Colour
+from setup import fonts
+from setup.configuration import Config
+from setup.screen import WIDTH as SCREEN_WIDTH
 from setup.themes import (
     TC,
+    THEME_BG,
+    THEME_CURRENT_DATE,
+    THEME_CURRENT_DAY,
     THEME_WEATHER_00C,
     THEME_WEATHER_01C,
     THEME_WEATHER_10C,
@@ -23,6 +30,156 @@ from setup.themes import (
     THEME_WEATHER_25C,
     THEME_WEATHER_35C,
 )
+
+# ---------------------------------------------------------------------------
+# Clock / Date / Day-of-week bar (shared by conditions + forecast themes)
+# ---------------------------------------------------------------------------
+
+_CLOCK_FONT = fonts.small
+_CLOCK_POSITION = (0, 6)
+_DATE_FONT = _CLOCK_FONT
+_DATE_POSITION_Y = _CLOCK_POSITION[1]
+# Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+# Formats 0 and 1 both render as DD/MM (day before month);
+# format 2 renders as MM/DD (month before day).
+_DATE_DAY_FIRST = {0: True, 1: True, 2: False}
+_DAY_DATE_SPACE_PX = 0
+_DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+class ClockDateBar:
+    """Renders the clock (top-left) + day-abbrev/date (top-right) row.
+
+    Shared by ConditionsIdleTheme and ForecastIdleTheme, which use the
+    exact same layout.  The only per-theme difference is the colour used
+    for the clock digits, supplied via ``time_theme_key``.
+
+    Usage::
+
+        self.bar = ClockDateBar(panel, canvas, THEME_CONDITIONS_TIME)
+        self.bar.draw()          # call once per second
+        self.bar.reset()         # on scene reset / canvas clear
+    """
+
+    def __init__(self, panel, canvas, time_theme_key: str) -> None:
+        self.panel = panel
+        self.canvas = canvas
+        self.time_theme_key = time_theme_key
+        self.last_time: str | None = None
+        self.last_date: str | None = None
+
+    def reset(self) -> None:
+        """Clear cached state so the next draw() fully redraws."""
+        self.last_time = None
+        self.last_date = None
+
+    # -- clock ---------------------------------------------------------
+
+    def _draw_clock(self) -> None:
+        cfg = Config.instance()
+        now = datetime.datetime.now()
+        if cfg.clock_24hr:
+            time_str = now.strftime("%H:%M")
+        else:
+            hour = int(now.strftime("%I"))
+            time_str = f"{hour}:{now.strftime('%M')}"
+
+        if self.last_time == time_str:
+            return
+
+        if self.last_time is not None:
+            self.panel.draw_text(
+                self.canvas,
+                _CLOCK_FONT,
+                _CLOCK_POSITION[0],
+                _CLOCK_POSITION[1],
+                TC(THEME_BG),
+                self.last_time,
+            )
+
+        self.last_time = time_str
+        self.panel.draw_text(
+            self.canvas,
+            _CLOCK_FONT,
+            _CLOCK_POSITION[0],
+            _CLOCK_POSITION[1],
+            TC(self.time_theme_key),
+            time_str,
+        )
+
+    # -- day + date ----------------------------------------------------
+
+    def _draw_date(self) -> None:
+        cfg = Config.instance()
+        now = datetime.datetime.now()
+
+        day_name = _DAY_ABBREVS[now.weekday()].upper()
+        day = now.day
+        month = now.month
+
+        day_first = _DATE_DAY_FIRST.get(cfg.date_format, True)
+        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
+
+        current_date = day_name + " " + date_str
+        if self.last_date == current_date:
+            return
+
+        date_width = font_text_width(_DATE_FONT, date_str)
+        date_x = SCREEN_WIDTH + 1 - date_width
+        day_x = date_x - _DAY_DATE_SPACE_PX - font_text_width(_DATE_FONT, day_name)
+
+        if self.last_date is not None:
+            old_day_name = self.last_date[:3]
+            old_date_str = self.last_date[4:]
+            old_date_width = font_text_width(_DATE_FONT, old_date_str)
+            old_date_x = SCREEN_WIDTH + 1 - old_date_width
+            old_day_x = (
+                old_date_x
+                - _DAY_DATE_SPACE_PX
+                - font_text_width(_DATE_FONT, old_day_name)
+            )
+            self.panel.draw_text(
+                self.canvas,
+                _DATE_FONT,
+                old_day_x,
+                _DATE_POSITION_Y,
+                TC(THEME_BG),
+                old_day_name,
+            )
+            self.panel.draw_text(
+                self.canvas,
+                _DATE_FONT,
+                old_date_x,
+                _DATE_POSITION_Y,
+                TC(THEME_BG),
+                old_date_str,
+            )
+
+        self.last_date = current_date
+        self.panel.draw_text(
+            self.canvas,
+            _DATE_FONT,
+            day_x,
+            _DATE_POSITION_Y,
+            TC(THEME_CURRENT_DAY),
+            day_name,
+        )
+        self.panel.draw_text(
+            self.canvas,
+            _DATE_FONT,
+            date_x,
+            _DATE_POSITION_Y,
+            TC(THEME_CURRENT_DATE),
+            date_str,
+        )
+
+    # -- public --------------------------------------------------------
+
+    def draw(self) -> None:
+        """Redraw clock and date if either has changed. Call ~1/sec."""
+        self._draw_clock()
+        self._draw_date()
+
 
 # ---------------------------------------------------------------------------
 # Weather API constants

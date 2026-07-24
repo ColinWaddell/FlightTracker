@@ -34,15 +34,15 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
     blank_area,
     create_animation,
 )
-from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
+from scenes.idle.themes.theme_utilities import (
+    ClockDateBar,
+    font_text_width,
+    temperature_to_colour,
+)
 from setup import fonts, frames
 from setup.configuration import Config
-from setup.screen import WIDTH as SCREEN_WIDTH
 from setup.themes import (
     TC,
-    THEME_BG,
-    THEME_CURRENT_DATE,
-    THEME_CURRENT_DAY,
     THEME_FORECAST_TIME,
     THEME_FORECAST_TOP_TEXT,
 )
@@ -65,31 +65,6 @@ BOTTOM_LABEL_Y = 32  # baseline for the label below the sprite
 
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-# ---------------------------------------------------------------------------
-# Clock / Date / Day-of-week constants (copied from ClassicIdleTheme)
-# ---------------------------------------------------------------------------
-
-# Clock
-CLOCK_FONT = fonts.small
-CLOCK_AMPM_FONT = fonts.small
-CLOCK_POSITION = (0, 6)
-AMPM_POSITION_Y = 5
-
-# Date — sits on the same line as the clock, positioned after it.
-DATE_FONT = CLOCK_FONT
-DATE_POSITION_Y = CLOCK_POSITION[1]
-# Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
-# Formats 0 and 1 both render as DD/MM (day before month);
-# format 2 renders as MM/DD (month before day).
-DATE_DAY_FIRST = {0: True, 1: True, 2: False}
-
-# Pixel gap between the day abbreviation and the date on the clock line.
-DAY_DATE_SPACE_PX = 0
-
-# Day of week
-DAY_FONT = fonts.small
-DAY_POSITION = (2, 23)
-
 
 class ForecastIdleTheme(BaseIdleScene):
     """Forecast idle layout - weather icons for upcoming periods."""
@@ -99,20 +74,15 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def theme_init(self) -> None:
+        self.bar = ClockDateBar(self.panel, self.canvas, THEME_FORECAST_TIME)
         self.last_slots: list[tuple] | None = None
-        self.last_time: str | None = None
-        self.last_date: str | None = None
-        self._last_date_x: int = 0
-        self.last_day: str | None = None
         self.animations: list = []
         self._anim_positions: list[tuple[int, int]] = []
 
     def theme_reset(self) -> None:
         self._destroy_animations()
         self.last_slots = None
-        self.last_time = None
-        self.last_date = None
-        self.last_day = None
+        self.bar.reset()
 
     # ------------------------------------------------------------------
     # draw() — overridden for per-frame animation
@@ -144,8 +114,7 @@ class ForecastIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
-        self.draw_clock()
-        self.draw_date()
+        self.bar.draw()
 
         weather = self.weather.get()
         if weather is None:
@@ -168,13 +137,10 @@ class ForecastIdleTheme(BaseIdleScene):
         self._destroy_animations()
         self.panel.clear(self.canvas)
 
-        # Re-draw clock/date/day after clear (they were drawn above but
+        # Re-draw clock/date after clear (they were drawn above but
         # the clear wiped them)
-        self.last_time = None
-        self.last_date = None
-        self.last_day = None
-        self.draw_clock()
-        self.draw_date()
+        self.bar.reset()
+        self.bar.draw()
 
         # Create new animations and draw labels
         for i, slot in enumerate(slots):
@@ -237,133 +203,6 @@ class ForecastIdleTheme(BaseIdleScene):
             blank_area(self.panel, self.canvas, x, y)
         self.animations = []
         self._anim_positions = []
-
-    # ------------------------------------------------------------------
-    # Clock (copied from ClassicIdleTheme)
-    # ------------------------------------------------------------------
-
-    def draw_clock(self) -> None:
-        cfg = Config.instance()
-        now = datetime.datetime.now()
-        if cfg.clock_24hr:
-            time_str = now.strftime("%H:%M")
-        else:
-            # Strip leading zero from 12-hour format (cross-platform:
-            # %-I is Linux-only, %#I is Windows-only).
-            hour = int(now.strftime("%I"))
-            time_str = f"{hour}:{now.strftime('%M')}"
-
-        current_time = time_str
-        if self.last_time == current_time:
-            return
-
-        # Undraw old value
-        if self.last_time is not None:
-            self.panel.draw_text(
-                self.canvas,
-                CLOCK_FONT,
-                CLOCK_POSITION[0],
-                CLOCK_POSITION[1],
-                TC(THEME_BG),
-                self.last_time[:5],
-            )
-
-        self.last_time = current_time
-
-        self.panel.draw_text(
-            self.canvas,
-            CLOCK_FONT,
-            CLOCK_POSITION[0],
-            CLOCK_POSITION[1],
-            TC(THEME_FORECAST_TIME),
-            time_str,
-        )
-
-    # ------------------------------------------------------------------
-    # Date (copied from ClassicIdleTheme)
-    # ------------------------------------------------------------------
-
-    def draw_date(self) -> None:
-        """Draw day abbreviation + date (e.g. WED2/3) right-aligned.
-
-        The date sits on the same line as the clock, right-aligned to
-        the panel width.  The day short-name uses THEME_CURRENT_DAY and
-        the date uses THEME_CURRENT_DATE.  The date is DD/MM or MM/DD
-        depending on the configured date format.  Leading zeros are
-        stripped.
-
-        Caches the full drawn string so we only redraw when it changes.
-        """
-        cfg = Config.instance()
-        now = datetime.datetime.now()
-
-        day_name = _DAY_ABBREVS[now.weekday()].upper()
-        day = now.day
-        month = now.month
-
-        day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
-
-        current_date = day_name + " " + date_str
-        if self.last_date == current_date:
-            return
-
-        # Right-align the date to the panel width, then place the day
-        # name DAY_DATE_SPACE_PX pixels to its left.  The font has a
-        # blank right column so we shift 1px past the panel edge without
-        # cropping any letters.
-        date_width = font_text_width(DATE_FONT, date_str)
-        date_x = SCREEN_WIDTH + 1 - date_width
-        day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
-
-        # Undraw old value (both segments in background colour)
-        if self.last_date is not None:
-            old_day_name = self.last_date[:3]
-            old_date_str = self.last_date[4:]  # skip the space at index 3
-            old_date_width = font_text_width(DATE_FONT, old_date_str)
-            old_date_x = SCREEN_WIDTH + 1 - old_date_width
-            old_day_x = (
-                old_date_x
-                - DAY_DATE_SPACE_PX
-                - font_text_width(DATE_FONT, old_day_name)
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATE_FONT,
-                old_day_x,
-                DATE_POSITION_Y,
-                TC(THEME_BG),
-                old_day_name,
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATE_FONT,
-                old_date_x,
-                DATE_POSITION_Y,
-                TC(THEME_BG),
-                old_date_str,
-            )
-
-        self.last_date = current_date
-        self._last_date_x = date_x
-
-        # Draw new value: day name in THEME_CURRENT_DAY, date in THEME_CURRENT_DATE
-        self.panel.draw_text(
-            self.canvas,
-            DATE_FONT,
-            day_x,
-            DATE_POSITION_Y,
-            TC(THEME_CURRENT_DAY),
-            day_name,
-        )
-        self.panel.draw_text(
-            self.canvas,
-            DATE_FONT,
-            date_x,
-            DATE_POSITION_Y,
-            TC(THEME_CURRENT_DATE),
-            date_str,
-        )
 
     # ------------------------------------------------------------------
     # Forecast slot selection

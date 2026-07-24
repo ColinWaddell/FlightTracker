@@ -182,6 +182,11 @@ CODE_MAPPINGS = {
 }
 
 
+def _or_none(value: str):
+    """Convert empty strings to None so callers can distinguish 'no icon' from 'icon'."""
+    return value or None
+
+
 def code_to_icon(code: int, night: bool):
     """Return (icon_name, animation_name) for a condition code.
 
@@ -192,8 +197,8 @@ def code_to_icon(code: int, night: bool):
     if not row:
         return None, None
 
-    icon = row[1] if night else row[0]
-    animation = row[3] if night else row[2]
+    icon = _or_none(row[1] if night else row[0])
+    animation = _or_none(row[3] if night else row[2])
     return icon, animation
 
 
@@ -209,7 +214,7 @@ def code_to_weather(code: int, night: bool):
     if not row:
         return None, None, 0
 
-    icon = row[1] if night else row[0]
-    animation = row[3] if night else row[2]
+    icon = _or_none(row[1] if night else row[0])
+    animation = _or_none(row[3] if night else row[2])
     intensity = row[4]
     return icon, animation, intensity

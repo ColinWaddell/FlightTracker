@@ -20,6 +20,10 @@ flicker while the weather service refreshes every few minutes.
 from __future__ import annotations
 
 import datetime
+from enum import Enum, auto
+from pathlib import Path
+
+from PIL import Image
 
 from scenes.idle.idle_scene import BaseIdleScene
 from scenes.idle.themes.icons.weather.codes import code_to_weather
@@ -28,7 +32,11 @@ from scenes.idle.themes.icons.weather.forecast_sprite import (
     blank_area,
     create_animation,
 )
-from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
+from scenes.idle.themes.theme_utilities import (
+    ClockDateBar,
+    font_text_width,
+    temperature_to_colour,
+)
 from setup import fonts, frames
 from setup.configuration import Config
 from setup.screen import WIDTH as SCREEN_WIDTH
@@ -41,15 +49,8 @@ from setup.themes import (
     THEME_CONDITIONS_SUNSET,
     THEME_CONDITIONS_TIME,
     THEME_CONDITIONS_WIND,
-    THEME_CURRENT_DATE,
-    THEME_CURRENT_DAY,
 )
 from utilities.sun_times import is_daytime
-
-# Wind direction icon loading (module-level cache).
-from pathlib import Path
-from enum import Enum, auto
-from PIL import Image
 
 _DIRECTIONS_DIR = Path(__file__).parent / "icons" / "directions"
 _direction_cache: dict[str, Image.Image] = {}
@@ -181,18 +182,6 @@ class DescriptionScroller:
 # Background image drawn once on scene entry.
 CONDITIONS_BG_POS = (15, 6)
 
-# Clock / date / day (top bar).
-CLOCK_FONT = fonts.small
-CLOCK_POSITION = (0, 6)
-DATE_FONT = CLOCK_FONT
-DATE_POSITION_Y = CLOCK_POSITION[1]
-# Date format: 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
-# Formats 0 and 1 both render as DD/MM (day before month);
-# format 2 renders as MM/DD (month before day).
-DATE_DAY_FIRST = {0: True, 1: True, 2: False}
-DAY_DATE_SPACE_PX = 0
-_DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-
 # Sprite - top left.
 SPRITE_POSITION = (0, 6)
 
@@ -225,8 +214,7 @@ class ConditionsIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def theme_init(self) -> None:
-        self.last_time: str | None = None
-        self.last_date: str | None = None
+        self.bar = ClockDateBar(self.panel, self.canvas, THEME_CONDITIONS_TIME)
         self.last_temp_str: str | None = None
         self.last_humidity_str: str | None = None
         self.last_wind_str: str | None = None
@@ -241,8 +229,7 @@ class ConditionsIdleTheme(BaseIdleScene):
 
     def theme_reset(self) -> None:
         self._destroy_animation()
-        self.last_time = None
-        self.last_date = None
+        self.bar.reset()
         self.last_temp_str = None
         self.last_humidity_str = None
         self.last_wind_str = None
@@ -291,8 +278,7 @@ class ConditionsIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def draw_content(self, count: int) -> None:
-        self.draw_clock()
-        self.draw_date()
+        self.bar.draw()
 
         weather = self.weather.get()
         if weather is None:
@@ -305,111 +291,6 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.draw_moon(weather)
         self.draw_description(weather)
         self.draw_sun(weather)
-
-    # ------------------------------------------------------------------
-    # Clock (top-left)
-    # ------------------------------------------------------------------
-
-    def draw_clock(self) -> None:
-        cfg = Config.instance()
-        now = datetime.datetime.now()
-        if cfg.clock_24hr:
-            time_str = now.strftime("%H:%M")
-        else:
-            hour = int(now.strftime("%I"))
-            time_str = f"{hour}:{now.strftime('%M')}"
-
-        if self.last_time == time_str:
-            return
-
-        if self.last_time is not None:
-            self.panel.draw_text(
-                self.canvas,
-                CLOCK_FONT,
-                CLOCK_POSITION[0],
-                CLOCK_POSITION[1],
-                TC(THEME_BG),
-                self.last_time,
-            )
-
-        self.last_time = time_str
-        self.panel.draw_text(
-            self.canvas,
-            CLOCK_FONT,
-            CLOCK_POSITION[0],
-            CLOCK_POSITION[1],
-            TC(THEME_CONDITIONS_TIME),
-            time_str,
-        )
-
-    # ------------------------------------------------------------------
-    # Day + date (top-right, right-aligned on clock line)
-    # ------------------------------------------------------------------
-
-    def draw_date(self) -> None:
-        """Draw day abbreviation + date right-aligned on the clock line."""
-        cfg = Config.instance()
-        now = datetime.datetime.now()
-
-        day_name = _DAY_ABBREVS[now.weekday()].upper()
-        day = now.day
-        month = now.month
-
-        day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
-
-        current_date = day_name + " " + date_str
-        if self.last_date == current_date:
-            return
-
-        date_width = font_text_width(DATE_FONT, date_str)
-        date_x = SCREEN_WIDTH + 1 - date_width
-        day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
-
-        if self.last_date is not None:
-            old_day_name = self.last_date[:3]
-            old_date_str = self.last_date[4:]
-            old_date_width = font_text_width(DATE_FONT, old_date_str)
-            old_date_x = SCREEN_WIDTH + 1 - old_date_width
-            old_day_x = (
-                old_date_x
-                - DAY_DATE_SPACE_PX
-                - font_text_width(DATE_FONT, old_day_name)
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATE_FONT,
-                old_day_x,
-                DATE_POSITION_Y,
-                TC(THEME_BG),
-                old_day_name,
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATE_FONT,
-                old_date_x,
-                DATE_POSITION_Y,
-                TC(THEME_BG),
-                old_date_str,
-            )
-
-        self.last_date = current_date
-        self.panel.draw_text(
-            self.canvas,
-            DATE_FONT,
-            day_x,
-            DATE_POSITION_Y,
-            TC(THEME_CURRENT_DAY),
-            day_name,
-        )
-        self.panel.draw_text(
-            self.canvas,
-            DATE_FONT,
-            date_x,
-            DATE_POSITION_Y,
-            TC(THEME_CURRENT_DATE),
-            date_str,
-        )
 
     # ------------------------------------------------------------------
     # Weather sprite (far left)
