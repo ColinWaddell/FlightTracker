@@ -420,8 +420,8 @@
             <select class="form-select form-select-sm" name="idle_screen_theme" id="idle_screen_theme" style="max-width:200px"
                     onchange="updateIdleThemeSections()">
               <option value="classic" {% if cfg.idle_screen_theme == 'classic' %}selected{% endif %}>Classic</option>
-              <option value="forecast" {% if cfg.idle_screen_theme == 'forecast' %}selected{% endif %}>Forecast</option>
               <option value="conditions" {% if cfg.idle_screen_theme == 'conditions' %}selected{% endif %}>Current Conditions</option>
+              <option value="forecast" {% if cfg.idle_screen_theme == 'forecast' %}selected{% endif %}>Forecast</option>
             </select>
             <div class="form-text text-muted small">Choose what to display on the idle screen when no flights or satellites are overhead.</div>
           </div>
