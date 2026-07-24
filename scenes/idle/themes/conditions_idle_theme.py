@@ -25,13 +25,13 @@ from scenes.idle.idle_scene import BaseIdleScene
 from scenes.idle.themes.icons.weather.codes import code_to_weather
 from scenes.idle.themes.icons.weather.forecast_sprite import (
     SPRITE_WIDTH,
+    _load_icon,
     blank_area,
     create_animation,
 )
 from scenes.idle.themes.theme_utilities import font_text_width, temperature_to_colour
 from setup import fonts, frames
 from setup.configuration import Config
-from setup.screen import WIDTH as SCREEN_WIDTH
 from setup.themes import (
     TC,
     THEME_BG,
@@ -51,15 +51,20 @@ from utilities.sun_times import is_daytime
 
 # Clock / date / day (bottom bar).
 CLOCK_FONT = fonts.small
-CLOCK_POSITION = (0, 31)
-DATE_FONT = CLOCK_FONT
-DATE_POSITION_Y = CLOCK_POSITION[1]
+CLOCK_POSITION = (0, 6)
+DAY_GAP_PX = 2  # gap between time and abbreviated day name
+DATE_FONT = fonts.extrasmall  # 4x6 - smaller font for full date
+DATE_POSITION_Y = CLOCK_POSITION[1] + 8  # line below clock
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-DATE_DAY_FIRST = {0: True, 1: True, 2: False}
-DAY_DATE_SPACE_PX = 0
+# 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
+DATE_FORMATS = {
+    0: lambda y, m, d: f"{y}-{m:02d}-{d:02d}",
+    1: lambda y, m, d: f"{d:02d}-{m:02d}-{y}",
+    2: lambda y, m, d: f"{m:02d}-{d:02d}-{y}",
+}
 
 # Sprite - top left.
-SPRITE_POSITION = (0, 0)
+SPRITE_POSITION = (63 - 15, 0)
 
 # Text column - to the right of the sprite.
 TEXT_X = SPRITE_WIDTH + 1  # one pixel gap after the sprite
@@ -70,7 +75,13 @@ TEXT_LINE_HEIGHT = 6
 ROW_TEMP_Y = 6
 ROW_HUMIDITY_Y = ROW_TEMP_Y + TEXT_LINE_HEIGHT
 ROW_WIND_Y = ROW_HUMIDITY_Y + TEXT_LINE_HEIGHT
-ROW_SUN_Y = ROW_WIND_Y + TEXT_LINE_HEIGHT
+
+# Sunrise / sunset - very bottom of the display.
+SUN_ROW_Y = 32  # baseline for 4x6 font at the bottom of 32px panel
+SUN_ICON_WIDTH = 5  # width of the sunrise/sunset PNG sprites
+SUN_ICON_HEIGHT = 5  # height of the sunrise/sunset PNG sprites
+SUN_ICON_GAP = 1  # gap between icon and text
+SUN_GAP = 2  # gap between sunrise and sunset segments
 
 
 class ConditionsIdleTheme(BaseIdleScene):
@@ -82,6 +93,7 @@ class ConditionsIdleTheme(BaseIdleScene):
 
     def theme_init(self) -> None:
         self.last_time: str | None = None
+        self.last_day: str | None = None
         self.last_date: str | None = None
         self.last_temp_str: str | None = None
         self.last_humidity_str: str | None = None
@@ -94,6 +106,7 @@ class ConditionsIdleTheme(BaseIdleScene):
     def theme_reset(self) -> None:
         self._destroy_animation()
         self.last_time = None
+        self.last_day = None
         self.last_date = None
         self.last_temp_str = None
         self.last_humidity_str = None
@@ -129,6 +142,7 @@ class ConditionsIdleTheme(BaseIdleScene):
 
     def draw_content(self, count: int) -> None:
         self.draw_clock()
+        self.draw_day()
         self.draw_date()
 
         weather = self.weather.get()
@@ -178,68 +192,74 @@ class ConditionsIdleTheme(BaseIdleScene):
         )
 
     # ------------------------------------------------------------------
-    # Date + day (bottom bar, right-aligned)
+    # Day abbreviation (beside clock, 2px gap)
+    # ------------------------------------------------------------------
+
+    def draw_day(self) -> None:
+        now = datetime.datetime.now()
+        day_name = _DAY_ABBREVS[now.weekday()].upper()
+
+        if self.last_day == day_name:
+            return
+
+        day_x = (
+            CLOCK_POSITION[0]
+            + font_text_width(CLOCK_FONT, self.last_time or "")
+            + DAY_GAP_PX
+        )
+
+        if self.last_day is not None:
+            self.panel.draw_text(
+                self.canvas,
+                CLOCK_FONT,
+                day_x,
+                CLOCK_POSITION[1],
+                TC(THEME_BG),
+                self.last_day,
+            )
+
+        self.last_day = day_name
+        self.panel.draw_text(
+            self.canvas,
+            CLOCK_FONT,
+            day_x,
+            CLOCK_POSITION[1],
+            TC(THEME_CONDITIONS_DAY),
+            day_name,
+        )
+
+    # ------------------------------------------------------------------
+    # Date (stacked below clock, left-aligned)
     # ------------------------------------------------------------------
 
     def draw_date(self) -> None:
         cfg = Config.instance()
         now = datetime.datetime.now()
 
-        day_name = _DAY_ABBREVS[now.weekday()].upper()
         day = now.day
         month = now.month
+        year = now.year
 
-        day_first = DATE_DAY_FIRST.get(cfg.date_format, True)
-        date_str = f"{day}/{month}" if day_first else f"{month}/{day}"
+        date_str = DATE_FORMATS.get(cfg.date_format, DATE_FORMATS[0])(year, month, day)
 
-        current_date = day_name + " " + date_str
-        if self.last_date == current_date:
+        if self.last_date == date_str:
             return
 
-        date_width = font_text_width(DATE_FONT, date_str)
-        date_x = SCREEN_WIDTH + 1 - date_width
-        day_x = date_x - DAY_DATE_SPACE_PX - font_text_width(DATE_FONT, day_name)
-
         if self.last_date is not None:
-            old_day_name = self.last_date[:3]
-            old_date_str = self.last_date[4:]
-            old_date_width = font_text_width(DATE_FONT, old_date_str)
-            old_date_x = SCREEN_WIDTH + 1 - old_date_width
-            old_day_x = (
-                old_date_x
-                - DAY_DATE_SPACE_PX
-                - font_text_width(DATE_FONT, old_day_name)
-            )
             self.panel.draw_text(
                 self.canvas,
                 DATE_FONT,
-                old_day_x,
+                0,
                 DATE_POSITION_Y,
                 TC(THEME_BG),
-                old_day_name,
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATE_FONT,
-                old_date_x,
-                DATE_POSITION_Y,
-                TC(THEME_BG),
-                old_date_str,
+                self.last_date,
             )
 
-        self.last_date = current_date
+        self.last_date = date_str
         self.panel.draw_text(
             self.canvas,
             DATE_FONT,
-            day_x,
-            DATE_POSITION_Y,
-            TC(THEME_CONDITIONS_DAY),
-            day_name,
-        )
-        self.panel.draw_text(
-            self.canvas,
-            DATE_FONT,
-            date_x,
+            0,
             DATE_POSITION_Y,
             TC(THEME_CONDITIONS_DATE),
             date_str,
@@ -415,46 +435,77 @@ class ConditionsIdleTheme(BaseIdleScene):
         cfg = Config.instance()
         fmt = "%H:%M" if cfg.clock_24hr else None
 
-        # Build "SR hh:mm SS hh:mm" showing both events side by side.
-        parts: list[tuple[str, object]] = []
+        # Build segments: (time_text, theme_key, icon_name).
+        parts: list[tuple[str, object, str]] = []
         if sunrise is not None:
             t_str = sunrise.strftime(fmt) if fmt else self._format_12h(sunrise)
-            parts.append((f"SR{t_str}", THEME_CONDITIONS_SUNRISE))
+            parts.append((t_str, THEME_CONDITIONS_SUNRISE, "sunrise"))
         if sunset is not None:
             t_str = sunset.strftime(fmt) if fmt else self._format_12h(sunset)
-            parts.append((f"SS{t_str}", THEME_CONDITIONS_SUNSET))
+            parts.append((t_str, THEME_CONDITIONS_SUNSET, "sunset"))
 
         if not parts:
             return
 
-        # Join segments with a space; cache the combined string.
+        # Cache the combined string for redraw avoidance.
         sun_str = " ".join(seg[0] for seg in parts)
 
         if sun_str == self.last_sun_str:
             return
 
         if self.last_sun_str is not None:
-            self.panel.draw_text(
-                self.canvas,
-                TEXT_FONT,
-                TEXT_X,
-                ROW_SUN_Y,
-                TC(THEME_BG),
-                self.last_sun_str,
-            )
+            self._undraw_sun_row(self.last_sun_str, len(parts))
 
         self.last_sun_str = sun_str
-        seg_x = TEXT_X
-        for seg_text, seg_key in parts:
+
+        # Draw new content at the bottom, left-aligned.
+        # Icon is vertically centred against the 4x6 text row.
+        icon_y = SUN_ROW_Y - 5 + (6 - SUN_ICON_HEIGHT) // 2
+        x = 0
+        for i, (t_str, seg_key, icon_name) in enumerate(parts):
+            if i > 0:
+                x += SUN_GAP
+            # Draw icon sprite to the left of the text.
+            icon_image = _load_icon(icon_name)
+            if icon_image is not None:
+                self.panel.draw_image(self.canvas, x, icon_y, icon_image)
+            x += SUN_ICON_WIDTH + SUN_ICON_GAP
+            # Draw text.
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
-                seg_x,
-                ROW_SUN_Y,
+                x,
+                SUN_ROW_Y,
                 TC(seg_key),
+                t_str,
+            )
+            x += font_text_width(TEXT_FONT, t_str)
+
+    def _undraw_sun_row(self, old_str: str, num_parts: int) -> None:
+        """Erase old sunrise/sunset text and icons in background colour."""
+        bg = TC(THEME_BG)
+        segments = old_str.split(" ")
+        icon_y = SUN_ROW_Y - 5 + (6 - SUN_ICON_HEIGHT) // 2
+        x = 0
+        for i in range(num_parts):
+            if i > 0:
+                x += SUN_GAP
+            # Erase icon area (SUN_ICON_WIDTH x SUN_ICON_HEIGHT).
+            for ty in range(icon_y, icon_y + SUN_ICON_HEIGHT):
+                for tx in range(x, x + SUN_ICON_WIDTH):
+                    self.panel.set_pixel(self.canvas, tx, ty, bg.red, bg.green, bg.blue)
+            x += SUN_ICON_WIDTH + SUN_ICON_GAP
+            # Erase text.
+            seg_text = segments[i] if i < len(segments) else ""
+            self.panel.draw_text(
+                self.canvas,
+                TEXT_FONT,
+                x,
+                SUN_ROW_Y,
+                bg,
                 seg_text,
             )
-            seg_x += font_text_width(TEXT_FONT, seg_text) + 1
+            x += font_text_width(TEXT_FONT, seg_text)
 
     @staticmethod
     def _parse_astro_time(value: str) -> datetime.time | None:
