@@ -4,6 +4,48 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.2.0] - 2026-07-24
+
+### Added
+- **Idle theme system** — the idle screen is now themeable, with a pluggable architecture making it easy to introduce new idle themes
+- **Conditions idle theme** — new theme showing current weather conditions with animated weather sprites, wind direction, sunrise/sunset times, moon phase, and temperature
+- **Forecast idle theme** — new theme displaying the weather forecast with min/max temperature colouring, sun rays, moon phase icons, and bouncy text descriptions
+- **Classic idle theme** — the previous idle screen layout, preserved as a selectable theme
+- **Animated weather sprites** — a sprite-based animation engine with animations for rain, snow, blowing snow, fog, mist, dust, sleet, thunder, moon rays, and sun rays, mapped to weather codes from all supported data sources
+- **Moon phase display** — moon phase calculation with custom-drawn icons (new, waxing crescent, first quarter, waxing gibbous, full, waning gibbous, last quarter, waning crescent)
+- **Wind direction icons** — compass direction icons (N, NE, E, SE, S, SW, W, NW) for weather display
+- **Sunrise/sunset icons** — dedicated sunrise and sunset icons in the conditions theme
+- **Sun times utility** — new `sun_times.py` module for sunrise/sunset lookups, cached locally as they are queried frequently
+- **FR24 fallback for route lookups** — when hexdb.io returns no origin/destination for a callsign, the lookup now falls back to FlightRadar24, improving route coverage while keeping FR24 usage minimal (only on hexdb misses)
+- **Release notes inline on update page** — the web UI update page now fetches and displays release notes from GitHub directly, with a lightweight markdown renderer
+- **Theme selection in web UI** — theme picker added to settings, with a warning when selecting a new theme
+- **Optional mist effect** — mist animation can be toggled off
+- **Optional blinker** — the loading blinker LED is now optional (configurable)
+- 26 new route lookup tests covering hexdb success/failure, FR24 fallback, and the public `get_route` interface
+- New test suites for animations (290 tests), weather codes (113 tests), forecast (129 tests), and forecast sprites (182 tests)
+
+### Changed
+- **Idle scene refactored** — the monolithic idle scene has been split into a theme system under `scenes/idle/themes/`, with shared utilities in `theme_utilities.py`
+- **Weather data expanded** — the conditions theme pulls in more weather data including wind direction and current conditions
+- **Forecast trimmed to future-only** — forecast data is now trimmed to only include future time periods
+- **Time display customised** — time font size bumped up and given more character in the idle themes
+- **Temperature-based colour** — forecast min/max temperatures now drive the colour of the display text
+- **Theme-aware loading blinker** — the blinker position now adjusts based on the active theme
+- **Airport name fixes** — airport display names corrected; having no blinker is now an option
+- **de421.bsp** — added to `.gitignore` and removed from git tracking
+- **Animation engine rewritten** — the animation engine was rewritten for the new sprite-based system
+
+### Fixed
+- **Frame stall on TLE fetch** — `SatelliteScene.poll()` was blocking for 5 seconds when Celestrak was down because `recompute_passes()` called `tle_manager.get(timeout=5.0)`. Added a non-blocking `try_get()` variant to `TLEManager` so the display loop is no longer stalled
+- **Celestrak failures no longer slow everything down** — TLE lookup failures are now handled gracefully with back-off
+- **TLE lookup back-off** — added back-off logic to prevent hammering Celestrak on repeated failures
+- **None guard** — added guard against `None` values in theme display
+- **File handle leak** — file now properly closed after use in moon phase calculation
+- **Update save error message** — improved error message when saving settings fails
+
+### Removed
+- **Astro theme** — the astronomy-themed idle screen has been removed (superseded by the new theme system)
+
 ## [v2.1.7] - 2026-07-19
 
 ### Fixed
