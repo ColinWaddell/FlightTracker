@@ -388,10 +388,10 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_str == self.last_temp_str:
             return
 
-        temp_x = 65 - font_text_width(TEXT_FONT, temp_str)
+        temp_x = 64 - font_text_width(TEXT_FONT, temp_str)
 
         if self.last_temp_str is not None:
-            old_x = 65 - font_text_width(TEXT_FONT, self.last_temp_str)
+            old_x = 64 - font_text_width(TEXT_FONT, self.last_temp_str)
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
