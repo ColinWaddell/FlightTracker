@@ -48,6 +48,7 @@ from utilities.sun_times import is_daytime
 
 # Wind direction icon loading (module-level cache).
 from pathlib import Path
+from enum import Enum, auto
 from PIL import Image
 
 _DIRECTIONS_DIR = Path(__file__).parent / "icons" / "directions"
@@ -98,6 +99,79 @@ def _load_moon_icon(name: str) -> Image.Image | None:
         with Image.open(path) as img:
             _moon_cache[name] = img.convert("RGBA")
     return _moon_cache[name]
+
+
+# ---------------------------------------------------------------------------
+# Description scroller (bouncing text for long descriptions)
+# ---------------------------------------------------------------------------
+
+# Easing pattern for smooth scrolling (same as flight_scene.py).
+_EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
+
+_DESC_INITIAL_TICKS = 2  # seconds to hold before scrolling
+_DESC_PAUSE_TICKS = 2  # seconds to hold at each end
+
+
+def _easing_offset(tick: int) -> int:
+    return 1 if tick >= len(_EASING_STEPS) else _EASING_STEPS[tick]
+
+
+class _ScrollState(Enum):
+    INITIAL = auto()
+    REVEAL = auto()
+    PAUSE = auto()
+    RETRACT = auto()
+
+
+class DescriptionScroller:
+    """Bounce-scroll text that's too wide for the display.
+
+    Simplified version of flight_scene.LineScroller — no loop-done
+    signalling, just bounces back and forth indefinitely when the
+    text exceeds the available width.
+    """
+
+    def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self.state: _ScrollState = _ScrollState.INITIAL
+        self.timer: int = 0
+        self.position: int = 0
+        self.scroll_max: int = 0
+
+    def tick(self) -> int:
+        st = self.state
+
+        if st == _ScrollState.REVEAL:
+            self.position -= _easing_offset(self.timer)
+        elif st == _ScrollState.RETRACT:
+            self.position += _easing_offset(self.timer)
+
+        if st == _ScrollState.INITIAL:
+            if self.scroll_max > 0 and self.timer >= _DESC_INITIAL_TICKS:
+                self.state = _ScrollState.REVEAL
+                self.timer = 0
+        elif st == _ScrollState.REVEAL:
+            if self.position <= -self.scroll_max:
+                self.position = -self.scroll_max
+                self.state = _ScrollState.PAUSE
+                self.timer = 0
+        elif st == _ScrollState.PAUSE:
+            if self.timer >= _DESC_PAUSE_TICKS:
+                self.state = (
+                    _ScrollState.RETRACT
+                    if self.position <= -self.scroll_max
+                    else _ScrollState.INITIAL
+                )
+                self.timer = 0
+        elif st == _ScrollState.RETRACT and self.position >= 0:
+            self.position = 0
+            self.state = _ScrollState.PAUSE
+            self.timer = 0
+
+        self.timer += 1
+        return self.position
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +232,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_wind_str: str | None = None
         self.last_wind_dir: str | None = None
         self.last_description: str | None = None
+        self.description_scroller = DescriptionScroller()
         self.last_moon_phase: str | None = None
         self.last_sun_str: str | None = None
         self.last_sprite_key: tuple | None = None
@@ -173,6 +248,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_wind_str = None
         self.last_wind_dir = None
         self.last_description = None
+        self.description_scroller.reset()
         self.last_moon_phase = None
         self.last_sun_str = None
         self.last_sprite_key = None
@@ -575,28 +651,48 @@ class ConditionsIdleTheme(BaseIdleScene):
         if not description:
             return
 
-        if self.last_description == description:
-            return
+        # If the description text changed, reset the scroller.
+        if description != self.last_description:
+            if self.last_description is not None:
+                self.panel.draw_text(
+                    self.canvas,
+                    DESCRIPTION_FONT,
+                    0,
+                    DESCRIPTION_Y,
+                    TC(THEME_BG),
+                    self.last_description,
+                )
+            self.last_description = description
+            self.description_scroller.reset()
+            text_width = font_text_width(DESCRIPTION_FONT, description)
+            self.description_scroller.scroll_max = max(0, text_width - SCREEN_WIDTH)
 
-        if self.last_description is not None:
+        # Tick the scroller and redraw if the position changed.
+        prev_pos = self.description_scroller.position
+        new_pos = self.description_scroller.tick()
+
+        if prev_pos != new_pos or self.description_scroller.state in (
+            _ScrollState.REVEAL,
+            _ScrollState.RETRACT,
+        ):
+            # Erase old text at previous position.
             self.panel.draw_text(
                 self.canvas,
                 DESCRIPTION_FONT,
-                0,
+                prev_pos,
                 DESCRIPTION_Y,
                 TC(THEME_BG),
-                self.last_description,
+                description,
             )
-
-        self.last_description = description
-        self.panel.draw_text(
-            self.canvas,
-            DESCRIPTION_FONT,
-            0,
-            DESCRIPTION_Y,
-            TC(THEME_CONDITIONS_DESCRIPTION),
-            description,
-        )
+            # Draw new text at the scrolled position.
+            self.panel.draw_text(
+                self.canvas,
+                DESCRIPTION_FONT,
+                new_pos,
+                DESCRIPTION_Y,
+                TC(THEME_CONDITIONS_DESCRIPTION),
+                description,
+            )
 
     # ------------------------------------------------------------------
     # Sunrise / sunset
