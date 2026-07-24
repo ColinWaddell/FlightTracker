@@ -222,7 +222,9 @@ def parse_settings_form(form, cfg) -> dict:
         "date_format": int_val(form.get("date_format"), 0),
         # Idle screen theme
         "idle_screen_theme": (
-            "forecast"
+            "conditions"
+            if str_val(form.get("idle_screen_theme"), "classic").lower() == "conditions"
+            else "forecast"
             if str_val(form.get("idle_screen_theme"), "classic").lower() == "forecast"
             else "classic"
         ),
@@ -551,6 +553,7 @@ def update_notes():
     if not tag:
         return {"error": "No tag specified."}, 400
     from utilities.updater import get_release_notes
+
     notes = get_release_notes(tag)
     if notes is None:
         return {"error": "No release notes available for this tag."}, 404

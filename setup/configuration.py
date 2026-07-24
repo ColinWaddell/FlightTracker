@@ -707,11 +707,15 @@ class Config:
 
     @property
     def idle_screen_theme(self) -> str:
-        """Idle screen theme name: 'classic', 'forecast'."""
+        """Idle screen theme name: 'classic', 'forecast', 'conditions'."""
         val = str(
             self.data_store.get("idle_screen_theme", DEFAULT_IDLE_SCREEN_THEME)
         ).lower()
-        return val if val in ("classic", "forecast") else DEFAULT_IDLE_SCREEN_THEME
+        return (
+            val
+            if val in ("classic", "forecast", "conditions")
+            else DEFAULT_IDLE_SCREEN_THEME
+        )
 
     @property
     def web_interface_enabled(self) -> bool:

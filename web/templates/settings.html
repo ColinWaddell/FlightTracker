@@ -421,13 +421,14 @@
                     onchange="updateIdleThemeSections()">
               <option value="classic" {% if cfg.idle_screen_theme == 'classic' %}selected{% endif %}>Classic</option>
               <option value="forecast" {% if cfg.idle_screen_theme == 'forecast' %}selected{% endif %}>Forecast</option>
+              <option value="conditions" {% if cfg.idle_screen_theme == 'conditions' %}selected{% endif %}>Current Conditions</option>
             </select>
             <div class="form-text text-muted small">Choose what to display on the idle screen when no flights or satellites are overhead.</div>
           </div>
         </div>
 
         <!-- ====== Classic theme settings ====== -->
-        <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme != 'forecast' %}block{% else %}none{% endif %}">
+        <div id="idle-theme-classic" style="display:{% if cfg.idle_screen_theme == 'classic' %}block{% else %}none{% endif %}">
 
         <!-- ====== Weather ====== -->
         <div id="group-weather" class="card mb-3 p-3">
@@ -528,6 +529,20 @@
             </div>
           </div>
         </div><!-- /idle-theme-forecast -->
+
+        <!-- ====== Current Conditions theme settings ====== -->
+        <div id="idle-theme-conditions" style="display:{% if cfg.idle_screen_theme == 'conditions' %}block{% else %}none{% endif %}">
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-thermometer-half me-2"></i>Current Conditions</p>
+            <p class="text-muted small mb-0">Display the current weather at a glance: a weather sprite, temperature, humidity, wind, and sunrise/sunset.</p>
+          </div>
+          <div class="alert alert-warning small d-flex align-items-start mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+            <div>
+              <strong>Experimental feature.</strong> This is a new, work-in-progress theme and may be a bit rough around the edges. Expect some jankiness, and please report any issues on <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
+            </div>
+          </div>
+        </div><!-- /idle-theme-conditions -->
 
         </div><!-- /page-default-screen -->
 

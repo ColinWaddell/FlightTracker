@@ -559,8 +559,10 @@
     const theme = sel.value;
     const classic = document.getElementById("idle-theme-classic");
     const forecast = document.getElementById("idle-theme-forecast");
+    const conditions = document.getElementById("idle-theme-conditions");
     if (classic) classic.style.display = theme === "classic" ? "block" : "none";
     if (forecast) forecast.style.display = theme === "forecast" ? "block" : "none";
+    if (conditions) conditions.style.display = theme === "conditions" ? "block" : "none";
   };
 
   // ===========================================================================

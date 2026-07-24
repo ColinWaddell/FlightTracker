@@ -188,6 +188,23 @@ def _parse_day(raw_day: dict) -> dict:
     return out
 
 
+def _parse_astro(raw_astro: dict) -> dict:
+    """Extract sunrise/sunset (and moon) strings from a forecast astro block.
+
+    WeatherAPI returns these as strings like "06:30 AM" / "07:45 PM".
+    We keep them as raw strings; callers parse them to ``datetime.time``
+    via ``utilities.sun_times.parse_time`` (which handles the HH:MM part).
+    Missing values default to empty strings.
+    """
+    out = {}
+    for key in ("sunrise", "sunset", "moonrise", "moonset", "moon_phase"):
+        out[key] = str(raw_astro.get(key, "")) if raw_astro else ""
+    out["moon_illumination"] = _coerce(
+        raw_astro.get("moon_illumination") if raw_astro else None, int, 0
+    )
+    return out
+
+
 def _parse_hourly(raw_forecast_days: list) -> list[dict]:
     """Flatten all forecast hours into dicts with temp, precip, and condition code.
 
@@ -224,6 +241,10 @@ def _parse_weather(raw: dict) -> dict:
     Returns a dict with current-condition fields at the root level,
     plus ``hourly`` and ``daily`` lists.  Missing or malformed values
     are coerced to safe defaults rather than raising.
+
+    ``astro`` holds today's sunrise/sunset (and moon) strings parsed
+    from the first forecast day's ``astro`` block, used by the
+    Current Conditions idle theme.
     """
     current = raw.get("current", {})
     forecast = raw.get("forecast", {}).get("forecastday", [])
@@ -231,6 +252,11 @@ def _parse_weather(raw: dict) -> dict:
     parsed = _parse_current(current)
     parsed["hourly"] = _parse_hourly(forecast)
     parsed["daily"] = [_parse_day(d.get("day", {})) for d in forecast]
+
+    # Today's astro block (sunrise/sunset) for the conditions theme.
+    astro_raw = forecast[0].get("astro", {}) if forecast else {}
+    parsed["astro"] = _parse_astro(astro_raw)
+
     return parsed
 
 
