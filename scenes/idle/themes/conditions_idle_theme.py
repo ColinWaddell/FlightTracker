@@ -129,7 +129,7 @@ WIND_POSITION = [23, 13]
 WIND_ARROW_POSITION = [16, 7]
 
 # Moon phase icon.
-MOON_POSITION = [32, 32]
+MOON_POSITION = [53, 14]
 
 # Sunrise / sunset - very bottom of the display.
 SUN_FONT = fonts.extrasmall
@@ -380,9 +380,6 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_c is None:
             return
 
-        # TEMP TEST: force 100C to check spacing.
-        temp_c = 100
-
         display_temp = temp_c * 9.0 / 5.0 + 32 if cfg.units == "i" else temp_c
         unit_char = "F" if cfg.units == "i" else "C"
         temp_str = f"{round(display_temp)}{unit_char}"
@@ -421,9 +418,6 @@ class ConditionsIdleTheme(BaseIdleScene):
         humidity = weather.get("humidity")
         if humidity is None:
             return
-
-        # TEMP TEST: force 100% to check spacing.
-        humidity = 100
 
         humidity_str = f"{int(humidity)}%"
 
