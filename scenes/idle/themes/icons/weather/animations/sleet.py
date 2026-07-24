@@ -1,7 +1,7 @@
 """Sleet animation — long white stripes falling within a bounded box.
 
 Sleet looks like rain but with elongated white streaks instead of
-single-pixel blue drops.  Each streak is a vertical line of 2–3 pixels
+single-pixel blue drops.  Each streak is a vertical line of 2-3 pixels
 that falls at rain speed (1px/frame).  Spawning is probabilistic so
 there is no fixed period or detectable loop.
 
@@ -32,22 +32,22 @@ _B = 240
 
 # Bounding box for the sleet (local coordinates, shared with rain/snow).
 _BOX_LEFT = 3
-_BOX_RIGHT = 11      # inclusive
+_BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
-_BOX_BOTTOM = 14     # inclusive
+_BOX_BOTTOM = 14  # inclusive
 
 # Columns available per intensity (subset of the box's x-range).
 _COLUMNS = {
-    0: [4, 10],              # light: 2 columns
-    1: [4, 6, 8, 10],        # medium: 4 columns
+    0: [4, 10],  # light: 2 columns
+    1: [4, 6, 8, 10],  # medium: 4 columns
     2: [3, 5, 6, 8, 9, 11],  # heavy: 6 columns
 }
 
 # Per-frame probability of spawning a new streak.
 _SPAWN_CHANCE = {
-    0: 0.12,   # light:  ~1.5 streaks/sec
-    1: 0.25,   # medium: ~3 streaks/sec
-    2: 0.45,   # heavy:  ~5.6 streaks/sec
+    0: 0.12,  # light:  ~1.5 streaks/sec
+    1: 0.25,  # medium: ~3 streaks/sec
+    2: 0.45,  # heavy:  ~5.6 streaks/sec
 }
 
 # Streak length in pixels per intensity.
@@ -68,7 +68,7 @@ class _Streak:
 
     def __init__(self, x: int, y: int, length: int) -> None:
         self.x = x
-        self.y = y          # bottom pixel of the streak
+        self.y = y  # bottom pixel of the streak
         self.length = length
 
 
@@ -78,15 +78,9 @@ class SleetAnimation(BaseAnimation):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._columns: list[int] = _COLUMNS.get(
-            self.intensity, _COLUMNS[1]
-        )
-        self._spawn_chance: float = _SPAWN_CHANCE.get(
-            self.intensity, _SPAWN_CHANCE[1]
-        )
-        self._streak_len: int = _STREAK_LEN.get(
-            self.intensity, _STREAK_LEN[1]
-        )
+        self._columns: list[int] = _COLUMNS.get(self.intensity, _COLUMNS[1])
+        self._spawn_chance: float = _SPAWN_CHANCE.get(self.intensity, _SPAWN_CHANCE[1])
+        self._streak_len: int = _STREAK_LEN.get(self.intensity, _STREAK_LEN[1])
 
         # Active streaks currently in flight.
         self._streaks: list[_Streak] = []

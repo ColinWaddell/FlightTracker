@@ -69,7 +69,7 @@ SPARKLE_CHANCE = {
     2: 0.03,  # heavy:  frequent (~3.75/sec per pixel)
 }
 
-# Brightness range a sparkle rises to (0–1).
+# Brightness range a sparkle rises to (0-1).
 SPARKLE_PEAK = {
     0: (0.2, 0.5),
     1: (0.3, 0.7),

@@ -2,7 +2,7 @@
 
 Snow particles move right-to-left across the bounding box with a slight
 downward drift, simulating strong wind.  Each particle is a short
-horizontal streak (2–3 pixels) that wraps around when it exits the left
+horizontal streak (2-3 pixels) that wraps around when it exits the left
 edge.  Spawning and row assignment are randomised so there is no fixed
 period or detectable loop.
 
@@ -33,9 +33,9 @@ _B = 240
 
 # Bounding box (local coordinates, shared with rain/snow).
 _BOX_LEFT = 3
-_BOX_RIGHT = 11      # inclusive
+_BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
-_BOX_BOTTOM = 14     # inclusive
+_BOX_BOTTOM = 14  # inclusive
 
 # Number of particles per intensity.
 _PARTICLE_COUNT = {
@@ -46,9 +46,9 @@ _PARTICLE_COUNT = {
 
 # Wind speed in pixels per frame (sub-pixel accumulator).
 _WIND_SPEED = {
-    0: 0.5,   # light:  slow wind (~1px every 2 frames)
+    0: 0.5,  # light:  slow wind (~1px every 2 frames)
     1: 0.75,  # medium: medium wind (~1px every 1.3 frames)
-    2: 1.0,   # heavy:  strong wind (1px/frame)
+    2: 1.0,  # heavy:  strong wind (1px/frame)
 }
 
 # Streak length in pixels per intensity.
@@ -59,7 +59,7 @@ _STREAK_LEN = {
 }
 
 # Downward drift speed (pixels per frame, sub-pixel accumulator).
-_DRIFT_SPEED = 0.25   # ~1px every 4 frames
+_DRIFT_SPEED = 0.25  # ~1px every 4 frames
 
 
 class _Particle:
@@ -68,7 +68,7 @@ class _Particle:
     __slots__ = ("x", "y", "length", "wind_accum", "drift_accum")
 
     def __init__(self, x: int, y: int, length: int) -> None:
-        self.x = x          # rightmost pixel of the streak
+        self.x = x  # rightmost pixel of the streak
         self.y = y
         self.length = length
         self.wind_accum = 0.0
@@ -84,12 +84,8 @@ class BlowingSnowAnimation(BaseAnimation):
         self._particle_count: int = _PARTICLE_COUNT.get(
             self.intensity, _PARTICLE_COUNT[1]
         )
-        self._wind_speed: int = _WIND_SPEED.get(
-            self.intensity, _WIND_SPEED[1]
-        )
-        self._streak_len: int = _STREAK_LEN.get(
-            self.intensity, _STREAK_LEN[1]
-        )
+        self._wind_speed: int = _WIND_SPEED.get(self.intensity, _WIND_SPEED[1])
+        self._streak_len: int = _STREAK_LEN.get(self.intensity, _STREAK_LEN[1])
 
         # Active particles.
         self._particles: list[_Particle] = []
@@ -98,9 +94,7 @@ class BlowingSnowAnimation(BaseAnimation):
         for _ in range(self._particle_count):
             x = random.randint(_BOX_LEFT, _BOX_RIGHT)
             y = random.randint(_BOX_TOP, _BOX_BOTTOM)
-            self._particles.append(
-                _Particle(x, y, self._streak_len)
-            )
+            self._particles.append(_Particle(x, y, self._streak_len))
 
         self._first_frame = True
 

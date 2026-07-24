@@ -71,11 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `data_source` config key now accepts `"osn"` in addition to `"fr24"` and `"tar1090"`.
-- `route_lookup.py` rewritten to use two separate adsbdb endpoints (`/v0/callsign/{callsign}` for routes, `/v0/aircraft/{mode_s}` for aircraft type) rather than the combined endpoint, which silently omitted route data when adsbdb could not verify the callsign–airframe association.
+- `route_lookup.py` rewritten to use two separate adsbdb endpoints (`/v0/callsign/{callsign}` for routes, `/v0/aircraft/{mode_s}` for aircraft type) rather than the combined endpoint, which silently omitted route data when adsbdb could not verify the callsign-airframe association.
 - Stale cache entries with empty origin and destination are now treated as cache misses and re-queried, fixing cases where old backend data blocked fresh lookups.
 
 ### Fixed
-- Origin and destination showing blank for flights whose routes were known to adsbdb via the callsign endpoint but not resolvable via the combined aircraft endpoint (e.g. KLM933 → AMS–DUB).
+- Origin and destination showing blank for flights whose routes were known to adsbdb via the callsign endpoint but not resolvable via the combined aircraft endpoint (e.g. KLM933 → AMS-DUB).
 - Python 3.13 dummy-thread GC noise (`TypeError: 'NoneType' object does not support the context manager protocol`) eliminated by using persistent `requests.Session` objects in `route_lookup`, `overhead_tar1090`, and `overhead_osn`.
 
 ## [v2.0.7] - 2026-07-11
@@ -102,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Airport display options expanded from a simple full-name toggle to five styles: short code, full name, abbreviated name, municipality, and municipality + country
-- Replaced `full_airport_name` and `abbreviate_name` config keys with a single `airport_display_style` setting (0–4)
+- Replaced `full_airport_name` and `abbreviate_name` config keys with a single `airport_display_style` setting (0-4)
 - Bundled airports database significantly expanded (45,000+ entries) with richer metadata (name, municipality, country)
 - Airport lookup now returns full airport info dict instead of just the name string, for both FR24 and tar1090 data sources
 
@@ -182,7 +182,7 @@ Complete ground-up rewrite of FlightTracker, developed across `release/v2` and n
 - **Rain sensitivity** setting for the rainfall chart
 - **Imperial/metric units** toggle
 - **24-hour/12-hour clock** and date format options
-- **Screen rotation** (180°) and **brightness** controls (1–5)
+- **Screen rotation** (180°) and **brightness** controls (1-5)
 - **Bundled airports database** (`airports.json`) with Python helper script to keep it updated
 
 ### Removed

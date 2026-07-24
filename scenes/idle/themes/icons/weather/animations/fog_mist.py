@@ -109,7 +109,7 @@ class FogMistConfig:
         line_speed:       dict[intensity -> float] — how fast the wave
                           travels (radians per second).
         line_brightness:  dict[intensity -> float] — brightness of the
-                          lines relative to the base colour (0–1).
+                          lines relative to the base colour (0-1).
     """
 
     def __init__(

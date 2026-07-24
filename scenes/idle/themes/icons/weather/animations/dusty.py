@@ -1,7 +1,7 @@
 """Dusty animation — blowing dust streaks drifting left-to-right.
 
 Dust streaks blow across the full sprite area (no icon for these weather
-codes).  Each streak is a short horizontal line of 2–3 pixels moving
+codes).  Each streak is a short horizontal line of 2-3 pixels moving
 rightward with a slight upward drift, simulating wind-blown dust.
 Movement uses a sub-pixel accumulator for smooth motion, and particles
 wrap around when they exit the right edge.
@@ -42,9 +42,9 @@ TOP_MARGIN = 0
 
 # Effective animation area.
 BOX_LEFT = 0
-BOX_RIGHT = SPRITE_WIDTH - 1       # inclusive
+BOX_RIGHT = SPRITE_WIDTH - 1  # inclusive
 BOX_TOP = TOP_MARGIN
-BOX_BOTTOM = SPRITE_HEIGHT - 1     # inclusive
+BOX_BOTTOM = SPRITE_HEIGHT - 1  # inclusive
 
 # Number of particles per intensity.
 PARTICLE_COUNT = {
@@ -55,9 +55,9 @@ PARTICLE_COUNT = {
 
 # Wind speed in pixels per frame (sub-pixel accumulator, left-to-right).
 WIND_SPEED = {
-    0: 0.5,    # light:  slow wind (~1px every 2 frames)
-    1: 0.75,   # medium: medium wind (~1px every 1.3 frames)
-    2: 1.0,    # heavy:  strong wind (1px/frame)
+    0: 0.5,  # light:  slow wind (~1px every 2 frames)
+    1: 0.75,  # medium: medium wind (~1px every 1.3 frames)
+    2: 1.0,  # heavy:  strong wind (1px/frame)
 }
 
 # Streak length in pixels per intensity.
@@ -68,7 +68,7 @@ STREAK_LEN = {
 }
 
 # Upward drift speed (pixels per frame, sub-pixel accumulator).
-DRIFT_SPEED = 0.2   # ~1px every 5 frames
+DRIFT_SPEED = 0.2  # ~1px every 5 frames
 
 
 class Particle:
@@ -77,7 +77,7 @@ class Particle:
     __slots__ = ("x", "y", "length", "wind_accum", "drift_accum")
 
     def __init__(self, x: int, y: int, length: int) -> None:
-        self.x = x          # leftmost pixel of the streak
+        self.x = x  # leftmost pixel of the streak
         self.y = y
         self.length = length
         self.wind_accum = 0.0
@@ -90,15 +90,9 @@ class DustyAnimation(BaseAnimation):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.particle_count: int = PARTICLE_COUNT.get(
-            self.intensity, PARTICLE_COUNT[1]
-        )
-        self.wind_speed: float = WIND_SPEED.get(
-            self.intensity, WIND_SPEED[1]
-        )
-        self.streak_len: int = STREAK_LEN.get(
-            self.intensity, STREAK_LEN[1]
-        )
+        self.particle_count: int = PARTICLE_COUNT.get(self.intensity, PARTICLE_COUNT[1])
+        self.wind_speed: float = WIND_SPEED.get(self.intensity, WIND_SPEED[1])
+        self.streak_len: int = STREAK_LEN.get(self.intensity, STREAK_LEN[1])
 
         # Active particles.
         self.particles: list[Particle] = []

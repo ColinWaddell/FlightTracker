@@ -25,9 +25,9 @@ import random
 
 # Bounding box for the lightning (local coordinates, shared with rain).
 _BOX_LEFT = 3
-_BOX_RIGHT = 11      # inclusive
+_BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
-_BOX_BOTTOM = 14     # inclusive
+_BOX_BOTTOM = 14  # inclusive
 
 # Bolt variants — each is a 3-column-wide zigzag spanning all 4 rows.
 # Coordinates are relative to the bolt's top-left corner.
@@ -46,15 +46,15 @@ _BOLTS = [
     [(2, 0), (1, 1), (2, 2), (1, 3)],
 ]
 
-# Bolt is 3 columns wide (x offsets 0–2), so the left-edge x can range
+# Bolt is 3 columns wide (x offsets 0-2), so the left-edge x can range
 # from _BOX_LEFT to _BOX_RIGHT - 2.
 _X_OFFSETS = list(range(_BOX_LEFT, _BOX_RIGHT - 1))
 
 # Per-frame probability of starting a new flash.
 _FLASH_CHANCE = {
-    0: 0.04,   # light:  ~1 flash every 2 s
-    1: 0.07,   # medium: ~1 flash every 1 s
-    2: 0.12,   # heavy:  ~1 flash every 0.6 s
+    0: 0.04,  # light:  ~1 flash every 2 s
+    1: 0.07,  # medium: ~1 flash every 1 s
+    2: 0.12,  # heavy:  ~1 flash every 0.6 s
 }
 
 # Bolt colour (yellow-white) per intensity.
@@ -97,9 +97,7 @@ class ThunderMixin:
 
     def _thunder_init(self) -> None:
         """Set up lightning state.  Call after ``super().__init__``."""
-        self._flash_chance: float = _FLASH_CHANCE.get(
-            self.intensity, _FLASH_CHANCE[1]
-        )
+        self._flash_chance: float = _FLASH_CHANCE.get(self.intensity, _FLASH_CHANCE[1])
         self._thunder_colour: tuple[int, int, int] = _COLOURS.get(
             self.intensity, _COLOURS[1]
         )
@@ -112,10 +110,7 @@ class ThunderMixin:
 
     def _bolt_pixels(self, flash: _Flash) -> list[tuple[int, int]]:
         """Return absolute local pixel coords for the flash's bolt."""
-        return [
-            (flash.x_offset + dx, _BOX_TOP + dy)
-            for dx, dy in flash.bolt
-        ]
+        return [(flash.x_offset + dx, _BOX_TOP + dy) for dx, dy in flash.bolt]
 
     def _draw_bolt(self, flash: _Flash, r: int, g: int, b: int) -> None:
         for px, py in self._bolt_pixels(flash):

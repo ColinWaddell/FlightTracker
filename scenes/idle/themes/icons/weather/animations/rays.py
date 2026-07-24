@@ -39,7 +39,7 @@ _PALETTE = ((255, 230, 40), (0, 120, 40))  # mostly yellow
 _CENTRE = (7, 6)
 _RADII = (5,)
 
-# Full target range (0–1) for a dramatic shimmer swing.
+# Full target range (0-1) for a dramatic shimmer swing.
 _TARGET_MIN = 0.0
 _TARGET_MAX = 1.0
 # Fast transition speeds so movement is clearly visible each frame.
@@ -75,20 +75,20 @@ CIRCLE_POINTS_0 = [
     [3, 4],
     [7, 0],
     [7, 1],
-    [11,2],
-    [12,1],
-    [12,6],
-    [13,6],
-    [11,10],
-    [12,11],
-    [7,11],
-    [7,12],
-    [3,10],
-    [2,11],
-    [2,6],
-    [1,6],
-    [3,2],
-    [2,1],
+    [11, 2],
+    [12, 1],
+    [12, 6],
+    [13, 6],
+    [11, 10],
+    [12, 11],
+    [7, 11],
+    [7, 12],
+    [3, 10],
+    [2, 11],
+    [2, 6],
+    [1, 6],
+    [3, 2],
+    [2, 1],
 ]
 
 CIRCLE_POINTS_1 = [[8, 1], [9, 0], [10, 0], [11, 0], [12, 1], [13, 2], [13, 3], [13, 4]]
