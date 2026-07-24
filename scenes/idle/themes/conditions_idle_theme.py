@@ -355,11 +355,14 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_str == self.last_temp_str:
             return
 
+        temp_x = 64 - font_text_width(TEXT_FONT, temp_str)
+
         if self.last_temp_str is not None:
+            old_x = 63 - font_text_width(TEXT_FONT, self.last_temp_str)
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
-                TEMPERATURE_POSITION[0],
+                old_x,
                 TEMPERATURE_POSITION[1],
                 TC(THEME_BG),
                 self.last_temp_str,
@@ -369,7 +372,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.panel.draw_text(
             self.canvas,
             TEXT_FONT,
-            TEMPERATURE_POSITION[0],
+            temp_x,
             TEMPERATURE_POSITION[1],
             temperature_to_colour(temp_c),
             temp_str,
