@@ -277,6 +277,9 @@ class ConditionsIdleTheme(BaseIdleScene):
         if self.animation is not None:
             self.animation.tick()
 
+        # Tick the description scroller every frame for smooth scrolling.
+        self.draw_description_scroll()
+
         if self.frame % int(frames.PER_SECOND):
             return
 
@@ -666,8 +669,25 @@ class ConditionsIdleTheme(BaseIdleScene):
             self.description_scroller.reset()
             text_width = font_text_width(DESCRIPTION_FONT, description)
             self.description_scroller.scroll_max = max(0, text_width - SCREEN_WIDTH)
+            # Draw the text at the initial position immediately.
+            self.panel.draw_text(
+                self.canvas,
+                DESCRIPTION_FONT,
+                0,
+                DESCRIPTION_Y,
+                TC(THEME_CONDITIONS_DESCRIPTION),
+                description,
+            )
 
-        # Tick the scroller and redraw if the position changed.
+    def draw_description_scroll(self) -> None:
+        """Tick the description scroller every frame and redraw if moved.
+
+        Called from draw() at full frame rate (~12.5 fps), not from
+        draw_content() which is throttled to ~1 fps.
+        """
+        if self.last_description is None:
+            return
+
         prev_pos = self.description_scroller.position
         new_pos = self.description_scroller.tick()
 
@@ -682,7 +702,7 @@ class ConditionsIdleTheme(BaseIdleScene):
                 prev_pos,
                 DESCRIPTION_Y,
                 TC(THEME_BG),
-                description,
+                self.last_description,
             )
             # Draw new text at the scrolled position.
             self.panel.draw_text(
@@ -691,7 +711,7 @@ class ConditionsIdleTheme(BaseIdleScene):
                 new_pos,
                 DESCRIPTION_Y,
                 TC(THEME_CONDITIONS_DESCRIPTION),
-                description,
+                self.last_description,
             )
 
     # ------------------------------------------------------------------
