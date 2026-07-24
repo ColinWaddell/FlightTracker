@@ -193,7 +193,8 @@ WIND_POSITION = [23, 13]
 WIND_ARROW_POSITION = [16, 7]
 
 # Moon phase icon.
-MOON_POSITION = [53, 14]
+MOON_ICON_WIDTH = 7
+MOON_Y = 14  # y position for the moon icon (below the temperature string)
 
 # Sunrise / sunset - very bottom of the display.
 SUN_FONT = fonts.extrasmall
@@ -222,6 +223,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_description: str | None = None
         self.description_scroller = DescriptionScroller()
         self.last_moon_phase: str | None = None
+        self._moon_position: tuple[int, int] | None = None
         self.last_sun_str: str | None = None
         self.last_sprite_key: tuple | None = None
         self.animation = None
@@ -237,6 +239,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_description = None
         self.description_scroller.reset()
         self.last_moon_phase = None
+        self._moon_position = None
         self.last_sun_str = None
         self.last_sprite_key = None
 
@@ -370,6 +373,10 @@ class ConditionsIdleTheme(BaseIdleScene):
             temperature_to_colour(temp_c),
             temp_str,
         )
+
+        # The moon icon is centred under the temperature string, so a
+        # temperature change shifts its position.  Force a redraw.
+        self.last_moon_phase = None
 
     # ------------------------------------------------------------------
     # Humidity
@@ -507,24 +514,33 @@ class ConditionsIdleTheme(BaseIdleScene):
 
         icon_name = _MOON_PHASE_ICONS.get(moon_phase)
 
-        # Undraw old moon icon.
-        if self.last_moon_phase is not None:
-            old_icon_name = _MOON_PHASE_ICONS.get(self.last_moon_phase)
+        # Undraw old moon icon from its previous position.
+        if self._moon_position is not None:
+            old_icon_name = _MOON_PHASE_ICONS.get(self.last_moon_phase or "")
             if old_icon_name is not None:
                 old_icon = _load_moon_icon(old_icon_name)
                 if old_icon is not None:
-                    self._erase_image(old_icon, MOON_POSITION)
+                    self._erase_image(old_icon, list(self._moon_position))
+            self._moon_position = None
 
         self.last_moon_phase = moon_phase
 
-        # Draw new moon icon.
+        # Draw new moon icon, centred under the temperature string.
         if icon_name is not None:
             icon = _load_moon_icon(icon_name)
             if icon is not None:
+                # Calculate the x centre of the temperature string.
+                # The temperature is right-aligned to the panel edge.
+                temp_str = self.last_temp_str or ""
+                temp_width = font_text_width(TEXT_FONT, temp_str)
+                temp_x = 64 - temp_width
+                temp_centre = temp_x + temp_width / 2
+                moon_x = round(temp_centre - MOON_ICON_WIDTH / 2)
+                self._moon_position = (moon_x, MOON_Y)
                 self.panel.draw_image(
                     self.canvas,
-                    MOON_POSITION[0],
-                    MOON_POSITION[1],
+                    moon_x,
+                    MOON_Y,
                     icon,
                 )
 

@@ -43,7 +43,6 @@ _DATE_POSITION_Y = _CLOCK_POSITION[1]
 # Formats 0 and 1 both render as DD/MM (day before month);
 # format 2 renders as MM/DD (month before day).
 _DATE_DAY_FIRST = {0: True, 1: True, 2: False}
-_DAY_DATE_SPACE_PX = 0
 _DAY_ABBREVS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
@@ -67,11 +66,13 @@ class ClockDateBar:
         self.time_theme_key = time_theme_key
         self.last_time: str | None = None
         self.last_date: str | None = None
+        self._clock_width: int = 0
 
     def reset(self) -> None:
         """Clear cached state so the next draw() fully redraws."""
         self.last_time = None
         self.last_date = None
+        self._clock_width = 0
 
     # -- clock ---------------------------------------------------------
 
@@ -98,6 +99,7 @@ class ClockDateBar:
             )
 
         self.last_time = time_str
+        self._clock_width = font_text_width(_CLOCK_FONT, time_str)
         self.panel.draw_text(
             self.canvas,
             _CLOCK_FONT,
@@ -126,17 +128,23 @@ class ClockDateBar:
 
         date_width = font_text_width(_DATE_FONT, date_str)
         date_x = SCREEN_WIDTH + 1 - date_width
-        day_x = date_x - _DAY_DATE_SPACE_PX - font_text_width(_DATE_FONT, day_name)
+        day_width = font_text_width(_DATE_FONT, day_name)
+        # Centre the day abbreviation in the gap between the clock and
+        # the right-aligned date.
+        gap_start = _CLOCK_POSITION[0] + self._clock_width
+        gap_end = date_x
+        day_x = gap_start + (gap_end - gap_start - day_width) // 2
 
         if self.last_date is not None:
             old_day_name = self.last_date[:3]
             old_date_str = self.last_date[4:]
             old_date_width = font_text_width(_DATE_FONT, old_date_str)
             old_date_x = SCREEN_WIDTH + 1 - old_date_width
+            old_day_width = font_text_width(_DATE_FONT, old_day_name)
+            old_gap_start = _CLOCK_POSITION[0] + self._clock_width
+            old_gap_end = old_date_x
             old_day_x = (
-                old_date_x
-                - _DAY_DATE_SPACE_PX
-                - font_text_width(_DATE_FONT, old_day_name)
+                old_gap_start + (old_gap_end - old_gap_start - old_day_width) // 2
             )
             self.panel.draw_text(
                 self.canvas,
