@@ -24,7 +24,6 @@ import datetime
 from scenes.idle.idle_scene import BaseIdleScene
 from scenes.idle.themes.icons.weather.codes import code_to_weather
 from scenes.idle.themes.icons.weather.forecast_sprite import (
-    SPRITE_WIDTH,
     _load_icon,
     blank_area,
     create_animation,
@@ -66,7 +65,8 @@ def _load_direction_icon(name: str) -> Image.Image | None:
         path = _DIRECTIONS_DIR / f"{name}.png"
         if not path.exists():
             return None
-        _direction_cache[name] = Image.open(path).convert("RGBA")
+        with Image.open(path) as img:
+            _direction_cache[name] = img.convert("RGBA")
     return _direction_cache[name]
 
 
@@ -95,7 +95,8 @@ def _load_moon_icon(name: str) -> Image.Image | None:
         path = _MOON_DIR / f"{name}.png"
         if not path.exists():
             return None
-        _moon_cache[name] = Image.open(path).convert("RGBA")
+        with Image.open(path) as img:
+            _moon_cache[name] = img.convert("RGBA")
     return _moon_cache[name]
 
 

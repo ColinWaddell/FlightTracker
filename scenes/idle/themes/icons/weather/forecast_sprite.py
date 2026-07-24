@@ -58,7 +58,8 @@ def _load_icon(filename: str) -> Optional[Image.Image]:
         path = _ICON_DIR / f"{filename}.png"
         if not path.exists():
             return None
-        _image_cache[filename] = Image.open(path).convert("RGBA")
+        with Image.open(path) as img:
+            _image_cache[filename] = img.convert("RGBA")
     return _image_cache[filename]
 
 
