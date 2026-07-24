@@ -25,6 +25,7 @@ class RouteInfo:
     """
 
     plane: str = ""
+    registration: str = ""
     origin: str = ""
     destination: str = ""
     origin_name: str = ""
@@ -69,6 +70,7 @@ class Flight:
 
     # Route info
     plane: str = ""
+    registration: str = ""
     origin: str = ""
     destination: str = ""
     origin_name: str = ""
