@@ -70,6 +70,35 @@ def _load_direction_icon(name: str) -> Image.Image | None:
     return _direction_cache[name]
 
 
+# Moon phase icon loading (module-level cache).
+_MOON_DIR = Path(__file__).parent / "icons" / "moon"
+_moon_cache: dict[str, Image.Image] = {}
+
+# Maps WeatherAPI moon_phase strings to icon filenames.
+_MOON_PHASE_ICONS = {
+    "New Moon": "new",
+    "Waxing Crescent": "waxing_crescent",
+    "First Quarter": "first_quarter",
+    "Waxing Gibbous": "waxing_gibbous",
+    "Full Moon": "full",
+    "Waning Gibbous": "waning_gibbous",
+    "Last Quarter": "last_quarter",
+    "Waning Crescent": "waning_crescent",
+}
+
+
+def _load_moon_icon(name: str) -> Image.Image | None:
+    """Load a moon phase icon PNG from icons/moon/, cached for reuse."""
+    if not name:
+        return None
+    if name not in _moon_cache:
+        path = _MOON_DIR / f"{name}.png"
+        if not path.exists():
+            return None
+        _moon_cache[name] = Image.open(path).convert("RGBA")
+    return _moon_cache[name]
+
+
 # ---------------------------------------------------------------------------
 # Layout constants
 # ---------------------------------------------------------------------------
@@ -99,6 +128,9 @@ HUMIDITY_POSITION = [23, 20]
 WIND_POSITION = [23, 13]
 WIND_ARROW_POSITION = [16, 7]
 
+# Moon phase icon.
+MOON_POSITION = [32, 32]
+
 # Sunrise / sunset - very bottom of the display.
 SUN_FONT = fonts.extrasmall
 SUN_ROW_Y = 32  # baseline for 4x6 font at the bottom of 32px panel
@@ -125,6 +157,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_wind_str: str | None = None
         self.last_wind_dir: str | None = None
         self.last_description: str | None = None
+        self.last_moon_phase: str | None = None
         self.last_sun_str: str | None = None
         self.last_sprite_key: tuple | None = None
         self.animation = None
@@ -139,6 +172,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_wind_str = None
         self.last_wind_dir = None
         self.last_description = None
+        self.last_moon_phase = None
         self.last_sun_str = None
         self.last_sprite_key = None
 
@@ -188,6 +222,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.draw_temperature(weather)
         self.draw_humidity(weather)
         self.draw_wind(weather)
+        self.draw_moon(weather)
         self.draw_description(weather)
         self.draw_sun(weather)
 
@@ -355,10 +390,10 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_str == self.last_temp_str:
             return
 
-        temp_x = 64 - font_text_width(TEXT_FONT, temp_str)
+        temp_x = 65 - font_text_width(TEXT_FONT, temp_str)
 
         if self.last_temp_str is not None:
-            old_x = 63 - font_text_width(TEXT_FONT, self.last_temp_str)
+            old_x = 65 - font_text_width(TEXT_FONT, self.last_temp_str)
             self.panel.draw_text(
                 self.canvas,
                 TEXT_FONT,
@@ -501,6 +536,42 @@ class ConditionsIdleTheme(BaseIdleScene):
                     self.panel.set_pixel(
                         self.canvas, x + px, y + py, bg.red, bg.green, bg.blue
                     )
+
+    # ------------------------------------------------------------------
+    # Moon phase
+    # ------------------------------------------------------------------
+
+    def draw_moon(self, weather: dict) -> None:
+        astro = weather.get("astro", {})
+        moon_phase = astro.get("moon_phase", "")
+        if not moon_phase:
+            return
+
+        if moon_phase == self.last_moon_phase:
+            return
+
+        icon_name = _MOON_PHASE_ICONS.get(moon_phase)
+
+        # Undraw old moon icon.
+        if self.last_moon_phase is not None:
+            old_icon_name = _MOON_PHASE_ICONS.get(self.last_moon_phase)
+            if old_icon_name is not None:
+                old_icon = _load_moon_icon(old_icon_name)
+                if old_icon is not None:
+                    self._erase_image(old_icon, MOON_POSITION)
+
+        self.last_moon_phase = moon_phase
+
+        # Draw new moon icon.
+        if icon_name is not None:
+            icon = _load_moon_icon(icon_name)
+            if icon is not None:
+                self.panel.draw_image(
+                    self.canvas,
+                    MOON_POSITION[0],
+                    MOON_POSITION[1],
+                    icon,
+                )
 
     # ------------------------------------------------------------------
 
