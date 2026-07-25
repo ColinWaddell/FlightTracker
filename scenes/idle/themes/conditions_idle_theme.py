@@ -109,7 +109,7 @@ def _load_moon_icon(name: str) -> Image.Image | None:
 # Easing pattern for smooth scrolling (same as flight_scene.py).
 _EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
 
-_DESC_INITIAL_TICKS = 2  # seconds to hold before scrolling
+_DESC_INITIAL_TICKS = 8  # seconds to hold before scrolling
 _DESC_PAUSE_TICKS = 2  # seconds to hold at each end
 
 
