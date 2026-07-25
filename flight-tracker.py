@@ -362,8 +362,8 @@ def _warn_if_root() -> None:
     else:
         print(
             "[startup] Note: the RGB matrix driver may print a message about "
-            "running as root — this is safe to ignore as FlightTracker is not "
-            "running with elevated privileges.",
+            "running as root - this is safe to ignore providing you gave python "
+            "real-time permissions during installation.",
             file=sys.stderr,
         )
 
