@@ -92,7 +92,9 @@ class TestParseHourly:
         assert result[0]["condition_code"] == 1183
 
     def test_includes_temp_and_precip(self):
-        raw_days = [{"hour": [self._raw_hour(temp=20.5, precip=1.2) for _ in range(24)]}]
+        raw_days = [
+            {"hour": [self._raw_hour(temp=20.5, precip=1.2) for _ in range(24)]}
+        ]
         result = _parse_hourly(raw_days)
         assert result[0]["temp_c"] == 20.5
         assert result[0]["precip_mm"] == 1.2

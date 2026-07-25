@@ -49,8 +49,8 @@ DATE_FONT = fonts.small
 DATE_POSITION = (1, 31)
 DATE_FORMATS = [
     "%Y-%m-%d",  # 0 = YYYY-MM-DD
-    "%d-%m-%Y",   # 1 = DD-MM-YYYY (leading zeros stripped in draw_date)
-    "%m-%d-%Y",   # 2 = MM-DD-YYYY (leading zeros stripped in draw_date)
+    "%d-%m-%Y",  # 1 = DD-MM-YYYY (leading zeros stripped in draw_date)
+    "%m-%d-%Y",  # 2 = MM-DD-YYYY (leading zeros stripped in draw_date)
 ]
 
 # Day of week

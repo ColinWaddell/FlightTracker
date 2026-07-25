@@ -425,14 +425,17 @@ class TestColourTheme:
 class TestNormaliseLongitude:
     def test_positive_wrap(self):
         from setup.configuration import _normalise_longitude
+
         assert _normalise_longitude(366.0) == 6.0
 
     def test_negative_wrap(self):
         from setup.configuration import _normalise_longitude
+
         assert _normalise_longitude(-366.0) == -6.0
 
     def test_already_in_range(self):
         from setup.configuration import _normalise_longitude
+
         assert _normalise_longitude(0.0) == 0.0
         assert _normalise_longitude(180.0) == -180.0
         assert _normalise_longitude(-180.0) == -180.0
@@ -441,11 +444,13 @@ class TestNormaliseLongitude:
 
     def test_large_positive(self):
         from setup.configuration import _normalise_longitude
+
         assert _normalise_longitude(720.0) == 0.0
         assert _normalise_longitude(540.0) == -180.0
 
     def test_large_negative(self):
         from setup.configuration import _normalise_longitude
+
         assert _normalise_longitude(-720.0) == 0.0
         assert _normalise_longitude(-540.0) == -180.0
 
@@ -453,6 +458,7 @@ class TestNormaliseLongitude:
 class TestNormaliseLongitudes:
     def test_fixes_bad_longitudes(self):
         from setup.configuration import _normalise_longitudes
+
         data = {
             "flight_lng": 366.0,
             "flight_observer_lng": -190.0,
@@ -468,6 +474,7 @@ class TestNormaliseLongitudes:
 
     def test_no_change_when_already_valid(self):
         from setup.configuration import _normalise_longitudes
+
         data = {
             "flight_lng": -4.25,
             "flight_observer_lng": -4.25,
@@ -481,12 +488,14 @@ class TestNormaliseLongitudes:
 
     def test_missing_keys_no_error(self):
         from setup.configuration import _normalise_longitudes
+
         data = {"flight_lat": 55.87}
         changed = _normalise_longitudes(data)
         assert changed is False
 
     def test_non_numeric_no_error(self):
         from setup.configuration import _normalise_longitudes
+
         data = {"flight_lng": "not a number"}
         changed = _normalise_longitudes(data)
         assert changed is False
@@ -494,6 +503,7 @@ class TestNormaliseLongitudes:
     def test_web_wrap_lng_matches_config(self):
         """The web app wrap_lng should produce the same results as the config normaliser."""
         from setup.configuration import _normalise_longitude
+
         # We can't import web.app easily (Flask), so re-test the algorithm
         for lng in [366, -366, 0, 180, -180, 720, -720, 540, -540, 6.5, -4.25]:
             expected = ((lng + 180) % 360 + 360) % 360 - 180

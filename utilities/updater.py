@@ -144,7 +144,9 @@ def get_release_notes(tag: str) -> str | None:
     Returns the markdown body, or None if no release is attached to the tag
     or the request fails.
     """
-    url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/tags/{tag}"
+    url = (
+        f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/tags/{tag}"
+    )
     try:
         req = urllib.request.Request(
             url,

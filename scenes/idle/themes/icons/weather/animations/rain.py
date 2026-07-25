@@ -30,22 +30,22 @@ _B = 220
 
 # Bounding box for the rain (local coordinates).
 _BOX_LEFT = 3
-_BOX_RIGHT = 11      # inclusive
+_BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
-_BOX_BOTTOM = 14     # inclusive
+_BOX_BOTTOM = 14  # inclusive
 
 # Columns available per intensity (subset of the box's x-range).
 _COLUMNS = {
-    0: [4, 6, 10],              # light: 2 columns
-    1: [4, 6, 8, 10],        # medium: 4 columns
+    0: [4, 6, 10],  # light: 2 columns
+    1: [4, 6, 8, 10],  # medium: 4 columns
     2: [3, 5, 6, 8, 9, 11],  # heavy: 6 columns
 }
 
 # Per-frame probability of spawning a new drop (in a random column).
 _SPAWN_CHANCE = {
-    0: 0.12,   # light:  ~1.5 drops/sec
-    1: 0.25,   # medium: ~3 drops/sec
-    2: 0.45,   # heavy:  ~5.6 drops/sec
+    0: 0.12,  # light:  ~1.5 drops/sec
+    1: 0.25,  # medium: ~3 drops/sec
+    2: 0.45,  # heavy:  ~5.6 drops/sec
 }
 
 # Fall speed in pixels per frame.
@@ -68,12 +68,8 @@ class RainAnimation(BaseAnimation):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._columns: list[int] = _COLUMNS.get(
-            self.intensity, _COLUMNS[1]
-        )
-        self._spawn_chance: float = _SPAWN_CHANCE.get(
-            self.intensity, _SPAWN_CHANCE[1]
-        )
+        self._columns: list[int] = _COLUMNS.get(self.intensity, _COLUMNS[1])
+        self._spawn_chance: float = _SPAWN_CHANCE.get(self.intensity, _SPAWN_CHANCE[1])
 
         # Active drops currently in flight.
         self._drops: list[_Drop] = []

@@ -32,9 +32,9 @@ _B = 240
 
 # Bounding box (local coordinates, shared with rain/snow).
 _BOX_LEFT = 3
-_BOX_RIGHT = 11      # inclusive
+_BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
-_BOX_BOTTOM = 14     # inclusive
+_BOX_BOTTOM = 14  # inclusive
 
 # Cross shape: 5 pixel offsets relative to the flake's top-left corner.
 #
@@ -52,23 +52,23 @@ _CROSS = [
 
 # Spawn columns (left-edge x of the 3px-wide cross) per intensity.
 _COLUMNS = {
-    0: [4, 8],              # light:  2 columns
-    1: [3, 6, 9],           # medium: 3 columns
-    2: [3, 5, 7, 9],        # heavy:  4 columns
+    0: [4, 8],  # light:  2 columns
+    1: [3, 6, 9],  # medium: 3 columns
+    2: [3, 5, 7, 9],  # heavy:  4 columns
 }
 
 # Per-frame probability of spawning a new flake.
 _SPAWN_CHANCE = {
-    0: 0.06,   # light:  ~0.75 flakes/sec
-    1: 0.12,   # medium: ~1.5 flakes/sec
-    2: 0.22,   # heavy:  ~2.75 flakes/sec
+    0: 0.06,  # light:  ~0.75 flakes/sec
+    1: 0.12,  # medium: ~1.5 flakes/sec
+    2: 0.22,  # heavy:  ~2.75 flakes/sec
 }
 
 # Sway interval range (frames between sway changes) per intensity.
 _SWAY_INTERVAL = {
-    0: (8, 16),   # light:  slow, lazy drift
-    1: (5, 12),   # medium: medium drift
-    2: (3, 8),    # heavy:  frequent shifts
+    0: (8, 16),  # light:  slow, lazy drift
+    1: (5, 12),  # medium: medium drift
+    2: (3, 8),  # heavy:  frequent shifts
 }
 
 # Fall speed in pixels per frame (sub-pixel accumulator).
@@ -96,12 +96,8 @@ class ThunderSnowAnimation(ThunderMixin, BaseAnimation):
         super().__init__(*args, **kwargs)
         self._thunder_init()
 
-        self._columns: list[int] = _COLUMNS.get(
-            self.intensity, _COLUMNS[1]
-        )
-        self._spawn_chance: float = _SPAWN_CHANCE.get(
-            self.intensity, _SPAWN_CHANCE[1]
-        )
+        self._columns: list[int] = _COLUMNS.get(self.intensity, _COLUMNS[1])
+        self._spawn_chance: float = _SPAWN_CHANCE.get(self.intensity, _SPAWN_CHANCE[1])
         self._sway_interval: tuple[int, int] = _SWAY_INTERVAL.get(
             self.intensity, _SWAY_INTERVAL[1]
         )
@@ -129,8 +125,7 @@ class ThunderSnowAnimation(ThunderMixin, BaseAnimation):
         return [
             (cx + dx, cy + dy)
             for dx, dy in _CROSS
-            if _BOX_LEFT <= cx + dx <= _BOX_RIGHT
-            and _BOX_TOP <= cy + dy <= _BOX_BOTTOM
+            if _BOX_LEFT <= cx + dx <= _BOX_RIGHT and _BOX_TOP <= cy + dy <= _BOX_BOTTOM
         ]
 
     def _new_sway(self, flake: _Flake) -> None:

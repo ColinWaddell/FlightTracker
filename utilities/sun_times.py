@@ -141,8 +141,7 @@ def is_daytime(lat: float, lng: float, date=None) -> bool:
         lat_rad = math.radians(lat)
         decl_rad = math.radians(decl)
         cos_h = (
-            math.sin(math.radians(-0.833))
-            - math.sin(lat_rad) * math.sin(decl_rad)
+            math.sin(math.radians(-0.833)) - math.sin(lat_rad) * math.sin(decl_rad)
         ) / (math.cos(lat_rad) * math.cos(decl_rad))
         return cos_h < -1
 
