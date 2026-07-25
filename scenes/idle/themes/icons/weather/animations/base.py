@@ -22,8 +22,6 @@ using ``self.x`` and ``self.y``.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from display.rgbpanel import RGBPanel
 
 # Type alias: original[ly][lx] = (r, g, b) before the animation started.
@@ -55,7 +53,7 @@ class BaseAnimation:
         intensity: int,
         panel: RGBPanel,
         canvas,
-        original: Optional[OriginalGrid] = None,
+        original: OriginalGrid | None = None,
     ) -> None:
         self.x = x
         self.y = y

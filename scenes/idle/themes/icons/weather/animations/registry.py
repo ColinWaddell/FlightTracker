@@ -7,8 +7,6 @@ name (no animation — e.g., static cloudy conditions).
 
 from __future__ import annotations
 
-from typing import Optional, Type
-
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
 from scenes.idle.themes.icons.weather.animations.blowing_snow import (
     BlowingSnowAnimation,
@@ -29,7 +27,7 @@ from scenes.idle.themes.icons.weather.animations.thunder_snow import (
     ThunderSnowAnimation,
 )
 
-ANIMATION_REGISTRY: dict[str, Type[BaseAnimation]] = {
+ANIMATION_REGISTRY: dict[str, type[BaseAnimation]] = {
     "rain": RainAnimation,
     "snow": SnowAnimation,
     "sleet": SleetAnimation,
@@ -45,7 +43,7 @@ ANIMATION_REGISTRY: dict[str, Type[BaseAnimation]] = {
 }
 
 
-def get_animation_class(name: str | None) -> Optional[Type[BaseAnimation]]:
+def get_animation_class(name: str | None) -> type[BaseAnimation] | None:
     """Return the animation class for *name*, or ``None`` if no animation."""
     if name is None:
         return None

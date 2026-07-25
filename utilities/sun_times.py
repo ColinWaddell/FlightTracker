@@ -13,7 +13,6 @@ import math
 from datetime import datetime, time
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Time conversion helpers
 # ---------------------------------------------------------------------------

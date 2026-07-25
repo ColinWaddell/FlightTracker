@@ -113,7 +113,7 @@ class RaysAnimation(BaseAnimation):
         cx, cy = _CENTRE
         circle_points = _CIRCLE_POINTS.get(self.intensity, CIRCLE_POINTS_0)
         ring_pixels: set[tuple[int, int]] = set()
-        for radius in _RADII:
+        for _radius in _RADII:
             for lx, ly in circle_points:
                 if not (0 <= lx < self.width and 0 <= ly < self.height):
                     continue

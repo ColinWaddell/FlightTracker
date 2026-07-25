@@ -5,7 +5,6 @@ from datetime import datetime
 from scenes.idle.themes.icons.weather.codes import code_to_icon, code_to_weather
 from scenes.idle.themes.theme_utilities import _parse_hourly
 
-
 # ---------------------------------------------------------------------------
 # code_to_icon / code_to_weather helpers
 # ---------------------------------------------------------------------------

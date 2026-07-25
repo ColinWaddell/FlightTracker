@@ -133,7 +133,7 @@ class TestCreateAnimation:
 
     def test_blanks_area_before_drawing_icon(self):
         panel, canvas = _make_panel_and_canvas()
-        anim = create_animation(
+        create_animation(
             panel=panel,
             canvas=canvas,
             x=3,

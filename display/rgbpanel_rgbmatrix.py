@@ -99,7 +99,6 @@ class RGBMatrixPanel(RGBPanel):
 
     def draw_image(self, canvas, x, y, image):
         """Draw a PIL Image at (x, y), skipping transparent pixels."""
-        from PIL import Image
 
         if image.mode != "RGBA":
             image = image.convert("RGBA")

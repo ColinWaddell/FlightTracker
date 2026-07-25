@@ -20,7 +20,6 @@ engine is fully responsible for clearing its own pixels between frames
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from PIL import Image
 
@@ -47,7 +46,7 @@ _ICON_DIR = Path(__file__).parent
 _image_cache: dict[str, Image.Image] = {}
 
 
-def _load_icon(filename: str) -> Optional[Image.Image]:
+def _load_icon(filename: str) -> Image.Image | None:
     """Load a weather icon PNG, caching the result for reuse.
 
     Returns ``None`` if the filename is empty or the PNG doesn't exist.
@@ -76,8 +75,8 @@ def blank_area(panel: RGBPanel, canvas, x: int, y: int) -> None:
 
 
 def draw_icon(
-    panel: RGBPanel, canvas, x: int, y: int, icon_name: Optional[str]
-) -> Optional[Image.Image]:
+    panel: RGBPanel, canvas, x: int, y: int, icon_name: str | None
+) -> Image.Image | None:
     """Draw the static icon PNG at (x, y + ICON_OFFSET_Y).
 
     Returns the loaded icon ``Image`` (for passing to ``build_original``),
@@ -93,7 +92,7 @@ def draw_icon(
 
 
 def build_original(
-    icon_image: Optional[Image.Image],
+    icon_image: Image.Image | None,
 ) -> list[list[tuple[int, int, int]]]:
     """Snapshot the sprite's RGB state before any animation runs.
 
@@ -110,7 +109,7 @@ def build_original(
 def _build_original_grid(
     width: int,
     height: int,
-    icon_image: Optional[Image.Image],
+    icon_image: Image.Image | None,
     icon_offset: tuple[int, int],
 ) -> list[list[tuple[int, int, int]]]:
     grid: list[list[tuple[int, int, int]]] = [
@@ -137,10 +136,10 @@ def create_animation(
     canvas,
     x: int,
     y: int,
-    icon_name: Optional[str],
-    animation_name: Optional[str],
+    icon_name: str | None,
+    animation_name: str | None,
     intensity: int,
-) -> Optional[BaseAnimation]:
+) -> BaseAnimation | None:
     """Full sprite setup: blank, draw icon, snapshot, instantiate engine.
 
     Returns the animation engine (ready to ``tick()`` every frame), or

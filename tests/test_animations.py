@@ -282,9 +282,3 @@ class TestIntensityVariation:
         assert anim.intensity == 2
         anim_neg = _make_animation(RainAnimation, intensity=-1)
         assert anim_neg.intensity == 0
-
-    def test_intensity_clamped_to_valid_range(self):
-        anim = _make_animation(RainAnimation, intensity=5)
-        assert anim.intensity == 2
-        anim_neg = _make_animation(RainAnimation, intensity=-1)
-        assert anim_neg.intensity == 0
