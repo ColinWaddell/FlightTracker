@@ -227,6 +227,15 @@ If you'd like to contribute to FlightTracker - whether it's a bug report, featur
 
 ---
 
+## Acknowledgements
+
+FlightTracker builds on the work of several open-source projects and contributors:
+
+- **Display drivers** — thanks to Henner Zeller for the [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) C++ library and Python bindings (used on Pi 3/4/Zero), and to Adafruit for the [adafruit_blinka_raspberry_pi5_piomatter](https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter) driver (used on Pi 5).
+- **[plane-tracker-rgb-pi](https://github.com/c0wsaysmoo/plane-tracker-rgb-pi)** — thanks to c0wsaysmoo for letting me copy some of their great work.
+
+---
+
 ## License
 
 Flight Tracker is released under the GNU General Public License v3.0. You're welcome to use, modify, and share the code - just keep it under the same license and include proper attribution (retain the copyright and license notice). See [LICENSE.md](LICENSE.md) for details.
