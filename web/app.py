@@ -203,10 +203,12 @@ def parse_settings_form(form, cfg) -> dict:
                     "3day"
                     if str_val(form.get("theme_forecast_duration"), "3hour").lower()
                     == "3day"
-                    else "12hour"
-                    if str_val(form.get("theme_forecast_duration"), "3hour").lower()
-                    == "12hour"
-                    else "3hour"
+                    else (
+                        "12hour"
+                        if str_val(form.get("theme_forecast_duration"), "3hour").lower()
+                        == "12hour"
+                        else "3hour"
+                    )
                 ),
             }
         },
@@ -233,9 +235,12 @@ def parse_settings_form(form, cfg) -> dict:
         "idle_screen_theme": (
             "conditions"
             if str_val(form.get("idle_screen_theme"), "classic").lower() == "conditions"
-            else "forecast"
-            if str_val(form.get("idle_screen_theme"), "classic").lower() == "forecast"
-            else "classic"
+            else (
+                "forecast"
+                if str_val(form.get("idle_screen_theme"), "classic").lower()
+                == "forecast"
+                else "classic"
+            )
         ),
         # Web interface
         "web_interface_enabled": bool_val(form.get("web_interface_enabled")),

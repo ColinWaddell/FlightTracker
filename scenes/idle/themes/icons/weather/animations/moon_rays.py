@@ -159,7 +159,7 @@ class MoonRaysAnimation(BaseAnimation):
             # original pixel is restored; when at peak (shimmer=1) the
             # sparkle colour dominates.
             orig_r, orig_g, orig_b = self.original_pixel(x, y)
-            (R, G, B) = RGB_INTENSITY_0 if self.intensity == 0 else RGB_INTENSITY_1
+            R, G, B = RGB_INTENSITY_0 if self.intensity == 0 else RGB_INTENSITY_1
             r = max(0, int(orig_r + (R - orig_r) * shimmer))
             g = max(0, int(orig_g + (G - orig_g) * shimmer))
             b = max(0, int(orig_b + (B - orig_b) * shimmer))
