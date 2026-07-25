@@ -112,6 +112,15 @@ def bool_val(v) -> bool:
     return str(v).lower() in ("on", "true", "1", "yes")
 
 
+def wrap_lng(lng: float) -> float:
+    """Wrap any longitude to the range [-180, 180).
+
+    Guards against values > 180 or < -180 that the Leaflet map could
+    produce when worldCopyJump was not enabled.
+    """
+    return ((lng + 180) % 360 + 360) % 360 - 180
+
+
 # ---------------------------------------------------------------------------
 # Restart helper
 # ---------------------------------------------------------------------------
@@ -145,7 +154,7 @@ def parse_settings_form(form, cfg) -> dict:
             else "simple"
         ),
         "flight_lat": float_val(form.get("flight_lat"), cfg.flight_lat),
-        "flight_lng": float_val(form.get("flight_lng"), cfg.flight_lng),
+        "flight_lng": wrap_lng(float_val(form.get("flight_lng"), cfg.flight_lng)),
         "flight_radius": float_val(form.get("flight_radius"), cfg.flight_radius),
         "flight_min_altitude": float_val(
             form.get("flight_min_altitude"), cfg.flight_min_altitude
@@ -157,21 +166,21 @@ def parse_settings_form(form, cfg) -> dict:
         "flight_zone_tl_y": float_val(
             form.get("flight_zone_tl_y"), cfg.flight_zone_tl_y
         ),
-        "flight_zone_tl_x": float_val(
-            form.get("flight_zone_tl_x"), cfg.flight_zone_tl_x
+        "flight_zone_tl_x": wrap_lng(
+            float_val(form.get("flight_zone_tl_x"), cfg.flight_zone_tl_x)
         ),
         "flight_zone_br_y": float_val(
             form.get("flight_zone_br_y"), cfg.flight_zone_br_y
         ),
-        "flight_zone_br_x": float_val(
-            form.get("flight_zone_br_x"), cfg.flight_zone_br_x
+        "flight_zone_br_x": wrap_lng(
+            float_val(form.get("flight_zone_br_x"), cfg.flight_zone_br_x)
         ),
         # Advanced mode: observer position
         "flight_observer_lat": float_val(
             form.get("flight_observer_lat"), cfg.flight_observer_lat
         ),
-        "flight_observer_lng": float_val(
-            form.get("flight_observer_lng"), cfg.flight_observer_lng
+        "flight_observer_lng": wrap_lng(
+            float_val(form.get("flight_observer_lng"), cfg.flight_observer_lng)
         ),
         # Airport display
         "home_airport_code": str_val(form.get("home_airport_code")).upper()[:4],

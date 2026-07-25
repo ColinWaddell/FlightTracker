@@ -347,6 +347,44 @@ def migrate_config(mod) -> dict[str, Any]:
     return data
 
 
+def _normalise_longitude(lng: float) -> float:
+    """Wrap any longitude to the range [-180, 180).
+
+    Fixes values > 180 or < -180 that could have been stored due to
+    the Leaflet map allowing clicks on repeated world copies.
+    """
+    wrapped = ((lng + 180) % 360 + 360) % 360 - 180
+    # Round to 10 decimal places to avoid floating-point noise causing
+    # spurious "changed" detections on values that were already in range.
+    return round(wrapped, 10)
+
+
+def _normalise_longitudes(data: dict[str, Any]) -> bool:
+    """Normalise all longitude fields in the config dict in-place.
+
+    Returns True if any values were changed.
+    """
+    lng_keys = [
+        "flight_lng",
+        "flight_observer_lng",
+        "flight_zone_tl_x",
+        "flight_zone_br_x",
+    ]
+    changed = False
+    for key in lng_keys:
+        if key not in data:
+            continue
+        try:
+            original = float(data[key])
+            wrapped = _normalise_longitude(original)
+            if original != wrapped:
+                data[key] = wrapped
+                changed = True
+        except (TypeError, ValueError):
+            pass
+    return changed
+
+
 class Config:
     """Singleton configuration object backed by config.json."""
 
@@ -392,6 +430,11 @@ class Config:
                     self.data_store["theme"] = dict(DEFAULT_THEME)
                     self.save()
 
+                # Normalise any longitudes outside [-180, 180) that were
+                # stored due to the Leaflet multi-Earth click bug.
+                if _normalise_longitudes(self.data_store):
+                    self.save()
+
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -399,6 +442,7 @@ class Config:
         if LEGACY_PATH.exists():
             mod = import_legacy(LEGACY_PATH)
             self.data_store = migrate_config(mod)
+            _normalise_longitudes(self.data_store)
             self.save()
             return
 

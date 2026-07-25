@@ -144,14 +144,28 @@
   // Leaflet maps
   // ===========================================================================
 
+  // -- World bounds: prevent panning/zooming beyond a single Earth copy --
+  const WORLD_BOUNDS = L.latLngBounds([-90, -180], [90, 180]);
+
+  // -- Normalise any longitude to [-180, 180) so markers and stored values --
+  // -- always use the primary world copy, even if the user clicked on a  --
+  // -- repeated tile copy at lng > 180 or lng < -180.                     --
+  function wrapLng(lng) {
+    return ((lng + 180) % 360 + 360) % 360 - 180;
+  }
+
   // -- Simple map --
   const initLat = parseFloat(document.getElementById("flight_lat").value) || 55.87;
   const initLng = parseFloat(document.getElementById("flight_lng").value) || -4.25;
   const initRadius = parseFloat(document.getElementById("flight_radius").value) || 20;
 
-  const map = L.map("map").setView([initLat, initLng], 10);
+  const map = L.map("map", {
+    worldCopyJump: true,
+    maxBounds: WORLD_BOUNDS,
+    maxBoundsViscosity: 1.0,
+  }).setView([initLat, initLng], 10);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors", maxZoom: 18,
+    attribution: "© OpenStreetMap contributors", maxZoom: 18, noWrap: true,
   }).addTo(map);
 
   let marker = L.marker([initLat, initLng], { draggable: true }).addTo(map);
@@ -254,10 +268,11 @@
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             if (Number.isFinite(lat) && Number.isFinite(lng)) {
-              map.setView(L.latLng(lat, lng), map.getZoom(), { animate: true });
-              marker.setLatLng([lat, lng]);
-              circle.setLatLng([lat, lng]);
-              updateLocation(lat, lng);
+              const wLng = wrapLng(lng);
+              map.setView(L.latLng(lat, wLng), map.getZoom(), { animate: true });
+              marker.setLatLng([lat, wLng]);
+              circle.setLatLng([lat, wLng]);
+              updateLocation(lat, wLng);
             }
             button.disabled = false;
             button.style.opacity = "";
@@ -288,16 +303,16 @@
 
   marker.on("dragend", e => {
     const pos = e.target.getLatLng();
-    updateLocation(pos.lat, pos.lng);
+    updateLocation(pos.lat, wrapLng(pos.lng));
   });
 
-  map.on("click", e => { if (!mapLocked) updateLocation(e.latlng.lat, e.latlng.lng); });
+  map.on("click", e => { if (!mapLocked) updateLocation(e.latlng.lat, wrapLng(e.latlng.lng)); });
 
   document.getElementById("lat_display").addEventListener("change", () => {
-    updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
+    updateLocation(parseFloat(document.getElementById("lat_display").value), wrapLng(parseFloat(document.getElementById("lng_display").value)));
   });
   document.getElementById("lng_display").addEventListener("change", () => {
-    updateLocation(parseFloat(document.getElementById("lat_display").value), parseFloat(document.getElementById("lng_display").value));
+    updateLocation(parseFloat(document.getElementById("lat_display").value), wrapLng(parseFloat(document.getElementById("lng_display").value)));
   });
 
   // -- Radius slider --
@@ -318,9 +333,14 @@
   const advObsLat = parseFloat(document.getElementById("flight_observer_lat").value);
   const advObsLng = parseFloat(document.getElementById("flight_observer_lng").value);
 
-  const advMap = L.map("map_advanced", { doubleClickZoom: false }).setView([advObsLat, advObsLng], 10);
+  const advMap = L.map("map_advanced", {
+    doubleClickZoom: false,
+    worldCopyJump: true,
+    maxBounds: WORLD_BOUNDS,
+    maxBoundsViscosity: 1.0,
+  }).setView([advObsLat, advObsLng], 10);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors", maxZoom: 18,
+    attribution: "© OpenStreetMap contributors", maxZoom: 18, noWrap: true,
   }).addTo(advMap);
 
   // Editable rectangle for the search box
@@ -380,9 +400,9 @@
   function syncAdvRect() {
     const bounds = advRect.getBounds();
     document.getElementById("flight_zone_tl_y").value = bounds.getNorth().toFixed(6);
-    document.getElementById("flight_zone_tl_x").value = bounds.getWest().toFixed(6);
+    document.getElementById("flight_zone_tl_x").value = wrapLng(bounds.getWest()).toFixed(6);
     document.getElementById("flight_zone_br_y").value = bounds.getSouth().toFixed(6);
-    document.getElementById("flight_zone_br_x").value = bounds.getEast().toFixed(6);
+    document.getElementById("flight_zone_br_x").value = wrapLng(bounds.getEast()).toFixed(6);
   }
 
   // Sync observer marker to hidden inputs + display fields
@@ -395,13 +415,14 @@
 
   advMarker.on("dragend", e => {
     const pos = e.target.getLatLng();
-    syncAdvMarker(pos.lat, pos.lng);
+    syncAdvMarker(pos.lat, wrapLng(pos.lng));
   });
 
   advMap.on("click", e => {
     if (!advMapLocked) {
-      advMarker.setLatLng(e.latlng);
-      syncAdvMarker(e.latlng.lat, e.latlng.lng);
+      const wLng = wrapLng(e.latlng.lng);
+      advMarker.setLatLng([e.latlng.lat, wLng]);
+      syncAdvMarker(e.latlng.lat, wLng);
     }
   });
 
@@ -409,8 +430,8 @@
   advMap.on("dblclick", e => {
     if (advMapLocked) return;
     const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
-    advMarker.setLatLng(e.latlng);
+    const lng = wrapLng(e.latlng.lng);
+    advMarker.setLatLng([lat, lng]);
     syncAdvMarker(lat, lng);
     const boxLatDeg = 10 / 111.0;
     const boxLngDeg = 10 / (111.0 * Math.cos(lat * Math.PI / 180));
@@ -431,7 +452,7 @@
 
   document.getElementById("observer_lat_display").addEventListener("change", () => {
     const lat = parseFloat(document.getElementById("observer_lat_display").value);
-    const lng = parseFloat(document.getElementById("observer_lng_display").value);
+    const lng = wrapLng(parseFloat(document.getElementById("observer_lng_display").value));
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       advMarker.setLatLng([lat, lng]);
       syncAdvMarker(lat, lng);
@@ -439,7 +460,7 @@
   });
   document.getElementById("observer_lng_display").addEventListener("change", () => {
     const lat = parseFloat(document.getElementById("observer_lat_display").value);
-    const lng = parseFloat(document.getElementById("observer_lng_display").value);
+    const lng = wrapLng(parseFloat(document.getElementById("observer_lng_display").value));
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       advMarker.setLatLng([lat, lng]);
       syncAdvMarker(lat, lng);

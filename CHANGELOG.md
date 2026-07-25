@@ -4,6 +4,17 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.2.1] - 2026-07-25
+
+### Fixed
+- **Map longitude wrapping bug** — the Leaflet maps in settings allowed zooming out to see multiple Earth copies. Clicking on a repeated copy could produce longitudes > 180 or < -180, which were stored verbatim. Fixed with three layers of defence:
+  - `worldCopyJump: true` on both maps so Leaflet snaps click coordinates to the primary world copy
+  - `maxBounds` + `maxBoundsViscosity` to prevent panning/zooming beyond a single Earth
+  - `noWrap: true` on tile layers to stop repeated tile rendering
+  - `wrapLng()` normalisation on every click, drag, double-click, and manual input handler in settings.js
+- **Config longitude normalisation on load** — `Config.load()` now wraps all stored longitude fields (`flight_lng`, `flight_observer_lng`, `flight_zone_tl_x`, `flight_zone_br_x`) to [-180, 180) on startup, automatically fixing any bad data from the map bug
+- **Form submission longitude normalisation** — `parse_settings_form()` in `web/app.py` now wraps longitudes before saving, as a backend safety net
+
 ## [v2.2.0] - 2026-07-24
 
 ### Added
