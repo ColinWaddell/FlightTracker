@@ -355,8 +355,7 @@ def _warn_if_root() -> None:
     if is_root:
         print(
             "[startup] Warning: running as root.  This is not recommended "
-            "for security reasons — consider running FlightTracker as a "
-            "dedicated non-root user.",
+            "for security reasons.",
             file=sys.stderr,
         )
     else:
