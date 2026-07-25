@@ -335,9 +335,44 @@ def load_minimum_interface(panel, canvas, cfg: Config):
     return result
 
 
+def _warn_if_root() -> None:
+    """Print a root-related advisory to stderr.
+
+    If the process is running as root, warn that this is not recommended
+    for security reasons.  If not running as root, note that the RGB
+    matrix driver may still print a root-related message to stderr and
+    that it can be safely ignored.
+
+    On platforms where ``os.geteuid`` is unavailable (e.g. Windows) the
+    check is skipped and the application continues to load as expected.
+    """
+    try:
+        is_root = os.geteuid() == 0
+    except AttributeError:
+        # os.geteuid() is not available on this platform (e.g. Windows).
+        return
+
+    if is_root:
+        print(
+            "[startup] Warning: running as root.  This is not recommended "
+            "for security reasons — consider running FlightTracker as a "
+            "dedicated non-root user.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "[startup] Note: the RGB matrix driver may print a message about "
+            "running as root — this is safe to ignore as FlightTracker is not "
+            "running with elevated privileges.",
+            file=sys.stderr,
+        )
+
+
 def run_flight_tracker():
     setup_logging()
     logger = logging.getLogger("startup")
+
+    _warn_if_root()
 
     cfg = Config.instance()
     logger.info("FlightTracker starting (log level: %s)", cfg.log_level)

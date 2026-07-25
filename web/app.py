@@ -284,6 +284,7 @@ def parse_settings_form(form, cfg) -> dict:
         "satellite_timeout_seconds": max(
             5, min(3600, int_val(form.get("satellite_timeout_seconds"), 30))
         ),
+        "_version": VERSION,
     }
 
 
