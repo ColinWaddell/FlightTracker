@@ -7,7 +7,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import asdict
 
-from setup.configuration import CONFIG_PATH, Config
+from setup.configuration import CONFIG_PATH, DEFAULTS, Config
 from utilities import routes_cache
 from utilities.tle_manager import TLE_CACHE_PATH, fetch_tle
 from version import VERSION
@@ -39,6 +39,128 @@ def _save_config_change(key: str, value) -> int:
     cfg.set(key, value)
     cfg.save()
     print(f"Updated {key} in {CONFIG_PATH}")
+    return 0
+
+
+def _coerce_value(raw: str):
+    """Parse a CLI string into a Python value via JSON, falling back to str.
+
+    ``true``/``false`` -> bool, ``123`` -> int, ``55.87`` -> float,
+    ``[25544, 40069]`` -> list, ``"GLA"`` -> str, bare ``fr24`` -> str.
+    """
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return raw
+
+
+def _set_nested(cfg: Config, key: str, value) -> None:
+    """Set a possibly dot-separated nested key in the config data store.
+
+    ``theme.forecast.duration`` walks into cfg["theme"]["forecast"]["duration"],
+    creating intermediate dicts as needed.
+    """
+    if "." not in key:
+        cfg.set(key, value)
+        return
+
+    parts = key.split(".")
+    top = parts[0]
+    container = cfg.get(top)
+    if not isinstance(container, dict):
+        container = {}
+        cfg.set(top, container)
+    for part in parts[1:-1]:
+        if not isinstance(container.get(part), dict):
+            container[part] = {}
+        container = container[part]
+    container[parts[-1]] = value
+
+
+def _config_set(argv: Sequence[str]) -> int:
+    """Handle ``config set <key> <value>``."""
+    if len(argv) < 2:
+        print("Usage: config set <key> <value>", file=sys.stderr)
+        print(
+            "Run 'python flight-tracker.py config' to see valid keys.",
+            file=sys.stderr,
+        )
+        return 2
+
+    key, raw_value = argv[0], argv[1]
+    top = key.split(".")[0]
+
+    if top not in DEFAULTS:
+        print(f"Unknown config key: {key}", file=sys.stderr)
+        print(f"Valid keys: {', '.join(sorted(DEFAULTS))}", file=sys.stderr)
+        return 2
+
+    value = _coerce_value(raw_value)
+
+    # reload() creates config.json from DEFAULTS if it doesn't exist yet,
+    # so the install script can seed values before first run.
+    Config.reload()
+    cfg = Config.instance()
+    _set_nested(cfg, key, value)
+    cfg.save()
+    print(f"Set {key}={value!r} in {CONFIG_PATH}")
+    return 0
+
+
+def _screen_test() -> int:
+    """Display each colour at 100/66/33% brightness for 2s each, then quit.
+
+    Cycles through white, red, green, blue, yellow, magenta, cyan. For each
+    colour the panel brightness is stepped through 100%, 66%, and 33% (2s per
+    step), so each colour is shown for 6 seconds total. Loads screen settings
+    (rotation, PWM, GPIO slowdown) from the config; brightness is driven by
+    the test itself rather than the config value.
+    """
+    from display.panel_factory import get_panel
+
+    # reload() creates config.json from DEFAULTS if it doesn't exist yet.
+    Config.reload()
+    cfg = Config.instance()
+
+    panel = get_panel()
+    panel.init_matrix(
+        width=64,
+        height=32,
+        brightness=cfg.brightness_percent,
+        rotation=180 if cfg.screen_rotate else 0,
+        hat_pwm=cfg.hat_pwm_enabled,
+        gpio_slowdown=cfg.gpio_slowdown,
+    )
+    canvas = panel.create_canvas()
+
+    colours = [
+        ("white", 255, 255, 255),
+        ("red", 255, 0, 0),
+        ("green", 0, 255, 0),
+        ("blue", 0, 0, 255),
+        ("yellow", 255, 255, 0),
+        ("magenta", 255, 0, 255),
+        ("cyan", 0, 255, 255),
+    ]
+    brightness_steps = [100, 66, 33]
+
+    try:
+        for name, r, g, b in colours:
+            for percent in brightness_steps:
+                print(f"Displaying {name} at {percent}% brightness for 2 seconds...")
+                panel.set_brightness(percent)
+                panel.fill(canvas, r, g, b)
+                panel.swap(canvas)
+                time.sleep(2)
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+    finally:
+        panel.clear(canvas)
+        panel.swap(canvas)
+        # Restore the configured brightness so we don't leave the panel dim.
+        panel.set_brightness(cfg.brightness_percent)
+
+    print("Screen test complete.")
     return 0
 
 
@@ -265,7 +387,11 @@ def _print_usage() -> None:
     print("Usage: python flight-tracker.py [command]")
     print("Commands:")
     print("  config                 Dump current configuration as JSON")
+    print("  config set <key> <val> Set a config key (validated against defaults)")
     print("  data                   Print the platform data directory path")
+    print(
+        "  screen-test            Cycle each colour through 100/66/33% brightness (2s each)"
+    )
     print("  reset-password         Clear web_password_hash in the config")
     print("  cache clear            Wipe all on-disk cache files")
     print("  interface enable       Enable the web interface in the config")
@@ -297,6 +423,8 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
         if command == "data":
             print(CONFIG_PATH.parent)
             return 0
+        if command == "screen-test":
+            return _screen_test()
         if command == "--version":
             print(".".join(map(str, VERSION)))
             return 0
@@ -323,6 +451,9 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
             return 0
         if command == "cache" and action == "clear":
             return _cache_clear()
+
+    if command == "config" and len(argv) >= 3 and argv[2].lower() == "set":
+        return _config_set(argv[3:])
 
     if command == "test" and len(argv) >= 3:
         target = argv[2].lower()
