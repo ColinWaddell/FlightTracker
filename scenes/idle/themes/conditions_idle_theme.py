@@ -193,8 +193,29 @@ WIND_POSITION = [23, 13]
 WIND_ARROW_POSITION = [16, 7]
 
 # Moon phase icon.
-MOON_ICON_WIDTH = 7
+MOON_X = 56  # hardcoded x position for the moon icon
 MOON_Y = 14  # y position for the moon icon (below the temperature string)
+
+# UV index triangle (drawn to the left of the moon icon).
+# Hardcoded three vertices of the triangle (height 7px). Tweak to fit.
+
+UV_TRIANGLE = ((48, 20), (54, 20), (51, 15))
+
+
+# UV index -> colour mapping (via theme keys resolved at draw time).
+# 0 = grey, 1-2 = green, 3-5 = yellow, 6+ = red.
+def _uv_colour(uv: float):
+    # Use raw RGB via the Colour helper so we don't depend on extra theme keys.
+    from display.rgbpanel import Colour
+
+    if uv >= 6:
+        return Colour(255, 0, 0)  # red
+    if uv >= 3:
+        return Colour(255, 255, 0)  # yellow
+    if uv >= 1:
+        return Colour(0, 255, 0)  # green
+    return Colour(128, 128, 128)  # grey
+
 
 # Sunrise / sunset - very bottom of the display.
 SUN_FONT = fonts.extrasmall
@@ -223,7 +244,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_description: str | None = None
         self.description_scroller = DescriptionScroller()
         self.last_moon_phase: str | None = None
-        self._moon_position: tuple[int, int] | None = None
+        self.last_uv: float | None = None
         self.last_sun_str: str | None = None
         self.last_sprite_key: tuple | None = None
         self.animation = None
@@ -239,7 +260,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.last_description = None
         self.description_scroller.reset()
         self.last_moon_phase = None
-        self._moon_position = None
+        self.last_uv = None
         self.last_sun_str = None
         self.last_sprite_key = None
 
@@ -292,6 +313,7 @@ class ConditionsIdleTheme(BaseIdleScene):
         self.draw_humidity(weather)
         self.draw_wind(weather)
         self.draw_moon(weather)
+        self.draw_uv(weather)
         self.draw_description(weather)
         self.draw_sun(weather)
 
@@ -373,10 +395,6 @@ class ConditionsIdleTheme(BaseIdleScene):
             temperature_to_colour(temp_c),
             temp_str,
         )
-
-        # The moon icon is centred under the temperature string, so a
-        # temperature change shifts its position.  Force a redraw.
-        self.last_moon_phase = None
 
     # ------------------------------------------------------------------
     # Humidity
@@ -514,34 +532,89 @@ class ConditionsIdleTheme(BaseIdleScene):
 
         icon_name = _MOON_PHASE_ICONS.get(moon_phase)
 
-        # Undraw old moon icon from its previous position.
-        if self._moon_position is not None:
-            old_icon_name = _MOON_PHASE_ICONS.get(self.last_moon_phase or "")
+        # Undraw old moon icon.
+        if self.last_moon_phase is not None:
+            old_icon_name = _MOON_PHASE_ICONS.get(self.last_moon_phase)
             if old_icon_name is not None:
                 old_icon = _load_moon_icon(old_icon_name)
                 if old_icon is not None:
-                    self._erase_image(old_icon, list(self._moon_position))
-            self._moon_position = None
+                    self._erase_image(old_icon, [MOON_X, MOON_Y])
 
         self.last_moon_phase = moon_phase
 
-        # Draw new moon icon, centred under the temperature string.
+        # Draw new moon icon at the hardcoded position.
         if icon_name is not None:
             icon = _load_moon_icon(icon_name)
             if icon is not None:
-                # Calculate the x centre of the temperature string.
-                # The temperature is right-aligned to the panel edge.
-                temp_str = self.last_temp_str or ""
-                temp_width = font_text_width(TEXT_FONT, temp_str)
-                temp_x = 64 - temp_width
-                temp_centre = temp_x + temp_width / 2
-                moon_x = round(temp_centre - MOON_ICON_WIDTH / 2)
-                self._moon_position = (moon_x, MOON_Y)
-                self.panel.draw_image(
-                    self.canvas,
-                    moon_x,
-                    MOON_Y,
-                    icon,
+                self.panel.draw_image(self.canvas, MOON_X, MOON_Y, icon)
+
+    # ------------------------------------------------------------------
+    # UV index triangle (left of the moon icon)
+    # ------------------------------------------------------------------
+
+    def draw_uv(self, weather: dict) -> None:
+        uv = weather.get("uv")
+        if uv is None:
+            return
+
+        try:
+            uv = float(uv)
+        except (TypeError, ValueError):
+            return
+
+        if uv == self.last_uv:
+            return
+
+        # Erase the previous triangle by filling its bounding box with bg.
+        if self.last_uv is not None:
+            self._erase_triangle()
+
+        self.last_uv = uv
+        self._fill_triangle(UV_TRIANGLE, _uv_colour(3))
+
+    def _erase_triangle(self) -> None:
+        """Erase the UV triangle area by filling its bounding box with bg."""
+        bg = TC(THEME_BG)
+        xs = [p[0] for p in UV_TRIANGLE]
+        ys = [p[1] for p in UV_TRIANGLE]
+        x0, x1 = min(xs), max(xs)
+        y0, y1 = min(ys), max(ys)
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                self.panel.set_pixel(self.canvas, x, y, bg.red, bg.green, bg.blue)
+
+    def _fill_triangle(self, points: tuple, colour) -> None:
+        """Draw a filled triangle via horizontal scanlines."""
+        (ax, ay), (bx, by), (cx, cy) = points
+        # Sort vertices by y.
+        if ay > by:
+            ax, ay, bx, by = bx, by, ax, ay
+        if ay > cy:
+            ax, ay, cx, cy = cx, cy, ax, ay
+        if by > cy:
+            bx, by, cx, cy = cx, cy, bx, by
+
+        total_h = cy - ay
+        if total_h <= 0:
+            return
+
+        for y in range(ay, cy + 1):
+            # Current segment is ay..by, then by..cy.
+            if y < by:
+                alpha_a = (y - ay) / (by - ay) if by != ay else 0.0
+                alpha_b = (y - ay) / (cy - ay) if cy != ay else 0.0
+                lx = ax + (bx - ax) * alpha_a
+                rx = ax + (cx - ax) * alpha_b
+            else:
+                alpha_a = (y - by) / (cy - by) if cy != by else 0.0
+                alpha_b = (y - ay) / (cy - ay) if cy != ay else 0.0
+                lx = bx + (cx - bx) * alpha_a
+                rx = ax + (cx - ax) * alpha_b
+            if lx > rx:
+                lx, rx = rx, lx
+            for x in range(int(round(lx)), int(round(rx)) + 1):
+                self.panel.set_pixel(
+                    self.canvas, x, y, colour.red, colour.green, colour.blue
                 )
 
     # ------------------------------------------------------------------
