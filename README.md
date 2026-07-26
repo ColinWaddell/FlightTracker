@@ -173,6 +173,23 @@ sudo systemctl restart FlightTracker.service
 
 ---
 
+## Troubleshooting
+
+- **The installation went well, you selected Convenience Mode (no soldering) and can't see anything:**
+   Head into the settings interface and go into the `Hardware` section and select Convenience Mode
+   for a second time, then hit save.
+
+- **Only the top half of the screen is lit up:**
+  Check the panel you've bought to see if it says `32S` (1:32 scan rate) anywhere on it. These aren't supported by this code
+  yet but it should be an easy fix - [more details here](https://github.com/ColinWaddell/FlightTracker/issues/73). If you get it working
+  let me know in the ticket as I want to add this to the settings page.
+
+- **Everything looks red**:
+  Your power supply isn't supplying enough power to the screen
+
+---
+
+
 ## Settings reference
 
 This table is for reference if you've disabled the web interface (`web_interface_enabled: false`). All settings are otherwise accessible through the web UI.
