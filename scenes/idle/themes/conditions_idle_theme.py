@@ -570,7 +570,7 @@ class ConditionsIdleTheme(BaseIdleScene):
             self._erase_triangle()
 
         self.last_uv = uv
-        self._fill_triangle(UV_TRIANGLE, _uv_colour(3))
+        self._fill_triangle(UV_TRIANGLE, _uv_colour(uv))
 
     def _erase_triangle(self) -> None:
         """Erase the UV triangle area by filling its bounding box with bg."""
