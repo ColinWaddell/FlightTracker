@@ -60,8 +60,10 @@ sudo apt-get dist-upgrade
 
 ```bash
 cd /home/pi
-curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/main/rgb-matrix.sh > /tmp/rgb-matrix.sh
-sudo bash /tmp/rgb-matrix.sh
+sudo apt install -y wget
+pip3 install adafruit-python-shell
+wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/rgb-matrix.py
+sudo -E env PATH=$PATH python3 rgb-matrix.py
 ```
 
 Verify with the demo:
