@@ -573,6 +573,19 @@ sudo systemctl enable FlightTracker.service
 
 success "Service installed and enabled."
 
+# Inject the HAT mode choice into the config so the runtime uses the
+# matching hardware mapping (adafruit-hat-pwm for Quality, adafruit-hat
+# for Convenience). The service isn't started until reboot, so there's
+# no race. The app resolves the config path via platformdirs.
+info "Writing HAT mode to config..."
+cd "$INSTALL_DIR"
+if [ "$QUALITY_MOD" -eq 0 ]; then
+    ./env/bin/python flight-tracker.py config set hat_pwm_enabled true
+else
+    ./env/bin/python flight-tracker.py config set hat_pwm_enabled false
+fi
+success "HAT mode written to config."
+
 # ============================================================================
 # STEP 7: Apply Boot Configuration
 # ============================================================================
