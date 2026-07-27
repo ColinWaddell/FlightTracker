@@ -185,7 +185,15 @@ sudo systemctl restart FlightTracker.service
   let me know in the ticket as I want to add this to the settings page.
 
 - **Everything looks red**:
-  Your power supply isn't supplying enough power to the screen
+  Your power supply isn't supplying enough power to the screen.
+
+- **I changed a setting now the deice wont start:**
+  Reset your settings by deleting your config and rebooting
+
+```
+rm ~/.local/share/FlightTracker/config.json
+sudo reboot
+```
 
 ---
 
