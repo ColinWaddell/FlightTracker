@@ -1,4 +1,4 @@
-# Raspberry Pi Flight Tracker (v2)
+# Raspberry Pi Flight Tracker (v2) [![CI](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml/badge.svg)](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml)
 
 [![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
 
