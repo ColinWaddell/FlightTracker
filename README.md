@@ -197,7 +197,7 @@ sudo systemctl restart FlightTracker.service
 - **I changed a setting now the deice wont start:**
   Reset your settings by deleting your config and rebooting
 
-```
+```bash
 # Before v2.3.0
 rm ~/.local/share/FlightTracker/config.json
 sudo reboot
@@ -206,6 +206,28 @@ sudo reboot
 cd ~/FlightTracker
 source env/bin/active
 python flight-tracker.py reset settings
+```
+
+- **Everything is broken and it wont boot:**
+  Raise a ticket and tell me what you can see. The most useful info comes from trying to run it manually like this:
+
+```bash
+# Disable the service
+sudo systemctl stop FlightTracker.service
+
+# Get ready to run the code
+cd ~/FlightTracker
+source env/bin/activate
+
+# Copy the output of this into a ticket
+python flight-tracker.py
+
+# Include this in the ticket
+# Please remove any confidential information before posting (specifically: API keys)
+python flight-tracker.py config
+
+# If you want to resart the service
+sudo systemctl start FlightTracker.service
 ```
 
 ---
