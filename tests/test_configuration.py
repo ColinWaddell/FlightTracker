@@ -539,3 +539,63 @@ class TestLoadingIndicator:
         cfg = Config.__new__(Config)
         cfg.data_store = {"loading_indicator": "GPIO"}
         assert cfg.loading_indicator == "gpio"
+
+
+class TestWeatherRefreshMinutes:
+    """Tests for the configurable weather refresh interval."""
+
+    def test_default_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.weather_refresh_minutes == 5
+
+    def test_clamps_below_minimum(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": 0}
+        assert cfg.weather_refresh_minutes == 1
+
+    def test_clamps_above_maximum(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": 121}
+        assert cfg.weather_refresh_minutes == 120
+
+    def test_valid_value_passes_through(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": 30}
+        assert cfg.weather_refresh_minutes == 30
+
+    def test_non_numeric_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": "soon"}
+        assert cfg.weather_refresh_minutes == 5
+
+    def test_none_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": None}
+        assert cfg.weather_refresh_minutes == 5
+
+    def test_seconds_is_minutes_times_sixty(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": 10}
+        assert cfg.weather_refresh_seconds == 600
+
+    def test_seconds_reflects_clamping(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"weather_refresh_minutes": 0}
+        assert cfg.weather_refresh_seconds == 60

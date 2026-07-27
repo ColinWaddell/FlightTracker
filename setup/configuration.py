@@ -68,6 +68,7 @@ DEFAULT_RAIN_SENSITIVITY = (
     1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
 )
 DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
+DEFAULT_WEATHER_REFRESH_MINUTES = 5  # how often (minutes) to re-fetch weather data
 
 # Display
 DEFAULT_COLOUR_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel, 3 = Classic (v1)
@@ -157,6 +158,7 @@ DEFAULTS: dict[str, Any] = {
     "weather_mode": DEFAULT_WEATHER_MODE,
     "rain_sensitivity": DEFAULT_RAIN_SENSITIVITY,
     "units": DEFAULT_UNITS,
+    "weather_refresh_minutes": DEFAULT_WEATHER_REFRESH_MINUTES,
     # Display
     "colour_theme": DEFAULT_COLOUR_THEME,
     # Per-theme configuration (nested dict)
@@ -608,6 +610,30 @@ class Config:
     def units(self) -> str:
         val = str(self.data_store.get("units", DEFAULT_UNITS))
         return val if val in ("m", "i") else DEFAULT_UNITS
+
+    @property
+    def weather_refresh_minutes(self) -> int:
+        """How often (minutes) to re-fetch weather data. Clamped 1–120."""
+        try:
+            return max(
+                1,
+                min(
+                    120,
+                    int(
+                        self.data_store.get(
+                            "weather_refresh_minutes",
+                            DEFAULT_WEATHER_REFRESH_MINUTES,
+                        )
+                    ),
+                ),
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_WEATHER_REFRESH_MINUTES
+
+    @property
+    def weather_refresh_seconds(self) -> int:
+        """Convenience accessor: refresh interval in seconds for the thread loop."""
+        return self.weather_refresh_minutes * 60
 
     @property
     def colour_theme(self) -> int:

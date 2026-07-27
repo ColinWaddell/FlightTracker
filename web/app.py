@@ -195,6 +195,15 @@ def parse_settings_form(form, cfg) -> dict:
         "weather_mode": int_val(form.get("weather_mode"), 0),
         "rain_sensitivity": max(0, min(2, int_val(form.get("rain_sensitivity"), 1))),
         "units": str_val(form.get("units"), "m"),
+        "weather_refresh_minutes": max(
+            1,
+            min(
+                120,
+                int_val(
+                    form.get("weather_refresh_minutes"), cfg.weather_refresh_minutes
+                ),
+            ),
+        ),
         # Display
         "colour_theme": int_val(form.get("colour_theme"), 0),
         "theme": {

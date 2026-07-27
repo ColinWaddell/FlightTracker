@@ -403,6 +403,15 @@
             <div id="weather_key_error" class="form-text small" style="display:none;color:#dc3545">A WeatherAPI.com API key is required when weather is enabled.</div>
             <div class="form-text text-muted small">Weather uses your flight location coordinates. <a href="https://www.weatherapi.com/pricing.aspx" target="_blank">Get a free key here</a>.</div>
           </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Refresh interval (minutes)</label>
+            <input type="number" class="form-control form-control-sm"
+                   name="weather_refresh_minutes" id="weather_refresh_minutes"
+                   value="{{ cfg.weather_refresh_minutes }}"
+                   min="1" max="120" step="1" style="max-width:120px" />
+            <div class="form-text text-muted small">How often to fetch new weather data (1–120 minutes). Lower values use more API calls.</div>
+          </div>
         </div>
 
         </div><!-- /page-data-source -->
