@@ -198,8 +198,14 @@ sudo systemctl restart FlightTracker.service
   Reset your settings by deleting your config and rebooting
 
 ```
+# Before v2.3.0
 rm ~/.local/share/FlightTracker/config.json
 sudo reboot
+
+# After v2.3.0
+cd ~/FlightTracker
+source env/bin/active
+python flight-tracker.py reset settings
 ```
 
 ---
