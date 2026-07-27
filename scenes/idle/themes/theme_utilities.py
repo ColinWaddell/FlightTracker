@@ -197,7 +197,6 @@ WEATHERAPI_URL = (
     "http://api.weatherapi.com/v1/forecast.json"
     "?key={key}&q={lat},{lng}&days=3&aqi=no&alerts=no"
 )
-WEATHER_REFRESH_SECONDS = 300
 
 # ---------------------------------------------------------------------------
 # Rainfall graph constants (shared by classic + forecast themes)
@@ -434,7 +433,8 @@ def _parse_weather(raw: dict) -> dict:
 class WeatherService(threading.Thread):
     """
     Singleton daemon thread that fetches from weatherapi.com on startup and
-    then every WEATHER_REFRESH_SECONDS thereafter. Thread-safe via a lock.
+    then every ``weather_refresh_minutes`` minutes (configurable) thereafter.
+    Thread-safe via a lock.
 
     Any consumer (idle theme, future scheduler, etc.) can call
     WeatherService.instance().get() to read the latest cached data.
@@ -459,8 +459,12 @@ class WeatherService(threading.Thread):
         self.stop_event = threading.Event()
 
     def run(self) -> None:
+        from setup.configuration import Config
+
         self.do_fetch()  # immediate fetch on start
-        while not self.stop_event.wait(WEATHER_REFRESH_SECONDS):
+        # Re-read the interval each iteration so a config change takes
+        # effect on the next refresh cycle without restarting the thread.
+        while not self.stop_event.wait(Config.instance().weather_refresh_seconds):
             self.do_fetch()
 
     def do_fetch(self) -> None:
