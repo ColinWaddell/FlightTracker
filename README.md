@@ -209,7 +209,7 @@ python flight-tracker.py reset settings
 ```
 
 - **Everything is broken and it wont boot:**
-  Raise a ticket and tell me what you can see. The most useful info comes from trying to run it manually like this:
+  [Raise a ticket](https://github.com/ColinWaddell/FlightTracker/issues/new?template=bug_report.yml) and tell me what you can see. The most useful info comes from trying to run it manually like this:
 
 ```bash
 # Disable the service
