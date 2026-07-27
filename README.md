@@ -145,13 +145,20 @@ Usage: python flight-tracker.py [command]
 Commands:
   config                 Dump current configuration as JSON
   data                   Print the platform data directory path
-  reset-password         Clear web_password_hash in the config
+  reset password         Clear web_password_hash in the config
+  reset settings         Delete the config.json file
   cache clear            Wipe all on-disk cache files (routes and TLE)
   interface enable       Enable the web interface in the config
   interface disable      Disable the web interface in the config
+  test overhead_fr24     Test FlightRadar24 data source
+  test overhead_tar1090  Test tar1090 data source
+  test overhead_osn      Test OpenSky Network data source
+  test tle               Test TLE satellite lookup
   help                   Show this help message
   --version              Print the program version
 ```
+
+Test commands accept `--parameters` and `--interval`/`--limit` for repeated runs. Run `python flight-tracker.py test <target> --help` for details.
 
 For normal operation, start the tracker with `python3 flight-tracker.py` and use the configuration file or the web settings UI to control its behaviour.
 

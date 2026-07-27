@@ -42,6 +42,20 @@ def _save_config_change(key: str, value) -> int:
     return 0
 
 
+def _reset_settings() -> int:
+    """Delete the config.json file from the platform data directory."""
+    if not _config_exists():
+        print(f"No config found at {CONFIG_PATH}", file=sys.stderr)
+        return 1
+    try:
+        CONFIG_PATH.unlink()
+        print(f"Deleted {CONFIG_PATH}")
+        return 0
+    except OSError as e:
+        print(f"Failed to delete config: {e}", file=sys.stderr)
+        return 1
+
+
 def _cache_clear() -> int:
     """Wipe all on-disk cache files (routes and TLE)."""
     cleared = []
@@ -266,7 +280,8 @@ def _print_usage() -> None:
     print("Commands:")
     print("  config                 Dump current configuration as JSON")
     print("  data                   Print the platform data directory path")
-    print("  reset-password         Clear web_password_hash in the config")
+    print("  reset password         Clear web_password_hash in the config")
+    print("  reset settings         Delete the config.json file")
     print("  cache clear            Wipe all on-disk cache files")
     print("  interface enable       Enable the web interface in the config")
     print("  interface disable      Disable the web interface in the config")
@@ -300,8 +315,6 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
         if command == "--version":
             print(".".join(map(str, VERSION)))
             return 0
-        if command == "reset-password":
-            return _save_config_change("web_password_hash", "")
         if command in {"help", "--help", "-h"}:
             _print_usage()
             return 0
@@ -311,6 +324,10 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
 
     if len(argv) == 3:
         action = argv[2].lower()
+        if command == "reset" and action == "password":
+            return _save_config_change("web_password_hash", "")
+        if command == "reset" and action == "settings":
+            return _reset_settings()
         if command == "interface" and action in {"enable", "disable"}:
             if not _config_exists():
                 _warn_no_config()

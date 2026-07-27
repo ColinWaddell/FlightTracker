@@ -101,7 +101,7 @@ class TestResetPassword:
     def test_reset_password(self, mock_config, capsys):
         config_path, _ = mock_config
         config_path.write_text('{"existing": true}')
-        result = dispatch_cli_command(["flight-tracker.py", "reset-password"])
+        result = dispatch_cli_command(["flight-tracker.py", "reset", "password"])
         assert result == 0
         captured = capsys.readouterr()
         assert "web_password_hash" in captured.out
@@ -109,7 +109,24 @@ class TestResetPassword:
     def test_reset_password_no_config(self, mock_config, capsys):
         config_path, _ = mock_config
         assert not config_path.exists()
-        result = dispatch_cli_command(["flight-tracker.py", "reset-password"])
+        result = dispatch_cli_command(["flight-tracker.py", "reset", "password"])
+        assert result == 1
+
+
+class TestResetSettings:
+    def test_reset_settings(self, mock_config, capsys):
+        config_path, _ = mock_config
+        config_path.write_text('{"existing": true}')
+        result = dispatch_cli_command(["flight-tracker.py", "reset", "settings"])
+        assert result == 0
+        captured = capsys.readouterr()
+        assert str(config_path) in captured.out
+        assert not config_path.exists()
+
+    def test_reset_settings_no_config(self, mock_config, capsys):
+        config_path, _ = mock_config
+        assert not config_path.exists()
+        result = dispatch_cli_command(["flight-tracker.py", "reset", "settings"])
         assert result == 1
 
 
