@@ -235,7 +235,6 @@ class TestScreenTest:
             patch("utilities.cli.time.sleep") as mock_sleep,
         ):
             panel = mock_get_panel.return_value
-            canvas = panel.create_canvas.return_value
 
             result = dispatch_cli_command(["flight-tracker.py", "screen-test"])
 
