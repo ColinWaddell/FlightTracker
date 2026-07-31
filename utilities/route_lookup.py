@@ -26,12 +26,27 @@ two on the first encounter then hits cache on every subsequent poll.
 
 FR24 fallback
 --------------
-When hexdb.io returns no origin/destination for a callsign, the lookup
-falls back to FlightRadar24 via the FlightRadarAPI library.  The FR24
-real-time feed (feed.js) includes origin/destination IATA codes directly
-in the flight list, so only one lightweight request is needed (filtered
-by airline ICAO code).  This keeps FR24 usage minimal - only on hexdb
-misses - and avoids hitting FR24 rate limits.
+When hexdb.io returns no origin/destination for a callsign, OR no aircraft
+type for a mode_s, the lookup falls back to FlightRadar24 via the
+FlightRadarAPI library.  The FR24 real-time feed (feed.js) is queried by
+**aircraft registration** (the only FR24 filter that works reliably),
+which is obtained from the hexdb aircraft lookup.  If hexdb yields no
+registration, the FR24 fallback cannot fire - there is nothing to query
+on - and the missing fields stay blank.
+
+The fallback is **unified**: a single ``get_flights(registration=...)``
+call is run at the end of :func:`get_route` after both hexdb lookups, and
+fills whatever hexdb missed - route and/or aircraft type - from the one
+matched flight.  This guarantees at most one ``get_flights`` call and
+at most one ``get_flight_details`` (clickhandler) call per
+``get_route`` invocation, so FR24 is never hit more than necessary.
+
+Aircraft type is fetched the same way as ``overhead_fr24.py``: via
+``get_flight_details`` -> ``details["aircraft"]["model"]["text"]`` (the
+full model name, e.g. "Boeing 737-800").  If that call fails or returns no
+model text, the free ``flight.aircraft_code`` (ICAO type code, e.g.
+"B737") from the feed list is used instead so the plane field is not
+left blank.
 
 The FR24 fallback code is intentionally duplicated here (rather than
 imported from overhead_fr24.py) to keep route_lookup self-contained.
@@ -46,6 +61,7 @@ from requests.exceptions import RequestException
 
 from utilities import routes_cache
 from utilities.flight import RouteInfo
+from utilities.overhead_utilities import clean_field
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +71,21 @@ HEXDB_BASE = "https://hexdb.io/api/v1"
 # avoiding Python 3.13 dummy-thread GC noise.
 _session = requests.Session()
 
-# FR24 fallback timeout (seconds).  Kept short - this is a last-resort lookup.
-FR24_TIMEOUT = 30
+# FR24 fallback timeout (seconds).  Matches overhead_fr24.py - the default 30
+# is too short for Pi on slow networks, and the clickhandler details call is
+# the slow one.
+FR24_TIMEOUT = 60
+
+# FR24 clickhandler (get_flight_details) retry behaviour - mirrors
+# overhead_fr24.py.  The details call is rate-limited, so we retry a few times
+# with a short delay before giving up and falling back to aircraft_code.
+FR24_DETAIL_RETRIES = 3
+FR24_DETAIL_DELAY = 1  # seconds, slept before each attempt
+
+try:
+    from curl_cffi.requests.exceptions import Timeout as _CurlTimeout
+except ImportError:
+    _CurlTimeout = None
 
 # ---------------------------------------------------------------------------
 # Bundled ICAO→IATA lookup table
@@ -222,30 +251,38 @@ def _parse_aircraft_type(data: dict) -> str:
     return type_code or manufacturer
 
 
+def _parse_aircraft_registration(data: dict) -> str:
+    registration = (data.get("Registration") or "").strip()
+    return registration
+
+
 # ---------------------------------------------------------------------------
 # Individual lookups (each with their own cache key)
 # ---------------------------------------------------------------------------
 
 
-def _fr24_route_fallback(callsign: str) -> RouteInfo:
-    """Fallback route lookup via FlightRadar24 when hexdb.io has no data.
+def _fr24_fallback(registration: str, want_plane: bool = False) -> RouteInfo:
+    """Unified FR24 fallback for route and/or aircraft details.
 
     Uses the FlightRadarAPI library (same as overhead_fr24.py) to query the
-    FR24 real-time feed, filtering by the airline ICAO code (first 3 chars of
-    the callsign) and then scanning for a matching callsign.
+    FR24 real-time feed, filtering by **aircraft registration** (the only
+    FR24 filter that works reliably).  The registration uniquely identifies
+    the aircraft, so the first flight returned is the match.
 
     The feed.js response includes origin/destination IATA codes directly in
-    the flight list, so no call to the clickhandler details endpoint is
-    needed - this keeps the FR24 usage minimal.
+    the flight list, so route fields are populated for free.  When
+    ``want_plane`` is True, the aircraft type is fetched via
+    ``get_flight_details`` -> ``details["aircraft"]["model"]["text"]`` (the
+    full model name, e.g. "Boeing 737-800"), mirroring overhead_fr24.py.
+    If that call fails or returns no model text, the free
+    ``flight.aircraft_code`` (ICAO type code, e.g. "B737") from the feed list
+    is used instead so the plane field is not left blank.
 
-    Returns a :class:`RouteInfo` with origin/destination fields populated
-    from the FR24 flight list.  ``plane`` is always "" (aircraft type is
-    not fetched here).  Never raises.
+    Returns a :class:`RouteInfo` with whatever fields could be resolved.
+    Never raises.
     """
-    if not callsign or len(callsign) < 3:
+    if not registration or len(registration) < 3:
         return RouteInfo()
-
-    airline_icao = callsign[:3]
 
     # Lazy import - FlightRadarAPI drags in curl_cffi + brotli (~4.7s on Pi).
     # Only pay that cost when a fallback is actually needed.
@@ -268,47 +305,97 @@ def _fr24_route_fallback(callsign: str) -> RouteInfo:
         tracker.gnd = 0
         api.set_flight_tracker_config(tracker)
 
-        flights = api.get_flights(airline=airline_icao)
+        flights = api.get_flights(registration=registration)
 
         for flight in flights:
-            # Only accept the flight whose callsign matches
-            flight_callsign = (getattr(flight, "callsign", "") or "").strip()
-            if flight_callsign != callsign:
-                continue
-
             origin = (flight.origin_airport_iata or "").strip()
             destination = (flight.destination_airport_iata or "").strip()
-            if not origin and not destination:
-                continue
 
-            route = RouteInfo(origin=origin, destination=destination)
+            route = RouteInfo()
 
-            if origin:
-                details = _airport_details(origin)
-                route.origin_name = details.get("name", "")
-                route.origin_municipality = details.get("municipality", "")
-                route.origin_country = details.get("country_name", "")
+            # ── Route (free from the feed list) ───────────────────────
+            if origin or destination:
+                route.origin = origin
+                route.destination = destination
 
-            if destination:
-                details = _airport_details(destination)
-                route.destination_name = details.get("name", "")
-                route.destination_municipality = details.get("municipality", "")
-                route.destination_country = details.get("country_name", "")
+                if origin:
+                    details = _airport_details(origin)
+                    route.origin_name = details.get("name", "")
+                    route.origin_municipality = details.get("municipality", "")
+                    route.origin_country = details.get("country_name", "")
 
-            logger.debug(
-                "FR24 fallback found route for %r: %s->%s",
-                callsign,
-                origin,
-                destination,
-            )
-            return route
+                if destination:
+                    details = _airport_details(destination)
+                    route.destination_name = details.get("name", "")
+                    route.destination_municipality = details.get("municipality", "")
+                    route.destination_country = details.get("country_name", "")
 
-        logger.debug("FR24 fallback: no matching flight for %r", callsign)
+            # ── Aircraft type (only when requested) ──────────────────
+            # The clickhandler details call is rate-limited, so only make it
+            # when the caller actually needs a plane.  Mirrors
+            # overhead_fr24.py:152-163 (retry loop + model text extraction).
+            if want_plane:
+                route.plane = _fr24_aircraft_type(api, flight)
+
+            if route.origin or route.destination or route.plane:
+                logger.debug(
+                    "FR24 fallback found data for %r: %s->%s plane=%r",
+                    registration,
+                    route.origin,
+                    route.destination,
+                    route.plane,
+                )
+                return route
+
+        logger.debug("FR24 fallback: no matching flight for %r", registration)
 
     except Exception as e:
-        logger.debug("FR24 fallback failed for %r: %s", callsign, e)
+        logger.debug("FR24 fallback failed for %r: %s", registration, e)
 
     return RouteInfo()
+
+
+def _fr24_aircraft_type(api, flight) -> str:
+    """Return the aircraft type string for *flight* via FR24.
+
+    Tries the clickhandler details endpoint (``get_flight_details``) for the
+    full model name (e.g. "Boeing 737-800"), mirroring overhead_fr24.py with
+    up to ``FR24_DETAIL_RETRIES`` attempts and a ``FR24_DETAIL_DELAY`` second
+    sleep before each.  If that fails or yields no model text, falls back to
+    the free ``flight.aircraft_code`` (ICAO type code, e.g. "B737") from the
+    feed list so the plane field is not left blank.
+
+    Never raises; returns "" if nothing could be determined.
+    """
+    retries = FR24_DETAIL_RETRIES
+    details = None
+    while retries:
+        try:
+            details = api.get_flight_details(flight)
+            break
+        except (KeyError, AttributeError, TypeError, Exception) as e:
+            if _CurlTimeout and isinstance(e, _CurlTimeout):
+                logger.debug(
+                    "FR24 flight detail timeout, retrying (%d left)",
+                    retries - 1,
+                )
+            elif isinstance(e, (KeyError, AttributeError, TypeError)):
+                pass
+            else:
+                logger.debug("FR24 flight detail error: %s", e)
+            retries -= 1
+
+    if details is not None:
+        try:
+            plane = clean_field(details["aircraft"]["model"]["text"])
+            if plane:
+                return plane
+        except (KeyError, TypeError):
+            pass
+
+    # Details call failed or had no model text - fall back to the free ICAO
+    # type code from the feed list (no extra HTTP call).
+    return clean_field(getattr(flight, "aircraft_code", ""))
 
 
 def _lookup_route(callsign: str) -> RouteInfo:
@@ -359,51 +446,39 @@ def _lookup_route(callsign: str) -> RouteInfo:
     except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.debug("hexdb route lookup failed for %r: %s", callsign, e)
 
-    # ── FR24 fallback ────────────────────────────────────────────
-    # If hexdb gave us no origin/destination, try FR24 before giving up.
-    if not route.origin and not route.destination:
-        logger.debug("hexdb had no route for %r - trying FR24 fallback", callsign)
-        fr24_route = _fr24_route_fallback(callsign)
-        if fr24_route.origin or fr24_route.destination:
-            route.origin = fr24_route.origin
-            route.origin_name = fr24_route.origin_name
-            route.origin_municipality = fr24_route.origin_municipality
-            route.origin_country = fr24_route.origin_country
-            route.destination = fr24_route.destination
-            route.destination_name = fr24_route.destination_name
-            route.destination_municipality = fr24_route.destination_municipality
-            route.destination_country = fr24_route.destination_country
-
     return route
 
 
-def _lookup_aircraft(mode_s: str) -> str:
-    """Return aircraft type string for *mode_s* via GET /api/v1/aircraft/{hex}.
+def _lookup_aircraft(mode_s: str) -> tuple[str, str]:
+    """Return aircraft type and registration for *mode_s*.
 
-    Cached by mode_s.  Returns "" when not found or on any error.
-    Never raises.
+    Fetches via GET /api/v1/aircraft/{hex} and returns a ``(plane,
+    registration)`` tuple.  Cached by mode_s.  Returns ``("", "")`` when not
+    found or on any error.  Never raises.
     """
     cached = routes_cache.get(mode_s)
     if cached is not None:
-        return cached.get("plane", "")
+        return cached.get("plane", ""), cached.get("registration", "")
 
     plane = ""
+    registration = ""
     try:
         resp = _session.get(f"{HEXDB_BASE}/aircraft/{mode_s.lower()}", timeout=10)
         if resp.status_code == 404:
             logger.debug("hexdb: unknown aircraft %r", mode_s)
             # Cache a blank entry so we don't keep hitting on every poll
-            routes_cache.put(mode_s, {"plane": ""})
-            return ""
+            routes_cache.put(mode_s, {"plane": "", "registration": ""})
+            return "", ""
         resp.raise_for_status()
         data = resp.json()
         plane = _parse_aircraft_type(data)
+        registration = _parse_aircraft_registration(data)
 
     except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.debug("hexdb aircraft lookup failed for %r: %s", mode_s, e)
 
-    routes_cache.put(mode_s, {"plane": plane})
-    return plane
+    routes_cache.put(mode_s, {"plane": plane, "registration": registration})
+    return plane, registration
 
 
 # ---------------------------------------------------------------------------
@@ -415,8 +490,18 @@ def get_route(callsign: str, mode_s: str | None = None) -> RouteInfo:
     """Return a combined route + aircraft info.
 
     Runs up to two independent hexdb.io lookups (route by callsign, aircraft
-    type by mode_s) and merges the results.  Each is independently cached
-    with a 24-hour TTL, so repeat calls within that window are free.
+    type + registration by mode_s) and merges the results.  Each is
+    independently cached with a 24-hour TTL, so repeat calls within that
+    window are free.
+
+    If hexdb left the route OR the aircraft type blank, a single unified
+    FR24 fallback is run, keyed on the aircraft **registration** (the only
+    FR24 filter that works reliably).  This fills whatever is missing -
+    route and/or aircraft type - from one matched flight.  If hexdb yielded
+    no registration, the FR24 fallback cannot fire and the missing fields
+    stay blank.  This guarantees at most one ``get_flights`` call and at
+    most one ``get_flight_details`` call per invocation, so FR24 is never
+    hit more than necessary.
 
     Returns a :class:`RouteInfo` with all fields as strings; unknown
     fields are "".  Never raises.
@@ -427,7 +512,49 @@ def get_route(callsign: str, mode_s: str | None = None) -> RouteInfo:
         result = _lookup_route(callsign)
 
     if mode_s and not result.plane:
-        result.plane = _lookup_aircraft(mode_s)
+        result.plane, result.registration = _lookup_aircraft(mode_s)
+
+    # ── Unified FR24 fallback ─────────────────────────────────────
+    # Run a single FR24 lookup (keyed on registration) when hexdb left the
+    # route OR the plane blank.  The clickhandler details call (rate-limited)
+    # is only requested when the plane is still missing, so it is skipped
+    # whenever hexdb already gave a plane (even if the route was missing and
+    # we only need the free origin/destination from the feed list).
+    # If there's no registration, FR24 cannot be queried - give up gracefully.
+    route_missing = not result.origin and not result.destination
+    plane_missing = not result.plane
+    if result.registration and (route_missing or plane_missing):
+        logger.debug(
+            "hexdb left gaps for %r (route_missing=%s, plane_missing=%s) - "
+            "trying unified FR24 fallback keyed on registration %r",
+            callsign,
+            route_missing,
+            plane_missing,
+            result.registration,
+        )
+        fr24 = _fr24_fallback(result.registration, want_plane=plane_missing)
+
+        if route_missing:
+            result.origin = fr24.origin
+            result.origin_name = fr24.origin_name
+            result.origin_municipality = fr24.origin_municipality
+            result.origin_country = fr24.origin_country
+            result.destination = fr24.destination
+            result.destination_name = fr24.destination_name
+            result.destination_municipality = fr24.destination_municipality
+            result.destination_country = fr24.destination_country
+
+        if plane_missing and fr24.plane:
+            result.plane = fr24.plane
+            # Cache the plane under the mode_s key too (mirrors
+            # _lookup_aircraft's pattern) so subsequent polls hit cache and
+            # skip FR24 entirely - even when no route was found.  Preserve
+            # the registration (from hexdb) in the cache entry.
+            if mode_s:
+                routes_cache.put(
+                    mode_s,
+                    {"plane": result.plane, "registration": result.registration},
+                )
 
     if callsign and (result.origin or result.destination):
         routes_cache.put(callsign, result.to_dict())
