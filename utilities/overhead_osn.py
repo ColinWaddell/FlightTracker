@@ -257,10 +257,23 @@ class Overhead:
                     heading = int(float(sv[10])) if sv[10] is not None else 0
                     vertical_speed = ms_to_fpm(sv[11])
 
+                    # Live position + speed feed the FR24 bounds fallback when
+                    # hexdb has no route/aircraft data.  OSN state vectors:
+                    # sv[5]=lon, sv[6]=lat, sv[9]=velocity in m/s.
+                    lat = sv[6] if sv[6] is not None else None
+                    lng = sv[5] if sv[5] is not None else None
+                    ground_speed_mps = sv[9] if sv[9] is not None else None
+
                     # Two independent hexdb lookups: route by callsign,
                     # aircraft type by mode_s.  Each is cached under its own
                     # key so repeat polls are free.
-                    route = route_lookup.get_route(callsign, mode_s=icao24)
+                    route = route_lookup.get_route(
+                        callsign,
+                        mode_s=icao24,
+                        lat=lat,
+                        lng=lng,
+                        ground_speed_mps=ground_speed_mps,
+                    )
 
                     data.append(
                         Flight.from_route(

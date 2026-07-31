@@ -31,6 +31,8 @@ def reset_airport_caches(monkeypatch):
     monkeypatch.setattr(rl, "_airports_loaded", False)
     monkeypatch.setattr(rl, "_icao_to_iata", {})
     monkeypatch.setattr(rl, "_icao_to_iata_loaded", False)
+    # Reset the FR24 fallback throttle so tests aren't blocked by a prior call.
+    monkeypatch.setattr(rl, "_fr24_last_call", 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -216,25 +218,32 @@ class TestLookupRouteHexdbOnly:
 
 
 # ---------------------------------------------------------------------------
-# _fr24_fallback (unified route + aircraft fallback, registration-keyed)
+# _fr24_fallback (unified route + aircraft fallback, bounds + callsign keyed)
 # ---------------------------------------------------------------------------
 
 
-class TestFr24Fallback:
-    """Direct tests of the unified _fr24_fallback(registration, want_plane)."""
+# Position/speed used across the _fr24_fallback direct tests.
+_LAT = 51.5
+_LNG = -0.45
+_SPEED_MPS = 250.0  # ~486 kt -> radius = min(20000, max(1000, 7500)) = 7500
 
-    def test_short_registration_returns_empty(self):
+
+class TestFr24Fallback:
+    """Direct tests of the unified _fr24_fallback(callsign, lat, lng, speed, want_plane)."""
+
+    def test_blank_callsign_returns_empty(self):
         from utilities.route_lookup import _fr24_fallback
 
-        result = _fr24_fallback("AB")
+        result = _fr24_fallback("", _LAT, _LNG, _SPEED_MPS)
         assert result.origin == ""
         assert result.destination == ""
         assert result.plane == ""
 
-    def test_empty_registration_returns_empty(self):
+    def test_missing_position_returns_empty(self):
         from utilities.route_lookup import _fr24_fallback
 
-        result = _fr24_fallback("")
+        # No lat/lng -> can't build a bubble
+        result = _fr24_fallback("BAW123", None, None, _SPEED_MPS)
         assert result.origin == ""
         assert result.destination == ""
         assert result.plane == ""
@@ -251,6 +260,7 @@ class TestFr24Fallback:
         mock_api.get_flight_tracker_config.return_value = mock_tracker
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = "LHR"
         mock_flight.destination_airport_iata = "GLA"
         mock_flight.aircraft_code = "B738"
@@ -266,7 +276,7 @@ class TestFr24Fallback:
         }.get(iata, {})
 
         # want_plane=False (default) - route only, no details call
-        result = _fr24_fallback("G-ABCD")
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
@@ -275,19 +285,31 @@ class TestFr24Fallback:
         assert result.plane == ""
         mock_api.get_flight_details.assert_not_called()
 
-        # Verify registration filter was applied
-        mock_api.get_flights.assert_called_once_with(registration="G-ABCD")
+        # Verify a bounds query was used (not registration/airline)
+        mock_api.get_flights.assert_called_once()
+        assert mock_api.get_flights.call_args.kwargs.get("bounds") is not None
+        # Verify the bounds bubble was built from the position
+        mock_api.get_bounds_by_point.assert_called_once()
+        call_args = mock_api.get_bounds_by_point.call_args
+        assert call_args.args[0] == _LAT
+        assert call_args.args[1] == _LNG
+        # radius scaled by speed: min(20000, max(1000, 250*30)) = 7500
+        assert call_args.args[2] == 7500
 
     @patch("FlightRadar24.api.FlightRadar24API")
-    def test_no_matching_flight(self, mock_api_cls):
+    def test_no_matching_callsign_in_bubble(self, mock_api_cls):
         from utilities.route_lookup import _fr24_fallback
 
         mock_api = MagicMock()
         mock_api_cls.return_value = mock_api
 
-        mock_api.get_flights.return_value = []
+        mock_flight = MagicMock()
+        mock_flight.callsign = "BAW999"  # different callsign
+        mock_flight.origin_airport_iata = "LHR"
+        mock_flight.destination_airport_iata = "JFK"
+        mock_api.get_flights.return_value = [mock_flight]
 
-        result = _fr24_fallback("G-ABCD")
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         assert result.origin == ""
         assert result.destination == ""
@@ -301,13 +323,14 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = ""
         mock_flight.destination_airport_iata = ""
         mock_flight.aircraft_code = ""
         mock_api.get_flights.return_value = [mock_flight]
 
         # want_plane=False, no route data -> nothing to return
-        result = _fr24_fallback("G-ABCD")
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         assert result.origin == ""
         assert result.destination == ""
@@ -319,7 +342,7 @@ class TestFr24Fallback:
 
         mock_api_cls.side_effect = Exception("FR24 unavailable")
 
-        result = _fr24_fallback("G-ABCD")
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         assert result.origin == ""
         assert result.destination == ""
@@ -333,7 +356,7 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
         mock_api.get_flights.side_effect = Exception("Network error")
 
-        result = _fr24_fallback("G-ABCD")
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         assert result.origin == ""
         assert result.destination == ""
@@ -351,16 +374,31 @@ class TestFr24Fallback:
         mock_api.get_flight_tracker_config.return_value = mock_tracker
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = "LHR"
         mock_flight.destination_airport_iata = "GLA"
         mock_flight.aircraft_code = ""
         mock_api.get_flights.return_value = [mock_flight]
 
-        _fr24_fallback("G-ABCD")
+        _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS)
 
         # Verify gnd was set to 0
         assert mock_tracker.gnd == 0
         mock_api.set_flight_tracker_config.assert_called_once_with(mock_tracker)
+
+    @patch("FlightRadar24.api.FlightRadar24API")
+    def test_slow_aircraft_uses_baseline_radius(self, mock_api_cls):
+        from utilities.route_lookup import _fr24_fallback
+
+        mock_api = MagicMock()
+        mock_api_cls.return_value = mock_api
+        mock_api.get_flights.return_value = []
+
+        # 0 m/s -> radius = max(1000, 0) = 1000 (baseline)
+        _fr24_fallback("BAW123", _LAT, _LNG, 0.0)
+
+        call_args = mock_api.get_bounds_by_point.call_args
+        assert call_args.args[2] == 1000
 
     # -- want_plane=True cases (aircraft details via get_flight_details) --------
 
@@ -372,6 +410,7 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = "LHR"
         mock_flight.destination_airport_iata = "GLA"
         mock_flight.aircraft_code = "B738"
@@ -380,7 +419,7 @@ class TestFr24Fallback:
             "aircraft": {"model": {"text": "Boeing 737-800"}}
         }
 
-        result = _fr24_fallback("G-ABCD", want_plane=True)
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS, want_plane=True)
 
         assert result.plane == "Boeing 737-800"
         assert result.origin == "LHR"
@@ -396,6 +435,7 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = ""
         mock_flight.destination_airport_iata = ""
         mock_flight.aircraft_code = "B737"
@@ -403,7 +443,7 @@ class TestFr24Fallback:
         # All get_flight_details attempts raise
         mock_api.get_flight_details.side_effect = KeyError("no details")
 
-        result = _fr24_fallback("G-ABCD", want_plane=True)
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS, want_plane=True)
 
         # Details call failed -> fall back to the free aircraft_code
         assert result.plane == "B737"
@@ -421,13 +461,14 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = ""
         mock_flight.destination_airport_iata = ""
         mock_flight.aircraft_code = ""
         mock_api.get_flights.return_value = [mock_flight]
         mock_api.get_flight_details.side_effect = Exception("timeout")
 
-        result = _fr24_fallback("G-ABCD", want_plane=True)
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS, want_plane=True)
 
         # Both details and aircraft_code empty -> plane stays blank
         assert result.plane == ""
@@ -444,6 +485,7 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = ""
         mock_flight.destination_airport_iata = ""
         mock_flight.aircraft_code = "A320"
@@ -451,7 +493,7 @@ class TestFr24Fallback:
         # Details returned but no model text
         mock_api.get_flight_details.return_value = {"aircraft": {}}
 
-        result = _fr24_fallback("G-ABCD", want_plane=True)
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS, want_plane=True)
 
         assert result.plane == "A320"
 
@@ -463,12 +505,13 @@ class TestFr24Fallback:
         mock_api_cls.return_value = mock_api
 
         mock_flight = MagicMock()
+        mock_flight.callsign = "BAW123"
         mock_flight.origin_airport_iata = "LHR"
         mock_flight.destination_airport_iata = "GLA"
         mock_flight.aircraft_code = "B738"
         mock_api.get_flights.return_value = [mock_flight]
 
-        result = _fr24_fallback("G-ABCD", want_plane=False)
+        result = _fr24_fallback("BAW123", _LAT, _LNG, _SPEED_MPS, want_plane=False)
 
         assert result.plane == ""
         mock_api.get_flight_details.assert_not_called()
@@ -479,12 +522,18 @@ class TestFr24Fallback:
 # ---------------------------------------------------------------------------
 
 
+# Position/speed used across the TestGetRoute trigger tests.
+_RT_LAT = 51.5
+_RT_LNG = -0.45
+_RT_SPEED = 250.0
+
+
 class TestGetRoute:
     """get_route runs hexdb lookups then a single unified FR24 fallback.
 
-    The FR24 fallback is registration-keyed: it can only fire when
-    ``result.registration`` is present (from the hexdb aircraft lookup).
-    ``_lookup_aircraft`` returns a ``(plane, registration)`` tuple.
+    The FR24 fallback is bounds+callsign keyed: it fires when route OR plane is
+    missing AND a callsign + lat/lng are available.  ``_lookup_aircraft``
+    returns a ``(plane, registration)`` tuple.
 
     The FR24 fallback is patched to a no-op (empty RouteInfo) by default so the
     existing hexdb-merge tests are unaffected; dedicated tests below verify the
@@ -502,7 +551,13 @@ class TestGetRoute:
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
         mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
@@ -523,7 +578,13 @@ class TestGetRoute:
             origin="LHR", destination="GLA", plane="B738"
         )
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.plane == "B738"
         mock_lookup_aircraft.assert_not_called()
@@ -532,21 +593,21 @@ class TestGetRoute:
     @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
     @patch("utilities.route_lookup._lookup_aircraft")
     @patch("utilities.route_lookup._lookup_route")
-    def test_no_callsign_skips_route(
+    def test_no_callsign_skips_route_and_fr24(
         self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
     ):
         from utilities.route_lookup import get_route
 
         mock_lookup_aircraft.return_value = ("A320", "G-ABCD")
 
-        result = get_route("", mode_s="a1b2c3")
+        result = get_route(
+            "", mode_s="a1b2c3", lat=_RT_LAT, lng=_RT_LNG, ground_speed_mps=_RT_SPEED
+        )
 
         assert result.plane == "A320"
         mock_lookup_route.assert_not_called()
-        # No callsign -> route is empty (missing).  A registration IS present,
-        # so the unified FR24 fallback fires to try to fill the route
-        # (want_plane=False because hexdb already gave a plane).
-        mock_fr24.assert_called_once_with("G-ABCD", want_plane=False)
+        # No callsign -> can't disambiguate in the bubble -> FR24 not called
+        mock_fr24.assert_not_called()
 
     @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
     @patch("utilities.route_lookup._lookup_route")
@@ -555,7 +616,9 @@ class TestGetRoute:
 
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
 
-        result = get_route("BAW123")
+        result = get_route(
+            "BAW123", lat=_RT_LAT, lng=_RT_LNG, ground_speed_mps=_RT_SPEED
+        )
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
@@ -571,18 +634,25 @@ class TestGetRoute:
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo()  # hexdb route miss
-        # hexdb aircraft miss for plane, but registration IS available
-        mock_lookup_aircraft.return_value = ("", "G-ABCD")
+        mock_lookup_aircraft.return_value = ("", "G-ABCD")  # plane miss
         mock_fr24.return_value = RouteInfo(
             origin="LHR", destination="GLA", plane="Boeing 737-800"
         )
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
         assert result.plane == "Boeing 737-800"
-        mock_fr24.assert_called_once_with("G-ABCD", want_plane=True)
+        mock_fr24.assert_called_once_with(
+            "BAW123", _RT_LAT, _RT_LNG, _RT_SPEED, want_plane=True
+        )
 
     @patch("utilities.route_lookup._fr24_fallback")
     @patch("utilities.route_lookup._lookup_aircraft")
@@ -597,13 +667,21 @@ class TestGetRoute:
         mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
         mock_fr24.return_value = RouteInfo(origin="LHR", destination="GLA")
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
         assert result.plane == "Airbus A320"  # from hexdb, not overwritten
         # want_plane=False because hexdb already gave a plane
-        mock_fr24.assert_called_once_with("G-ABCD", want_plane=False)
+        mock_fr24.assert_called_once_with(
+            "BAW123", _RT_LAT, _RT_LNG, _RT_SPEED, want_plane=False
+        )
 
     @patch("utilities.route_lookup._fr24_fallback")
     @patch("utilities.route_lookup._lookup_aircraft")
@@ -613,17 +691,25 @@ class TestGetRoute:
     ):
         from utilities.route_lookup import get_route
 
-        # hexdb route hit, hexdb aircraft miss (plane blank, registration present)
+        # hexdb route hit, hexdb aircraft miss (plane blank)
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
         mock_lookup_aircraft.return_value = ("", "G-ABCD")
         mock_fr24.return_value = RouteInfo(plane="Boeing 737-800")
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.origin == "LHR"  # from hexdb, not overwritten
         assert result.destination == "GLA"
         assert result.plane == "Boeing 737-800"  # from FR24
-        mock_fr24.assert_called_once_with("G-ABCD", want_plane=True)
+        mock_fr24.assert_called_once_with(
+            "BAW123", _RT_LAT, _RT_LNG, _RT_SPEED, want_plane=True
+        )
 
     @patch("utilities.route_lookup._fr24_fallback")
     @patch("utilities.route_lookup._lookup_aircraft")
@@ -636,7 +722,13 @@ class TestGetRoute:
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
         mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.origin == "LHR"
         assert result.destination == "GLA"
@@ -646,21 +738,40 @@ class TestGetRoute:
     @patch("utilities.route_lookup._fr24_fallback")
     @patch("utilities.route_lookup._lookup_aircraft")
     @patch("utilities.route_lookup._lookup_route")
-    def test_no_registration_skips_fr24(
+    def test_no_position_skips_fr24(
         self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
     ):
         from utilities.route_lookup import get_route
 
-        # hexdb route miss AND no registration -> FR24 cannot be queried
+        # hexdb route+plane miss, but no lat/lng -> can't build a bubble
         mock_lookup_route.return_value = RouteInfo()
-        mock_lookup_aircraft.return_value = ("", "")  # no plane, no registration
+        mock_lookup_aircraft.return_value = ("", "")
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route("BAW123", mode_s="a1b2c3")  # no lat/lng/speed
 
         assert result.origin == ""
         assert result.destination == ""
         assert result.plane == ""
-        # Nothing to key FR24 on -> fallback not called
+        mock_fr24.assert_not_called()
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_lookup._lookup_aircraft")
+    @patch("utilities.route_lookup._lookup_route")
+    def test_blank_callsign_skips_fr24(
+        self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
+    ):
+        from utilities.route_lookup import get_route
+
+        # No callsign -> can't disambiguate in the bubble
+        mock_lookup_route.return_value = RouteInfo()
+        mock_lookup_aircraft.return_value = ("", "")
+
+        result = get_route(
+            "", mode_s="a1b2c3", lat=_RT_LAT, lng=_RT_LNG, ground_speed_mps=_RT_SPEED
+        )
+
+        assert result.origin == ""
+        assert result.plane == ""
         mock_fr24.assert_not_called()
 
     @patch("utilities.route_lookup._fr24_fallback")
@@ -676,7 +787,13 @@ class TestGetRoute:
         mock_lookup_aircraft.return_value = ("", "G-ABCD")  # plane miss, reg present
         mock_fr24.return_value = RouteInfo(plane="Boeing 737-800")  # plane only
 
-        result = get_route("BAW123", mode_s="a1b2c3")
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
 
         assert result.plane == "Boeing 737-800"
         # Plane + registration cached under the mode_s key so subsequent polls

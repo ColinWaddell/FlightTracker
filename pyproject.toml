@@ -57,7 +57,7 @@ Changelog = "https://github.com/ColinWaddell/FlightTracker/blob/main/CHANGELOG.m
 [tool.setuptools.packages.find]
 include = ["setup*", "display*", "utilities*", "scenes*", "web*", "platforms*"]
 
-# ── Black ──────────────────────────────────────────────────────────────
+# -- Black --------------------------------------------------------------
 [tool.black]
 line-length = 88
 target-version = ["py39", "py310", "py311", "py312", "py313"]
@@ -69,7 +69,7 @@ extend-exclude = '''
 )/
 '''
 
-# ── Ruff ───────────────────────────────────────────────────────────────
+# -- Ruff ---------------------------------------------------------------
 [tool.ruff]
 line-length = 88
 target-version = "py39"
@@ -92,7 +92,7 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["setup", "display", "utilities", "scenes", "web", "version"]
 
-# ── pytest ─────────────────────────────────────────────────────────────
+# -- pytest -------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -136,7 +136,25 @@ class Overhead:
                     # returns the aircraft type, complementing the route lookup
                     # that returns origin/destination airport info.
                     mode_s = (ac.get("hex") or "").strip().lower() or None
-                    route = route_lookup.get_route(callsign, mode_s=mode_s)
+
+                    # Live position + speed feed the FR24 bounds fallback when
+                    # hexdb has no route/aircraft data.  tar1090 reports ground
+                    # speed in knots; convert to m/s for get_route.
+                    lat = ac.get("lat")
+                    lng = ac.get("lon")
+                    try:
+                        gs_knots = float(ac.get("gs", 0) or 0)
+                    except (TypeError, ValueError):
+                        gs_knots = 0.0
+                    ground_speed_mps = gs_knots * 0.514444
+
+                    route = route_lookup.get_route(
+                        callsign,
+                        mode_s=mode_s,
+                        lat=lat,
+                        lng=lng,
+                        ground_speed_mps=ground_speed_mps,
+                    )
 
                     # Prefer local tar1090 plane type; fall back to hexdb
                     if not plane:

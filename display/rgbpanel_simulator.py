@@ -239,12 +239,12 @@ class SimulatorPanel(RGBPanel):
 
         print(
             "\n"
-            "┌──────────────────────────────────────────────────┐\n"
+            "┌--------------------------------------------------┐\n"
             "│  RGB Matrix simulator - capture keys             │\n"
             "│                                                  │\n"
             "│  P  - save a photo to captures/                  │\n"
             "│  R  - toggle video recording on/off              │\n"
-            "└──────────────────────────────────────────────────┘\n"
+            "└--------------------------------------------------┘\n"
         )
 
     def _build_mask(self) -> None:
