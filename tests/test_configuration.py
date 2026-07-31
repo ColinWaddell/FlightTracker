@@ -257,12 +257,16 @@ class TestMigrateConfig:
     def test_units_metric(self):
         mod = self._make_legacy_module(TEMPERATURE_UNITS="metric")
         data = migrate_config(mod)
-        assert data["units"] == "m"
+        assert data["temperature_unit"] == "c"
+        assert data["speed_unit"] == "kmh"
+        assert data["height_unit"] == "m"
 
     def test_units_imperial(self):
         mod = self._make_legacy_module(TEMPERATURE_UNITS="imperial")
         data = migrate_config(mod)
-        assert data["units"] == "i"
+        assert data["temperature_unit"] == "f"
+        assert data["speed_unit"] == "mph"
+        assert data["height_unit"] == "ft"
 
     def test_rainfall_enabled_sets_weather_mode(self):
         mod = self._make_legacy_module(RAINFALL_ENABLED=True)
@@ -315,7 +319,9 @@ class TestMigrateConfig:
         data = migrate_config(mod)
         # Should return defaults
         assert "flight_lat" in data
-        assert "units" in data
+        assert "temperature_unit" in data
+        assert "speed_unit" in data
+        assert "height_unit" in data
 
 
 # ---------------------------------------------------------------------------

@@ -67,7 +67,9 @@ DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rai
 DEFAULT_RAIN_SENSITIVITY = (
     1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
 )
-DEFAULT_UNITS = "m"  # 'm' = metric, 'i' = imperial
+DEFAULT_TEMPERATURE_UNIT = "c"  # 'c' = Celsius, 'f' = Fahrenheit
+DEFAULT_SPEED_UNIT = "kmh"  # 'kmh' = km/h, 'mph' = miles/h, 'kts' = knots
+DEFAULT_HEIGHT_UNIT = "m"  # 'm' = metres, 'ft' = feet
 DEFAULT_WEATHER_REFRESH_MINUTES = 5  # how often (minutes) to re-fetch weather data
 
 # Display
@@ -157,7 +159,9 @@ DEFAULTS: dict[str, Any] = {
     "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
     "weather_mode": DEFAULT_WEATHER_MODE,
     "rain_sensitivity": DEFAULT_RAIN_SENSITIVITY,
-    "units": DEFAULT_UNITS,
+    "temperature_unit": DEFAULT_TEMPERATURE_UNIT,
+    "speed_unit": DEFAULT_SPEED_UNIT,
+    "height_unit": DEFAULT_HEIGHT_UNIT,
     "weather_refresh_minutes": DEFAULT_WEATHER_REFRESH_MINUTES,
     # Display
     "colour_theme": DEFAULT_COLOUR_THEME,
@@ -306,9 +310,12 @@ def migrate_config(mod) -> dict[str, Any]:
     if min_alt is not None:
         data["flight_min_altitude"] = max(10.0, round(float(min_alt) * 0.3048, 1))
 
-    # Units: old 'metric'/'imperial' -> new 'm'/'i'
+    # Units: old 'metric'/'imperial' -> per-unit settings.
     temp_units = get("TEMPERATURE_UNITS", "metric")
-    data["units"] = "i" if str(temp_units).lower() == "imperial" else DEFAULT_UNITS
+    is_imperial = str(temp_units).lower() == "imperial"
+    data["temperature_unit"] = "f" if is_imperial else DEFAULT_TEMPERATURE_UNIT
+    data["speed_unit"] = "mph" if is_imperial else DEFAULT_SPEED_UNIT
+    data["height_unit"] = "ft" if is_imperial else DEFAULT_HEIGHT_UNIT
 
     # Migrate old RAINFALL_ENABLED -> weather_mode
     # (WEATHER_LOCATION / OPENWEATHER_API_KEY are dropped - weatherapi uses lat/lng)
@@ -430,6 +437,31 @@ class Config:
                 if isinstance(self.data_store.get("theme"), int):
                     self.data_store["colour_theme"] = self.data_store.pop("theme")
                     self.data_store["theme"] = dict(DEFAULT_THEME)
+                    self.save()
+
+                # Migrate the legacy single "units" ("m"/"i") setting into
+                # the per-unit settings when the new keys are absent.
+                if (
+                    "temperature_unit" not in loaded
+                    or "speed_unit" not in loaded
+                    or "height_unit" not in loaded
+                ):
+                    legacy = str(loaded.get("units", "m")).lower()
+                    if legacy == "i":
+                        self.data_store.setdefault("temperature_unit", "f")
+                        self.data_store.setdefault("speed_unit", "mph")
+                        self.data_store.setdefault("height_unit", "ft")
+                    else:
+                        self.data_store.setdefault(
+                            "temperature_unit", DEFAULT_TEMPERATURE_UNIT
+                        )
+                        self.data_store.setdefault("speed_unit", DEFAULT_SPEED_UNIT)
+                        self.data_store.setdefault("height_unit", DEFAULT_HEIGHT_UNIT)
+                    self.save()
+
+                # Drop the obsolete legacy "units" key if present.
+                if "units" in self.data_store:
+                    del self.data_store["units"]
                     self.save()
 
                 # Normalise any longitudes outside [-180, 180) that were
@@ -607,9 +639,24 @@ class Config:
         )
 
     @property
-    def units(self) -> str:
-        val = str(self.data_store.get("units", DEFAULT_UNITS))
-        return val if val in ("m", "i") else DEFAULT_UNITS
+    def temperature_unit(self) -> str:
+        """'c' = Celsius, 'f' = Fahrenheit."""
+        val = str(
+            self.data_store.get("temperature_unit", DEFAULT_TEMPERATURE_UNIT)
+        ).lower()
+        return val if val in ("c", "f") else DEFAULT_TEMPERATURE_UNIT
+
+    @property
+    def speed_unit(self) -> str:
+        """'kmh' = km/h, 'mph' = miles/h, 'kts' = knots."""
+        val = str(self.data_store.get("speed_unit", DEFAULT_SPEED_UNIT)).lower()
+        return val if val in ("kmh", "mph", "kts") else DEFAULT_SPEED_UNIT
+
+    @property
+    def height_unit(self) -> str:
+        """'m' = metres, 'ft' = feet."""
+        val = str(self.data_store.get("height_unit", DEFAULT_HEIGHT_UNIT)).lower()
+        return val if val in ("m", "ft") else DEFAULT_HEIGHT_UNIT
 
     @property
     def weather_refresh_minutes(self) -> int:

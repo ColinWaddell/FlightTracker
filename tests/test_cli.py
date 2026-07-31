@@ -21,7 +21,7 @@ def mock_config(tmp_path):
         cfg.as_dict.return_value = {
             "flight_lat": 55.0,
             "flight_lng": -4.0,
-            "units": "m",
+            "temperature_unit": "c",
         }
 
         def _set(key, value):

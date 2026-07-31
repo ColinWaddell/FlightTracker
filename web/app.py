@@ -194,7 +194,22 @@ def parse_settings_form(form, cfg) -> dict:
         "weatherapi_key": str_val(form.get("weatherapi_key"), cfg.weatherapi_key),
         "weather_mode": int_val(form.get("weather_mode"), 0),
         "rain_sensitivity": max(0, min(2, int_val(form.get("rain_sensitivity"), 1))),
-        "units": str_val(form.get("units"), "m"),
+        "temperature_unit": (
+            v
+            if (v := str_val(form.get("temperature_unit"), "c").lower()) in ("c", "f")
+            else "c"
+        ),
+        "speed_unit": (
+            v
+            if (v := str_val(form.get("speed_unit"), "kmh").lower())
+            in ("kmh", "mph", "kts")
+            else "kmh"
+        ),
+        "height_unit": (
+            v
+            if (v := str_val(form.get("height_unit"), "m").lower()) in ("m", "ft")
+            else "m"
+        ),
         "weather_refresh_minutes": max(
             1,
             min(

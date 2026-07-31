@@ -299,16 +299,21 @@ class SatelliteScene:
             cfg = Config.instance()
             if telemetry is not None:
                 speed_kmh, alt_km = telemetry
-                if cfg.units == "i":
+                if cfg.speed_unit == "mph":
                     speed_val = f"{int(speed_kmh * 0.621371)}"
                     speed_unit = "mph"
-                    alt_val = f"{int(alt_km * 0.621371)}"
-                    alt_unit = "mi"
+                elif cfg.speed_unit == "kts":
+                    speed_val = f"{int(speed_kmh * 0.539957)}"
+                    speed_unit = "kts"
                 else:
                     speed_val = f"{int(speed_kmh)}"
                     speed_unit = "km/h"
-                    alt_val = f"{int(alt_km)}"
-                    alt_unit = "km"
+                if cfg.height_unit == "ft":
+                    alt_val = f"{int(alt_km * 3280.84)}"
+                    alt_unit = "ft"
+                else:
+                    alt_val = f"{int(alt_km * 1000)}"
+                    alt_unit = "m"
             else:
                 speed_val, speed_unit = "--", ""
                 alt_val, alt_unit = "--", ""

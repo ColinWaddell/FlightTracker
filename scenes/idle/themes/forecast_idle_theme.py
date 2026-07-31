@@ -297,7 +297,7 @@ class ForecastIdleTheme(BaseIdleScene):
     def _convert_temp(temp_c: float) -> float:
         """Convert Celsius to the configured unit."""
         cfg = Config.instance()
-        if cfg.units == "i":
+        if cfg.temperature_unit == "f":
             return temp_c * 9.0 / 5.0 + 32
         return temp_c
 

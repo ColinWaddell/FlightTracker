@@ -725,16 +725,36 @@
         <div id="group-defaults" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-rulers me-2"></i>Defaults</p>
 
+          <h5>Units</h5>
           <div class="mb-3">
-            <label class="form-label small">Units</label>
-            <select class="form-select form-select-sm" name="units" style="max-width:180px">
-              <option value="m" {% if cfg.units == 'm' %}selected{% endif %}>Metric (°C / km)</option>
-              <option value="i" {% if cfg.units == 'i' %}selected{% endif %}>Imperial (°F / mi)</option>
+            <label class="form-label small">Temperature</label>
+            <select class="form-select form-select-sm" name="temperature_unit" style="max-width:180px">
+              <option value="c" {% if cfg.temperature_unit == 'c' %}selected{% endif %}>Celsius (°C)</option>
+              <option value="f" {% if cfg.temperature_unit == 'f' %}selected{% endif %}>Fahrenheit (°F)</option>
             </select>
-            <div class="form-text text-muted small">Applies to distance, speed and temperature throughout the display.</div>
+            <div class="form-text text-muted small">How temperatures are shown on the display.</div>
           </div>
 
-          <p>Clock and Date</p>
+          <div class="mb-3">
+            <label class="form-label small">Speed</label>
+            <select class="form-select form-select-sm" name="speed_unit" style="max-width:180px">
+              <option value="kmh" {% if cfg.speed_unit == 'kmh' %}selected{% endif %}>km/h</option>
+              <option value="mph" {% if cfg.speed_unit == 'mph' %}selected{% endif %}>mph</option>
+              <option value="kts" {% if cfg.speed_unit == 'kts' %}selected{% endif %}>knots</option>
+            </select>
+            <div class="form-text text-muted small">How aircraft and wind speeds are shown.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Height</label>
+            <select class="form-select form-select-sm" name="height_unit" style="max-width:180px">
+              <option value="m" {% if cfg.height_unit == 'm' %}selected{% endif %}>Metres (m)</option>
+              <option value="ft" {% if cfg.height_unit == 'ft' %}selected{% endif %}>Feet (ft)</option>
+            </select>
+            <div class="form-text text-muted small">How aircraft and satellite altitudes are shown.</div>
+          </div>
+
+          <h5>Clock and Date</h5>
           <div class="mb-2 form-check">
             <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"
                    {% if cfg.clock_24hr %}checked{% endif %} />

@@ -652,14 +652,20 @@ class FlightScene:
         ground_speed_kts = flight.ground_speed or 0
         heading = flight.heading or 0
 
-        if cfg.units == "i":
+        if cfg.height_unit == "ft":
             alt_val = str(int(altitude_ft))
             alt_unit = "ft"
-            speed_val = str(int(ground_speed_kts * 1.15078))
-            speed_unit = "mph"
         else:
             alt_val = str(int(altitude_ft * 0.3048))
             alt_unit = "m"
+
+        if cfg.speed_unit == "kts":
+            speed_val = str(int(ground_speed_kts))
+            speed_unit = "kts"
+        elif cfg.speed_unit == "mph":
+            speed_val = str(int(ground_speed_kts * 1.15078))
+            speed_unit = "mph"
+        else:
             speed_val = str(int(ground_speed_kts * 1.852))
             speed_unit = "kmh"
 

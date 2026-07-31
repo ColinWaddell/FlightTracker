@@ -366,8 +366,10 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_c is None:
             return
 
-        display_temp = temp_c * 9.0 / 5.0 + 32 if cfg.units == "i" else temp_c
-        unit_char = "F" if cfg.units == "i" else "C"
+        display_temp = (
+            temp_c * 9.0 / 5.0 + 32 if cfg.temperature_unit == "f" else temp_c
+        )
+        unit_char = "F" if cfg.temperature_unit == "f" else "C"
         temp_str = f"{round(display_temp)}{unit_char}"
 
         if temp_str == self.last_temp_str:
@@ -440,9 +442,12 @@ class ConditionsIdleTheme(BaseIdleScene):
         if wind_kph is None:
             return
 
-        if cfg.units == "i":
+        if cfg.speed_unit == "mph":
             wind_val = wind_kph * 0.621371
             wind_unit = "m"
+        elif cfg.speed_unit == "kts":
+            wind_val = wind_kph * 0.539957
+            wind_unit = "k"
         else:
             wind_val = wind_kph
             wind_unit = "k"

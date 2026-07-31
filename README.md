@@ -1,4 +1,4 @@
-# Raspberry Pi Flight Tracker (v2) [![CI](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml/badge.svg)](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml)
+# Raspberry Pi Flight Tracker (v2) [![Tests and formatting](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml/badge.svg)](https://github.com/ColinWaddell/FlightTracker/actions/workflows/lint.yml)
 
 [![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
 
@@ -254,7 +254,9 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `weatherapi_key` | API key for [weatherapi.com](https://www.weatherapi.com/pricing.aspx). Leave blank to disable weather | `""` |
 | `weather_mode` | `0` = off, `1` = temperature only, `2` = temperature + 24-hour rainfall graph | `0` |
 | `rain_sensitivity` | `0` = dry, `1` = moderate, `2` = wet | `1` |
-| `units` | `"m"` for metric (C / km), `"i"` for imperial (F / mi) | `"m"` |
+| `temperature_unit` | `"c"` for Celsius, `"f"` for Fahrenheit | `"c"` |
+| `speed_unit` | `"kmh"` for km/h, `"mph"` for miles/h, `"kts"` for knots | `"kmh"` |
+| `height_unit` | `"m"` for metres, `"ft"` for feet | `"m"` |
 | `theme` | `0` = default, `1` = monochrome, `2` = pastel | `0` |
 | `screen_brightness` | Display brightness from `1` (dim) to `5` (full) | `3` |
 | `screen_rotate` | Rotate the display by 180° | `false` |
