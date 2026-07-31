@@ -67,7 +67,7 @@ DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rai
 DEFAULT_RAIN_SENSITIVITY = (
     1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
 )
-DEFAULT_TEMPERATURE_UNIT = "c"  # 'c' = Celsius, 'f' = Fahrenheit
+DEFAULT_TEMPERATURE_UNIT = "c"  # 'c' = Celsius, 'f' = Fahrenheit, 'k' = Kelvin
 DEFAULT_SPEED_UNIT = "kmh"  # 'kmh' = km/h, 'mph' = miles/h, 'kts' = knots
 DEFAULT_HEIGHT_UNIT = "m"  # 'm' = metres, 'ft' = feet
 DEFAULT_WEATHER_REFRESH_MINUTES = 5  # how often (minutes) to re-fetch weather data
@@ -640,11 +640,11 @@ class Config:
 
     @property
     def temperature_unit(self) -> str:
-        """'c' = Celsius, 'f' = Fahrenheit."""
+        """'c' = Celsius, 'f' = Fahrenheit, 'k' = Kelvin."""
         val = str(
             self.data_store.get("temperature_unit", DEFAULT_TEMPERATURE_UNIT)
         ).lower()
-        return val if val in ("c", "f") else DEFAULT_TEMPERATURE_UNIT
+        return val if val in ("c", "f", "k") else DEFAULT_TEMPERATURE_UNIT
 
     @property
     def speed_unit(self) -> str:

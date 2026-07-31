@@ -731,6 +731,7 @@
             <select class="form-select form-select-sm" name="temperature_unit" style="max-width:180px">
               <option value="c" {% if cfg.temperature_unit == 'c' %}selected{% endif %}>Celsius (°C)</option>
               <option value="f" {% if cfg.temperature_unit == 'f' %}selected{% endif %}>Fahrenheit (°F)</option>
+              <option value="k" {% if cfg.temperature_unit == 'k' %}selected{% endif %}>Kelvin (K)</option>
             </select>
             <div class="form-text text-muted small">How temperatures are shown on the display.</div>
           </div>

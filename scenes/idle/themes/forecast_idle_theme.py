@@ -299,6 +299,8 @@ class ForecastIdleTheme(BaseIdleScene):
         cfg = Config.instance()
         if cfg.temperature_unit == "f":
             return temp_c * 9.0 / 5.0 + 32
+        if cfg.temperature_unit == "k":
+            return temp_c + 273.15
         return temp_c
 
     def _format_temp_value(self, temp_c: float) -> str:

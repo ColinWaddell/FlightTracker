@@ -196,7 +196,8 @@ def parse_settings_form(form, cfg) -> dict:
         "rain_sensitivity": max(0, min(2, int_val(form.get("rain_sensitivity"), 1))),
         "temperature_unit": (
             v
-            if (v := str_val(form.get("temperature_unit"), "c").lower()) in ("c", "f")
+            if (v := str_val(form.get("temperature_unit"), "c").lower())
+            in ("c", "f", "k")
             else "c"
         ),
         "speed_unit": (

@@ -366,10 +366,15 @@ class ConditionsIdleTheme(BaseIdleScene):
         if temp_c is None:
             return
 
-        display_temp = (
-            temp_c * 9.0 / 5.0 + 32 if cfg.temperature_unit == "f" else temp_c
-        )
-        unit_char = "F" if cfg.temperature_unit == "f" else "C"
+        if cfg.temperature_unit == "f":
+            display_temp = temp_c * 9.0 / 5.0 + 32
+            unit_char = "F"
+        elif cfg.temperature_unit == "k":
+            display_temp = temp_c + 273.15
+            unit_char = "K"
+        else:
+            display_temp = temp_c
+            unit_char = "C"
         temp_str = f"{round(display_temp)}{unit_char}"
 
         if temp_str == self.last_temp_str:
