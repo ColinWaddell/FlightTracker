@@ -91,6 +91,7 @@ def put(callsign: str, info: dict):
 
 def clear():
     """Clear the entire cache."""
+    global _cache, _loaded
     with _lock:
         _cache = {}
         _loaded = True
