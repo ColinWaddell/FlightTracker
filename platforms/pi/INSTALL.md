@@ -221,12 +221,13 @@ Allow it to reboot when prompted. A reboot is required when changing between the
 
 After the Pi restarts, reconnect over SSH or open a new terminal.
 
-### Verify the driver
+### Verify the driver (Optional)
 
-Change to the example-program directory:
+Change to the example-program directory and build the demos:
 
 ```bash
 cd ~/rgb-matrix-install/rpi-rgb-led-matrix/examples-api-use
+make demo
 ```
 
 Run the demo for a single 64×32 matrix:
@@ -285,8 +286,10 @@ python -m pip install -r platforms/pi/requirements.txt
 Install the RGB matrix Python bindings into the FlightTracker virtual environment:
 
 ```bash
-python -m pip install \
-    ~/rgb-matrix-install/rpi-rgb-led-matrix/bindings/python
+cd ~/rgb-matrix-install/rpi-rgb-led-matrix
+sudo apt-get update && sudo apt-get install python3-dev cython3 -y
+pip install .
+cd ~/FlightTracker
 ```
 
 Verify that the bindings can be imported:
