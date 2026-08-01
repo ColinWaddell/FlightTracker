@@ -24,6 +24,7 @@ import logging
 import time
 from enum import Enum, auto
 
+from display.spans import Span, Spans, draw_spans, font_text_width
 from setup import fonts, screen
 from setup.configuration import Config
 from setup.themes import (
@@ -134,10 +135,6 @@ def abbreviate(name: str) -> str:
     for long, short in ABBREVIATIONS.items():
         name = name.replace(long, short)
     return " ".join(name.split())
-
-
-def font_text_width(font, text: str) -> int:
-    return sum(font.CharacterWidth(ord(c)) for c in text)
 
 
 class BounceState(Enum):
@@ -639,14 +636,14 @@ class FlightScene:
     # Plane details (scrolling bar)
     # ------------------------------------------------------------------
 
-    def build_spans(self, cfg) -> list:
+    def build_spans(self, cfg) -> Spans:
         return self.telemetry_spans(cfg) if cfg.details == 1 else self.model_spans()
 
-    def model_spans(self) -> list:
+    def model_spans(self) -> Spans:
         text = self.flights[self.flight_index].plane
-        return [(TC(THEME_PLANE), fonts.regular, text.upper())]
+        return [Span(TC(THEME_PLANE), fonts.regular, text.upper())]
 
-    def telemetry_spans(self, cfg) -> list:
+    def telemetry_spans(self, cfg) -> Spans:
         flight = self.flights[self.flight_index]
         altitude_ft = flight.altitude or 0
         ground_speed_kts = flight.ground_speed or 0
@@ -674,27 +671,18 @@ class FlightScene:
         ico = TC(THEME_PLANE_TLM_UNITS)
 
         return [
-            (ico, f, "^"),
-            (val, f, alt_val),
-            (ico, f, alt_unit),
-            (val, f, " "),
-            (ico, f, "~"),
-            (val, f, speed_val),
-            (ico, f, speed_unit),
-            (val, f, " "),
-            (ico, f, "}"),
-            (val, f, str(heading)),
-            (ico, f, "*"),
+            Span(ico, f, "^"),
+            Span(val, f, alt_val),
+            Span(ico, f, alt_unit),
+            Span(val, f, " "),
+            Span(ico, f, "~"),
+            Span(val, f, speed_val),
+            Span(ico, f, speed_unit),
+            Span(val, f, " "),
+            Span(ico, f, "}"),
+            Span(val, f, str(heading)),
+            Span(ico, f, "*"),
         ]
-
-    def spans_width(self, spans: list) -> int:
-        return sum(font.CharacterWidth(ord(c)) for _, font, text in spans for c in text)
-
-    def draw_spans(self, spans: list, x: int, y: int) -> int:
-        start_x = x
-        for colour, font, text in spans:
-            x += self.panel.draw_text(self.canvas, font, x, y, colour, text)
-        return x - start_x
 
     def draw_plane_details(self) -> None:
         cfg = Config.instance()
@@ -715,8 +703,8 @@ class FlightScene:
             TC(THEME_BG),
         )
 
-        total_width = self.draw_spans(
-            spans, self.plane_position, PLANE_DISTANCE_FROM_TOP
+        total_width = draw_spans(
+            self.panel, self.canvas, spans, self.plane_position, PLANE_DISTANCE_FROM_TOP
         )
 
         self.plane_position -= 1
