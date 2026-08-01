@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from display.rendered_pixel import RenderedPixels
+
 
 @dataclass
 class Glyph:
@@ -136,7 +138,60 @@ class BDFFont:
 
     def text_width(self, text: str) -> int:
         """Return the total advance width of *text* in pixels."""
-        return sum(self.CharacterWidth(ord(c)) for c in text)
+        return sum(
+            glyph.dwidth if (glyph := self.get_glyph(ord(ch))) else 1 for ch in text
+        )
+
+
+def render_pixels(font: BDFFont, colour, text: str) -> RenderedPixels:
+    """Render text into sparse, column-oriented pixel data.
+
+    The returned list index is the x coordinate. Each column maps lit
+    y coordinates to their colour. Missing y coordinates are blank.
+
+    Vertical coordinates are normalised to the font's bounding area,
+    with y=0 at the top.
+    """
+    if not text:
+        return []
+
+    width = font.text_width(text)
+    columns: RenderedPixels = [{} for _ in range(width)]
+
+    # Position the BDF baseline within a top-origin coordinate system.
+    baseline = font.ascent - 1
+    advance = 0
+
+    for ch in text:
+        glyph = font.get_glyph(ord(ch))
+
+        if glyph is None:
+            # Match draw_text(): missing glyph consumes one blank column.
+            advance += 1
+            continue
+
+        top_y = baseline - glyph.bbx_yoff - glyph.bbx_h + 1
+        total_bits = ((glyph.bbx_w + 7) // 8) * 8
+
+        for row_index, row_value in enumerate(glyph.rows):
+            pixel_y = top_y + row_index
+
+            for bit in range(glyph.bbx_w):
+                mask = 1 << (total_bits - 1 - bit)
+
+                if not row_value & mask:
+                    continue
+
+                pixel_x = advance + glyph.bbx_xoff + bit
+
+                # A glyph may technically overhang its advance box.
+                # Ignore pixels outside the rendered text's column range.
+                if 0 <= pixel_x < width:
+                    columns[pixel_x][pixel_y] = colour
+
+        advance += glyph.dwidth
+
+    return columns
 
 
 def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
