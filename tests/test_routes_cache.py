@@ -84,36 +84,23 @@ class TestRoutesCachePut:
 
 
 class TestRoutesCacheClear:
-    # NOTE: clear() has a bug - `_cache = {}` inside the function is a local
-    # variable, not a global assignment. The in-memory cache is NOT cleared
-    # and _save() writes the old (non-empty) cache to disk. These tests
-    # document the current behaviour. When the bug is fixed, update them.
-
-    def test_clear_does_not_empty_in_memory_cache(self, isolated_cache):
+    def test_clear_empties_in_memory_cache(self, isolated_cache):
         rc = isolated_cache
         rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
         rc.clear()
-        # Bug: _cache is a local in clear(), so the global is untouched
-        assert "BAW123" in rc._cache
+        assert "BAW123" not in rc._cache
+
+    def test_clear_empties_disk(self, isolated_cache):
+        rc = isolated_cache
+        rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
+        rc.clear()
+        data = json.loads(rc.CACHE_PATH.read_text())
+        assert data == {}
 
     def test_clear_on_empty_cache(self, isolated_cache):
         rc = isolated_cache
         rc.clear()
         assert rc.get("anything") is None
-
-    # When the clear() bug is fixed, these tests should pass:
-    # def test_clear_empties_in_memory_cache(self, isolated_cache):
-    #     rc = isolated_cache
-    #     rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
-    #     rc.clear()
-    #     assert "BAW123" not in rc._cache
-    #
-    # def test_clear_empties_disk(self, isolated_cache):
-    #     rc = isolated_cache
-    #     rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
-    #     rc.clear()
-    #     data = json.loads(rc.CACHE_PATH.read_text())
-    #     assert data == {}
 
 
 class TestRoutesCachePersistence:
