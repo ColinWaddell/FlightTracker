@@ -100,8 +100,7 @@ PLANE_DETAILS_HEIGHT = 8
 # Journey widget
 # ---------------------------------------------------------------------------
 
-
-FULL_LINE_Y = (6, 14)
+FULL_LINE_Y = (7, 15)
 
 IATA_ORIGIN_X = 1
 IATA_DESTINATION_X = 40
@@ -447,7 +446,7 @@ class FlightScene:
             self.panel.draw_square(
                 self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
             )
-            self.setup_full_mode(origin_spans, dest_spans)
+            self.setup_full_mode(cfg, flight, origin_spans, dest_spans)
             self.journey_first_draw = False
         else:
             if origin_spans != self.origin_spans:
@@ -558,8 +557,6 @@ class FlightScene:
         font = fonts.small_symbols
 
         origin_spans: Spans = [
-            Span(TC(THEME_LOCATION_ORIGIN), font, origin),
-            Span(TC(THEME_LOCATION_ORIGIN_ARROW), font, ">"),
             Span(
                 TC(THEME_LOCATION_ORIGIN_FULL),
                 font,
@@ -567,8 +564,6 @@ class FlightScene:
             ),
         ]
         destination_spans: Spans = [
-            Span(TC(THEME_LOCATION_DESTINATION), font, destination),
-            Span(TC(THEME_LOCATION_DESTINATION_ARROW), font, "<"),
             Span(
                 TC(THEME_LOCATION_DESTINATION_FULL),
                 font,
@@ -578,28 +573,72 @@ class FlightScene:
 
         return origin_spans, destination_spans
 
-    def setup_full_mode(self, origin_spans: Spans, dest_spans: Spans) -> None:
+    def setup_full_mode(
+        self,
+        cfg,
+        flight: Flight,
+        origin_spans: Spans,
+        dest_spans: Spans,
+    ) -> None:
         for scroller in (self.origin_scroller, self.dest_scroller):
             if scroller is not None:
                 scroller.clear()
+
+        font = fonts.small_symbols
+        origin = flight.origin or cfg.journey_blank_filler
+        destination = flight.destination or cfg.journey_blank_filler
+
+        origin_x = self.panel.draw_text(
+            self.canvas,
+            font,
+            0,
+            FULL_LINE_Y[0],
+            TC(THEME_LOCATION_ORIGIN),
+            origin,
+        )
+        origin_x += self.panel.draw_text(
+            self.canvas,
+            font,
+            origin_x,
+            FULL_LINE_Y[0],
+            TC(THEME_LOCATION_ORIGIN_ARROW),
+            ">",
+        )
+
+        dest_x = self.panel.draw_text(
+            self.canvas,
+            font,
+            0,
+            FULL_LINE_Y[1],
+            TC(THEME_LOCATION_DESTINATION),
+            destination,
+        )
+        dest_x += self.panel.draw_text(
+            self.canvas,
+            font,
+            dest_x,
+            FULL_LINE_Y[1],
+            TC(THEME_LOCATION_DESTINATION_ARROW),
+            "<",
+        )
 
         self.origin_spans = origin_spans
         self.dest_spans = dest_spans
         self.origin_scroller = Scroller(
             self.panel,
             self.canvas,
-            0,
+            origin_x,
             FULL_LINE_Y[0],
-            screen.WIDTH,
+            max(1, screen.WIDTH - origin_x),
             origin_spans,
             bounce=True,
         )
         self.dest_scroller = Scroller(
             self.panel,
             self.canvas,
-            0,
+            dest_x,
             FULL_LINE_Y[1],
-            screen.WIDTH,
+            max(1, screen.WIDTH - dest_x),
             dest_spans,
             bounce=True,
         )
