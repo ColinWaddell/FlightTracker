@@ -221,12 +221,13 @@ Allow it to reboot when prompted. A reboot is required when changing between the
 
 After the Pi restarts, reconnect over SSH or open a new terminal.
 
-### Verify the driver
+### Verify the driver (Optional but recommended)
 
-Change to the example-program directory:
+Change to the example-program directory and build the demos:
 
 ```bash
 cd ~/rgb-matrix-install/rpi-rgb-led-matrix/examples-api-use
+make
 ```
 
 Run the demo for a single 64×32 matrix:
