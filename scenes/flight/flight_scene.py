@@ -93,15 +93,15 @@ DATA_INDEX_FONT = fonts.extrasmall
 # Plane details (scrolling bar)
 # ---------------------------------------------------------------------------
 
-PLANE_DISTANCE_FROM_TOP = 31
-PLANE_TEXT_HEIGHT = 8
+PLANE_DETAILS_Y = 30
+PLANE_DETAILS_HEIGHT = 8
 
 # ---------------------------------------------------------------------------
 # Journey widget
 # ---------------------------------------------------------------------------
 
 
-FULL_LINE_Y = (7, 15)
+FULL_LINE_Y = (6, 14)
 
 IATA_ORIGIN_X = 1
 IATA_DESTINATION_X = 40
@@ -669,7 +669,7 @@ class FlightScene:
                 self.panel,
                 self.canvas,
                 0,
-                PLANE_DISTANCE_FROM_TOP,
+                PLANE_DETAILS_Y,
                 screen.WIDTH,
                 spans,
                 bounce=False,
