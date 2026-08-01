@@ -8,7 +8,7 @@ This guide covers installing FlightTracker on a Raspberry Pi 5 using Adafruit's 
 
 - Raspberry Pi 5
 - [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview) + 64x32 RGB LED matrix
-- Optional: solder bridge on the HAT to enable PWM (reduces flicker)
+- *Solder bridge not required for the Raspberry Pi 5*
 
 ---
 
@@ -108,9 +108,12 @@ source env/bin/activate
 pip install -r platforms/pi5/requirements.txt
 ```
 
-Then restart the service:
+Install the latest service file and restart FlightTracker:
 
 ```bash
+sudo cp /home/pi/FlightTracker/assets/FlightTracker.service \
+    /etc/systemd/system/FlightTracker.service
+sudo systemctl daemon-reload
 sudo systemctl restart FlightTracker.service
 ```
 

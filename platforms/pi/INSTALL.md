@@ -1,164 +1,575 @@
-# Installation Guide - Raspberry Pi 3 / 4 / Zero
+# Installation Guide — Raspberry Pi 3 / 4 / Zero
 
-This guide covers both fresh installs and upgrades from the previous version of FlightTracker.
+This guide covers both fresh installations and upgrades from previous versions of FlightTracker.
+
+> **Raspberry Pi 5 users:** Follow the separate [Raspberry Pi 5 installation guide](../pi5/INSTALL.md).
 
 ---
 
 ## Automated install (recommended)
 
+The automated installer:
+
+* Detects your Raspberry Pi hardware
+* Clones FlightTracker
+* Creates a Python virtual environment
+* Installs the required dependencies
+* Installs the Hzeller `rpi-rgb-led-matrix` driver
+* Configures FlightTracker to run as a systemd service
+
+Run:
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash
 ```
 
-The installer detects your hardware, clones the repo, creates a virtual environment, installs dependencies (including the hzeller rpi-rgb-led-matrix C++ driver), and sets up a systemd service.
+For most users, this is the recommended installation method.
 
 ---
 
 ## Hardware
 
-- Raspberry Pi (Tested with 3, 4 and Zero W. For Pi 5 see the guide at [platforms/pi5/INSTALL.md](../pi5/INSTALL.md))
-- [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview) + 64x32 RGB LED matrix
-- Optional: solder bridge on the HAT to enable PWM via the Pi's audio hardware (reduces flicker)
+You will need:
+
+* A Raspberry Pi 3, Raspberry Pi 4, or Raspberry Pi Zero W
+* An [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview)
+* A 64×32 HUB75 RGB LED matrix
+* A suitable 5 V power supply for the matrix
+* A microSD card containing Raspberry Pi OS
+
+FlightTracker has been tested with the Raspberry Pi 3, Raspberry Pi 4, and Raspberry Pi Zero W.
+
+### Optional PWM modification
+
+The Adafruit installer offers two display-timing configurations:
+
+* **Quality:** Better display quality and reduced flicker, but requires the PWM solder bridge.
+* **Convenience:** Requires no soldering, but may exhibit occasional flicker.
+
+On the single-matrix Adafruit RGB Matrix Bonnet, the quality configuration requires soldering the GPIO 4 and GPIO 18 pads together.
+
+Select the configuration matching your hardware when prompted by the Adafruit installer.
 
 ---
 
 ## Upgrading from a previous version
 
-If you already have FlightTracker running with a `config.py`, this is all you need:
-
-If your checkout is still on the old `master` branch, switch to `main` before pulling updates:
+Change to the existing FlightTracker checkout:
 
 ```bash
-cd /home/pi/FlightTracker
-git fetch --all
-git checkout main
-git pull
-source env/bin/activate
-pip install -r platforms/pi/requirements.txt
+cd ~/FlightTracker
 ```
 
-Your `config.py` will be detected on first boot and automatically migrated to `config.json`. The old file is left untouched.
-
-After pulling, restart the service:
+Fetch the current branches:
 
 ```bash
+git fetch origin
+```
+
+If your checkout is still using the old `master` branch, switch to `main`:
+
+```bash
+if git show-ref --verify --quiet refs/heads/main; then
+    git switch main
+else
+    git switch --track origin/main
+fi
+```
+
+Pull the latest changes:
+
+```bash
+git pull --ff-only
+```
+
+Activate the existing FlightTracker virtual environment:
+
+```bash
+source env/bin/activate
+```
+
+Update the Python dependencies:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r platforms/pi/requirements.txt
+```
+
+Install or update the RGB matrix Python bindings:
+
+```bash
+python -m pip install --force-reinstall \
+    ~/rgb-matrix-install/rpi-rgb-led-matrix/bindings/python
+```
+
+Copy the latest systemd service file:
+
+```bash
+sudo cp \
+    ~/FlightTracker/assets/FlightTracker.service \
+    /etc/systemd/system/FlightTracker.service
+```
+
+Reload systemd and restart FlightTracker:
+
+```bash
+sudo systemctl daemon-reload
 sudo systemctl restart FlightTracker.service
 ```
 
+Check that FlightTracker started successfully:
+
+```bash
+sudo systemctl status FlightTracker.service
+```
+
+Press `q` to leave the status display.
+
+### Configuration migration
+
+If your existing installation contains a `config.py`, FlightTracker will detect it during startup and automatically migrate its settings to `config.json`.
+
+The original `config.py` file is left untouched.
+
+> If `~/rgb-matrix-install/rpi-rgb-led-matrix` does not exist, follow the [Install the RGB matrix driver](#2-install-the-rgb-matrix-driver) section before reinstalling the bindings.
+
 ---
 
-## Fresh install
+# Fresh install
 
-### 1. System update
+## 1. Update Raspberry Pi OS
+
+Update the package list and install available operating-system upgrades:
 
 ```bash
-sudo apt-get update
-sudo apt-get dist-upgrade
+sudo apt update
+sudo apt full-upgrade -y
 ```
 
-### 2. Install the RGB matrix driver
+Reboot if required:
 
 ```bash
-cd /home/pi
-sudo apt install -y wget
-pip3 install adafruit-python-shell
-wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/rgb-matrix.py
-sudo -E env PATH=$PATH python3 rgb-matrix.py
+sudo reboot
 ```
 
-Verify with the demo:
+After the Pi restarts, reconnect over SSH or open a new terminal.
+
+---
+
+## 2. Install the RGB matrix driver
+
+FlightTracker uses Henner Zeller’s `rpi-rgb-led-matrix` driver. The recommended installation method is Adafruit’s installer script.
+
+Install the required system packages:
 
 ```bash
-cd /home/pi/rpi-rgb-led-matrix/examples-api-use
-sudo ./demo --led-rows=32 --led-cols=64 -D0
+sudo apt install -y python3-venv wget
 ```
 
-### 3. Clone and install FlightTracker
+Create a dedicated directory for the installer and driver source:
 
 ```bash
-cd /home/pi
-git clone https://github.com/ColinWaddell/FlightTracker
+mkdir -p ~/rgb-matrix-install
+cd ~/rgb-matrix-install
+```
+
+Create a virtual environment for the Adafruit installer:
+
+```bash
+python3 -m venv env --system-site-packages
+source env/bin/activate
+```
+
+Install the Adafruit Python shell helper:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install adafruit-python-shell
+```
+
+Download the Adafruit installer:
+
+```bash
+wget -O rgb-matrix.py \
+    https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/rgb-matrix.py
+```
+
+Run it using the virtual environment:
+
+```bash
+sudo -E env PATH="$PATH" python3 rgb-matrix.py
+```
+
+Select the Adafruit RGB Matrix Bonnet when prompted.
+
+Choose the display-timing option matching your hardware:
+
+* Select **quality** if you have completed the PWM solder bridge.
+* Select **convenience** if you have not modified the Bonnet.
+
+The installer creates the driver checkout at:
+
+```text
+~/rgb-matrix-install/rpi-rgb-led-matrix
+```
+
+> The installer may replace an existing `rpi-rgb-led-matrix` directory inside `~/rgb-matrix-install`.
+
+### Reboot after installation
+
+The installer may ask to reboot the Raspberry Pi.
+
+Allow it to reboot when prompted. A reboot is required when changing between the quality and convenience configurations.
+
+After the Pi restarts, reconnect over SSH or open a new terminal.
+
+### Verify the driver
+
+Change to the example-program directory:
+
+```bash
+cd ~/rgb-matrix-install/rpi-rgb-led-matrix/examples-api-use
+```
+
+Run the demo for a single 64×32 matrix:
+
+```bash
+sudo ./demo \
+    --led-rows=32 \
+    --led-cols=64 \
+    --led-gpio-mapping=adafruit-hat \
+    -D0
+```
+
+The matrix should display a test animation.
+
+Press `Ctrl-C` to stop the demo.
+
+If the display does not work correctly, check that:
+
+* The matrix has a suitable external 5 V power supply.
+* The ribbon cable is connected in the correct orientation.
+* The selected quality/convenience configuration matches the hardware modification.
+* The Raspberry Pi is not overclocked.
+
+---
+
+## 3. Clone and install FlightTracker
+
+Install Git:
+
+```bash
+sudo apt install -y git
+```
+
+Clone FlightTracker:
+
+```bash
+cd ~
+git clone https://github.com/ColinWaddell/FlightTracker.git
 cd FlightTracker
+```
+
+Create the FlightTracker virtual environment:
+
+```bash
 python3 -m venv env
 source env/bin/activate
-pip install -r platforms/pi/requirements.txt
 ```
 
-Then install the rgbmatrix Python bindings into the same environment:
+Upgrade `pip` and install FlightTracker’s dependencies:
 
 ```bash
-cd /home/pi/rpi-rgb-led-matrix/bindings/python
-pip install .
+python -m pip install --upgrade pip
+python -m pip install -r platforms/pi/requirements.txt
 ```
 
-### 4. Permissions
-
-Grant Python permission to set real-time scheduling priorities (avoids running as root):
+Install the RGB matrix Python bindings into the FlightTracker virtual environment:
 
 ```bash
-sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.13
+python -m pip install \
+    ~/rgb-matrix-install/rpi-rgb-led-matrix/bindings/python
 ```
 
-Adjust `python3.13` to match the version in your virtual environment if different.
+Verify that the bindings can be imported:
+
+```bash
+python -c 'from rgbmatrix import RGBMatrix; print("rgbmatrix bindings installed")'
+```
+
+You should see:
+
+```text
+rgbmatrix bindings installed
+```
 
 ---
 
 ## Configuration
 
-On first boot, the display shows a QR code pointing to the config UI. The QR code stays up until you save your settings for the first time, then shows briefly for 5 seconds on subsequent boots before the main display starts.
+FlightTracker provides a browser-based configuration interface.
 
-Scan the QR code or open a browser on the same network and go to:
+On first boot, the matrix displays a QR code pointing to the configuration page. The QR code remains on screen until the settings are saved for the first time.
 
-```
+On subsequent boots, the QR code appears for five seconds before the normal display begins.
+
+Scan the QR code or open the following address from another device on the same network:
+
+```text
 http://<pi-ip-address>:8584
 ```
 
-The settings page covers everything: your location (with a map), flight filters, airport display, weather, display theme, brightness, clock, and hardware options. FlightTracker generates and manages the configuration file automatically - there's no need to edit it by hand.
+Replace `<pi-ip-address>` with the Raspberry Pi’s IP address.
 
-If you've disabled the web interface, see the [main README](../../README.md) for the full settings reference.
+You can find the Pi’s IP addresses with:
+
+```bash
+hostname -I
+```
+
+The web interface allows you to configure:
+
+* Your location
+* Flight filters
+* Airport display options
+* Weather information
+* Display themes
+* Brightness and brightness scheduling
+* Clock settings
+* Matrix and hardware options
+* Local ADS-B receiver integration
+
+FlightTracker creates and manages `config.json` automatically. There is normally no need to edit the configuration file manually.
+
+If the web interface has been disabled, see the [main README](../../README.md) for the complete settings reference.
 
 ---
 
-## Running manually
+## Running FlightTracker manually
+
+Change to the FlightTracker directory:
 
 ```bash
-cd /home/pi/FlightTracker
+cd ~/FlightTracker
+```
+
+Run FlightTracker using the virtual environment’s interpreter:
+
+```bash
 env/bin/python3 flight-tracker.py
 ```
 
-Press `Ctrl-C` to quit.
+Press `Ctrl-C` to stop FlightTracker.
+
+You can also activate the environment first:
+
+```bash
+cd ~/FlightTracker
+source env/bin/activate
+python flight-tracker.py
+```
 
 ---
 
-## Running on boot (systemd)
+## Running FlightTracker on boot
+
+FlightTracker includes a systemd service file.
+
+The supplied service:
+
+* Runs FlightTracker as the `pi` user
+* Starts after the network is online
+* Restarts FlightTracker if it fails
+* Grants FlightTracker the `CAP_SYS_NICE` capability required for elevated scheduling priority
+* Does not grant the capability globally to the system Python interpreter
+
+Install the service file:
 
 ```bash
-sudo cp /home/pi/FlightTracker/assets/FlightTracker.service /etc/systemd/system/FlightTracker.service
+sudo cp \
+    ~/FlightTracker/assets/FlightTracker.service \
+    /etc/systemd/system/FlightTracker.service
+```
+
+Reload the systemd configuration:
+
+```bash
 sudo systemctl daemon-reload
+```
+
+Enable FlightTracker at boot:
+
+```bash
 sudo systemctl enable FlightTracker.service
+```
+
+Start FlightTracker:
+
+```bash
 sudo systemctl start FlightTracker.service
 ```
 
-Check status and logs:
+### Check service status
 
 ```bash
 sudo systemctl status FlightTracker.service
+```
+
+Press `q` to leave the status display.
+
+### Follow the logs
+
+```bash
 journalctl -u FlightTracker.service -f
+```
+
+Press `Ctrl-C` to stop following the logs.
+
+### Restart FlightTracker
+
+```bash
+sudo systemctl restart FlightTracker.service
+```
+
+### Stop FlightTracker
+
+```bash
+sudo systemctl stop FlightTracker.service
+```
+
+### Verify scheduling capabilities
+
+Check the capabilities assigned to the service:
+
+```bash
+systemctl show FlightTracker.service \
+    -p AmbientCapabilities \
+    -p CapabilityBoundingSet
+```
+
+The output should include `CAP_SYS_NICE`.
+
+The corresponding service file contains:
+
+```ini
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+```
+
+There is no need to run `setcap` against `/usr/bin/python3` or the virtual environment’s Python executable.
+
+---
+
+## FlightTracker systemd service
+
+The supplied `assets/FlightTracker.service` file should contain:
+
+```ini
+[Unit]
+Description=Flight Tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/FlightTracker
+
+ExecStartPre=/bin/sleep 20
+ExecStart=/home/pi/FlightTracker/env/bin/python /home/pi/FlightTracker/flight-tracker.py
+
+Environment=PYTHONUNBUFFERED=1
+
+Restart=on-failure
+RestartSec=5
+
+Nice=-10
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+StandardOutput=append:/home/pi/plane.log
+StandardError=append:/home/pi/plane.log
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ---
 
-## Using a local ADS-B receiver (tar1090)
+## Using a local ADS-B receiver
 
-If you run your own receiver with [tar1090](https://github.com/wiedehopf/tar1090), dump1090-fa, or PiAware, you can use it instead of FlightRadar24 - no API key required.
+FlightTracker can use aircraft data from a local ADS-B receiver instead of FlightRadar24. No FlightRadar24 API key is required when using a compatible local receiver.
 
-First, find the right URL for your receiver. Try each of these in a browser, replacing `your-receiver` with the hostname or IP, until you get back a JSON response containing an `"aircraft"` array:
+Compatible systems include:
 
-```
+* [tar1090](https://github.com/wiedehopf/tar1090)
+* `dump1090-fa`
+* PiAware / SkyAware
+
+### Find the aircraft JSON URL
+
+Try each of the following addresses in a browser, replacing `your-receiver` with the receiver’s hostname or IP address:
+
+```text
 http://your-receiver/tar1090/data/aircraft.json
 http://your-receiver:8080/data/aircraft.json
 http://your-receiver/dump1090-fa/data/aircraft.json
 http://your-receiver/skyaware/data/aircraft.json
 ```
 
-Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings.
+The correct URL should return JSON containing an `aircraft` array, similar to:
+
+```json
+{
+  "aircraft": [
+    {
+      "hex": "406abc",
+      "flight": "BAW123"
+    }
+  ]
+}
+```
+
+Enter the working URL in the FlightTracker web interface under the ADS-B / tar1090 settings.
+
+For example:
+
+```text
+http://garagepi.local:8080/data/aircraft.json
+```
+
+The Raspberry Pi running FlightTracker must be able to access the receiver over the local network.
+
+---
+
+## Directory layout
+
+After a manual installation, the relevant directories should look approximately like this:
+
+```text
+/home/pi/
+├── FlightTracker/
+│   ├── env/
+│   ├── platforms/
+│   ├── assets/
+│   ├── flight-tracker.py
+│   └── config.json
+│
+└── rgb-matrix-install/
+    ├── env/
+    ├── rgb-matrix.py
+    └── rpi-rgb-led-matrix/
+        ├── bindings/
+        │   └── python/
+        └── examples-api-use/
+```
+
+The two `env` directories are separate virtual environments:
+
+* `~/rgb-matrix-install/env` runs the Adafruit installation script.
+* `~/FlightTracker/env` contains FlightTracker and its runtime dependencies.
+
+FlightTracker does not need the Adafruit installer virtual environment after installation. Keep the `rpi-rgb-led-matrix` source directory so that its Python bindings can be rebuilt or reinstalled later.
