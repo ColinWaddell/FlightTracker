@@ -408,3 +408,132 @@ class TestShortCodeLabel:
         # First draw_text call should be at x=17 (the text_x_origin)
         first_call_args = panel.draw_text.call_args_list[0]
         assert first_call_args[0][2] == 17  # x argument position
+
+
+# ---------------------------------------------------------------------------
+# CallsignBar / AirlineNameBar / make_callsign_bar
+# ---------------------------------------------------------------------------
+
+from scenes.flight.callsign_bar import (
+    AirlineNameBar,
+    CallsignBar,
+    airline_name_from_flight,
+    make_callsign_bar,
+)
+
+
+class TestAirlineNameFromFlight:
+    def test_known_airline(self):
+        # BAW -> British Airways in airlines.json
+        flight = Flight(airline_icao="BAW")
+        assert airline_name_from_flight(flight) == "British Airways"
+
+    def test_unknown_airline(self):
+        flight = Flight(airline_icao="PPP")
+        assert airline_name_from_flight(flight) == ""
+
+    def test_empty_icao(self):
+        flight = Flight()
+        assert airline_name_from_flight(flight) == ""
+
+
+class TestMakeCallsignBar:
+    def test_callsign_mode_returns_callsign_bar(self):
+        cfg = MagicMock()
+        cfg.info_bar_mode = "callsign"
+        panel, _ = _make_panel_and_canvas()
+        bar = make_callsign_bar(cfg, panel)
+        assert isinstance(bar, CallsignBar)
+
+    def test_airline_mode_returns_airline_name_bar(self):
+        cfg = MagicMock()
+        cfg.info_bar_mode = "airline"
+        panel, _ = _make_panel_and_canvas()
+        bar = make_callsign_bar(cfg, panel)
+        assert isinstance(bar, AirlineNameBar)
+
+
+class TestCallsignBar:
+    def test_draw_callsign_text(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = CallsignBar(panel)
+        flights = [Flight(callsign="BAW123")]
+        bar.draw(canvas, flights, 0)
+        assert panel.draw_text.called
+        assert panel.draw_square.called  # background blank
+
+    def test_cached_redraw_skips(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = CallsignBar(panel)
+        flights = [Flight(callsign="BAW123")]
+        bar.draw(canvas, flights, 0)
+        panel.reset_mock()
+        bar.draw(canvas, flights, 0)
+        assert not panel.draw_text.called
+        assert not panel.draw_square.called
+
+    def test_reset_clears_cache(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = CallsignBar(panel)
+        flights = [Flight(callsign="BAW123")]
+        bar.draw(canvas, flights, 0)
+        panel.reset_mock()
+        bar.reset()
+        bar.draw(canvas, flights, 0)
+        assert panel.draw_text.called
+
+    def test_draws_index_for_multiple_flights(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = CallsignBar(panel)
+        flights = [Flight(callsign="BAW123"), Flight(callsign="UAL456")]
+        bar.draw(canvas, flights, 0)
+        # The last draw_text call should be the N/M index
+        last_call = panel.draw_text.call_args_list[-1]
+        assert "1/2" in last_call[0]
+
+
+class TestAirlineNameBar:
+    def test_creates_scroller_on_first_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = AirlineNameBar(panel)
+        flights = [Flight(airline_icao="BAW")]
+        bar.draw(canvas, flights, 0)
+        assert bar.scroller is not None
+        assert panel.draw_square.called  # background blank
+
+    def test_rebuilds_scroller_on_flight_change(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = AirlineNameBar(panel)
+        flights = [
+            Flight(icao_callsign="BAW123", airline_icao="BAW"),
+            Flight(icao_callsign="UAL456", airline_icao="UAL"),
+        ]
+        bar.draw(canvas, flights, 0)
+        first_scroller = bar.scroller
+        bar.draw(canvas, flights, 1)
+        assert bar.scroller is not first_scroller
+
+    def test_reset_clears_scroller(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = AirlineNameBar(panel)
+        flights = [Flight(airline_icao="BAW")]
+        bar.draw(canvas, flights, 0)
+        bar.reset()
+        assert bar.scroller is None
+
+    def test_unknown_airline_falls_back_to_callsign(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        bar = AirlineNameBar(panel)
+        # PPP is not in airlines.json; falls back to the display callsign
+        flights = [Flight(airline_icao="PPP", callsign="PPP123")]
+        bar.draw(canvas, flights, 0)
+        assert bar.scroller is not None
+        assert bar.spans[0].text == "PPP123"

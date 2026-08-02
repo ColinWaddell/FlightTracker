@@ -120,6 +120,9 @@ DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 DEFAULT_CALLSIGN_FORMAT = (
     "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 )
+DEFAULT_INFO_BAR_MODE = (
+    "callsign"  # 'callsign' = show callsign, 'airline' = show airline name
+)
 DEFAULT_OSN_CLIENT_ID = ""  # OpenSky Network OAuth2 client ID
 DEFAULT_OSN_CLIENT_SECRET = ""  # OpenSky Network OAuth2 client secret
 
@@ -199,6 +202,7 @@ DEFAULTS: dict[str, Any] = {
     "tar1090_url": DEFAULT_TAR1090_URL,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
+    "info_bar_mode": DEFAULT_INFO_BAR_MODE,
     "osn_client_id": DEFAULT_OSN_CLIENT_ID,
     "osn_client_secret": DEFAULT_OSN_CLIENT_SECRET,
     # Satellite tracking
@@ -940,6 +944,11 @@ class Config:
             self.data_store.get("callsign_format", DEFAULT_CALLSIGN_FORMAT)
         ).lower()
         return val if val in ("icao", "iata") else DEFAULT_CALLSIGN_FORMAT
+
+    @property
+    def info_bar_mode(self) -> str:
+        val = str(self.data_store.get("info_bar_mode", DEFAULT_INFO_BAR_MODE)).lower()
+        return val if val in ("callsign", "airline") else DEFAULT_INFO_BAR_MODE
 
     @property
     def satellite_tracking_enabled(self) -> bool:

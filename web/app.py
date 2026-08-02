@@ -296,6 +296,11 @@ def parse_settings_form(form, cfg) -> dict:
             if str_val(form.get("callsign_format"), "icao").lower() == "iata"
             else "icao"
         ),
+        "info_bar_mode": (
+            "airline"
+            if str_val(form.get("info_bar_mode"), "callsign").lower() == "airline"
+            else "callsign"
+        ),
         "osn_client_id": str_val(form.get("osn_client_id"), ""),
         "osn_client_secret": str_val(form.get("osn_client_secret"), ""),
         # Satellite tracking

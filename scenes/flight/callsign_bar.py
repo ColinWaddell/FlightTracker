@@ -1,0 +1,241 @@
+"""Info bar widget — callsign or airline name in the middle bar row.
+
+Two modes, selected at construction via ``cfg.info_bar_mode``:
+
+* :class:`CallsignBar` — draws the callsign character-by-character with
+  numeric/alpha colouring, plus the dividing bar and N/M index.
+* :class:`AirlineNameBar` — looks up the airline name from
+  ``assets/airlines.json`` via the resolved ICAO code and bounce-scrolls
+  it using the :class:`Scroller`, same font/position as the callsign bar.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from display.scroller import Scroller
+from display.spans import Span, Spans
+from scenes.flight.airline_logo import airline_icao_from_flight
+from setup import fonts, screen
+from setup.configuration import Config
+from setup.themes import (
+    TC,
+    THEME_BG,
+    THEME_DATA_INDEX,
+    THEME_DIVIDING_BAR,
+    THEME_FLIGHT_ALPHA,
+    THEME_FLIGHT_NUMERIC,
+)
+from utilities.flight import Flight
+
+# Shared layout constants (same as the original draw_callsign).
+BAR_STARTING_POSITION = (0, 20)
+BAR_PADDING = 2
+FLIGHT_NO_POSITION = (1, 23)
+FLIGHT_NO_TEXT_HEIGHT = 8
+FLIGHT_NO_FONT = fonts.small
+DATA_INDEX_POSITION = (52, 23)
+DATA_INDEX_FONT = fonts.extrasmall
+
+# Airline name lookup — loaded once from assets/airlines.json.
+_AIRLINES_JSON = Path(__file__).parents[2] / "assets" / "airlines.json"
+_airlines_cache: dict[str, str] | None = None
+
+
+def _load_airlines() -> dict[str, str]:
+    global _airlines_cache
+    if _airlines_cache is None:
+        with open(_AIRLINES_JSON) as f:
+            _airlines_cache = json.load(f)
+    return _airlines_cache
+
+
+def airline_name_from_flight(flight: Flight) -> str:
+    """Look up the airline name from the flight's resolved ICAO code."""
+    icao = airline_icao_from_flight(flight)
+    if not icao:
+        return ""
+    return _load_airlines().get(icao, "")
+
+
+class CallsignBar:
+    """Draws the callsign character-by-character with the dividing bar + index."""
+
+    def __init__(self, panel, cfg: Config | None = None):
+        self.panel = panel
+        self.cfg = cfg or Config.instance()
+        self.last_callsign_drawn: str | None = None
+        self.last_index_drawn: int | None = None
+        self.last_flight_count_drawn: int | None = None
+
+    def reset(self) -> None:
+        self.last_callsign_drawn = None
+        self.last_index_drawn = None
+        self.last_flight_count_drawn = None
+
+    def draw(self, canvas, flights: list, flight_index: int) -> None:
+        callsign = flights[flight_index].callsign
+        flight_count = len(flights)
+        index = flight_index
+
+        if (
+            callsign == self.last_callsign_drawn
+            and index == self.last_index_drawn
+            and flight_count == self.last_flight_count_drawn
+        ):
+            return
+
+        self.last_callsign_drawn = callsign
+        self.last_index_drawn = index
+        self.last_flight_count_drawn = flight_count
+
+        self.panel.draw_square(
+            canvas,
+            0,
+            BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
+            screen.WIDTH - 1,
+            BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
+            TC(THEME_BG),
+        )
+        flight_no_text_length = 0
+        if callsign and callsign != "N/A":
+            for ch in callsign:
+                ch_length = self.panel.draw_text(
+                    canvas,
+                    FLIGHT_NO_FONT,
+                    FLIGHT_NO_POSITION[0] + flight_no_text_length,
+                    FLIGHT_NO_POSITION[1],
+                    (
+                        TC(THEME_FLIGHT_NUMERIC)
+                        if ch.isnumeric()
+                        else TC(THEME_FLIGHT_ALPHA)
+                    ),
+                    ch,
+                )
+                flight_no_text_length += ch_length
+
+        if flight_count > 1:
+            self.panel.draw_square(
+                canvas,
+                DATA_INDEX_POSITION[0] - BAR_PADDING,
+                BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
+                screen.WIDTH,
+                BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
+                TC(THEME_BG),
+            )
+            self.panel.draw_line(
+                canvas,
+                flight_no_text_length + BAR_PADDING,
+                BAR_STARTING_POSITION[1],
+                DATA_INDEX_POSITION[0] - BAR_PADDING - 1,
+                BAR_STARTING_POSITION[1],
+                TC(THEME_DIVIDING_BAR),
+            )
+            self.panel.draw_text(
+                canvas,
+                DATA_INDEX_FONT,
+                DATA_INDEX_POSITION[0],
+                DATA_INDEX_POSITION[1],
+                TC(THEME_DATA_INDEX),
+                f"{index + 1}/{flight_count}",
+            )
+        else:
+            self.panel.draw_line(
+                canvas,
+                flight_no_text_length + BAR_PADDING if flight_no_text_length else 0,
+                BAR_STARTING_POSITION[1],
+                screen.WIDTH,
+                BAR_STARTING_POSITION[1],
+                TC(THEME_DIVIDING_BAR),
+            )
+
+
+class AirlineNameBar:
+    """Bounce-scrolls the airline name in the info bar position."""
+
+    def __init__(self, panel, cfg: Config | None = None):
+        self.panel = panel
+        self.cfg = cfg or Config.instance()
+        self.scroller: Scroller | None = None
+        self.spans: Spans | None = None
+        self.last_flight_id: str | None = None
+        self.last_index_drawn: int | None = None
+        self.last_flight_count_drawn: int | None = None
+
+    def reset(self) -> None:
+        if self.scroller is not None:
+            self.scroller.clear()
+        self.scroller = None
+        self.spans = None
+        self.last_flight_id = None
+        self.last_index_drawn = None
+        self.last_flight_count_drawn = None
+
+    def draw(self, canvas, flights: list, flight_index: int) -> None:
+        flight = flights[flight_index]
+        flight_count = len(flights)
+        index = flight_index
+        flight_id = flight.flight_id
+
+        # Rebuild scroller when the flight changes (different airline name).
+        if flight_id != self.last_flight_id:
+            self.last_flight_id = flight_id
+            name = airline_name_from_flight(flight) or flight.callsign or "Unknown"
+            self.spans = [Span(TC(THEME_FLIGHT_ALPHA), FLIGHT_NO_FONT, name)]
+
+            if self.scroller is not None:
+                self.scroller.clear()
+
+            # Blank the bar region.
+            self.panel.draw_square(
+                canvas,
+                0,
+                BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
+                screen.WIDTH - 1,
+                BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
+                TC(THEME_BG),
+            )
+
+            self.scroller = Scroller(
+                self.panel,
+                canvas,
+                FLIGHT_NO_POSITION[0],
+                FLIGHT_NO_POSITION[1] - 1,
+                screen.WIDTH - FLIGHT_NO_POSITION[0],
+                self.spans,
+                bounce=True,
+            )
+        elif self.scroller is not None:
+            self.scroller.draw()
+
+        # Draw the N/M index (same as callsign mode).
+        if flight_count > 1 and (
+            index != self.last_index_drawn
+            or flight_count != self.last_flight_count_drawn
+        ):
+            self.last_index_drawn = index
+            self.last_flight_count_drawn = flight_count
+            self.panel.draw_square(
+                canvas,
+                DATA_INDEX_POSITION[0] - BAR_PADDING,
+                BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
+                screen.WIDTH,
+                BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
+                TC(THEME_BG),
+            )
+            self.panel.draw_text(
+                canvas,
+                DATA_INDEX_FONT,
+                DATA_INDEX_POSITION[0],
+                DATA_INDEX_POSITION[1],
+                TC(THEME_DATA_INDEX),
+                f"{index + 1}/{flight_count}",
+            )
+
+
+def make_callsign_bar(cfg: Config, panel):
+    """Return the info bar widget for the configured display mode."""
+    if cfg.info_bar_mode == "airline":
+        return AirlineNameBar(panel, cfg)
+    return CallsignBar(panel, cfg)

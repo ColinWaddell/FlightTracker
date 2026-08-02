@@ -26,16 +26,13 @@ import time
 from display.scroller import Scroller
 from display.spans import Span, Spans
 from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
+from scenes.flight.callsign_bar import make_callsign_bar
 from scenes.flight.journey import make_label
 from setup import fonts, screen
 from setup.configuration import Config
 from setup.themes import (
     TC,
     THEME_BG,
-    THEME_DATA_INDEX,
-    THEME_DIVIDING_BAR,
-    THEME_FLIGHT_ALPHA,
-    THEME_FLIGHT_NUMERIC,
     THEME_PLANE,
     THEME_PLANE_TLM,
     THEME_PLANE_TLM_UNITS,
@@ -72,17 +69,10 @@ def telemetry_changed(old: list, new: list) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Callsign bar
 # ---------------------------------------------------------------------------
-
-BAR_STARTING_POSITION = (0, 20)
-BAR_PADDING = 2
-FLIGHT_NO_POSITION = (1, 23)
-FLIGHT_NO_TEXT_HEIGHT = 8
-FLIGHT_NO_FONT = fonts.small
-DATA_INDEX_POSITION = (52, 23)
-DATA_INDEX_TEXT_HEIGHT = 6
-DATA_INDEX_FONT = fonts.extrasmall
+# Callsign bar — delegated to a widget built once at construction via
+# make_callsign_bar() in scenes/flight/callsign_bar.py.
+# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Plane details (scrolling bar)
@@ -147,6 +137,7 @@ class FlightScene:
             AirlineLogoWidget(panel) if cfg.show_airline_icon else NullWidget()
         )
         self.journey_label = make_label(cfg, panel)
+        self.callsign_bar = make_callsign_bar(cfg, panel)
         # Track route changes so the label can reset its scrollers.
         self.last_origin: str | None = None
         self.last_dest: str | None = None
@@ -155,11 +146,6 @@ class FlightScene:
         self.details_scroller: Scroller | None = None
         self.details_spans: Spans | None = None
         self.last_details_mode: int | None = None
-
-        # Callsign bar cache - only redraw when these change
-        self.last_callsign_drawn: str | None = None
-        self.last_index_drawn: int | None = None
-        self.last_flight_count_drawn: int | None = None
 
         # Error backoff - log once, hold off before retrying
         self.error_logged: bool = False
@@ -264,6 +250,7 @@ class FlightScene:
 
         self.airline_logo.reset()
         self.journey_label.reset()
+        self.callsign_bar.reset()
         self.last_origin = None
         self.last_dest = None
 
@@ -272,10 +259,6 @@ class FlightScene:
         self.details_scroller = None
         self.details_spans = None
         self.last_details_mode = None
-
-        self.last_callsign_drawn = None
-        self.last_index_drawn = None
-        self.last_flight_count_drawn = None
 
     def draw(self) -> None:
         self.frame += 1
@@ -289,80 +272,7 @@ class FlightScene:
     # ------------------------------------------------------------------
 
     def draw_callsign(self) -> None:
-        callsign = self.flights[self.flight_index].callsign
-        flight_count = len(self.flights)
-        index = self.flight_index
-
-        if (
-            callsign == self.last_callsign_drawn
-            and index == self.last_index_drawn
-            and flight_count == self.last_flight_count_drawn
-        ):
-            return
-
-        self.last_callsign_drawn = callsign
-        self.last_index_drawn = index
-        self.last_flight_count_drawn = flight_count
-
-        self.panel.draw_square(
-            self.canvas,
-            0,
-            BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
-            screen.WIDTH - 1,
-            BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
-            TC(THEME_BG),
-        )
-        flight_no_text_length = 0
-        if callsign and callsign != "N/A":
-            for ch in callsign:
-                ch_length = self.panel.draw_text(
-                    self.canvas,
-                    FLIGHT_NO_FONT,
-                    FLIGHT_NO_POSITION[0] + flight_no_text_length,
-                    FLIGHT_NO_POSITION[1],
-                    (
-                        TC(THEME_FLIGHT_NUMERIC)
-                        if ch.isnumeric()
-                        else TC(THEME_FLIGHT_ALPHA)
-                    ),
-                    ch,
-                )
-                flight_no_text_length += ch_length
-
-        if flight_count > 1:
-            self.panel.draw_square(
-                self.canvas,
-                DATA_INDEX_POSITION[0] - BAR_PADDING,
-                BAR_STARTING_POSITION[1] - (FLIGHT_NO_TEXT_HEIGHT // 2),
-                screen.WIDTH,
-                BAR_STARTING_POSITION[1] + (FLIGHT_NO_TEXT_HEIGHT // 2),
-                TC(THEME_BG),
-            )
-            self.panel.draw_line(
-                self.canvas,
-                flight_no_text_length + BAR_PADDING,
-                BAR_STARTING_POSITION[1],
-                DATA_INDEX_POSITION[0] - BAR_PADDING - 1,
-                BAR_STARTING_POSITION[1],
-                TC(THEME_DIVIDING_BAR),
-            )
-            self.panel.draw_text(
-                self.canvas,
-                DATA_INDEX_FONT,
-                DATA_INDEX_POSITION[0],
-                DATA_INDEX_POSITION[1],
-                TC(THEME_DATA_INDEX),
-                f"{index + 1}/{flight_count}",
-            )
-        else:
-            self.panel.draw_line(
-                self.canvas,
-                flight_no_text_length + BAR_PADDING if flight_no_text_length else 0,
-                BAR_STARTING_POSITION[1],
-                screen.WIDTH,
-                BAR_STARTING_POSITION[1],
-                TC(THEME_DIVIDING_BAR),
-            )
+        self.callsign_bar.draw(self.canvas, self.flights, self.flight_index)
 
     # ------------------------------------------------------------------
     # Journey widget
