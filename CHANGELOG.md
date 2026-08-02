@@ -4,6 +4,11 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.4.0] - 2026-08-03
+- Airline logos available for flight scenes
+- Static origin/destination short-codes for full journey view (when there's no icon)
+- Completely rewritten scroller engine
+
 ## [v2.3.3] - 2026-08-03
 - Airport short-code lookup working in html
 
