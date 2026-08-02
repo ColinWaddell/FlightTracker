@@ -16,9 +16,7 @@ colour scheme (digits in ``THEME_FLIGHT_NUMERIC``, everything else in
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
+from assets.airlines.lookups import icao_to_airline
 from display.scroller import Scroller
 from display.spans import Span, Spans, draw_spans
 from scenes.flight.airline_logo import airline_icao_from_flight
@@ -38,23 +36,11 @@ from utilities.flight import Flight
 # Shared layout constants (same as the original draw_callsign).
 BAR_STARTING_POSITION = (0, 20)
 BAR_PADDING = 2
-FLIGHT_NO_POSITION = (1, 23)
+FLIGHT_NO_POSITION = (0, 23)
 FLIGHT_NO_TEXT_HEIGHT = 8
 FLIGHT_NO_FONT = fonts.small
 DATA_INDEX_POSITION = (52, 23)
 DATA_INDEX_FONT = fonts.extrasmall
-
-# Airline name lookup — loaded once from assets/airlines.json.
-_AIRLINES_JSON = Path(__file__).parents[2] / "assets" / "airlines.json"
-_airlines_cache: dict[str, str] | None = None
-
-
-def _load_airlines() -> dict[str, str]:
-    global _airlines_cache
-    if _airlines_cache is None:
-        with open(_AIRLINES_JSON) as f:
-            _airlines_cache = json.load(f)
-    return _airlines_cache
 
 
 def airline_name_from_flight(flight: Flight) -> str:
@@ -62,7 +48,8 @@ def airline_name_from_flight(flight: Flight) -> str:
     icao = airline_icao_from_flight(flight)
     if not icao:
         return ""
-    return _load_airlines().get(icao, "")
+
+    return icao_to_airline(icao)
 
 
 def build_info_spans(callsign: str = "", airline: str = "") -> Spans:

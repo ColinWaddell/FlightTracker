@@ -18,8 +18,6 @@ a stale icon behind.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from PIL import Image
 
 from display.rgbpanel import Colour, RGBPanel
@@ -39,36 +37,34 @@ _OUTLINE_COLOUR = Colour(255, 255, 255)
 # -----------------------------------------------------------------------
 # Asset loading (module-level cache, mirrors forecast_sprite._load_icon)
 # -----------------------------------------------------------------------
-
-# scenes/flight/airline_logo.py → up 2 → project root → assets/airlines
-_AIRLINES_DIR = Path(__file__).parents[2] / "assets" / "airlines"
-# Icons are spread across two subdirectories with largely disjoint sets.
-# Search both so every available icon is reachable.
-_ICON_DIRS = (
-    _AIRLINES_DIR / "ica0",  # ICAO-named icons
-    _AIRLINES_DIR / "iata",  # IATA-named (and some ICAO-named) icons
+from assets.airlines.lookups import (
+    AirlineLogoNotFound,
+    iata_to_png,
+    icao_to_png,
 )
+
 _image_cache: dict[str, Image.Image | None] = {}
 
 
-def _load_airline_icon(icao_prefix: str) -> Image.Image | None:
+def _load_airline_icon(lookup: str) -> Image.Image | None:
     """Load an airline icon PNG, caching the result for reuse.
 
     Searches both the ``ica0`` and ``iata`` subdirectories.  Returns
     ``None`` if the prefix is empty or the PNG doesn't exist in either.
     """
-    if not icao_prefix:
+    if not lookup:
         return None
-    if icao_prefix not in _image_cache:
-        for icon_dir in _ICON_DIRS:
-            path = icon_dir / f"{icao_prefix}.png"
-            if path.exists():
-                with Image.open(path) as img:
-                    _image_cache[icao_prefix] = img.convert("RGBA")
-                break
-        else:
-            _image_cache[icao_prefix] = None
-    return _image_cache[icao_prefix]
+    if lookup not in _image_cache:
+        try:
+            path = icao_to_png(lookup)
+            _image_cache[lookup] = Image.open(path)
+        except AirlineLogoNotFound:
+            try:
+                path = iata_to_png(lookup)
+                _image_cache[lookup] = Image.open(path)
+            except AirlineLogoNotFound:
+                _image_cache[lookup] = None
+    return _image_cache[lookup]
 
 
 # Some regional/commuter callsign prefixes differ from the ICAO airline
