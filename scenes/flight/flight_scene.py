@@ -390,6 +390,7 @@ class FlightScene:
             self.details_scroller.loop_count > previous_loop_count
             and len(self.flights) > 1
             and self.journey_label.loop_completed
+            and self.callsign_bar.loop_completed
         ):
             self.flight_index = (self.flight_index + 1) % len(self.flights)
             self.all_looped_flag = (not self.flight_index) or self.all_looped_flag

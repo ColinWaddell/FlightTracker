@@ -536,4 +536,5 @@ class TestAirlineNameBar:
         flights = [Flight(airline_icao="PPP", callsign="PPP123")]
         bar.draw(canvas, flights, 0)
         assert bar.scroller is not None
-        assert bar.spans[0].text == "PPP123"
+        # The spans should reconstruct the callsign (split by colour)
+        assert "".join(s.text for s in bar.spans) == "PPP123"

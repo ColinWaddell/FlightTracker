@@ -2,11 +2,16 @@
 
 Two modes, selected at construction via ``cfg.info_bar_mode``:
 
-* :class:`CallsignBar` — draws the callsign character-by-character with
-  numeric/alpha colouring, plus the dividing bar and N/M index.
+* :class:`CallsignBar` — draws the callsign with numeric/alpha colouring
+  via :class:`Span` objects, plus the dividing bar and N/M index.
 * :class:`AirlineNameBar` — looks up the airline name from
   ``assets/airlines.json`` via the resolved ICAO code and bounce-scrolls
   it using the :class:`Scroller`, same font/position as the callsign bar.
+
+Both modes use :func:`build_info_spans` so that every text string —
+callsign, airline name, or fallback — gets the same numeric/alpha
+colour scheme (digits in ``THEME_FLIGHT_NUMERIC``, everything else in
+``THEME_FLIGHT_ALPHA``).
 """
 
 from __future__ import annotations
@@ -15,12 +20,13 @@ import json
 from pathlib import Path
 
 from display.scroller import Scroller
-from display.spans import Span, Spans
+from display.spans import Span, Spans, draw_spans
 from scenes.flight.airline_logo import airline_icao_from_flight
 from setup import fonts, screen
 from setup.configuration import Config
 from setup.themes import (
     TC,
+    THEME_AIRLINE,
     THEME_BG,
     THEME_DATA_INDEX,
     THEME_DIVIDING_BAR,
@@ -59,8 +65,63 @@ def airline_name_from_flight(flight: Flight) -> str:
     return _load_airlines().get(icao, "")
 
 
+def build_info_spans(callsign: str = "", airline: str = "") -> Spans:
+    """Build spans for the info bar.
+
+    If both ``callsign`` and ``airline`` are supplied, the output is
+    ``"[callsign] [airline]"`` (with a space separator).  If only one is
+    supplied, it is rendered alone with no leading or trailing space.
+
+    The callsign uses the numeric/alpha colour scheme (digits in
+    ``THEME_FLIGHT_NUMERIC``, other characters in ``THEME_FLIGHT_ALPHA``).
+    The airline name uses a single ``THEME_AIRLINE`` colour.
+    """
+    spans: Spans = []
+
+    if callsign:
+        spans.extend(_numeric_alpha_spans(callsign))
+
+    if airline:
+        if spans:
+            spans.append(Span(TC(THEME_AIRLINE), FLIGHT_NO_FONT, " "))
+        spans.append(Span(TC(THEME_AIRLINE), FLIGHT_NO_FONT, airline))
+
+    return spans
+
+
+def _numeric_alpha_spans(text: str) -> Spans:
+    """Split ``text`` into per-character spans with numeric/alpha colouring.
+
+    Digits use ``THEME_FLIGHT_NUMERIC``; all other characters use
+    ``THEME_FLIGHT_ALPHA``.  Consecutive characters with the same colour
+    are grouped into a single span for efficiency.
+    """
+    if not text:
+        return []
+    spans: Spans = []
+    current_colour = None
+    current_chars: list[str] = []
+
+    for ch in text:
+        colour = TC(THEME_FLIGHT_NUMERIC) if ch.isnumeric() else TC(THEME_FLIGHT_ALPHA)
+        if colour != current_colour:
+            if current_chars:
+                spans.append(
+                    Span(current_colour, FLIGHT_NO_FONT, "".join(current_chars))
+                )
+            current_colour = colour
+            current_chars = [ch]
+        else:
+            current_chars.append(ch)
+
+    if current_chars:
+        spans.append(Span(current_colour, FLIGHT_NO_FONT, "".join(current_chars)))
+
+    return spans
+
+
 class CallsignBar:
-    """Draws the callsign character-by-character with the dividing bar + index."""
+    """Draws the callsign with numeric/alpha colouring, dividing bar + index."""
 
     def __init__(self, panel, cfg: Config | None = None):
         self.panel = panel
@@ -73,6 +134,11 @@ class CallsignBar:
         self.last_callsign_drawn = None
         self.last_index_drawn = None
         self.last_flight_count_drawn = None
+
+    @property
+    def loop_completed(self) -> bool:
+        """Static text — always considered fully revealed."""
+        return True
 
     def draw(self, canvas, flights: list, flight_index: int) -> None:
         callsign = flights[flight_index].callsign
@@ -100,20 +166,14 @@ class CallsignBar:
         )
         flight_no_text_length = 0
         if callsign and callsign != "N/A":
-            for ch in callsign:
-                ch_length = self.panel.draw_text(
-                    canvas,
-                    FLIGHT_NO_FONT,
-                    FLIGHT_NO_POSITION[0] + flight_no_text_length,
-                    FLIGHT_NO_POSITION[1],
-                    (
-                        TC(THEME_FLIGHT_NUMERIC)
-                        if ch.isnumeric()
-                        else TC(THEME_FLIGHT_ALPHA)
-                    ),
-                    ch,
-                )
-                flight_no_text_length += ch_length
+            spans = build_info_spans(callsign=callsign)
+            flight_no_text_length = draw_spans(
+                self.panel,
+                canvas,
+                spans,
+                FLIGHT_NO_POSITION[0],
+                FLIGHT_NO_POSITION[1],
+            )
 
         if flight_count > 1:
             self.panel.draw_square(
@@ -172,6 +232,13 @@ class AirlineNameBar:
         self.last_index_drawn = None
         self.last_flight_count_drawn = None
 
+    @property
+    def loop_completed(self) -> bool:
+        """True when the bounce-scrolled airline name has been fully revealed."""
+        if self.scroller is None:
+            return True
+        return self.scroller.all_looped()
+
     def draw(self, canvas, flights: list, flight_index: int) -> None:
         flight = flights[flight_index]
         flight_count = len(flights)
@@ -181,8 +248,12 @@ class AirlineNameBar:
         # Rebuild scroller when the flight changes (different airline name).
         if flight_id != self.last_flight_id:
             self.last_flight_id = flight_id
-            name = airline_name_from_flight(flight) or flight.callsign or "Unknown"
-            self.spans = [Span(TC(THEME_FLIGHT_ALPHA), FLIGHT_NO_FONT, name)]
+            name = airline_name_from_flight(flight)
+            callsign = flight.callsign or ""
+            if name:
+                self.spans = build_info_spans(callsign=callsign, airline=name)
+            else:
+                self.spans = build_info_spans(callsign=callsign or "Unknown")
 
             if self.scroller is not None:
                 self.scroller.clear()
@@ -202,7 +273,7 @@ class AirlineNameBar:
                 canvas,
                 FLIGHT_NO_POSITION[0],
                 FLIGHT_NO_POSITION[1] - 1,
-                screen.WIDTH - FLIGHT_NO_POSITION[0],
+                DATA_INDEX_POSITION[0] - 2,
                 self.spans,
                 bounce=True,
             )

@@ -7,8 +7,8 @@ from display.spans import Span, Spans
 from setup import screen
 
 EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
-INITIAL_TICKS = 100
-PAUSE_TICKS = 25
+INITIAL_TICKS = 25
+PAUSE_TICKS = 15
 
 
 class BounceState(Enum):
