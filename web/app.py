@@ -297,8 +297,9 @@ def parse_settings_form(form, cfg) -> dict:
             else "icao"
         ),
         "info_bar_mode": (
-            "airline"
-            if str_val(form.get("info_bar_mode"), "callsign").lower() == "airline"
+            value
+            if (value := str_val(form.get("info_bar_mode"), "callsign").lower())
+            in {"airline", "callsign", "callsign_airline"}
             else "callsign"
         ),
         "osn_client_id": str_val(form.get("osn_client_id"), ""),

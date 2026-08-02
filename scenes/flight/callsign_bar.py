@@ -250,10 +250,15 @@ class AirlineNameBar:
             self.last_flight_id = flight_id
             name = airline_name_from_flight(flight)
             callsign = flight.callsign or ""
-            if name:
+
+            if self.cfg.info_bar_mode == "callsign_airline" and callsign and name:
                 self.spans = build_info_spans(callsign=callsign, airline=name)
+            elif self.cfg.info_bar_mode == "airline" and name:
+                self.spans = build_info_spans(airline=name)
+            elif self.cfg.info_bar_mode == "callsign" and callsign:
+                self.spans = build_info_spans(callsign=callsign)
             else:
-                self.spans = build_info_spans(callsign=callsign or "Unknown")
+                self.spans = build_info_spans(callsign="Unknown")
 
             if self.scroller is not None:
                 self.scroller.clear()
@@ -273,7 +278,7 @@ class AirlineNameBar:
                 canvas,
                 FLIGHT_NO_POSITION[0],
                 FLIGHT_NO_POSITION[1] - 1,
-                DATA_INDEX_POSITION[0] - 2,
+                DATA_INDEX_POSITION[0] - 2 if flight_count > 1 else screen.WIDTH - 1,
                 self.spans,
                 bounce=True,
             )
@@ -307,6 +312,6 @@ class AirlineNameBar:
 
 def make_callsign_bar(cfg: Config, panel):
     """Return the info bar widget for the configured display mode."""
-    if cfg.info_bar_mode == "airline":
+    if cfg.info_bar_mode in ("airline", "callsign_airline"):
         return AirlineNameBar(panel, cfg)
     return CallsignBar(panel, cfg)

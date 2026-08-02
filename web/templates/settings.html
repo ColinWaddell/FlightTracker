@@ -257,6 +257,11 @@
                      {% if cfg.info_bar_mode == 'airline' %}checked{% endif %} />
               <label class="form-check-label" for="info_bar_mode_airline">Show airline name</label>
             </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="info_bar_mode" id="info_bar_mode_callsign_airline" value="callsign_airline"
+                     {% if cfg.info_bar_mode == 'callsign_airline' %}checked{% endif %} />
+              <label class="form-check-label" for="info_bar_mode_callsign_airline">Show callsign and airline name</label>
+            </div>
             <div class="form-text text-muted small">Show the flight's callsign (e.g. BAW123) or the operating airline's name (e.g. British Airways) in the info bar.</div>
           </div>
         </div>

@@ -6,7 +6,7 @@ from display.rendered_pixel import PixelColumn, RenderedPixels
 from display.spans import Span, Spans
 from setup import screen
 
-EASING_STEPS = (1, 0, 0, 1, 1, 0, 1, 1, 1)
+EASING_STEPS = (1, 1, 1, 1, 1, 1, 1, 1, 1)
 INITIAL_TICKS = 25
 PAUSE_TICKS = 15
 
