@@ -31,7 +31,8 @@
           <div class="group-header"><i class="bi bi-rocket-takeoff-pin me-2"></i>Sky Monitoring</div>
           <nav class="nav flex-column">
             <router-link class="nav-link" to="/sky-monitoring" data-section="group-sky-monitoring"><i class="bi bi-geo-alt me-2"></i>Location</router-link>
-            <router-link class="nav-link" to="/sky-monitoring" data-section="group-airport-display"><i class="bi bi-airplane me-2"></i>Airport Display</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-bi-building"><i class="bi bi-airplane me-2"></i>Airport Display</router-link>
+            <router-link class="nav-link" to="/sky-monitoring" data-section="group-airline-info"><i class="bi bi-ticket-perforated me-2"></i>Airline Info</router-link>
             <router-link class="nav-link" to="/sky-monitoring" data-section="group-plane-info"><i class="bi bi-info-circle me-2"></i>Plane Details</router-link>
             <router-link class="nav-link" to="/sky-monitoring" data-section="group-satellite"><i class="bi bi-rocket-takeoff me-2"></i>Satellite Tracking</router-link>
           </nav>
@@ -181,13 +182,6 @@
         <div id="group-airport-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>
 
-          <div class="mb-2 form-check">
-            <input type="checkbox" class="form-check-input" name="show_airline_icon" id="show_airline_icon"
-                   {% if cfg.show_airline_icon %}checked{% endif %} />
-            <label class="form-check-label" for="show_airline_icon">Show airline logo</label>
-            <div class="form-text text-muted small">Displays a 16×16 airline icon in the top-left corner, derived from the flight's callsign prefix.</div>
-          </div>
-
           <div class="mb-3">
             <label class="form-label small">Airport display style</label>
             <div class="form-check">
@@ -238,6 +232,18 @@
                    style="max-width:120px" />
             <div class="form-text text-muted small mt-1">Code to be displayed when no airport information is available.</div>
           </div>
+        </div>
+
+        <!-- ====== Airline Info ====== -->
+        <div id="group-airline-info" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-ticket-perforated me-2"></i>Airline Info</p>
+          
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="show_airline_icon" id="show_airline_icon"
+                   {% if cfg.show_airline_icon %}checked{% endif %} />
+            <label class="form-check-label" for="show_airline_icon">Show airline logo</label>
+            <div class="form-text text-muted small">Displays a 16×16 airline icon in the top-left corner, derived from the flight's callsign prefix.</div>
+          </div> 
         </div>
 
         <!-- ====== Plane Info Row ====== -->
