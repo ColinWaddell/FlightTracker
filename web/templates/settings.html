@@ -181,6 +181,13 @@
         <div id="group-airport-display" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>
 
+          <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="show_airline_icon" id="show_airline_icon"
+                   {% if cfg.show_airline_icon %}checked{% endif %} />
+            <label class="form-check-label" for="show_airline_icon">Show airline logo</label>
+            <div class="form-text text-muted small">Displays a 16×16 airline icon in the top-left corner, derived from the flight's callsign prefix.</div>
+          </div>
+
           <div class="mb-3">
             <label class="form-label small">Airport display style</label>
             <div class="form-check">

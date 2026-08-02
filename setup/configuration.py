@@ -57,6 +57,9 @@ DEFAULT_FLIGHT_OBSERVER_LNG = -4.25
 DEFAULT_AIRPORT_DISPLAY_STYLE = 0  # 0=short code, 1=name, 2=name abbreviated, 3=municipality, 4=municipality+country
 DEFAULT_HOME_AIRPORT_CODE = ""
 DEFAULT_JOURNEY_BLANK_FILLER = "???"
+DEFAULT_SHOW_AIRLINE_ICON = (
+    False  # show 16x16 airline logo (from callsign prefix) at (0,0)
+)
 
 # Plane info row
 DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
@@ -153,6 +156,7 @@ DEFAULTS: dict[str, Any] = {
     "airport_display_style": DEFAULT_AIRPORT_DISPLAY_STYLE,
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
+    "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
     # Plane info row
     "details": DEFAULT_DETAILS,
     # Weather
@@ -611,6 +615,10 @@ class Config:
         return str(
             self.data_store.get("journey_blank_filler", DEFAULT_JOURNEY_BLANK_FILLER)
         )
+
+    @property
+    def show_airline_icon(self) -> bool:
+        return bool(self.data_store.get("show_airline_icon", DEFAULT_SHOW_AIRLINE_ICON))
 
     @property
     def details(self) -> int:

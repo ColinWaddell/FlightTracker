@@ -1,12 +1,9 @@
 """Tests for scenes/flight/flight_scene.py - pure helper functions."""
 
-from scenes.flight.flight_scene import (
-    EASING_STEPS,
-    abbreviate,
-    callsigns_match,
-    telemetry_changed,
-    tick_to_offset,
-)
+from display.scroller import EASING_STEPS
+from display.scroller import _tick_offset as tick_to_offset
+from scenes.flight.flight_scene import callsigns_match, telemetry_changed
+from scenes.flight.journey.full_label import abbreviate
 from utilities.flight import Flight
 
 # ---------------------------------------------------------------------------
@@ -192,3 +189,222 @@ class TestTickToOffset:
         assert tick_to_offset(len(EASING_STEPS)) == 1
         assert tick_to_offset(len(EASING_STEPS) + 5) == 1
         assert tick_to_offset(100) == 1
+
+
+# ---------------------------------------------------------------------------
+# airline_icao_from_flight
+# ---------------------------------------------------------------------------
+
+from unittest.mock import MagicMock
+
+from scenes.flight.airline_logo import (
+    AirlineLogoWidget,
+    NullWidget,
+    airline_icao_from_flight,
+)
+
+
+class TestAirlineIcaoFromFlight:
+    def test_airline_icao_from_field(self):
+        flight = Flight(airline_icao="BAW")
+        assert airline_icao_from_flight(flight) == "BAW"
+
+    def test_falls_back_to_callsign_prefix(self):
+        flight = Flight(icao_callsign="UAL1583")
+        assert airline_icao_from_flight(flight) == "UAL"
+
+    def test_airline_icao_takes_priority_over_callsign(self):
+        flight = Flight(airline_icao="ENY", icao_callsign="UAL1583")
+        assert airline_icao_from_flight(flight) == "ENY"
+
+    def test_empty_everything(self):
+        assert airline_icao_from_flight(Flight()) == ""
+
+    def test_short_callsign_no_airline_icao(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="A1")) == ""
+
+    def test_non_alpha_callsign_prefix(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="1AB234")) == ""
+
+    def test_strips_whitespace(self):
+        flight = Flight(airline_icao="  baw  ")
+        assert airline_icao_from_flight(flight) == "BAW"
+
+
+# ---------------------------------------------------------------------------
+# AirlineLogoWidget
+# ---------------------------------------------------------------------------
+
+
+def _make_panel_and_canvas():
+    panel = MagicMock()
+    canvas = MagicMock()
+    return panel, canvas
+
+
+class TestAirlineLogoWidget:
+    def test_width_is_0_before_draw(self):
+        panel, _ = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        assert widget.width == 0
+        assert widget.icon_drawn is False
+
+    def test_width_is_16_after_icon_drawn(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        widget.draw(canvas, Flight(airline_icao="BBQ"))
+        assert widget.width == 16
+        assert widget.icon_drawn is True
+
+    def test_draw_blanks_then_draws_image(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        # BBQ icon exists in assets/airlines/ica0/
+        flight = Flight(airline_icao="BBQ")
+        widget.draw(canvas, flight)
+        # Should have blanked the region (set_pixel calls) then drawn the image
+        assert panel.set_pixel.called
+        assert panel.draw_image.called
+
+    def test_draw_once_skips_repaint(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        flight = Flight(airline_icao="BBQ")
+        widget.draw(canvas, flight)
+        panel.reset_mock()
+        # Second draw with same airline_icao — should skip
+        widget.draw(canvas, flight)
+        assert not panel.set_pixel.called
+        assert not panel.draw_image.called
+
+    def test_reset_forces_repaint(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        flight = Flight(airline_icao="BBQ")
+        widget.draw(canvas, flight)
+        panel.reset_mock()
+        widget.reset()
+        widget.draw(canvas, flight)
+        assert panel.set_pixel.called
+        assert panel.draw_image.called
+
+    def test_flight_change_repaints(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        widget.draw(canvas, Flight(airline_icao="BBQ"))
+        panel.reset_mock()
+        widget.draw(canvas, Flight(airline_icao="BCO"))
+        assert panel.set_pixel.called
+        assert panel.draw_image.called
+
+    def test_missing_icon_no_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        # QQQ icon file does not exist — no outline, no image, width=0
+        widget.draw(canvas, Flight(airline_icao="QQQ"))
+        assert panel.set_pixel.called  # blanks the region
+        assert not panel.draw_image.called
+        assert not panel.draw_line.called
+        assert widget.width == 0
+        assert widget.icon_drawn is False
+
+    def test_empty_airline_icao_no_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        widget.draw(canvas, Flight())
+        assert not panel.draw_image.called
+        assert not panel.draw_line.called
+        assert widget.width == 0
+        assert widget.icon_drawn is False
+
+    def test_callsign_fallback_missing_icon_no_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        # No airline_icao, callsign prefix is alphabetic but has no matching icon
+        widget.draw(canvas, Flight(icao_callsign="QQQ999"))
+        assert not panel.draw_image.called
+        assert not panel.draw_line.called
+        assert widget.width == 0
+        assert widget.icon_drawn is False
+
+
+class TestNullWidget:
+    def test_width_is_0(self):
+        assert NullWidget().width == 0
+
+    def test_draw_is_noop(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = NullWidget()
+        widget.draw(canvas, Flight(airline_icao="BAW"))
+        assert not panel.set_pixel.called
+        assert not panel.draw_image.called
+
+    def test_reset_is_noop(self):
+        widget = NullWidget()
+        widget.reset()  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# make_label
+# ---------------------------------------------------------------------------
+
+from scenes.flight.journey import make_label
+from scenes.flight.journey.full_label import FullNameLabel
+from scenes.flight.journey.short_label import ShortCodeLabel
+
+
+class TestMakeLabel:
+    def test_style_0_returns_short_code_label(self, monkeypatch):
+        cfg = MagicMock()
+        cfg.airport_display_style = 0
+        panel, _ = _make_panel_and_canvas()
+        label = make_label(cfg, panel)
+        assert isinstance(label, ShortCodeLabel)
+
+    def test_style_1_returns_full_name_label(self):
+        cfg = MagicMock()
+        cfg.airport_display_style = 1
+        panel, _ = _make_panel_and_canvas()
+        label = make_label(cfg, panel)
+        assert isinstance(label, FullNameLabel)
+
+    def test_style_4_returns_full_name_label(self):
+        cfg = MagicMock()
+        cfg.airport_display_style = 4
+        panel, _ = _make_panel_and_canvas()
+        label = make_label(cfg, panel)
+        assert isinstance(label, FullNameLabel)
+
+
+# ---------------------------------------------------------------------------
+# ShortCodeLabel
+# ---------------------------------------------------------------------------
+
+
+class TestShortCodeLabel:
+    def test_loop_completed_after_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        # draw_text returns advance width; mock it to return small ints
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        label = ShortCodeLabel(panel)
+        assert label.loop_completed is False
+        flight = Flight(origin="GLA", destination="LHR")
+        label.draw(canvas, flight, 1, 63)
+        assert label.loop_completed is True
+
+    def test_reset_clears_loop_completed(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        label = ShortCodeLabel(panel)
+        label.draw(canvas, Flight(origin="GLA", destination="LHR"), 1, 63)
+        label.reset()
+        assert label.loop_completed is False
+
+    def test_text_origin_shifts_with_icon(self):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        label = ShortCodeLabel(panel)
+        label.draw(canvas, Flight(origin="GLA", destination="LHR"), 17, 47)
+        # First draw_text call should be at x=17 (the text_x_origin)
+        first_call_args = panel.draw_text.call_args_list[0]
+        assert first_call_args[0][2] == 17  # x argument position

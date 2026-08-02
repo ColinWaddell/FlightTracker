@@ -221,6 +221,7 @@ class Overhead:
                         heading=heading,
                         callsign=display_callsign,
                         icao_callsign=icao_callsign,
+                        airline_icao=clean_field(flight.airline_icao),
                     )
                 )
 

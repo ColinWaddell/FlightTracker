@@ -25,27 +25,22 @@ import time
 
 from display.scroller import Scroller
 from display.spans import Span, Spans
+from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
+from scenes.flight.journey import make_label
 from setup import fonts, screen
 from setup.configuration import Config
 from setup.themes import (
     TC,
-    THEME_ARROW,
     THEME_BG,
     THEME_DATA_INDEX,
     THEME_DIVIDING_BAR,
     THEME_FLIGHT_ALPHA,
     THEME_FLIGHT_NUMERIC,
-    THEME_LOCATION_DESTINATION,
-    THEME_LOCATION_DESTINATION_ARROW,
-    THEME_LOCATION_DESTINATION_FULL,
-    THEME_LOCATION_ORIGIN,
-    THEME_LOCATION_ORIGIN_ARROW,
-    THEME_LOCATION_ORIGIN_FULL,
     THEME_PLANE,
     THEME_PLANE_TLM,
     THEME_PLANE_TLM_UNITS,
 )
-from utilities.flight import TELEMETRY_FIELDS, Flight
+from utilities.flight import TELEMETRY_FIELDS
 
 logger = logging.getLogger(__name__)
 
@@ -99,33 +94,11 @@ PLANE_DETAILS_HEIGHT = 8
 # ---------------------------------------------------------------------------
 # Journey widget
 # ---------------------------------------------------------------------------
-
-FULL_LINE_Y = (7, 15)
-
-IATA_ORIGIN_X = 1
-IATA_DESTINATION_X = 40
-ARROW_TIP_X = 34
-ARROW_TIP_Y = 7
-ARROW_WIDTH = 4
-ARROW_HEIGHT = 8
-
-ABBREVIATIONS = {
-    "International": "Intl",
-    "international": "Intl",
-    "Airport": "",
-    "airport": "",
-    "Regional": "Reg",
-    "regional": "Reg",
-    "Municipal": "Muni",
-    "municipal": "Muni",
-}
-
-
-def abbreviate(name: str) -> str:
-    for long, short in ABBREVIATIONS.items():
-        name = name.replace(long, short)
-    return " ".join(name.split())
-
+# The journey rendering (short-code vs full-name) is delegated to a label
+# widget built once at construction via make_label().  The airline icon
+# widget (AirlineLogoWidget or NullWidget) is also built once.  Both live
+# in scenes/flight/journey/ and scenes/flight/airline_logo.py.
+# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # FlightScene
@@ -166,14 +139,15 @@ class FlightScene:
         self.all_looped_flag: bool = False
         self.frame: int = 0
 
-        # Journey state
-        self.journey_first_draw = True
-        self.journey_mode: str | None = None
-        self.origin_scroller: Scroller | None = None
-        self.dest_scroller: Scroller | None = None
-        self.origin_spans: Spans | None = None
-        self.dest_spans: Spans | None = None
-        self.journey_loop_completed = False
+        # Airline icon + journey label — built once from current config.
+        # Settings changes force a restart, so selection at construction is
+        # safe and avoids per-frame config branching.
+        cfg = Config.instance()
+        self.airline_logo = (
+            AirlineLogoWidget(panel) if cfg.show_airline_icon else NullWidget()
+        )
+        self.journey_label = make_label(cfg, panel)
+        # Track route changes so the label can reset its scrollers.
         self.last_origin: str | None = None
         self.last_dest: str | None = None
 
@@ -283,24 +257,18 @@ class FlightScene:
     def reset(self) -> None:
         self.frame = 0
 
-        for scroller in (
-            self.origin_scroller,
-            self.dest_scroller,
-            self.details_scroller,
-        ):
-            if scroller is not None:
-                scroller.clear()
+        # Blank the entire top half (journey band + icon area, rows 0-15)
+        # in one go on flight-to-flight transitions, rather than letting
+        # each widget clear its own slice separately.
+        self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
 
-        self.journey_first_draw = True
-        self.journey_mode = None
-        self.origin_scroller = None
-        self.dest_scroller = None
-        self.origin_spans = None
-        self.dest_spans = None
-        self.journey_loop_completed = False
+        self.airline_logo.reset()
+        self.journey_label.reset()
         self.last_origin = None
         self.last_dest = None
 
+        if self.details_scroller is not None:
+            self.details_scroller.clear()
         self.details_scroller = None
         self.details_spans = None
         self.last_details_mode = None
@@ -311,6 +279,7 @@ class FlightScene:
 
     def draw(self) -> None:
         self.frame += 1
+        self.airline_logo.draw(self.canvas, self.flights[self.flight_index])
         self.draw_callsign()
         self.draw_journey()
         self.draw_plane_details()
@@ -400,247 +369,30 @@ class FlightScene:
     # ------------------------------------------------------------------
 
     def draw_journey(self) -> None:
-        cfg = Config.instance()
         flight = self.flights[self.flight_index]
         origin = flight.origin
         destination = flight.destination
 
         route_changed = origin != self.last_origin or destination != self.last_dest
         if route_changed:
-            for scroller in (self.origin_scroller, self.dest_scroller):
-                if scroller is not None:
-                    scroller.clear()
-
-            self.journey_first_draw = True
-            self.journey_mode = None
-            self.origin_scroller = None
-            self.dest_scroller = None
-            self.origin_spans = None
-            self.dest_spans = None
-            self.journey_loop_completed = False
+            self.journey_label.reset()
             self.last_origin = origin
             self.last_dest = destination
 
-        if cfg.airport_display_style == 0:
-            if self.journey_mode != "iata":
-                for scroller in (self.origin_scroller, self.dest_scroller):
-                    if scroller is not None:
-                        scroller.clear()
-                self.origin_scroller = None
-                self.dest_scroller = None
-                self.origin_spans = None
-                self.dest_spans = None
-                self.journey_mode = "iata"
-                self.journey_first_draw = True
-                self.journey_loop_completed = False
-
-            if not self.journey_loop_completed:
-                self.draw_iata_mode(cfg, flight)
-                self.journey_first_draw = False
-            return
-
-        origin_spans, dest_spans = self.build_journey_spans(cfg, flight)
-
-        if self.journey_mode != "full" or self.journey_first_draw:
-            self.journey_mode = "full"
-            self.panel.draw_square(
-                self.canvas, 0, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
-            )
-            self.setup_full_mode(cfg, flight, origin_spans, dest_spans)
-            self.journey_first_draw = False
+        # Journey text starts after the icon (1px gap) when an icon was
+        # drawn; otherwise starts at x=1 (the original margin).
+        icon_width = self.airline_logo.width
+        if icon_width:
+            # Icon mode: start at x=16 (no gap) and extend 1px wider.
+            journey_x = icon_width + 1
+            journey_width = screen.WIDTH - journey_x
         else:
-            if origin_spans != self.origin_spans:
-                assert self.origin_scroller is not None
-                self.origin_scroller.update(origin_spans)
-                self.origin_spans = origin_spans
+            journey_x = 1
+            journey_width = screen.WIDTH - journey_x
+        scroll_all = icon_width > 0
 
-            if dest_spans != self.dest_spans:
-                assert self.dest_scroller is not None
-                self.dest_scroller.update(dest_spans)
-                self.dest_spans = dest_spans
-
-        assert self.origin_scroller is not None
-        assert self.dest_scroller is not None
-
-        self.origin_scroller.draw()
-        self.dest_scroller.draw()
-
-        # Preserve the old behaviour that keeps two overflowing bounce lines
-        # approximately synchronised when their state transitions diverge.
-        if (
-            self.origin_scroller.scroll_max > 0
-            and self.dest_scroller.scroll_max > 0
-            and self.origin_scroller.state != self.dest_scroller.state
-        ):
-            self.origin_scroller.timer = 0
-            self.dest_scroller.timer = 0
-
-        if self.origin_scroller.all_looped() and self.dest_scroller.all_looped():
-            self.journey_loop_completed = True
-
-    def draw_iata_mode(self, cfg, flight: Flight) -> None:
-        origin = flight.origin or cfg.journey_blank_filler
-        destination = flight.destination or cfg.journey_blank_filler
-        home_code = cfg.home_airport_code
-
-        self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
-
-        font = fonts.large_bold if origin == home_code else fonts.large
-        self.panel.draw_text(
-            self.canvas, font, IATA_ORIGIN_X, 12, TC(THEME_LOCATION_ORIGIN), origin
-        )
-        font = fonts.large_bold if destination == home_code else fonts.large
-        self.panel.draw_text(
-            self.canvas,
-            font,
-            IATA_DESTINATION_X,
-            12,
-            TC(THEME_LOCATION_DESTINATION),
-            destination,
-        )
-
-        ax, ay = ARROW_TIP_X, ARROW_TIP_Y
-        x = ax - ARROW_WIDTH
-        y1 = ay - (ARROW_HEIGHT // 2)
-        y2 = ay + (ARROW_HEIGHT // 2)
-        self.panel.set_pixel(
-            self.canvas,
-            ax,
-            ay,
-            TC(THEME_ARROW).red,
-            TC(THEME_ARROW).green,
-            TC(THEME_ARROW).blue,
-        )
-        for _ in range(ARROW_WIDTH):
-            self.panel.draw_line(self.canvas, x, y1, x, y2, TC(THEME_ARROW))
-            x += 1
-            y1 += 1
-            y2 -= 1
-
-        self.journey_loop_completed = True
-
-    def build_journey_spans(self, cfg, flight: Flight) -> tuple[Spans, Spans]:
-        origin = flight.origin or cfg.journey_blank_filler
-        destination = flight.destination or cfg.journey_blank_filler
-        style = cfg.airport_display_style
-
-        def resolve_name(
-            flight_key_name: str,
-            flight_key_muni: str,
-            flight_key_country: str,
-        ) -> str:
-            if style == 1:
-                return getattr(flight, flight_key_name, "") or ""
-            if style == 2:
-                return abbreviate(getattr(flight, flight_key_name, "") or "")
-            if style == 3:
-                return getattr(flight, flight_key_muni, "") or ""
-            if style == 4:
-                municipality = getattr(flight, flight_key_muni, "") or ""
-                country = getattr(flight, flight_key_country, "") or ""
-                return (
-                    f"{municipality}, {country}"
-                    if municipality and country
-                    else municipality or country
-                )
-            return getattr(flight, flight_key_name, "") or ""
-
-        origin_name = resolve_name(
-            "origin_name", "origin_municipality", "origin_country"
-        )
-        destination_name = resolve_name(
-            "destination_name",
-            "destination_municipality",
-            "destination_country",
-        )
-
-        font = fonts.small_symbols
-
-        origin_spans: Spans = [
-            Span(
-                TC(THEME_LOCATION_ORIGIN_FULL),
-                font,
-                f"{origin_name or 'Unknown'} ",
-            ),
-        ]
-        destination_spans: Spans = [
-            Span(
-                TC(THEME_LOCATION_DESTINATION_FULL),
-                font,
-                f"{destination_name or 'Unknown'} ",
-            ),
-        ]
-
-        return origin_spans, destination_spans
-
-    def setup_full_mode(
-        self,
-        cfg,
-        flight: Flight,
-        origin_spans: Spans,
-        dest_spans: Spans,
-    ) -> None:
-        for scroller in (self.origin_scroller, self.dest_scroller):
-            if scroller is not None:
-                scroller.clear()
-
-        font = fonts.small_symbols
-        origin = flight.origin or cfg.journey_blank_filler
-        destination = flight.destination or cfg.journey_blank_filler
-
-        origin_x = self.panel.draw_text(
-            self.canvas,
-            font,
-            0,
-            FULL_LINE_Y[0],
-            TC(THEME_LOCATION_ORIGIN),
-            origin,
-        )
-        origin_x += self.panel.draw_text(
-            self.canvas,
-            font,
-            origin_x,
-            FULL_LINE_Y[0],
-            TC(THEME_LOCATION_ORIGIN_ARROW),
-            ">",
-        )
-
-        dest_x = self.panel.draw_text(
-            self.canvas,
-            font,
-            0,
-            FULL_LINE_Y[1],
-            TC(THEME_LOCATION_DESTINATION),
-            destination,
-        )
-        dest_x += self.panel.draw_text(
-            self.canvas,
-            font,
-            dest_x,
-            FULL_LINE_Y[1],
-            TC(THEME_LOCATION_DESTINATION_ARROW),
-            "<",
-        )
-
-        self.origin_spans = origin_spans
-        self.dest_spans = dest_spans
-        self.origin_scroller = Scroller(
-            self.panel,
-            self.canvas,
-            origin_x,
-            FULL_LINE_Y[0],
-            max(1, screen.WIDTH - origin_x),
-            origin_spans,
-            bounce=True,
-        )
-        self.dest_scroller = Scroller(
-            self.panel,
-            self.canvas,
-            dest_x,
-            FULL_LINE_Y[1],
-            max(1, screen.WIDTH - dest_x),
-            dest_spans,
-            bounce=True,
+        self.journey_label.draw(
+            self.canvas, flight, journey_x, journey_width, scroll_all
         )
 
     # ------------------------------------------------------------------
@@ -727,7 +479,7 @@ class FlightScene:
         if (
             self.details_scroller.loop_count > previous_loop_count
             and len(self.flights) > 1
-            and self.journey_loop_completed
+            and self.journey_label.loop_completed
         ):
             self.flight_index = (self.flight_index + 1) % len(self.flights)
             self.all_looped_flag = (not self.flight_index) or self.all_looped_flag
