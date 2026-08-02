@@ -10,6 +10,7 @@ _junk/
 *.bak
 package.json
 package-lock.json
+airline_logos_full/
 
 # Docs site (Eleventy)
 node_modules/

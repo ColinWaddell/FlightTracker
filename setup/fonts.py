@@ -21,6 +21,10 @@ def _load_fonts():
         f"{DIR_PATH}/../fonts/5x8-custom.bdf"
     )
     _loaded_fonts["regular"] = panel.load_font(f"{DIR_PATH}/../fonts/6x12.bdf")
+
+    _loaded_fonts["medium"] = panel.load_font(f"{DIR_PATH}/../fonts/7x13.bdf")
+    _loaded_fonts["medium_bold"] = panel.load_font(f"{DIR_PATH}/../fonts/7x14B.bdf")
+
     _loaded_fonts["large"] = panel.load_font(f"{DIR_PATH}/../fonts/8x13.bdf")
     _loaded_fonts["large_bold"] = panel.load_font(f"{DIR_PATH}/../fonts/8x13B.bdf")
 
@@ -31,6 +35,8 @@ def __getattr__(name):
         "small",
         "small_symbols",
         "regular",
+        "medium",
+        "medium_bold",
         "large",
         "large_bold",
     ):

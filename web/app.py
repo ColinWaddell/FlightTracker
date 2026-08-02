@@ -188,6 +188,7 @@ def parse_settings_form(form, cfg) -> dict:
             0, min(4, int_val(form.get("airport_display_style"), 0))
         ),
         "journey_blank_filler": str_val(form.get("journey_blank_filler"), " ? "),
+        "show_airline_icon": bool_val(form.get("show_airline_icon")),
         # Plane info row
         "details": int_val(form.get("details"), 0),
         # Weather
@@ -294,6 +295,12 @@ def parse_settings_form(form, cfg) -> dict:
             "iata"
             if str_val(form.get("callsign_format"), "icao").lower() == "iata"
             else "icao"
+        ),
+        "info_bar_mode": (
+            value
+            if (value := str_val(form.get("info_bar_mode"), "callsign").lower())
+            in {"airline", "callsign", "callsign_airline"}
+            else "callsign"
         ),
         "osn_client_id": str_val(form.get("osn_client_id"), ""),
         "osn_client_secret": str_val(form.get("osn_client_secret"), ""),

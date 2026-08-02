@@ -14,6 +14,7 @@ import threading
 import urllib.request
 
 from display.rgbpanel import Colour
+from display.spans import font_text_width
 from setup import fonts
 from setup.configuration import Config
 from setup.screen import WIDTH as SCREEN_WIDTH
@@ -259,15 +260,6 @@ def temperature_to_colour(temp_c: float) -> Colour:
         int(c_lo.green + (c_hi.green - c_lo.green) * ratio),
         int(c_lo.blue + (c_hi.blue - c_lo.blue) * ratio),
     )
-
-
-# ---------------------------------------------------------------------------
-# Font helper
-# ---------------------------------------------------------------------------
-
-
-def font_text_width(font, text: str) -> int:
-    return sum(font.CharacterWidth(ord(c)) for c in text)
 
 
 # ---------------------------------------------------------------------------

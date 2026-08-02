@@ -26,6 +26,7 @@ class RouteInfo:
 
     plane: str = ""
     registration: str = ""
+    airline_icao: str = ""  # operating carrier ICAO code for logo lookup
     origin: str = ""
     destination: str = ""
     origin_name: str = ""
@@ -67,6 +68,7 @@ class Flight:
     # Identity
     callsign: str = ""
     icao_callsign: str = ""
+    airline_icao: str = ""  # operating carrier ICAO code for logo lookup
 
     # Route info
     plane: str = ""

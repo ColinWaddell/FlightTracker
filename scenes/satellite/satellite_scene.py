@@ -22,6 +22,7 @@ import datetime
 import logging
 
 from display.rgbpanel import Colour
+from display.spans import PlacedSpan, Span, font_text_width
 from scenes.satellite import azel_plot
 from scenes.satellite import passes as passes_mod
 from setup import fonts, frames, screen
@@ -75,7 +76,7 @@ class SatelliteScene:
         self.last_blink_on: bool = True
 
         # Stash previous text draws so we can erase only what changed
-        self.last_text: dict[str, tuple[str, int, int, Colour]] = {}
+        self.last_text: dict[str, PlacedSpan] = {}
 
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
         self.ring_drawn: bool = False
@@ -322,44 +323,39 @@ class SatelliteScene:
             alt_val, alt_unit = "--", ""
 
         # Build the set of text elements for this frame.
-        # Each entry: (text, x, y, colour, font)
-        new_texts: dict[str, tuple[str, int, int, Colour, object]] = {
-            "name": (window.name, TEXT_COL_X, NAME_Y, YELLOW, fonts.extrasmall),
-            "spd_label": ("Speed", TEXT_COL_X, LINE1_Y, PEACH, fonts.extrasmall),
-            "spd_value": (speed_val, TEXT_COL_X, LINE2_Y, WHITE, fonts.extrasmall),
-            "spd_unit": (speed_unit, 0, LINE2_Y, PINK, fonts.extrasmall),
-            "alt_label": (
-                "Altitude",
-                TEXT_COL_X,
-                LINE3_Y,
-                PEACH,
-                fonts.extrasmall,
-            ),
-            "alt_value": (alt_val, TEXT_COL_X, LINE4_Y, WHITE, fonts.extrasmall),
-            "alt_unit": (alt_unit, 0, LINE4_Y, PINK, fonts.extrasmall),
+        # Each entry is a PlacedSpan (a Span positioned at an x, y baseline).
+        f = fonts.extrasmall
+        new_texts: dict[str, PlacedSpan] = {
+            "name": PlacedSpan(Span(YELLOW, f, window.name), TEXT_COL_X, NAME_Y),
+            "spd_label": PlacedSpan(Span(PEACH, f, "Speed"), TEXT_COL_X, LINE1_Y),
+            "spd_value": PlacedSpan(Span(WHITE, f, speed_val), TEXT_COL_X, LINE2_Y),
+            "spd_unit": PlacedSpan(Span(PINK, f, speed_unit), 0, LINE2_Y),
+            "alt_label": PlacedSpan(Span(PEACH, f, "Altitude"), TEXT_COL_X, LINE3_Y),
+            "alt_value": PlacedSpan(Span(WHITE, f, alt_val), TEXT_COL_X, LINE4_Y),
+            "alt_unit": PlacedSpan(Span(PINK, f, alt_unit), 0, LINE4_Y),
         }
 
         # Compute unit x-positions (right after the value text)
         for key in ("spd_unit", "alt_unit"):
             val_key = key.replace("_unit", "_value")
-            val_text, val_x, val_y, _, _ = new_texts[val_key]
-            unit_text, _, unit_y, unit_col, unit_font = new_texts[key]
-            # Width of value text in pixels (4px per char for extrasmall)
-            val_width = len(val_text) * 4
-            new_texts[key] = (unit_text, val_x + val_width, unit_y, unit_col, unit_font)
+            val_ps = new_texts[val_key]
+            unit_ps = new_texts[key]
+            # Width of value text in pixels, using the real per-glyph advance
+            val_width = font_text_width(val_ps.span.font, val_ps.span.text)
+            new_texts[key] = unit_ps._replace(x=val_ps.x + val_width)
 
         black = Colour(0, 0, 0)
 
-        for key, (text, x, y, col, font) in new_texts.items():
+        for key, ps in new_texts.items():
             old = self.last_text.get(key)
-            if old is not None:
-                old_text, old_x, old_y, _, old_font = old
-                # Only erase if something changed (text, position, or font)
-                if (old_text, old_x, old_y, old_font) != (text, x, y, font):
-                    self.panel.draw_text(
-                        self.canvas, old_font, old_x, old_y, black, old_text
-                    )
-            self.panel.draw_text(self.canvas, font, x, y, col, text)
+            if old is not None and old != ps:
+                # Erase the old text if anything changed (text, position, font, or colour)
+                self.panel.draw_text(
+                    self.canvas, old.span.font, old.x, old.y, black, old.span.text
+                )
+            self.panel.draw_text(
+                self.canvas, ps.span.font, ps.x, ps.y, ps.span.colour, ps.span.text
+            )
 
         self.last_text = new_texts
 

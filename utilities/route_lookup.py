@@ -395,6 +395,9 @@ def _fr24_fallback(
             if want_plane:
                 route.plane = _fr24_aircraft_type(api, flight)
 
+            # -- Operating carrier ICAO (for logo lookup) --------------
+            route.airline_icao = (getattr(flight, "airline_icao", "") or "").strip()
+
             if route.origin or route.destination or route.plane:
                 logger.debug(
                     "FR24 fallback found data for %r: %s->%s plane=%r",

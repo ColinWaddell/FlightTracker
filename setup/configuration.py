@@ -57,6 +57,9 @@ DEFAULT_FLIGHT_OBSERVER_LNG = -4.25
 DEFAULT_AIRPORT_DISPLAY_STYLE = 0  # 0=short code, 1=name, 2=name abbreviated, 3=municipality, 4=municipality+country
 DEFAULT_HOME_AIRPORT_CODE = ""
 DEFAULT_JOURNEY_BLANK_FILLER = "???"
+DEFAULT_SHOW_AIRLINE_ICON = (
+    False  # show 16x16 airline logo (from callsign prefix) at (0,0)
+)
 
 # Plane info row
 DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
@@ -117,6 +120,7 @@ DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 DEFAULT_CALLSIGN_FORMAT = (
     "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 )
+DEFAULT_INFO_BAR_MODE = "callsign"  # 'callsign' = show callsign, 'airline' = show airline name, 'callsign_airline' = show both
 DEFAULT_OSN_CLIENT_ID = ""  # OpenSky Network OAuth2 client ID
 DEFAULT_OSN_CLIENT_SECRET = ""  # OpenSky Network OAuth2 client secret
 
@@ -153,6 +157,7 @@ DEFAULTS: dict[str, Any] = {
     "airport_display_style": DEFAULT_AIRPORT_DISPLAY_STYLE,
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
+    "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
     # Plane info row
     "details": DEFAULT_DETAILS,
     # Weather
@@ -195,6 +200,7 @@ DEFAULTS: dict[str, Any] = {
     "tar1090_url": DEFAULT_TAR1090_URL,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
+    "info_bar_mode": DEFAULT_INFO_BAR_MODE,
     "osn_client_id": DEFAULT_OSN_CLIENT_ID,
     "osn_client_secret": DEFAULT_OSN_CLIENT_SECRET,
     # Satellite tracking
@@ -613,6 +619,10 @@ class Config:
         )
 
     @property
+    def show_airline_icon(self) -> bool:
+        return bool(self.data_store.get("show_airline_icon", DEFAULT_SHOW_AIRLINE_ICON))
+
+    @property
     def details(self) -> int:
         return int(self.data_store.get("details", DEFAULT_DETAILS))
 
@@ -932,6 +942,15 @@ class Config:
             self.data_store.get("callsign_format", DEFAULT_CALLSIGN_FORMAT)
         ).lower()
         return val if val in ("icao", "iata") else DEFAULT_CALLSIGN_FORMAT
+
+    @property
+    def info_bar_mode(self) -> str:
+        val = str(self.data_store.get("info_bar_mode", DEFAULT_INFO_BAR_MODE)).lower()
+        return (
+            val
+            if val in ("callsign", "airline", "callsign_airline")
+            else DEFAULT_INFO_BAR_MODE
+        )
 
     @property
     def satellite_tracking_enabled(self) -> bool:
