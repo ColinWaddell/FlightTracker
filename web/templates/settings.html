@@ -216,6 +216,7 @@
           </div>
 
           <div id="home_airport_fields" class="mb-3" style="display:{% if cfg.airport_display_style == 0 %}block{% else %}none{% endif %}">
+            <label class="form-label small">Home airport</label>
             <input type="text" maxlength="3" class="form-control form-control-sm"
                    name="home_airport_code" id="home_airport_code"
                    value="{{ cfg.home_airport_code }}"

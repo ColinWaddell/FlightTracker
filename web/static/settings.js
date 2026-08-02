@@ -561,14 +561,14 @@
     const code = e.target.value.toUpperCase();
     e.target.value = code;
     const hint = document.getElementById("airport_name_hint");
-    hint.textContent = AIRPORTS[code] ? AIRPORTS[code] : (code.length >= 3 ? "Unknown airport" : "");
+    hint.textContent = AIRPORTS[code]?.name ?? (code.length >= 3 ? "Unknown airport" : "");
   });
 
   // Trigger on load
   (function () {
     const code = document.getElementById("home_airport_code").value.toUpperCase();
     const hint = document.getElementById("airport_name_hint");
-    if (AIRPORTS[code]) hint.textContent = AIRPORTS[code];
+    hint.textContent = AIRPORTS[code]?.name ?? "";
   })();
 
   // ===========================================================================
