@@ -9,6 +9,25 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 from display.rgbpanel import RGBPanel
 
+# The rgbmatrix graphics.Font is a C++ binding object with no __dict__, so
+# we cannot stash the BDF path on it.  Instead we keep a module-level
+# registry mapping each loaded font's id() to the BDF path it was loaded
+# from.  Callers that need glyph-level access (e.g. the Scroller, which
+# renders pixel columns) can look the path up via bdf_path_for_font() and
+# load a BDFFont from the same file.  Fonts live for the program's
+# lifetime (held in setup/fonts._loaded_fonts), so id() is stable.
+_font_bdf_paths: dict[int, str] = {}
+
+
+def bdf_path_for_font(font) -> str | None:
+    """Return the BDF path a rgbmatrix graphics.Font was loaded from.
+
+    Returns ``None`` for fonts not loaded by :meth:`RGBMatrixPanel.load_font`
+    (e.g. a real :class:`display.bdf_font.BDFFont`, which carries its own
+    glyph data and doesn't need this lookup).
+    """
+    return _font_bdf_paths.get(id(font))
+
 
 class RGBMatrixPanel(RGBPanel):
     """Pi 3/4 panel driver using hzeller rpi-rgb-led-matrix."""
@@ -59,11 +78,11 @@ class RGBMatrixPanel(RGBPanel):
     def load_font(self, path):
         font = graphics.Font()
         font.LoadFont(path)
-        # Stash the BDF path so callers that need glyph-level access (e.g.
+        # Record the BDF path so callers that need glyph-level access (e.g.
         # the Scroller, which renders pixel columns) can load a BDFFont from
-        # the same file.  The rgbmatrix graphics.Font exposes only
-        # CharacterWidth() and DrawText() — no glyph bitmap access.
-        font._bdf_path = path
+        # the same file via bdf_path_for_font().  The rgbmatrix graphics.Font
+        # is a C++ object with no __dict__, so the path can't live on it.
+        _font_bdf_paths[id(font)] = path
         return font
 
     def _to_color(self, colour):

@@ -23,10 +23,9 @@ def _resolve_bdf_font(font) -> BDFFont:
 
     If *font* is already a :class:`BDFFont` it is returned directly.
     Otherwise (e.g. an ``rgbmatrix.graphics.Font`` on Pi 3/4) a BDFFont is
-    loaded from the BDF path the panel driver stashed on the object as
-    ``_bdf_path`` and cached for reuse.  This lets the Scroller render
-    pixel columns from glyph bitmaps regardless of which panel driver
-    supplied the font.
+    loaded from the BDF path registered for that font object and cached
+    for reuse.  This lets the Scroller render pixel columns from glyph
+    bitmaps regardless of which panel driver supplied the font.
     """
     if isinstance(font, BDFFont):
         return font
@@ -34,15 +33,31 @@ def _resolve_bdf_font(font) -> BDFFont:
     key = id(font)
     bdf = _bdf_font_cache.get(key)
     if bdf is None:
-        path = getattr(font, "_bdf_path", None)
+        path = _bdf_path_for_font(font)
         if path is None:
             raise AttributeError(
-                "Span font has no get_glyph() and no _bdf_path to fall "
-                "back on; cannot render glyph bitmaps."
+                "Span font has no get_glyph() and no registered BDF path "
+                "to fall back on; cannot render glyph bitmaps."
             )
         bdf = BDFFont(path)
         _bdf_font_cache[key] = bdf
     return bdf
+
+
+def _bdf_path_for_font(font) -> str | None:
+    """Return the BDF path a non-BDFFont was loaded from, if known.
+
+    The rgbmatrix ``graphics.Font`` (Pi 3/4) is a C++ object with no
+    ``__dict__``, so the path can't be stored on it.  Instead the panel
+    driver registers it in a module-level dict keyed by ``id(font)``.
+    The import is lazy so platforms without the rgbmatrix binding (Pi 5,
+    simulator) don't pay for — or fail on — importing it.
+    """
+    try:
+        from display.rgbpanel_rgbmatrix import bdf_path_for_font
+    except ImportError:
+        return None
+    return bdf_path_for_font(font)
 
 
 def _get_glyph(font, codepoint: int) -> Glyph | None:
