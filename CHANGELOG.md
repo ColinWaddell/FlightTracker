@@ -4,6 +4,9 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.3.3] - 2026-08-03
+- Airport short-code lookup working in html
+
 ## [v2.3.2] - 2026-08-01
 - Clear-cache now works as expected from the interface
 - Fixed some installation instructions
