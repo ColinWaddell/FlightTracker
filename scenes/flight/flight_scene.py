@@ -389,10 +389,10 @@ class FlightScene:
         else:
             journey_x = 1
             journey_width = screen.WIDTH - journey_x
-        scroll_all = icon_width > 0
+        icon_required = icon_width > 0
 
         self.journey_label.draw(
-            self.canvas, flight, journey_x, journey_width, scroll_all
+            self.canvas, flight, journey_x, journey_width, icon_required
         )
 
     # ------------------------------------------------------------------

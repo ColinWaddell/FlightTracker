@@ -64,7 +64,7 @@ def _resolve_name(
 
 
 def build_journey_spans(
-    cfg: Config, flight: Flight, scroll_all: bool = False
+    cfg: Config, flight: Flight, icon_required: bool = False
 ) -> tuple[Spans, Spans]:
     style = cfg.airport_display_style
     origin_name = _resolve_name(
@@ -82,7 +82,7 @@ def build_journey_spans(
     origin = flight.origin or cfg.journey_blank_filler
     destination = flight.destination or cfg.journey_blank_filler
 
-    if scroll_all:
+    if icon_required:
         # The entire [code][arrow][name] line scrolls as one unit.
         origin_spans: Spans = [
             Span(TC(THEME_LOCATION_ORIGIN), font, origin),
@@ -128,7 +128,7 @@ class FullNameLabel:
         self.origin_spans: Spans | None = None
         self.dest_spans: Spans | None = None
         self.first_draw = True
-        self._scroll_all = False
+        self._icon_required = False
         self.loop_completed = False
 
     def reset(self) -> None:
@@ -140,7 +140,7 @@ class FullNameLabel:
         self.origin_spans = None
         self.dest_spans = None
         self.first_draw = True
-        self._scroll_all = False
+        self._icon_required = False
         self.loop_completed = False
 
     def draw(
@@ -149,13 +149,13 @@ class FullNameLabel:
         flight: Flight,
         text_x_origin: int,
         available_width: int,
-        scroll_all: bool = False,
+        icon_required: bool = False,
     ) -> None:
         cfg = Config.instance()
-        origin_spans, dest_spans = build_journey_spans(cfg, flight, scroll_all)
+        origin_spans, dest_spans = build_journey_spans(cfg, flight, icon_required)
 
-        if self.first_draw or self._scroll_all != scroll_all:
-            self._scroll_all = scroll_all
+        if self.first_draw or self._icon_required != icon_required:
+            self._icon_required = icon_required
             self.panel.draw_square(
                 canvas, text_x_origin, 0, screen.WIDTH - 1, 16, TC(THEME_BG)
             )
@@ -167,7 +167,7 @@ class FullNameLabel:
                 dest_spans,
                 text_x_origin,
                 available_width,
-                scroll_all,
+                icon_required,
             )
             self.first_draw = False
         else:
@@ -208,13 +208,13 @@ class FullNameLabel:
         dest_spans: Spans,
         text_x_origin: int,
         available_width: int,
-        scroll_all: bool = False,
+        icon_required: bool = False,
     ) -> None:
         for scroller in (self.origin_scroller, self.dest_scroller):
             if scroller is not None:
                 scroller.clear()
 
-        if scroll_all:
+        if icon_required:
             # The entire [code][arrow][name] scrolls as one unit from
             # text_x_origin with the full available width.
             self.origin_spans = origin_spans

@@ -25,6 +25,8 @@ _ARROW_TIP_OFFSET = 33
 _ARROW_TIP_Y = 7
 _ARROW_WIDTH = 4
 _ARROW_HEIGHT = 8
+_ARROW_WIDTH_SMALL = 3
+_ARROW_HEIGHT_SMALL = 6
 
 
 class ShortCodeLabel:
@@ -34,8 +36,9 @@ class ShortCodeLabel:
     there is no scrolling to wait for.
     """
 
-    def __init__(self, panel):
+    def __init__(self, panel, cfg: Config | None = None):
         self.panel = panel
+        self.cfg = cfg or Config.instance()
         self.loop_completed = False
 
     def reset(self) -> None:
@@ -47,9 +50,29 @@ class ShortCodeLabel:
         flight: Flight,
         text_x_origin: int,
         available_width: int,
-        scroll_all: bool = False,  # noqa: ARG002 — short codes never scroll
+        icon_required: bool = False,
     ) -> None:
-        cfg = Config.instance()
+        # icon_required indicates icon mode is enabled; text_x_origin > 1
+        # confirms an icon was actually drawn (x=17 vs x=1).  If icon
+        # mode is on but no icon resolved, fall back to the no-icon layout.
+        with_icon = icon_required and text_x_origin > 1
+
+        if with_icon:
+            self._draw_with_icon(canvas, flight, text_x_origin, available_width)
+        else:
+            self._draw_without_icon(canvas, flight, text_x_origin, available_width)
+
+        self.loop_completed = True
+
+    # ------------------------------------------------------------------
+    # No-icon layout — original positioning (origin at text_x_origin,
+    # destination at +39, arrow tip at +33)
+    # ------------------------------------------------------------------
+
+    def _draw_without_icon(
+        self, canvas, flight: Flight, text_x_origin: int, available_width: int
+    ) -> None:
+        cfg = self.cfg
         origin = flight.origin or cfg.journey_blank_filler
         destination = flight.destination or cfg.journey_blank_filler
         home_code = cfg.home_airport_code
@@ -58,7 +81,7 @@ class ShortCodeLabel:
             canvas,
             text_x_origin,
             0,
-            text_x_origin + available_width - 1,
+            text_x_origin + available_width,
             15,
             TC(THEME_BG),
         )
@@ -75,14 +98,68 @@ class ShortCodeLabel:
             canvas, font, dest_x, _IATA_Y, TC(THEME_LOCATION_DESTINATION), destination
         )
 
-        self._draw_arrow(canvas, text_x_origin + _ARROW_TIP_OFFSET, _ARROW_TIP_Y)
+        self._draw_arrow(
+            canvas,
+            text_x_origin + _ARROW_TIP_OFFSET,
+            _ARROW_TIP_Y,
+            _ARROW_WIDTH,
+            _ARROW_HEIGHT,
+        )
 
-        self.loop_completed = True
+    # ------------------------------------------------------------------
+    # Icon layout — repositioned to fit the narrower space beside the icon
+    # ------------------------------------------------------------------
 
-    def _draw_arrow(self, canvas, ax: int, ay: int) -> None:
-        x = ax - _ARROW_WIDTH
-        y1 = ay - (_ARROW_HEIGHT // 2)
-        y2 = ay + (_ARROW_HEIGHT // 2)
+    def _draw_with_icon(
+        self, canvas, flight: Flight, text_x_origin: int, available_width: int
+    ) -> None:
+        cfg = self.cfg
+        origin = flight.origin or cfg.journey_blank_filler
+        destination = flight.destination or cfg.journey_blank_filler
+        home_code = cfg.home_airport_code
+
+        self.panel.draw_square(
+            canvas,
+            text_x_origin,
+            0,
+            text_x_origin + available_width,
+            15,
+            TC(THEME_BG),
+        )
+
+        # TODO: tune these offsets for the icon layout.
+        # For now, scale the original offsets proportionally to the
+        # narrower width.  Origin at text_x_origin, arrow centred,
+        # destination pushed left to fit.
+        origin_x = text_x_origin
+        arrow_tip_x = origin_x + 25
+        dest_x = text_x_origin + 27
+
+        font = fonts.medium_bold if origin == home_code else fonts.medium
+        self.panel.draw_text(
+            canvas, font, origin_x, _IATA_Y, TC(THEME_LOCATION_ORIGIN), origin
+        )
+        font = fonts.medium_bold if destination == home_code else fonts.medium
+        self.panel.draw_text(
+            canvas, font, dest_x, _IATA_Y, TC(THEME_LOCATION_DESTINATION), destination
+        )
+
+        self._draw_arrow(
+            canvas,
+            arrow_tip_x,
+            _ARROW_TIP_Y,
+            _ARROW_WIDTH_SMALL,
+            _ARROW_HEIGHT_SMALL,
+        )
+
+    # ------------------------------------------------------------------
+    # Shared arrow drawing
+    # ------------------------------------------------------------------
+
+    def _draw_arrow(self, canvas, ax: int, ay: int, width: int, height: int) -> None:
+        x = ax - width
+        y1 = ay - (height // 2)
+        y2 = ay + (height // 2)
         self.panel.set_pixel(
             canvas,
             ax,
@@ -91,7 +168,7 @@ class ShortCodeLabel:
             TC(THEME_ARROW).green,
             TC(THEME_ARROW).blue,
         )
-        for _ in range(_ARROW_WIDTH):
+        for _ in range(width):
             self.panel.draw_line(canvas, x, y1, x, y2, TC(THEME_ARROW))
             x += 1
             y1 += 1
