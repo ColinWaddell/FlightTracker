@@ -89,7 +89,7 @@ def get_latest_tag() -> tuple[str | None, str | None, str | None]:
                 "Accept": "application/vnd.github+json",
             },
         )
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=100) as resp:
             tags = json.loads(resp.read().decode("utf-8"))
 
         if not tags:
@@ -155,7 +155,7 @@ def get_release_notes(tag: str) -> str | None:
                 "Accept": "application/vnd.github+json",
             },
         )
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=100) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         return data.get("body") or None
     except Exception:
@@ -222,7 +222,7 @@ def is_dirty_tree() -> bool:
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=100,
         )
         return bool(result.stdout.strip())
     except Exception:  # noqa: BLE001
@@ -252,13 +252,13 @@ def perform_update(tag: str) -> tuple[bool, str]:
     # (e.g. after an amended commit). Without it, git rejects any tag that would
     # change and aborts the whole fetch.
     logger.info("Fetching tags from origin...")
-    ok, msg = _run_git(["fetch", "--tags", "--force", "origin"], timeout=60)
+    ok, msg = _run_git(["fetch", "--tags", "--force", "origin"], timeout=600)
     if not ok:
         return False, f"git fetch failed: {msg}"
 
     # 3. Checkout the tag
     logger.info("Checking out tag %s...", tag)
-    ok, msg = _run_git(["checkout", tag], timeout=30)
+    ok, msg = _run_git(["checkout", tag], timeout=300)
     if not ok:
         return False, f"git checkout {tag} failed: {msg}"
 
@@ -281,7 +281,7 @@ def perform_update(tag: str) -> tuple[bool, str]:
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=1200,
         )
         output = (result.stdout + result.stderr).strip()
         if result.returncode != 0:
