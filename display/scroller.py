@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 
+from display.bdf_font import BDFFont, Glyph
 from display.rendered_pixel import PixelColumn, RenderedPixels
 from display.spans import Span, Spans
 from setup import screen
@@ -9,6 +10,49 @@ from setup import screen
 EASING_STEPS = (1, 1, 1, 1, 1, 1, 1, 1, 1)
 INITIAL_TICKS = 25
 PAUSE_TICKS = 15
+
+# Cache of BDFFont loaded on demand for non-BDFFont span fonts (e.g. the
+# rgbmatrix graphics.Font on Pi 3/4, which exposes CharacterWidth() and
+# DrawText() but no glyph bitmap access).  Keyed by the original font
+# object's id() so each distinct font is parsed only once.
+_bdf_font_cache: dict[int, BDFFont] = {}
+
+
+def _resolve_bdf_font(font) -> BDFFont:
+    """Return a BDFFont giving glyph data for *font*.
+
+    If *font* is already a :class:`BDFFont` it is returned directly.
+    Otherwise (e.g. an ``rgbmatrix.graphics.Font`` on Pi 3/4) a BDFFont is
+    loaded from the BDF path the panel driver stashed on the object as
+    ``_bdf_path`` and cached for reuse.  This lets the Scroller render
+    pixel columns from glyph bitmaps regardless of which panel driver
+    supplied the font.
+    """
+    if isinstance(font, BDFFont):
+        return font
+
+    key = id(font)
+    bdf = _bdf_font_cache.get(key)
+    if bdf is None:
+        path = getattr(font, "_bdf_path", None)
+        if path is None:
+            raise AttributeError(
+                "Span font has no get_glyph() and no _bdf_path to fall "
+                "back on; cannot render glyph bitmaps."
+            )
+        bdf = BDFFont(path)
+        _bdf_font_cache[key] = bdf
+    return bdf
+
+
+def _get_glyph(font, codepoint: int) -> Glyph | None:
+    """Return the :class:`Glyph` for *codepoint* from *font*.
+
+    Works for both :class:`BDFFont` (Pi 5 / simulator) and
+    ``rgbmatrix.graphics.Font`` (Pi 3/4) by routing the latter through a
+    cached BDFFont loaded from the same BDF file.
+    """
+    return _resolve_bdf_font(font).get_glyph(codepoint)
 
 
 class BounceState(Enum):
@@ -26,13 +70,13 @@ def _render_span(span: Span) -> RenderedPixels:
     """Render one span into sparse columns with y relative to its baseline."""
     font = span.font
     width = sum(
-        glyph.dwidth if (glyph := font.get_glyph(ord(ch))) else 1 for ch in span.text
+        glyph.dwidth if (glyph := _get_glyph(font, ord(ch))) else 1 for ch in span.text
     )
     columns: RenderedPixels = [{} for _ in range(width)]
     advance = 0
 
     for ch in span.text:
-        glyph = font.get_glyph(ord(ch))
+        glyph = _get_glyph(font, ord(ch))
         if glyph is None:
             advance += 1
             continue

@@ -49,7 +49,7 @@ def airline_name_from_flight(flight: Flight) -> str:
     if not icao:
         return ""
 
-    return icao_to_airline(icao)
+    return icao_to_airline(icao) or ""
 
 
 def build_info_spans(callsign: str = "", airline: str = "") -> Spans:

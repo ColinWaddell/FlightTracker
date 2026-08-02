@@ -59,6 +59,11 @@ class RGBMatrixPanel(RGBPanel):
     def load_font(self, path):
         font = graphics.Font()
         font.LoadFont(path)
+        # Stash the BDF path so callers that need glyph-level access (e.g.
+        # the Scroller, which renders pixel columns) can load a BDFFont from
+        # the same file.  The rgbmatrix graphics.Font exposes only
+        # CharacterWidth() and DrawText() — no glyph bitmap access.
+        font._bdf_path = path
         return font
 
     def _to_color(self, colour):

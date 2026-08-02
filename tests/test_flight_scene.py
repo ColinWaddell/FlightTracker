@@ -1,9 +1,24 @@
 """Tests for scenes/flight/flight_scene.py - pure helper functions."""
 
+from unittest.mock import MagicMock
+
 from display.scroller import EASING_STEPS
 from display.scroller import _tick_offset as tick_to_offset
+from scenes.flight.airline_logo import (
+    AirlineLogoWidget,
+    NullWidget,
+    airline_icao_from_flight,
+)
+from scenes.flight.callsign_bar import (
+    AirlineNameBar,
+    CallsignBar,
+    airline_name_from_flight,
+    make_callsign_bar,
+)
 from scenes.flight.flight_scene import callsigns_match, telemetry_changed
-from scenes.flight.journey.full_label import abbreviate
+from scenes.flight.journey import make_label
+from scenes.flight.journey.full_label import FullNameLabel, abbreviate
+from scenes.flight.journey.short_label import ShortCodeLabel
 from utilities.flight import Flight
 
 # ---------------------------------------------------------------------------
@@ -195,14 +210,6 @@ class TestTickToOffset:
 # airline_icao_from_flight
 # ---------------------------------------------------------------------------
 
-from unittest.mock import MagicMock
-
-from scenes.flight.airline_logo import (
-    AirlineLogoWidget,
-    NullWidget,
-    airline_icao_from_flight,
-)
-
 
 class TestAirlineIcaoFromFlight:
     def test_airline_icao_from_field(self):
@@ -252,15 +259,15 @@ class TestAirlineLogoWidget:
     def test_width_is_16_after_icon_drawn(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        widget.draw(canvas, Flight(airline_icao="BBQ"))
+        widget.draw(canvas, Flight(airline_icao="BCO"))
         assert widget.width == 16
         assert widget.icon_drawn is True
 
     def test_draw_blanks_then_draws_image(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        # BBQ icon exists in assets/airlines/ica0/
-        flight = Flight(airline_icao="BBQ")
+        # BCO icon exists in assets/airlines/airline_logos_16/
+        flight = Flight(airline_icao="BCO")
         widget.draw(canvas, flight)
         # Should have blanked the region (set_pixel calls) then drawn the image
         assert panel.set_pixel.called
@@ -269,7 +276,7 @@ class TestAirlineLogoWidget:
     def test_draw_once_skips_repaint(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        flight = Flight(airline_icao="BBQ")
+        flight = Flight(airline_icao="BCO")
         widget.draw(canvas, flight)
         panel.reset_mock()
         # Second draw with same airline_icao — should skip
@@ -280,7 +287,7 @@ class TestAirlineLogoWidget:
     def test_reset_forces_repaint(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        flight = Flight(airline_icao="BBQ")
+        flight = Flight(airline_icao="BCO")
         widget.draw(canvas, flight)
         panel.reset_mock()
         widget.reset()
@@ -291,9 +298,9 @@ class TestAirlineLogoWidget:
     def test_flight_change_repaints(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        widget.draw(canvas, Flight(airline_icao="BBQ"))
-        panel.reset_mock()
         widget.draw(canvas, Flight(airline_icao="BCO"))
+        panel.reset_mock()
+        widget.draw(canvas, Flight(airline_icao="AAL"))
         assert panel.set_pixel.called
         assert panel.draw_image.called
 
@@ -347,10 +354,6 @@ class TestNullWidget:
 # ---------------------------------------------------------------------------
 # make_label
 # ---------------------------------------------------------------------------
-
-from scenes.flight.journey import make_label
-from scenes.flight.journey.full_label import FullNameLabel
-from scenes.flight.journey.short_label import ShortCodeLabel
 
 
 class TestMakeLabel:
@@ -413,13 +416,6 @@ class TestShortCodeLabel:
 # ---------------------------------------------------------------------------
 # CallsignBar / AirlineNameBar / make_callsign_bar
 # ---------------------------------------------------------------------------
-
-from scenes.flight.callsign_bar import (
-    AirlineNameBar,
-    CallsignBar,
-    airline_name_from_flight,
-    make_callsign_bar,
-)
 
 
 class TestAirlineNameFromFlight:
@@ -531,7 +527,9 @@ class TestAirlineNameBar:
     def test_unknown_airline_falls_back_to_callsign(self):
         panel, canvas = _make_panel_and_canvas()
         panel.draw_text.side_effect = lambda *a, **k: 5
-        bar = AirlineNameBar(panel)
+        cfg = MagicMock()
+        cfg.info_bar_mode = "callsign"
+        bar = AirlineNameBar(panel, cfg)
         # PPP is not in airlines.json; falls back to the display callsign
         flights = [Flight(airline_icao="PPP", callsign="PPP123")]
         bar.draw(canvas, flights, 0)

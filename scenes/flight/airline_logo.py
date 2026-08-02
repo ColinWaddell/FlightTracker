@@ -20,6 +20,11 @@ from __future__ import annotations
 
 from PIL import Image
 
+from assets.airlines.lookups import (
+    AirlineLogoNotFound,
+    iata_to_png,
+    icao_to_png,
+)
 from display.rgbpanel import Colour, RGBPanel
 from utilities.flight import Flight
 
@@ -37,12 +42,6 @@ _OUTLINE_COLOUR = Colour(255, 255, 255)
 # -----------------------------------------------------------------------
 # Asset loading (module-level cache, mirrors forecast_sprite._load_icon)
 # -----------------------------------------------------------------------
-from assets.airlines.lookups import (
-    AirlineLogoNotFound,
-    iata_to_png,
-    icao_to_png,
-)
-
 _image_cache: dict[str, Image.Image | None] = {}
 
 
