@@ -105,6 +105,7 @@ class Overhead:
         self.new_data_store = False
         self.processing_store = False
         self.error_store = None
+        self.last_updated = None
 
     # ------------------------------------------------------------------
     # OAuth2 token management
@@ -294,6 +295,7 @@ class Overhead:
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
+                self.last_updated = time_mod.time()
             logger.debug("OSN fetch complete - %d flight(s) tracked", len(data))
 
         except requests.exceptions.HTTPError as e:

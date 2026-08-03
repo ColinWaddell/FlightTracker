@@ -7,6 +7,39 @@ from time import perf_counter, sleep
 # ---------------------------------------------------------------------------
 
 DisplayClass = None
+_overhead_instance = None
+
+
+def _get_overhead_class():
+    from setup.configuration import Config
+
+    cfg = Config.instance()
+    if cfg.use_tar1090:
+        from utilities.overhead_tar1090 import Overhead
+
+        return Overhead
+    if cfg.use_osn:
+        from utilities.overhead_osn import Overhead
+
+        return Overhead
+
+    from utilities.overhead_fr24 import Overhead
+
+    return Overhead
+
+
+def get_overhead_instance():
+    global _overhead_instance
+    if _overhead_instance is None:
+        _overhead_instance = _get_overhead_class()()
+    return _overhead_instance
+
+
+def get_overhead_last_updated():
+    overhead = get_overhead_instance()
+    if hasattr(overhead, "last_updated"):
+        return getattr(overhead, "last_updated")
+    return None
 
 
 def build_display_class():
@@ -59,7 +92,7 @@ def build_display_class():
 
             self._init_panel(matrix, canvas, cfg)
 
-            overhead = Overhead()
+            overhead = get_overhead_instance()
             self._init_scenes(overhead, cfg)
 
             self.loading = IndicatorClass(self.canvas, self.panel, overhead)

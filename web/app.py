@@ -34,6 +34,7 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 from setup.configuration import CONFIG_PATH, Config
 from setup.logging import get_buffer
 from utilities import routes_cache
+from utilities.flight import Flight
 from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
 from utilities.updater import get_update_info, perform_update, version_string
 from version import VERSION
@@ -120,6 +121,114 @@ def wrap_lng(lng: float) -> float:
     produce when worldCopyJump was not enabled.
     """
     return ((lng + 180) % 360 + 360) % 360 - 180
+
+
+# ---------------------------------------------------------------------------
+# Live-data helpers
+# ---------------------------------------------------------------------------
+
+
+def _select_overhead_class():
+    """Return the Overhead implementation selected by the current config."""
+    from setup.configuration import Config
+
+    cfg = Config.instance()
+    if cfg.use_tar1090:
+        from utilities.overhead_tar1090 import Overhead
+
+        return Overhead, "tar1090"
+    if cfg.use_osn:
+        from utilities.overhead_osn import Overhead
+
+        return Overhead, "OpenSky Network"
+
+    from utilities.overhead_fr24 import Overhead
+
+    return Overhead, "FlightRadar24"
+
+
+def _flatten_debug_rows(value, prefix="") -> list[dict[str, str]]:
+    """Flatten nested dict values into dotted-key rows, skipping lists and blanks."""
+    rows = []
+    if isinstance(value, dict):
+        for key, child in sorted(value.items()):
+            new_prefix = f"{prefix}.{key}" if prefix else key
+            if isinstance(child, dict):
+                rows.extend(_flatten_debug_rows(child, new_prefix))
+            elif isinstance(child, list):
+                continue
+            elif child is None:
+                continue
+            else:
+                rows.append({"key": new_prefix, "value": str(child)})
+    return rows
+
+
+def _build_weather_current_rows(weather_data: dict | None) -> list[dict[str, str]]:
+    """Build a flat key/value table for the current weather payload."""
+    if not isinstance(weather_data, dict):
+        return []
+    rows = []
+    for row in _flatten_debug_rows(weather_data):
+        if row["value"] not in ("", None):
+            rows.append(row)
+    return rows
+
+
+def _build_forecast_rows(forecast_data: list | None) -> tuple[list[dict], list[str]]:
+    """Build a row-per-day forecast table using the union of available fields."""
+    if not isinstance(forecast_data, list):
+        return [], []
+
+    columns = sorted(
+        {key for day in forecast_data if isinstance(day, dict) for key in day.keys()}
+    )
+    rows = []
+    for index, day in enumerate(forecast_data, start=1):
+        if not isinstance(day, dict):
+            continue
+        row = {"day": f"Day {index}"}
+        for column in columns:
+            value = day.get(column)
+            row[column] = "" if value is None else str(value)
+        rows.append(row)
+    return rows, columns
+
+
+def _build_flight_rows(flights: list) -> tuple[list[dict], list[str]]:
+    """Build a flat debug table for all flight objects."""
+    from dataclasses import fields
+
+    field_names = [field.name for field in fields(Flight)]
+    rows = []
+    for flight in flights:
+        row = {}
+        for field_name in field_names:
+            value = getattr(flight, field_name, None)
+            row[field_name] = "" if value is None else str(value)
+        rows.append(row)
+    return rows, field_names
+
+
+def _format_last_updated_value(timestamp) -> str:
+    """Format an epoch timestamp into a human-readable string."""
+    if timestamp is None:
+        return ""
+    try:
+        import datetime as _dt
+
+        return _dt.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError, OSError):
+        return ""
+
+
+def _get_live_data_overhead() -> tuple[object, str]:
+    """Return the shared overhead instance already owned by the display flow."""
+    from display import get_overhead_instance
+
+    overhead = get_overhead_instance()
+    _, data_source_name = _select_overhead_class()
+    return overhead, data_source_name
 
 
 # ---------------------------------------------------------------------------
@@ -717,8 +826,32 @@ def cache_clear_apply():
 @app.route("/live-data")
 @login_required
 def live_data():
-    """Show the live data page (placeholder for now)."""
-    return render_template("live_data.html", active_page="live_data")
+    """Show current weather and overhead flight data for debugging."""
+    from scenes.idle.themes.theme_utilities import WeatherService
+
+    overhead, data_source_name = _get_live_data_overhead()
+
+    weather_service = WeatherService.instance()
+    weather_service.do_fetch()
+    weather_data = weather_service.get() or {}
+
+    weather_current_rows = _build_weather_current_rows(weather_data)
+    forecast_rows, forecast_columns = _build_forecast_rows(weather_data.get("daily"))
+    flight_rows, flight_columns = _build_flight_rows(overhead.data)
+    last_updated = _format_last_updated_value(getattr(overhead, "last_updated", None))
+
+    return render_template(
+        "live_data.html",
+        active_page="live_data",
+        weather_current_rows=weather_current_rows,
+        forecast_rows=forecast_rows,
+        forecast_columns=forecast_columns,
+        flight_rows=flight_rows,
+        flight_columns=flight_columns,
+        data_source_name=data_source_name,
+        flight_count=len(flight_rows),
+        last_updated=last_updated,
+    )
 
 
 @app.route("/cached-data")

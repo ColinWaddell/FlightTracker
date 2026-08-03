@@ -1,4 +1,5 @@
 import logging
+import time
 from threading import Event, Lock, Thread
 
 import requests
@@ -49,6 +50,7 @@ class Overhead:
         self.new_data_store = False
         self.processing_store = False
         self.error_store = None
+        self.last_updated = None
 
     def grab_data(self):
         with self.lock:
@@ -191,6 +193,7 @@ class Overhead:
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
+                self.last_updated = time.time()
             logger.debug("tar1090 fetch complete - %d flight(s) tracked", len(data))
 
         except (RequestException, ValueError, KeyError, AttributeError, TypeError) as e:

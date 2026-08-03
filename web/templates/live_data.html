@@ -11,17 +11,132 @@
 </head>
 <body>
 {% include "navbar.html" %}
-<div class="container-fluid py-4" style="max-width:1100px">
+<div class="container-fluid py-4" style="max-width:1400px">
   <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-broadcast me-2"></i>Live Data</h2>
 
-  <div class="card mb-3 p-4">
-    <p class="text-muted mb-0">This page will show live data from the active data source (FlightRadar24, OpenSky Network, or tar1090) in real time.</p>
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Overhead Flights ({{ flight_count }}) [{{ data_source_name }}]</div>
+    <div class="card-body p-0">
+      {% if flight_rows %}
+      <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0 align-middle">
+          <thead>
+            <tr>
+              {% for column in flight_columns %}
+              <th>{{ column }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in flight_rows %}
+            <tr>
+              {% for column in flight_columns %}
+              <td class="font-monospace small">{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-muted">No overhead flight data is available yet.</div>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="alert alert-info small d-flex align-items-start mb-3" role="alert">
-    <i class="bi bi-info-circle-fill me-2 mt-1"></i>
-    <div>
-      <strong>Coming soon.</strong> This feature is under development. Check back in a future release.
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Current Weather</div>
+        <div class="card-body p-0">
+          {% if weather_current_rows %}
+          <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 35%">Field</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in weather_current_rows %}
+                <tr>
+                  <td class="fw-semibold text-muted">{{ row.key }}</td>
+                  <td class="font-monospace small">{{ row.value }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="p-3 text-muted">No current weather data is available yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Forecast Weather</div>
+        <div class="card-body p-0">
+          {% if forecast_rows %}
+          <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 18%">Attribute</th>
+                  {% for row in forecast_rows %}
+                  <th>{{ row.day }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for column in forecast_columns %}
+                <tr>
+                  <td class="fw-semibold text-muted">{{ column }}</td>
+                  {% for row in forecast_rows %}
+                  <td class="font-monospace small">{{ row[column] }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="p-3 text-muted">No forecast weather data is available yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Overhead Flights ({{ flight_count }})</div>
+    <div class="card-body p-0">
+      {% if flight_rows %}
+      <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0 align-middle">
+          <thead>
+            <tr>
+              {% for column in flight_columns %}
+              <th>{{ column }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in flight_rows %}
+            <tr>
+              {% for column in flight_columns %}
+              <td class="font-monospace small">{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-muted">No overhead flight data is available yet.</div>
+      {% endif %}
     </div>
   </div>
 </div>

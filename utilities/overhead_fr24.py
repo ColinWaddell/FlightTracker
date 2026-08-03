@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import time
 from threading import Event, Lock, Thread
 from time import sleep
 
@@ -61,6 +62,7 @@ class Overhead:
         self.new_data_store = False
         self.processing_store = False
         self.error_store = None
+        self.last_updated = None
 
         # Configure FR24 to exclude ground traffic
         flight_tracker = self.api.get_flight_tracker_config()
@@ -236,6 +238,7 @@ class Overhead:
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
+                self.last_updated = time.time()
             logger.debug("FR24 fetch complete - %d flight(s) tracked", len(data))
 
         except Exception as e:
