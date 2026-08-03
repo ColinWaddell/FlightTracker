@@ -209,6 +209,10 @@ class AirlineNameBar:
         self.last_flight_id: str | None = None
         self.last_index_drawn: int | None = None
         self.last_flight_count_drawn: int | None = None
+        # Flight count the scroller was built for, so a change in the
+        # number of tracked flights (which alters the viewport width)
+        # forces a rebuild even when the displayed flight_id is unchanged.
+        self.last_flight_count_for_scroller: int | None = None
 
     def reset(self) -> None:
         if self.scroller is not None:
@@ -218,6 +222,7 @@ class AirlineNameBar:
         self.last_flight_id = None
         self.last_index_drawn = None
         self.last_flight_count_drawn = None
+        self.last_flight_count_for_scroller = None
 
     @property
     def loop_completed(self) -> bool:
@@ -232,9 +237,15 @@ class AirlineNameBar:
         index = flight_index
         flight_id = flight.flight_id
 
-        # Rebuild scroller when the flight changes (different airline name).
-        if flight_id != self.last_flight_id:
+        # Rebuild scroller when the flight changes (different airline
+        # name) or when the flight count changes (the viewport width
+        # depends on whether the N/M index is drawn).
+        if (
+            flight_id != self.last_flight_id
+            or flight_count != self.last_flight_count_for_scroller
+        ):
             self.last_flight_id = flight_id
+            self.last_flight_count_for_scroller = flight_count
             name = airline_name_from_flight(flight)
             callsign = flight.callsign or ""
 

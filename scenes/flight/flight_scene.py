@@ -54,6 +54,8 @@ ERROR_BACKOFF_S = 60
 
 
 def callsigns_match(a: list, b: list) -> bool:
+    if len(a) != len(b):
+        return False
     return {f.flight_id for f in a} == {f.flight_id for f in b}
 
 
