@@ -41,42 +41,30 @@ def flight_icao_to_iata(icao_code: str) -> str | None:
     return airline_codes.icao_to_iata.get(icao_code.strip().upper(), None)
 
 
-def iata_flight_to_icao(flight: str) -> str | None:
-    """Convert an IATA flight number to its ICAO form.
-
-    ``BA147`` -> ``BAW147``
-    ``LH401`` -> ``DLH401``
-
-    Returns ``None`` when the IATA airline code has no ICAO mapping or the
-    input is not a recognisable IATA flight number.
-    """
-    m = _IATA_FLIGHT_RE.match(flight.strip().upper())
-    if not m:
-        return None
-    iata_prefix, suffix = m.group(1), m.group(2)
-    icao_prefix = airline_codes.iata_to_icao.get(iata_prefix)
-    if icao_prefix is None:
-        return None
-    return f"{icao_prefix}{suffix}"
-
-
 def icao_flight_to_iata(flight: str) -> str | None:
     """Convert an ICAO flight identifier to its IATA form.
 
     ``BAW147`` -> ``BA147``
+    ``BAW147QA`` -> ``BA147``
     ``DLH401`` -> ``LH401``
 
-    Returns ``None`` when the ICAO airline code has no IATA mapping or the
-    input is not a recognisable ICAO flight identifier.
+    Returns ``None`` when the ICAO airline code has no IATA mapping, the
+    suffix does not begin with digits, or the input is not recognisable.
     """
     m = _ICAO_FLIGHT_RE.match(flight.strip().upper())
     if not m:
         return None
+
     icao_prefix, suffix = m.group(1), m.group(2)
     iata_prefix = airline_codes.icao_to_iata.get(icao_prefix)
     if iata_prefix is None:
         return None
-    return f"{iata_prefix}{suffix}"
+
+    numeric_suffix = re.match(r"\d+", suffix)
+    if not numeric_suffix:
+        return None
+
+    return f"{iata_prefix}{numeric_suffix.group()}"
 
 
 if __name__ == "__main__":
