@@ -43,7 +43,6 @@ def reset_airport_caches(monkeypatch):
 
 class TestParseRoute:
     def test_standard_route(self):
-        from utilities.route_providers import _icao_to_iata_code
 
         # _parse_route is now internal to HexdbProvider; test it via the provider
         from utilities.route_providers import HexdbProvider

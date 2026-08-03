@@ -38,7 +38,7 @@ def get_overhead_instance():
 def get_overhead_last_updated():
     overhead = get_overhead_instance()
     if hasattr(overhead, "last_updated"):
-        return getattr(overhead, "last_updated")
+        return overhead.last_updated
     return None
 
 
@@ -60,8 +60,6 @@ def build_display_class():
     logger = logging.getLogger("display")
 
     if cfg.use_tar1090:
-        from utilities.overhead_tar1090 import Overhead
-
         REFRESH_INTERVAL = 10
         logger.info(
             "Data source: tar1090 (%s), refresh every %ds",
@@ -69,13 +67,9 @@ def build_display_class():
             REFRESH_INTERVAL,
         )
     elif cfg.use_osn:
-        from utilities.overhead_osn import Overhead
-
         REFRESH_INTERVAL = 22
         logger.info("Data source: OpenSky Network, refresh every %ds", REFRESH_INTERVAL)
     else:
-        from utilities.overhead_fr24 import Overhead
-
         REFRESH_INTERVAL = 30
         logger.info("Data source: FlightRadar24, refresh every %ds", REFRESH_INTERVAL)
 
