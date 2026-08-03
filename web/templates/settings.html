@@ -406,6 +406,20 @@
           </div>
 
           <div class="mt-3">
+            <label class="form-label small" for="aerodatabox_api_key">AeroDataBox API Key (optional)</label>
+            <input type="password" class="form-control form-control-sm" id="aerodatabox_api_key"
+                   name="aerodatabox_api_key" value="{{ cfg.aerodatabox_api_key }}"
+                   placeholder="your-rapidapi-key" autocomplete="new-password" />
+            <div class="form-text text-muted small mt-1">
+              Optional.  When set, AeroDataBox is used as a fallback route/aircraft
+              lookup provider (in addition to hexdb.io and adsbdb.com).
+              Get a key from
+              <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener noreferrer">RapidAPI</a>.
+              Only used when the data source is not FR24.
+            </div>
+          </div>
+
+          <div class="mt-3">
             <label class="form-label small" for="max_flight_lookup">Flights to track</label>
             <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
                    name="max_flight_lookup" value="{{ cfg.max_flight_lookup }}" min="1" max="20" style="width:6rem" />

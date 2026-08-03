@@ -87,6 +87,8 @@ def _check_routing_reachable(cfg: Config) -> bool:
     """
     from utilities import route_providers
 
+    # Feed the aerodatabox key into the provider chain if configured.
+    route_providers.set_aerodatabox_key(cfg.aerodatabox_api_key)
     return route_providers.check_routing()
 
 
