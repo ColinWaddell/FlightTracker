@@ -9,7 +9,6 @@ which they are retried automatically.
 Provider list (in priority order):
     1. hexdb.io       - free, no key (legacy default)
     2. adsbdb.com      - free, no key
-    3. aerodatabox.com  - requires API key (only active if configured)
 
 Each provider implements the ``RouteProvider`` protocol:
 
@@ -20,7 +19,7 @@ Each provider implements the ``RouteProvider`` protocol:
         def lookup_aircraft(mode_s) -> tuple[str, str]
 
 ``is_available()`` returns False when the provider is quarantined (failed
-recently) or lacks required configuration (e.g. aerodatabox without a key).
+recently).
 
 The startup health check (:func:`check_routing`) pings each provider in turn
 and returns True if at least one is reachable.
@@ -49,9 +48,6 @@ PROVIDER_RETRY_INTERVAL = 3600  # 1 hour
 
 # Request timeout for provider API calls (seconds).
 PROVIDER_TIMEOUT = 10
-
-# Aerodatabox API base (RapidAPI-hosted, but direct URL also works with key).
-AERODATABOX_BASE = "https://aerodatabox.p.rapidapi.com"
 
 # ---------------------------------------------------------------------------
 # Quarantine tracking
@@ -385,147 +381,6 @@ class AdsbdbProvider(RouteProvider):
 
 
 # ---------------------------------------------------------------------------
-# AeroDataBox provider (requires RapidAPI key)
-# ---------------------------------------------------------------------------
-
-
-class AeroDataBoxProvider(RouteProvider):
-    """aerodatabox.com - requires a RapidAPI key.
-
-    The key is passed as the ``X-RapidAPI-Key`` header.
-
-    Provides:
-        /flights/{callsign}           -> flight status with route info
-        /aircraft/{mode_s_or_reg}     -> aircraft details
-    """
-
-    name = "aerodatabox"
-    BASE = AERODATABOX_BASE
-
-    def __init__(self, api_key: str = ""):
-        self._api_key = api_key
-
-    def is_configured(self) -> bool:
-        return bool(self._api_key)
-
-    def _headers(self) -> dict:
-        return {
-            "X-RapidAPI-Key": self._api_key,
-            "Accept": "application/json",
-        }
-
-    def ping(self) -> bool:
-        if not self._api_key:
-            return False
-        try:
-            # Use a lightweight endpoint - search by registration with a known reg
-            resp = _session.get(
-                f"{self.BASE}/aircraft/reg/G-EZWD",
-                headers=self._headers(),
-                timeout=5,
-            )
-            return resp.status_code == 200
-        except (RequestException, OSError):
-            return False
-
-    def lookup_route(self, callsign: str) -> RouteInfo:
-        if not self._api_key:
-            return RouteInfo()
-        resp = self._get(
-            f"{self.BASE}/flights/{callsign}",
-            headers=self._headers(),
-        )
-        if resp is None:
-            return RouteInfo()
-        if resp.status_code == 404:
-            logger.debug("aerodatabox: unknown callsign %r", callsign)
-            return RouteInfo()
-        try:
-            resp.raise_for_status()
-            data = resp.json()
-        except (RequestException, ValueError) as e:
-            logger.debug("aerodatabox route lookup failed for %r: %s", callsign, e)
-            _quarantine(self.name)
-            return RouteInfo()
-
-        # AeroDataBox returns a list of flight objects for the callsign
-        flights = data if isinstance(data, list) else [data]
-        if not flights:
-            return RouteInfo()
-
-        flight = flights[0]
-        route = RouteInfo()
-
-        # Departure / arrival are in the flight object
-        dep = flight.get("departure", {}) or {}
-        arr = flight.get("arrival", {}) or {}
-
-        if dep:
-            airport = dep.get("airport", {}) or {}
-            iata = (airport.get("iata") or "").strip()
-            icao = (airport.get("icao") or "").strip()
-            route.origin = iata or icao
-            route.origin_name = (airport.get("name") or "").strip()
-            route.origin_municipality = (airport.get("municipality") or "").strip()
-            route.origin_country = (airport.get("country") or {}).get("name", "") if isinstance(airport.get("country"), dict) else (airport.get("countryName") or "").strip()
-
-        if arr:
-            airport = arr.get("airport", {}) or {}
-            iata = (airport.get("iata") or "").strip()
-            icao = (airport.get("icao") or "").strip()
-            route.destination = iata or icao
-            route.destination_name = (airport.get("name") or "").strip()
-            route.destination_municipality = (airport.get("municipality") or "").strip()
-            route.destination_country = (airport.get("country") or {}).get("name", "") if isinstance(airport.get("country"), dict) else (airport.get("countryName") or "").strip()
-
-        # Airline
-        airline = flight.get("airline", {}) or {}
-        route.airline_icao = (airline.get("icao") or "").strip()
-
-        if route.origin or route.destination:
-            _mark_healthy(self.name)
-        return route
-
-    def lookup_aircraft(self, mode_s: str) -> tuple[str, str]:
-        if not self._api_key:
-            return "", ""
-        resp = self._get(
-            f"{self.BASE}/aircraft/mode-s/{mode_s.lower()}",
-            headers=self._headers(),
-        )
-        if resp is None:
-            return "", ""
-        if resp.status_code == 404:
-            logger.debug("aerodatabox: unknown aircraft %r", mode_s)
-            return "", ""
-        try:
-            resp.raise_for_status()
-            data = resp.json()
-        except (RequestException, ValueError) as e:
-            logger.debug("aerodatabox aircraft lookup failed for %r: %s", mode_s, e)
-            _quarantine(self.name)
-            return "", ""
-
-        # Response may be a list or single object
-        ac_list = data if isinstance(data, list) else [data]
-        if not ac_list:
-            return "", ""
-
-        ac = ac_list[0]
-        manufacturer = (ac.get("manufacturer") or "").strip()
-        model = (ac.get("model") or ac.get("type") or "").strip()
-        registration = (ac.get("registration") or "").strip()
-
-        if manufacturer and model:
-            plane = f"{manufacturer} {model}"
-        else:
-            plane = model or manufacturer
-
-        _mark_healthy(self.name)
-        return plane, registration
-
-
-# ---------------------------------------------------------------------------
 # Bundled ICAO→IATA lookup (moved from route_lookup.py, shared by providers)
 # ---------------------------------------------------------------------------
 
@@ -568,19 +423,9 @@ def _icao_to_iata_code(icao: str) -> str:
 # Provider registry / chain
 # ---------------------------------------------------------------------------
 
-# Module-level singleton providers.  The aerodatabox key is read from the
-# Config on first access (see :func:`_all_providers`).
+# Module-level singleton providers.
 _hexdb: HexdbProvider | None = None
 _adsbdb: AdsbdbProvider | None = None
-_aerodatabox: AeroDataBoxProvider | None = None
-_aerodatabox_key: str = ""
-
-
-def set_aerodatabox_key(key: str) -> None:
-    """Set the Aerodatabox API key (called once at startup from Config)."""
-    global _aerodatabox_key, _aerodatabox
-    _aerodatabox_key = (key or "").strip()
-    _aerodatabox = AeroDataBoxProvider(_aerodatabox_key) if _aerodatabox_key else None
 
 
 def _all_providers() -> list[RouteProvider]:
@@ -590,10 +435,7 @@ def _all_providers() -> list[RouteProvider]:
         _hexdb = HexdbProvider()
     if _adsbdb is None:
         _adsbdb = AdsbdbProvider()
-    providers = [_hexdb, _adsbdb]
-    if _aerodatabox is not None:
-        providers.append(_aerodatabox)
-    return providers
+    return [_hexdb, _adsbdb]
 
 
 def available_providers() -> list[RouteProvider]:

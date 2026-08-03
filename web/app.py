@@ -424,7 +424,6 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         "osn_client_id": str_val(form.get("osn_client_id"), ""),
         "osn_client_secret": str_val(form.get("osn_client_secret"), ""),
-        "aerodatabox_api_key": str_val(form.get("aerodatabox_api_key"), ""),
         # Satellite tracking
         "satellite_tracking_enabled": bool_val(form.get("satellite_tracking_enabled")),
         "satellite_norad_ids": [
@@ -616,7 +615,7 @@ def airports_json() -> str:
 
 # Keys that may contain sensitive information and should be stripped from
 # the debug config export.
-SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash", "osn_client_secret", "aerodatabox_api_key"}
+SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash", "osn_client_secret"}
 
 
 @app.route("/debug-config")
