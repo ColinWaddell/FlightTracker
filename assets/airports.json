@@ -10131,7 +10131,7 @@
   },
   "EDI": {
     "country_name": "United Kingdom",
-    "municipality": "Edinburgh",
+    "municipality": "Ingliston, Edinburgh",
     "name": "Edinburgh Airport"
   },
   "EDK": {
@@ -13928,11 +13928,6 @@
     "country_name": "United States",
     "municipality": "Greenville",
     "name": "Majors Airport"
-  },
-  "GVX": {
-    "country_name": "Sweden",
-    "municipality": "Gävle / Sandviken",
-    "name": "Gävle Sandviken Airport"
   },
   "GWA": {
     "country_name": "Myanmar",
@@ -25966,7 +25961,7 @@
   },
   "MZE": {
     "country_name": "Belize",
-    "municipality": "",
+    "municipality": "Spanish Lookout",
     "name": "Manatee Airport"
   },
   "MZG": {
@@ -31598,11 +31593,6 @@
     "country_name": "Brazil",
     "municipality": "Montenegro",
     "name": "Montenegro Airport"
-  },
-  "QGG":{
-    "name": "Cumbernauld Airport",
-    "municipality": "Cumbernauld",
-    "country_name": "United Kingdom"
   },
   "QGP": {
     "country_name": "Brazil",
@@ -41133,11 +41123,6 @@
     "country_name": "United States",
     "municipality": "Frenchville",
     "name": "Northern Aroostook Regional Airport"
-  },
-  "WFR": {
-    "country_name": "Antarctica",
-    "municipality": "Queen Maud Island",
-    "name": "[Duplicate] Wolf's Fang Runway"
   },
   "WGA": {
     "country_name": "Australia",

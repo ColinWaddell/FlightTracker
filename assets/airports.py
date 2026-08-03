@@ -36,5 +36,5 @@ with urllib.request.urlopen(url) as r:
 with open("airports.json", "w", encoding="utf-8") as f:
     json.dump(airports, f, indent=2, sort_keys=True, ensure_ascii=False)
 
-with open("icao_to_iata.json", "w", encoding="utf-8") as f:
+with open("airports_icao_to_iata.json", "w", encoding="utf-8") as f:
     json.dump(ica0, f, indent=2, sort_keys=True, ensure_ascii=False)

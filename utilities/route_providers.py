@@ -546,12 +546,12 @@ _icao_to_iata_loaded = False
 
 
 def _load_icao_to_iata() -> None:
-    """Load the ICAO-to-IATA mapping from assets/icao_to_iata.json."""
+    """Load the ICAO-to-IATA mapping from assets/airports_icao_to_iata.json."""
     global _icao_to_iata, _icao_to_iata_loaded
     if _icao_to_iata_loaded:
         return
     _icao_to_iata_loaded = True
-    path = Path(__file__).parent.parent / "assets" / "icao_to_iata.json"
+    path = Path(__file__).parent.parent / "assets" / "airports_icao_to_iata.json"
     if path.exists():
         try:
             with open(path) as fh:
