@@ -155,9 +155,7 @@ def _flatten_debug_rows(value, prefix="") -> list[dict[str, str]]:
             new_prefix = f"{prefix}.{key}" if prefix else key
             if isinstance(child, dict):
                 rows.extend(_flatten_debug_rows(child, new_prefix))
-            elif isinstance(child, list):
-                continue
-            elif child is None:
+            elif isinstance(child, list) or child is None:
                 continue
             else:
                 rows.append({"key": new_prefix, "value": str(child)})
@@ -202,6 +200,7 @@ def _build_flight_rows(flights: list) -> tuple[list[dict], list[str]]:
     excluded_fields = {
         "origin_name",
         "destination_name",
+        "registration",
         "origin_municipality",
         "destination_municipality",
         "origin_country",
@@ -616,7 +615,12 @@ def airports_json() -> str:
 
 # Keys that may contain sensitive information and should be stripped from
 # the debug config export.
-SENSITIVE_KEYS = {"weatherapi_key", "web_password_hash", "osn_client_secret", "aerodatabox_api_key"}
+SENSITIVE_KEYS = {
+    "weatherapi_key",
+    "web_password_hash",
+    "osn_client_secret",
+    "aerodatabox_api_key",
+}
 
 
 @app.route("/debug-config")

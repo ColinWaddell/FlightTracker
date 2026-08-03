@@ -437,6 +437,36 @@ class AeroDataBoxProvider(RouteProvider):
         except (RequestException, OSError):
             return False
 
+    # -- Rate-limit / error detection ---------------------------------
+
+    # HTTP status codes that indicate rate-limiting or quota exhaustion.
+    # RapidAPI typically returns 429, but some gateways use 403.
+    _RATE_LIMIT_CODES = frozenset({429, 403})
+
+    # Body keys that signal an error response rather than flight data.
+    # RapidAPI rate-limit bodies look like {"message": "You exceeded..."}
+    # or {"error": "Quota exceeded"}.  A genuine flight object has none of
+    # these top-level keys.
+    _ERROR_BODY_KEYS = frozenset({"message", "error", "errors"})
+
+    @classmethod
+    def _is_error_response(cls, data) -> bool:
+        """Return True if *data* looks like an API error / rate-limit body.
+
+        AeroDataBox flight responses are either a list of flight objects or
+        a single flight object, each containing ``departure``/``arrival``.
+        A rate-limit or quota-exceeded response is a dict with a ``message``
+        or ``error`` key and no flight structure.  Detecting this lets us
+        quarantine the provider instead of silently returning blanks.
+        """
+        if not isinstance(data, dict):
+            return False
+        # A genuine flight object has departure/arrival; an error body does not.
+        has_flight_structure = bool(data.get("departure") or data.get("arrival"))
+        if has_flight_structure:
+            return False
+        return any(k in data for k in cls._ERROR_BODY_KEYS)
+
     def lookup_route(self, callsign: str) -> RouteInfo:
         if not self._api_key:
             return RouteInfo()
@@ -449,11 +479,42 @@ class AeroDataBoxProvider(RouteProvider):
         if resp.status_code == 404:
             logger.debug("aerodatabox: unknown callsign %r", callsign)
             return RouteInfo()
+        # Explicit rate-limit / quota handling.  RapidAPI returns 429 (or
+        # sometimes 403) when the quota is exhausted; quarantine immediately
+        # so we stop hitting the API for PROVIDER_RETRY_INTERVAL.
+        if resp.status_code in self._RATE_LIMIT_CODES:
+            logger.warning(
+                "aerodatabox: rate limit / quota exceeded (HTTP %d) for %r - "
+                "quarantining for %ds",
+                resp.status_code,
+                callsign,
+                PROVIDER_RETRY_INTERVAL,
+            )
+            _quarantine(self.name)
+            return RouteInfo()
         try:
             resp.raise_for_status()
             data = resp.json()
         except (RequestException, ValueError) as e:
             logger.debug("aerodatabox route lookup failed for %r: %s", callsign, e)
+            _quarantine(self.name)
+            return RouteInfo()
+
+        # Some gateways return HTTP 200 with an error body when rate-limited
+        # (e.g. {"message": "You exceeded your monthly quota"}).  Detect this
+        # and quarantine rather than treating it as a genuine miss.
+        if self._is_error_response(data):
+            msg = ""
+            for k in self._ERROR_BODY_KEYS:
+                if k in data:
+                    msg = str(data[k])[:200]
+                    break
+            logger.warning(
+                "aerodatabox: error response for %r (%s) - quarantining for %ds",
+                callsign,
+                msg,
+                PROVIDER_RETRY_INTERVAL,
+            )
             _quarantine(self.name)
             return RouteInfo()
 
@@ -513,11 +574,38 @@ class AeroDataBoxProvider(RouteProvider):
         if resp.status_code == 404:
             logger.debug("aerodatabox: unknown aircraft %r", mode_s)
             return "", ""
+        # Explicit rate-limit / quota handling (see lookup_route for rationale).
+        if resp.status_code in self._RATE_LIMIT_CODES:
+            logger.warning(
+                "aerodatabox: rate limit / quota exceeded (HTTP %d) for %r - "
+                "quarantining for %ds",
+                resp.status_code,
+                mode_s,
+                PROVIDER_RETRY_INTERVAL,
+            )
+            _quarantine(self.name)
+            return "", ""
         try:
             resp.raise_for_status()
             data = resp.json()
         except (RequestException, ValueError) as e:
             logger.debug("aerodatabox aircraft lookup failed for %r: %s", mode_s, e)
+            _quarantine(self.name)
+            return "", ""
+
+        # Detect 200-with-error-body rate-limit responses (see lookup_route).
+        if self._is_error_response(data):
+            msg = ""
+            for k in self._ERROR_BODY_KEYS:
+                if k in data:
+                    msg = str(data[k])[:200]
+                    break
+            logger.warning(
+                "aerodatabox: error response for %r (%s) - quarantining for %ds",
+                mode_s,
+                msg,
+                PROVIDER_RETRY_INTERVAL,
+            )
             _quarantine(self.name)
             return "", ""
 
