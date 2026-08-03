@@ -13,9 +13,13 @@
 {% include "navbar.html" %}
 <div class="container-fluid py-4" style="max-width:1400px">
   <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-broadcast me-2"></i>Live Data</h2>
+  <p>This tool is for debugging purposes only.</p>
 
+  <hr />
+
+  <h3 class="fs-4 fw-semibold mb-3"><i class="bi bi-airplane me-1"></i>Flight Data</h3>
   <div class="card mb-4">
-    <div class="card-header fw-semibold">Overhead Flights ({{ flight_count }}) [{{ data_source_name }}]</div>
+    <div class="card-header fw-semibold">Overhead Flights - {{ data_source_name }} ({{ flight_count }})</div>
     <div class="card-body p-0">
       {% if flight_rows %}
       <div class="table-responsive">
@@ -44,6 +48,9 @@
     </div>
   </div>
 
+  <hr />
+
+  <h3 class="fs-4 fw-semibold mb-3"><i class="bi bi-cloud-drizzle me-1"></i>Weather Data</h3>
   <div class="row g-4 mb-4">
     <div class="col-md-6">
       <div class="card h-100">
@@ -107,36 +114,6 @@
           {% endif %}
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="card mb-4">
-    <div class="card-header fw-semibold">Overhead Flights ({{ flight_count }})</div>
-    <div class="card-body p-0">
-      {% if flight_rows %}
-      <div class="table-responsive">
-        <table class="table table-sm table-striped mb-0 align-middle">
-          <thead>
-            <tr>
-              {% for column in flight_columns %}
-              <th>{{ column }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in flight_rows %}
-            <tr>
-              {% for column in flight_columns %}
-              <td class="font-monospace small">{{ row[column] }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-3 text-muted">No overhead flight data is available yet.</div>
-      {% endif %}
     </div>
   </div>
 </div>

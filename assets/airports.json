@@ -31599,6 +31599,11 @@
     "municipality": "Montenegro",
     "name": "Montenegro Airport"
   },
+  "QGG":{
+    "name": "Cumbernauld Airport",
+    "municipality": "Cumbernauld",
+    "country_name": "United Kingdom"
+  },
   "QGP": {
     "country_name": "Brazil",
     "municipality": "Garanhuns",
