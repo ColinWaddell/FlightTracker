@@ -99,8 +99,8 @@ FR24_BOUNDS_CAP_M = 20000  # sanity cap so a speed anomaly can't blow the box ou
 
 # TTL for miss entries - shorter than the 24-hour positive TTL so transient
 # provider/FR24 gaps don't suppress data for too long.
-PROVIDER_MISS_TTL = routes_cache.CACHE_TTL_MISS   # 1 hour
-FR24_MISS_TTL = routes_cache.CACHE_TTL_MISS        # 1 hour
+PROVIDER_MISS_TTL = routes_cache.CACHE_TTL_MISS  # 1 hour
+FR24_MISS_TTL = routes_cache.CACHE_TTL_MISS  # 1 hour
 
 # ---------------------------------------------------------------------------
 # In-memory FR24 miss tracking
@@ -109,7 +109,7 @@ FR24_MISS_TTL = routes_cache.CACHE_TTL_MISS        # 1 hour
 # are tracked in-memory only: FR24 availability can vary (rate limits,
 # Cloudflare blocks) so we want retries after a process restart.
 
-_fr24_miss: dict[str, float] = {}   # callsign -> timestamp of last FR24 miss
+_fr24_miss: dict[str, float] = {}  # callsign -> timestamp of last FR24 miss
 _fr24_miss_lock = threading.Lock()
 
 
@@ -304,6 +304,7 @@ def _fr24_fallback(
 def _enrich_route_names_helper(iata: str) -> dict:
     """Return airport details for *iata* from bundled airports.json."""
     from utilities.overhead_utilities import airport_info as _bundled_airport_info
+
     return _bundled_airport_info(iata) or {}
 
 
@@ -511,7 +512,9 @@ def get_route(
         else:
             # FR24 also found nothing - record a miss so we don't retry on
             # every subsequent poll until the TTL expires.
-            logger.debug("FR24 fallback found nothing for %r - recording miss", callsign)
+            logger.debug(
+                "FR24 fallback found nothing for %r - recording miss", callsign
+            )
             _record_fr24_miss(callsign)
 
     # Persist a positive route result under the callsign key.

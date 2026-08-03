@@ -176,7 +176,9 @@ class Overhead:
                                     "FR24 flight detail timeout, retrying (%d left)",
                                     RETRIES - attempt - 1,
                                 )
-                            elif not isinstance(e, (KeyError, AttributeError, TypeError)):
+                            elif not isinstance(
+                                e, (KeyError, AttributeError, TypeError)
+                            ):
                                 logger.debug("FR24 flight detail error: %s", e)
 
                     if details is not None:
@@ -209,11 +211,17 @@ class Overhead:
                                 "origin": origin,
                                 "destination": destination,
                                 "origin_name": origin_info.get("name", ""),
-                                "origin_municipality": origin_info.get("municipality", ""),
+                                "origin_municipality": origin_info.get(
+                                    "municipality", ""
+                                ),
                                 "origin_country": origin_info.get("country_name", ""),
                                 "destination_name": dest_info.get("name", ""),
-                                "destination_municipality": dest_info.get("municipality", ""),
-                                "destination_country": dest_info.get("country_name", ""),
+                                "destination_municipality": dest_info.get(
+                                    "municipality", ""
+                                ),
+                                "destination_country": dest_info.get(
+                                    "country_name", ""
+                                ),
                                 "registration": "",
                                 "airline_icao": clean_field(flight.airline_icao),
                             },

@@ -32,6 +32,7 @@ def reset_airport_caches(monkeypatch):
     monkeypatch.setattr(rp, "_failed_at", {})
     # Reset FR24 miss tracking so tests aren't blocked by a prior call.
     import utilities.route_lookup as rl
+
     monkeypatch.setattr(rl, "_fr24_miss", {})
 
 
@@ -46,6 +47,7 @@ class TestParseRoute:
 
         # _parse_route is now internal to HexdbProvider; test it via the provider
         from utilities.route_providers import HexdbProvider
+
         p = HexdbProvider()
         assert p._parse_route("EGPF-LEMG") == ("EGPF", "LEMG")
 
