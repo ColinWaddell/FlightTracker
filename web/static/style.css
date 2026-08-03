@@ -6,6 +6,28 @@ body { background: #f8f9fa; }
 
 .form-check-label { cursor: pointer; }
 
+/* ===== Navbar ===== */
+
+.ft-navbar {
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.1);
+}
+.ft-navbar .navbar-brand {
+  font-size: 1.1rem;
+}
+.ft-navbar .nav-link {
+  font-size: .9rem;
+  font-weight: 500;
+  color: #495057;
+}
+.ft-navbar .nav-link:hover {
+  color: #0d6efd;
+}
+.ft-navbar .nav-link.active {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
 /* ===== Settings page ===== */
 
 #map, #map_advanced { height: 320px; border-radius: .375rem; }

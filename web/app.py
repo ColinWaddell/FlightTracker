@@ -414,6 +414,7 @@ def settings():
                         in_schedule=cfg.is_in_brightness_schedule(),
                         schedule_window=cfg.brightness_schedule_window,
                         current_version=version_string(VERSION),
+                        active_page="settings",
                     ),
                     400,
                 )
@@ -445,6 +446,7 @@ def settings():
                     in_schedule=cfg.is_in_brightness_schedule(),
                     schedule_window=cfg.brightness_schedule_window,
                     current_version=version_string(VERSION),
+                    active_page="settings",
                 ),
                 400,
             )
@@ -460,6 +462,7 @@ def settings():
         in_schedule=cfg.is_in_brightness_schedule(),
         schedule_window=cfg.brightness_schedule_window,
         current_version=version_string(VERSION),
+        active_page="settings",
     )
 
 
@@ -541,7 +544,7 @@ def logs():
         }
         for r in records
     ]
-    return render_template("logs.html", rows=rows)
+    return render_template("logs.html", rows=rows, active_page="logs")
 
 
 @app.route("/logs/download")
@@ -577,7 +580,9 @@ def logs_download():
 def update():
     """Show the update status page."""
     info = get_update_info()
-    return render_template("update.html", info=info, csrf_token=csrf_token())
+    return render_template(
+        "update.html", info=info, csrf_token=csrf_token(), active_page="update"
+    )
 
 
 @app.route("/update/check", methods=["POST"])
@@ -618,6 +623,7 @@ def update_apply():
                 info=get_update_info(),
                 csrf_token=csrf_token(),
                 error="Invalid CSRF token.",
+                active_page="update",
             ),
             403,
         )
@@ -630,6 +636,7 @@ def update_apply():
                 info=get_update_info(),
                 csrf_token=csrf_token(),
                 error="No tag specified.",
+                active_page="update",
             ),
             400,
         )
@@ -645,6 +652,7 @@ def update_apply():
                 info=get_update_info(),
                 csrf_token=csrf_token(),
                 error=message,
+                active_page="update",
             ),
             500,
         )
@@ -658,7 +666,9 @@ def update_apply():
 @login_required
 def cache_clear():
     """Show the clear-cache status page."""
-    return render_template("clear_cache.html", csrf_token=csrf_token())
+    return render_template(
+        "clear_cache.html", csrf_token=csrf_token(), active_page="clear_cache"
+    )
 
 
 @app.route("/cache-clear/apply", methods=["POST"])
@@ -671,6 +681,7 @@ def cache_clear_apply():
                 "clear_cache.html",
                 csrf_token=csrf_token(),
                 error="Invalid CSRF token.",
+                active_page="clear_cache",
             ),
             403,
         )
@@ -687,6 +698,7 @@ def cache_clear_apply():
                 "clear_cache.html",
                 csrf_token=csrf_token(),
                 error=f"Failed to clear cache: {exc}",
+                active_page="clear_cache",
             ),
             500,
         )
