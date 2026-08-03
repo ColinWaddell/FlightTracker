@@ -34,13 +34,12 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from dataclasses import dataclass
 
 import requests
 from requests.exceptions import RequestException
 
 from utilities.flight import RouteInfo
-from utilities.overhead_utilities import airport_info as _bundled_airport_info, clean_field
+from utilities.overhead_utilities import airport_info as _bundled_airport_info
 
 logger = logging.getLogger(__name__)
 
@@ -220,7 +219,9 @@ class HexdbProvider(RouteProvider):
         route_str = data.get("route", "")
         origin_icao, dest_icao = self._parse_route(route_str)
         if not origin_icao or not dest_icao:
-            logger.debug("hexdb: empty/unparseable route for %r (%r)", callsign, route_str)
+            logger.debug(
+                "hexdb: empty/unparseable route for %r (%r)", callsign, route_str
+            )
             return RouteInfo()
         route = RouteInfo()
 
@@ -327,7 +328,9 @@ class AdsbdbProvider(RouteProvider):
             icao = (origin.get("icao_code") or "").strip()
             route.origin = iata or icao
             route.origin_name = (origin.get("name") or "").strip()
-            route.origin_municipality = (origin.get("municipality") or origin.get("city") or "").strip()
+            route.origin_municipality = (
+                origin.get("municipality") or origin.get("city") or ""
+            ).strip()
             route.origin_country = (origin.get("country_name") or "").strip()
 
         if dest:
@@ -335,7 +338,9 @@ class AdsbdbProvider(RouteProvider):
             icao = (dest.get("icao_code") or "").strip()
             route.destination = iata or icao
             route.destination_name = (dest.get("name") or "").strip()
-            route.destination_municipality = (dest.get("municipality") or dest.get("city") or "").strip()
+            route.destination_municipality = (
+                dest.get("municipality") or dest.get("city") or ""
+            ).strip()
             route.destination_country = (dest.get("country_name") or "").strip()
 
         # Airline ICAO from the airline block
@@ -467,7 +472,11 @@ class AeroDataBoxProvider(RouteProvider):
             route.origin = iata or icao
             route.origin_name = (airport.get("name") or "").strip()
             route.origin_municipality = (airport.get("municipality") or "").strip()
-            route.origin_country = (airport.get("country") or {}).get("name", "") if isinstance(airport.get("country"), dict) else (airport.get("countryName") or "").strip()
+            route.origin_country = (
+                (airport.get("country") or {}).get("name", "")
+                if isinstance(airport.get("country"), dict)
+                else (airport.get("countryName") or "").strip()
+            )
 
         if arr:
             airport = arr.get("airport", {}) or {}
@@ -476,7 +485,11 @@ class AeroDataBoxProvider(RouteProvider):
             route.destination = iata or icao
             route.destination_name = (airport.get("name") or "").strip()
             route.destination_municipality = (airport.get("municipality") or "").strip()
-            route.destination_country = (airport.get("country") or {}).get("name", "") if isinstance(airport.get("country"), dict) else (airport.get("countryName") or "").strip()
+            route.destination_country = (
+                (airport.get("country") or {}).get("name", "")
+                if isinstance(airport.get("country"), dict)
+                else (airport.get("countryName") or "").strip()
+            )
 
         # Airline
         airline = flight.get("airline", {}) or {}
@@ -592,7 +605,7 @@ def _all_providers() -> list[RouteProvider]:
         _adsbdb = AdsbdbProvider()
     providers = [_hexdb, _adsbdb]
     if _aerodatabox is not None:
-        providers.append(_aerodatabox)
+        providers.insert(0, _aerodatabox)
     return providers
 
 
