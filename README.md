@@ -278,7 +278,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `data_source` | `"fr24"` for FlightRadar24, `"tar1090"` for a local receiver | `"fr24"` |
 | `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json` | `""` |
 | `max_flight_lookup` | Number of nearby flights to track at once | `5` |
-| `callsign_format` | `"icao"` for ICAO callsign (e.g. BAW123), `"iata"` for IATA flight number (e.g. BA123). FR24 only | `"icao"` |
+| `callsign_format` | `"icao"` for ICAO callsign (e.g. BAW123), `"iata"` for IATA flight number (e.g. BA123) | `"icao"` |
 | `satellite_tracking_enabled` | Enable satellite pass tracking | `true` |
 | `satellite_norad_ids` | NORAD IDs for tracked satellites | `[25544]` |
 | `satellite_min_elevation` | Minimum elevation for satellite passes | `20` |

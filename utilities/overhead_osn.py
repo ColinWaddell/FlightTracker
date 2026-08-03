@@ -29,6 +29,7 @@ from threading import Event, Lock, Thread
 
 import requests
 
+from assets.airlines.convert import icao_flight_to_iata
 from utilities import route_lookup, routes_cache
 from utilities.flight import Flight
 from utilities.overhead_utilities import (
@@ -85,6 +86,7 @@ class Overhead:
         self.max_altitude = cfg.flight_max_altitude
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
+        self.callsign_format = cfg.callsign_format
         self.client_id = cfg.osn_client_id
         self.client_secret = cfg.osn_client_secret
 
@@ -276,11 +278,21 @@ class Overhead:
                         ground_speed_mps=ground_speed_mps,
                     )
 
+                    # The OSN feed only exposes the ICAO callsign.  When the
+                    # user has selected the IATA display format, translate the
+                    # ICAO callsign (e.g. BAW147) to its IATA form (BA147);
+                    # fall back to the ICAO callsign if no mapping exists.
+                    icao_callsign = callsign
+                    if self.callsign_format == "iata":
+                        display_callsign = icao_flight_to_iata(callsign) or callsign
+                    else:
+                        display_callsign = callsign
+
                     data.append(
                         Flight.from_route(
                             route,
-                            callsign=callsign,
-                            icao_callsign=callsign,
+                            callsign=display_callsign,
+                            icao_callsign=icao_callsign,
                             altitude=alt_ft,
                             ground_speed=ground_speed,
                             heading=heading,

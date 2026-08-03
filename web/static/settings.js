@@ -121,7 +121,6 @@
       tar1090Fields.style.display  = isTar1090 ? "block" : "none";
       osnFields.style.display      = isOsn     ? "block" : "none";
       fr24Warning.style.display    = isFr24    ? "block" : "none";
-      callsignFields.style.display = isFr24    ? "block" : "none";
     }
 
     fr24Radio.addEventListener("change", updateDataSourceUI);

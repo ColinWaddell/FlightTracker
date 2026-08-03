@@ -327,21 +327,23 @@ class AdsbdbProvider(RouteProvider):
             iata = (origin.get("iata_code") or "").strip()
             icao = (origin.get("icao_code") or "").strip()
             route.origin = iata or icao
-            route.origin_name = (origin.get("name") or "").strip()
-            route.origin_municipality = (
-                origin.get("municipality") or origin.get("city") or ""
-            ).strip()
-            route.origin_country = (origin.get("country_name") or "").strip()
+            # Name/municipality/country come from the bundled airports.json
+            # (single source of truth) rather than the provider API.
+            if route.origin:
+                details = self._airport_details(route.origin)
+                route.origin_name = details.get("name", "")
+                route.origin_municipality = details.get("municipality", "")
+                route.origin_country = details.get("country_name", "")
 
         if dest:
             iata = (dest.get("iata_code") or "").strip()
             icao = (dest.get("icao_code") or "").strip()
             route.destination = iata or icao
-            route.destination_name = (dest.get("name") or "").strip()
-            route.destination_municipality = (
-                dest.get("municipality") or dest.get("city") or ""
-            ).strip()
-            route.destination_country = (dest.get("country_name") or "").strip()
+            if route.destination:
+                details = self._airport_details(route.destination)
+                route.destination_name = details.get("name", "")
+                route.destination_municipality = details.get("municipality", "")
+                route.destination_country = details.get("country_name", "")
 
         # Airline ICAO from the airline block
         airline = fr.get("airline", {})
@@ -439,7 +441,7 @@ class AeroDataBoxProvider(RouteProvider):
         if not self._api_key:
             return RouteInfo()
         resp = self._get(
-            f"{self.BASE}/flights/{callsign}",
+            f"{self.BASE}/flights/callsign/{callsign}",
             headers=self._headers(),
         )
         if resp is None:
@@ -472,26 +474,24 @@ class AeroDataBoxProvider(RouteProvider):
             iata = (airport.get("iata") or "").strip()
             icao = (airport.get("icao") or "").strip()
             route.origin = iata or icao
-            route.origin_name = (airport.get("name") or "").strip()
-            route.origin_municipality = (airport.get("municipality") or "").strip()
-            route.origin_country = (
-                (airport.get("country") or {}).get("name", "")
-                if isinstance(airport.get("country"), dict)
-                else (airport.get("countryName") or "").strip()
-            )
+            # Name/municipality/country come from the bundled airports.json
+            # (single source of truth) rather than the provider API.
+            if route.origin:
+                details = self._airport_details(route.origin)
+                route.origin_name = details.get("name", "")
+                route.origin_municipality = details.get("municipality", "")
+                route.origin_country = details.get("country_name", "")
 
         if arr:
             airport = arr.get("airport", {}) or {}
             iata = (airport.get("iata") or "").strip()
             icao = (airport.get("icao") or "").strip()
             route.destination = iata or icao
-            route.destination_name = (airport.get("name") or "").strip()
-            route.destination_municipality = (airport.get("municipality") or "").strip()
-            route.destination_country = (
-                (airport.get("country") or {}).get("name", "")
-                if isinstance(airport.get("country"), dict)
-                else (airport.get("countryName") or "").strip()
-            )
+            if route.destination:
+                details = self._airport_details(route.destination)
+                route.destination_name = details.get("name", "")
+                route.destination_municipality = details.get("municipality", "")
+                route.destination_country = details.get("country_name", "")
 
         # Airline
         airline = flight.get("airline", {}) or {}
@@ -505,7 +505,7 @@ class AeroDataBoxProvider(RouteProvider):
         if not self._api_key:
             return "", ""
         resp = self._get(
-            f"{self.BASE}/aircraft/mode-s/{mode_s.lower()}",
+            f"{self.BASE}/aircrafts/icao24/{mode_s.lower()}",
             headers=self._headers(),
         )
         if resp is None:
@@ -527,14 +527,8 @@ class AeroDataBoxProvider(RouteProvider):
             return "", ""
 
         ac = ac_list[0]
-        manufacturer = (ac.get("manufacturer") or "").strip()
-        model = (ac.get("model") or ac.get("type") or "").strip()
-        registration = (ac.get("registration") or "").strip()
-
-        if manufacturer and model:
-            plane = f"{manufacturer} {model}"
-        else:
-            plane = model or manufacturer
+        plane = (ac.get("typeName") or ac.get("productionLine") or "").strip()
+        registration = (ac.get("reg") or "").strip()
 
         _mark_healthy(self.name)
         return plane, registration

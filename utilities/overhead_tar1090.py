@@ -5,6 +5,7 @@ from threading import Event, Lock, Thread
 import requests
 from requests.exceptions import RequestException
 
+from assets.airlines.convert import icao_flight_to_iata
 from utilities import route_lookup, routes_cache
 from utilities.flight import Flight
 from utilities.overhead_utilities import (
@@ -41,6 +42,7 @@ class Overhead:
         self.max_altitude = cfg.flight_max_altitude
         self.location_home = cfg.location_home
         self.max_flight_lookup = cfg.max_flight_lookup
+        self.callsign_format = cfg.callsign_format
         self._session = requests.Session()
         self.lock = Lock()
         self.done = Event()
@@ -162,6 +164,16 @@ class Overhead:
                     if not plane:
                         plane = route.plane
 
+                    # The tar1090 feed only exposes the ICAO callsign.  When
+                    # the user has selected the IATA display format, translate
+                    # the ICAO callsign (e.g. BAW147) to its IATA form (BA147);
+                    # fall back to the ICAO callsign if no mapping exists.
+                    icao_callsign = callsign
+                    if self.callsign_format == "iata":
+                        display_callsign = icao_flight_to_iata(callsign) or callsign
+                    else:
+                        display_callsign = callsign
+
                     # Telemetry
                     try:
                         ground_speed = int(ac.get("gs", 0) or 0)
@@ -177,8 +189,8 @@ class Overhead:
                         Flight.from_route(
                             route,
                             plane=plane,
-                            callsign=callsign,
-                            icao_callsign=callsign,
+                            callsign=display_callsign,
+                            icao_callsign=icao_callsign,
                             altitude=ac.get("alt_baro", 0),
                             ground_speed=ground_speed,
                             heading=heading,
