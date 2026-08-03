@@ -1,4 +1,4 @@
-"""Tests for utilities/route_lookup.py - hexdb lookups and FR24 fallback."""
+"""Tests for utilities/route_lookup.py - multi-provider lookups and FR24 fallback."""
 
 from unittest.mock import MagicMock, patch
 
@@ -24,15 +24,15 @@ def isolated_route_cache(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_airport_caches(monkeypatch):
     """Reset module-level airport caches so tests start clean."""
-    import utilities.route_lookup as rl
+    import utilities.route_providers as rp
 
-    monkeypatch.setattr(rl, "_airport_cache", {})
-    monkeypatch.setattr(rl, "_airports_cache", {})
-    monkeypatch.setattr(rl, "_airports_loaded", False)
-    monkeypatch.setattr(rl, "_icao_to_iata", {})
-    monkeypatch.setattr(rl, "_icao_to_iata_loaded", False)
-    # Reset the FR24 fallback throttle so tests aren't blocked by a prior call.
-    monkeypatch.setattr(rl, "_fr24_last_call", 0.0)
+    monkeypatch.setattr(rp, "_icao_to_iata", {})
+    monkeypatch.setattr(rp, "_icao_to_iata_loaded", False)
+    # Reset provider quarantine state.
+    monkeypatch.setattr(rp, "_failed_at", {})
+    # Reset FR24 miss tracking so tests aren't blocked by a prior call.
+    import utilities.route_lookup as rl
+    monkeypatch.setattr(rl, "_fr24_miss", {})
 
 
 # ---------------------------------------------------------------------------
@@ -42,24 +42,30 @@ def reset_airport_caches(monkeypatch):
 
 class TestParseRoute:
     def test_standard_route(self):
-        from utilities.route_lookup import _parse_route
+        from utilities.route_providers import _icao_to_iata_code
 
-        assert _parse_route("EGPF-LEMG") == ("EGPF", "LEMG")
+        # _parse_route is now internal to HexdbProvider; test it via the provider
+        from utilities.route_providers import HexdbProvider
+        p = HexdbProvider()
+        assert p._parse_route("EGPF-LEMG") == ("EGPF", "LEMG")
 
     def test_lowercased(self):
-        from utilities.route_lookup import _parse_route
+        from utilities.route_providers import HexdbProvider
 
-        assert _parse_route("egpf-lemg") == ("EGPF", "LEMG")
+        p = HexdbProvider()
+        assert p._parse_route("egpf-lemg") == ("EGPF", "LEMG")
 
     def test_no_separator(self):
-        from utilities.route_lookup import _parse_route
+        from utilities.route_providers import HexdbProvider
 
-        assert _parse_route("EGPF") == ("", "")
+        p = HexdbProvider()
+        assert p._parse_route("EGPF") == ("", "")
 
     def test_empty_string(self):
-        from utilities.route_lookup import _parse_route
+        from utilities.route_providers import HexdbProvider
 
-        assert _parse_route("") == ("", "")
+        p = HexdbProvider()
+        assert p._parse_route("") == ("", "")
 
 
 # ---------------------------------------------------------------------------
@@ -69,38 +75,42 @@ class TestParseRoute:
 
 class TestParseAircraftType:
     def test_manufacturer_and_type(self):
-        from utilities.route_lookup import _parse_aircraft_type
+        from utilities.route_providers import HexdbProvider
 
+        p = HexdbProvider()
         data = {"Manufacturer": "Airbus", "ICAOTypeCode": "A320"}
-        assert _parse_aircraft_type(data) == "Airbus A320"
+        assert p._parse_aircraft_type(data) == "Airbus A320"
 
     def test_type_only(self):
-        from utilities.route_lookup import _parse_aircraft_type
+        from utilities.route_providers import HexdbProvider
 
+        p = HexdbProvider()
         data = {"Manufacturer": "", "ICAOTypeCode": "B738"}
-        assert _parse_aircraft_type(data) == "B738"
+        assert p._parse_aircraft_type(data) == "B738"
 
     def test_manufacturer_only(self):
-        from utilities.route_lookup import _parse_aircraft_type
+        from utilities.route_providers import HexdbProvider
 
+        p = HexdbProvider()
         data = {"Manufacturer": "Boeing", "ICAOTypeCode": ""}
-        assert _parse_aircraft_type(data) == "Boeing"
+        assert p._parse_aircraft_type(data) == "Boeing"
 
     def test_missing_fields(self):
-        from utilities.route_lookup import _parse_aircraft_type
+        from utilities.route_providers import HexdbProvider
 
-        assert _parse_aircraft_type({}) == ""
+        p = HexdbProvider()
+        assert p._parse_aircraft_type({}) == ""
 
 
 # ---------------------------------------------------------------------------
-# _lookup_route - hexdb success (no FR24 fallback needed)
+# _lookup_route - provider chain success (no FR24 fallback needed)
 # ---------------------------------------------------------------------------
 
 
 class TestLookupRouteHexdbSuccess:
-    @patch("utilities.route_lookup._airport_details")
-    @patch("utilities.route_lookup._icao_to_iata_code")
-    @patch("utilities.route_lookup._session")
+    @patch("utilities.route_providers._bundled_airport_info")
+    @patch("utilities.route_providers._icao_to_iata_code")
+    @patch("utilities.route_providers._session")
     def test_hexdb_returns_route(
         self, mock_session, mock_icao_to_iata, mock_airport_details
     ):
@@ -129,15 +139,15 @@ class TestLookupRouteHexdbSuccess:
 
 
 # ---------------------------------------------------------------------------
-# _lookup_route - hexdb only (FR24 fallback is handled by get_route)
+# _lookup_route - provider chain only (FR24 fallback is handled by get_route)
 # ---------------------------------------------------------------------------
 
 
 class TestLookupRouteHexdbOnly:
-    """_lookup_route is now hexdb-only; the FR24 fallback lives in get_route."""
+    """_lookup_route delegates to the provider chain; FR24 fallback lives in get_route."""
 
     @patch("utilities.route_lookup._fr24_fallback")
-    @patch("utilities.route_lookup._session")
+    @patch("utilities.route_providers._session")
     def test_hexdb_404_returns_empty_no_fr24(self, mock_session, mock_fr24):
         from utilities.route_lookup import _lookup_route
 
@@ -152,7 +162,7 @@ class TestLookupRouteHexdbOnly:
         mock_fr24.assert_not_called()
 
     @patch("utilities.route_lookup._fr24_fallback")
-    @patch("utilities.route_lookup._session")
+    @patch("utilities.route_providers._session")
     def test_hexdb_empty_route_returns_empty_no_fr24(self, mock_session, mock_fr24):
         from utilities.route_lookup import _lookup_route
 
@@ -169,8 +179,8 @@ class TestLookupRouteHexdbOnly:
         mock_fr24.assert_not_called()
 
     @patch("utilities.route_lookup._fr24_fallback")
-    @patch("utilities.route_lookup._icao_to_iata_code")
-    @patch("utilities.route_lookup._session")
+    @patch("utilities.route_providers._icao_to_iata_code")
+    @patch("utilities.route_providers._session")
     def test_iata_conversion_failure_returns_empty_no_fr24(
         self, mock_session, mock_icao_to_iata, mock_fr24
     ):
@@ -182,8 +192,6 @@ class TestLookupRouteHexdbOnly:
         mock_resp.json.return_value = {"route": "EGPF-LEMG"}
         mock_session.get.return_value = mock_resp
 
-        # hexdb parsed the route but IATA conversion failed - both empty.
-        # _lookup_route no longer falls back to FR24; it just returns empty.
         mock_icao_to_iata.return_value = ""
 
         result = _lookup_route("BAW123")
@@ -193,8 +201,8 @@ class TestLookupRouteHexdbOnly:
         mock_fr24.assert_not_called()
 
     @patch("utilities.route_lookup._fr24_fallback")
-    @patch("utilities.route_lookup._icao_to_iata_code")
-    @patch("utilities.route_lookup._session")
+    @patch("utilities.route_providers._icao_to_iata_code")
+    @patch("utilities.route_providers._session")
     def test_hexdb_success_returns_route_no_fr24(
         self, mock_session, mock_icao_to_iata, mock_fr24
     ):
@@ -248,7 +256,7 @@ class TestFr24Fallback:
         assert result.destination == ""
         assert result.plane == ""
 
-    @patch("utilities.route_lookup._airport_details")
+    @patch("utilities.route_lookup._enrich_route_names_helper")
     @patch("FlightRadar24.api.FlightRadar24API")
     def test_matching_flight_found_route_only(self, mock_api_cls, mock_airport_details):
         from utilities.route_lookup import _fr24_fallback

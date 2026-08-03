@@ -80,15 +80,16 @@ def _check_celestrack() -> bool:
         return False
 
 
-def _check_hexdb_reachable() -> bool:
-    """Return True if the hexdb service can be reached."""
-    import requests
+def _check_routing_reachable(cfg: Config) -> bool:
+    """Return True if at least one route lookup provider is reachable.
 
-    try:
-        requests.get("https://hexdb.io", timeout=5)
-        return True
-    except Exception:
-        return False
+    Skipped when FR24 is the data source (FR24 provides its own routing).
+    """
+    from utilities import route_providers
+
+    # Feed the aerodatabox key into the provider chain if configured.
+    route_providers.set_aerodatabox_key(cfg.aerodatabox_api_key)
+    return route_providers.check_routing()
 
 
 def _render_ip_address(panel, canvas, y):
@@ -144,15 +145,21 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
     panel.swap(canvas)
 
 
-def _render_hexdb_test(panel, canvas, y):
-    from setup.colours import GREEN, GREY, RED
+def _render_routing_test(panel, canvas, cfg: Config, y):
+    from setup.colours import GREEN, GREY, ORANGE, RED
 
-    panel.draw_text(canvas, test_font, 1, y, GREY, "HEXDB: ")
+    panel.draw_text(canvas, test_font, 1, y, GREY, "ROUTE: ")
     panel.swap(canvas)
 
-    ok = _check_hexdb_reachable()
-    result_text = "OK" if ok else "FAIL"
-    result_colour = GREEN if ok else RED
+    if cfg.data_source == "fr24":
+        # FR24 provides its own routing - no external lookup needed.
+        result_text = "N/A"
+        result_colour = ORANGE
+    else:
+        working = _check_routing_reachable(cfg)
+        result_text = "OK" if working else "FAIL"
+        result_colour = GREEN if working else RED
+
     result_width = len(result_text) * 4
     panel.draw_text(
         canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
@@ -169,7 +176,7 @@ def render_tests(panel, canvas):
 
     _render_data_source_test(panel, canvas, cfg, 5)
     _render_celestrack_test(panel, canvas, cfg, 13)
-    _render_hexdb_test(panel, canvas, 21)
+    _render_routing_test(panel, canvas, cfg, 21)
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)

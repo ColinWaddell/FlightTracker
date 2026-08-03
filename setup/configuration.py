@@ -123,6 +123,7 @@ DEFAULT_CALLSIGN_FORMAT = (
 DEFAULT_INFO_BAR_MODE = "callsign"  # 'callsign' = show callsign, 'airline' = show airline name, 'callsign_airline' = show both
 DEFAULT_OSN_CLIENT_ID = ""  # OpenSky Network OAuth2 client ID
 DEFAULT_OSN_CLIENT_SECRET = ""  # OpenSky Network OAuth2 client secret
+DEFAULT_AERODATABOX_API_KEY = ""  # AeroDataBox RapidAPI key (optional route lookup provider)
 
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
@@ -203,6 +204,7 @@ DEFAULTS: dict[str, Any] = {
     "info_bar_mode": DEFAULT_INFO_BAR_MODE,
     "osn_client_id": DEFAULT_OSN_CLIENT_ID,
     "osn_client_secret": DEFAULT_OSN_CLIENT_SECRET,
+    "aerodatabox_api_key": DEFAULT_AERODATABOX_API_KEY,
     # Satellite tracking
     "satellite_tracking_enabled": DEFAULT_SATELLITE_TRACKING_ENABLED,
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
@@ -915,6 +917,10 @@ class Config:
     @property
     def osn_client_secret(self) -> str:
         return str(self.data_store.get("osn_client_secret", DEFAULT_OSN_CLIENT_SECRET))
+
+    @property
+    def aerodatabox_api_key(self) -> str:
+        return str(self.data_store.get("aerodatabox_api_key", DEFAULT_AERODATABOX_API_KEY))
 
     @property
     def use_osn(self) -> bool:
