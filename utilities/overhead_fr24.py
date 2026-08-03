@@ -146,30 +146,38 @@ class Overhead:
                     plane = cached.get("plane", "")
                     origin = cached.get("origin", "")
                     destination = cached.get("destination", "")
+                    origin_info = {
+                        "name": cached.get("origin_name", ""),
+                        "municipality": cached.get("origin_municipality", ""),
+                        "country_name": cached.get("origin_country", ""),
+                    }
+                    dest_info = {
+                        "name": cached.get("destination_name", ""),
+                        "municipality": cached.get("destination_municipality", ""),
+                        "country_name": cached.get("destination_country", ""),
+                    }
                 else:
                     # Cache miss or incomplete entry (plane only, no route) -
                     # fetch details from FR24 API.  If we had a partial cache
                     # entry, reuse the cached plane type as a fallback.
                     cached_plane = cached.get("plane", "") if cached else ""
 
-                    retries = RETRIES
                     details = None
-                    while retries:
-                        sleep(RATE_LIMIT_DELAY)
+                    for attempt in range(RETRIES):
+                        if attempt > 0:
+                            # Sleep between retries only, not before the first attempt
+                            sleep(RATE_LIMIT_DELAY)
                         try:
                             details = self.api.get_flight_details(flight)
                             break
-                        except (KeyError, AttributeError, TypeError, Exception) as e:
+                        except Exception as e:
                             if CurlTimeout and isinstance(e, CurlTimeout):
                                 logger.debug(
                                     "FR24 flight detail timeout, retrying (%d left)",
-                                    retries - 1,
+                                    RETRIES - attempt - 1,
                                 )
-                            elif isinstance(e, (KeyError, AttributeError, TypeError)):
-                                pass
-                            else:
+                            elif not isinstance(e, (KeyError, AttributeError, TypeError)):
                                 logger.debug("FR24 flight detail error: %s", e)
-                            retries -= 1
 
                     if details is not None:
                         try:
@@ -177,30 +185,39 @@ class Overhead:
                         except (KeyError, TypeError):
                             plane = cached_plane
                         plane = clean_field(plane)
-
-                        origin = clean_field(flight.origin_airport_iata)
-                        destination = clean_field(flight.destination_airport_iata)
-
-                        # Cache the route info for 24 hours
-                        if icao_callsign:
-                            routes_cache.put(
-                                icao_callsign,
-                                {
-                                    "plane": plane,
-                                    "origin": origin,
-                                    "destination": destination,
-                                },
-                            )
                     else:
-                        # All retries failed - use cached plane if available,
-                        # otherwise blank.  Use what we have from the flight object.
+                        # All retries failed - use cached plane if available
                         plane = cached_plane
-                        origin = clean_field(flight.origin_airport_iata)
-                        destination = clean_field(flight.destination_airport_iata)
 
-                # Airport names / municipality / country from bundled airports.json
-                origin_info = airport_info(origin) if origin else {}
-                dest_info = airport_info(destination) if destination else {}
+                    # Origin/destination come from the feed list regardless of
+                    # whether the details call succeeded (they're always present).
+                    origin = clean_field(flight.origin_airport_iata)
+                    destination = clean_field(flight.destination_airport_iata)
+
+                    # Airport names/municipality/country from bundled airports.json
+                    origin_info = airport_info(origin) if origin else {}
+                    dest_info = airport_info(destination) if destination else {}
+
+                    # Cache the full route entry (including names) so that
+                    # route_lookup backends (OSN, tar1090) reading the same
+                    # callsign get a complete record rather than a partial one.
+                    if icao_callsign and (origin or destination):
+                        routes_cache.put(
+                            icao_callsign,
+                            {
+                                "plane": plane,
+                                "origin": origin,
+                                "destination": destination,
+                                "origin_name": origin_info.get("name", ""),
+                                "origin_municipality": origin_info.get("municipality", ""),
+                                "origin_country": origin_info.get("country_name", ""),
+                                "destination_name": dest_info.get("name", ""),
+                                "destination_municipality": dest_info.get("municipality", ""),
+                                "destination_country": dest_info.get("country_name", ""),
+                                "registration": "",
+                                "airline_icao": clean_field(flight.airline_icao),
+                            },
+                        )
 
                 # Telemetry (always from live flight object, not cached)
                 try:
@@ -254,6 +271,9 @@ class Overhead:
             with self.lock:
                 self.processing_store = False
             self.done.set()
+            # Flush the route cache once per poll cycle rather than on every
+            # individual put() to reduce SD-card writes on Raspberry Pi.
+            routes_cache.flush()
 
     @property
     def new_data(self):

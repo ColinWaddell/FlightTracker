@@ -74,13 +74,27 @@ class TestRoutesCachePut:
         assert result["plane"] == "B737"
         assert result["origin"] == "LGW"
 
-    def test_put_persists_to_disk(self, isolated_cache, tmp_path):
+    def test_put_persists_to_disk_after_flush(self, isolated_cache, tmp_path):
         rc = isolated_cache
         rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
-        # File should exist and contain valid JSON
+        # put() no longer writes immediately - must call flush() first
+        assert not rc.CACHE_PATH.exists(), "put() should not write to disk before flush()"
+        rc.flush()
         assert rc.CACHE_PATH.exists()
         data = json.loads(rc.CACHE_PATH.read_text())
         assert "BAW123" in data
+
+    def test_flush_clears_dirty_flag(self, isolated_cache):
+        rc = isolated_cache
+        rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
+        assert rc._dirty is True
+        rc.flush()
+        assert rc._dirty is False
+
+    def test_flush_noop_when_not_dirty(self, isolated_cache, tmp_path):
+        rc = isolated_cache
+        rc.flush()  # nothing to flush - should not create file
+        assert not rc.CACHE_PATH.exists()
 
 
 class TestRoutesCacheClear:

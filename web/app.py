@@ -199,7 +199,17 @@ def _build_flight_rows(flights: list) -> tuple[list[dict], list[str]]:
     """Build a flat debug table for all flight objects."""
     from dataclasses import fields
 
-    field_names = [field.name for field in fields(Flight)]
+    excluded_fields = {
+        "origin_name",
+        "destination_name",
+        "origin_municipality",
+        "destination_municipality",
+        "origin_country",
+        "destination_country",
+    }
+    field_names = [
+        field.name for field in fields(Flight) if field.name not in excluded_fields
+    ]
     rows = []
     for flight in flights:
         row = {}

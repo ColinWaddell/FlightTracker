@@ -5,7 +5,7 @@ from threading import Event, Lock, Thread
 import requests
 from requests.exceptions import RequestException
 
-from utilities import route_lookup
+from utilities import route_lookup, routes_cache
 from utilities.flight import Flight
 from utilities.overhead_utilities import (
     clean_field,
@@ -182,7 +182,10 @@ class Overhead:
                             altitude=ac.get("alt_baro", 0),
                             ground_speed=ground_speed,
                             heading=heading,
-                            vertical_speed=ac.get("baro_rate", 0),
+                            # baro_rate may be None when the transponder doesn't
+                            # report vertical rate; default to 0 to keep the
+                            # Flight.vertical_speed field an int, not None.
+                            vertical_speed=ac.get("baro_rate") or 0,
                         )
                     )
 
@@ -210,6 +213,9 @@ class Overhead:
             with self.lock:
                 self.processing_store = False
             self.done.set()
+            # Flush the route cache once per poll cycle rather than on every
+            # individual put() to reduce SD-card writes on Raspberry Pi.
+            routes_cache.flush()
 
     @property
     def new_data(self):

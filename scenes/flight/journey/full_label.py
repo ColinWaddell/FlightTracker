@@ -87,7 +87,7 @@ def build_journey_spans(
         origin_spans: Spans = [
             Span(TC(THEME_LOCATION_ORIGIN), font, origin),
             Span(TC(THEME_LOCATION_ORIGIN_ARROW), font, ">"),
-            Span(TC(THEME_LOCATION_ORIGIN_FULL), font, f"{origin_name or 'Unknown'} "),
+            Span(TC(THEME_LOCATION_ORIGIN_FULL), font, f"{origin_name or 'Unknown'}"),
         ]
         destination_spans: Spans = [
             Span(TC(THEME_LOCATION_DESTINATION), font, destination),
@@ -95,19 +95,19 @@ def build_journey_spans(
             Span(
                 TC(THEME_LOCATION_DESTINATION_FULL),
                 font,
-                f"{destination_name or 'Unknown'} ",
+                f"{destination_name or 'Unknown'}",
             ),
         ]
     else:
         # Only the name scrolls; the code+arrow prefix is drawn statically.
         origin_spans = [
-            Span(TC(THEME_LOCATION_ORIGIN_FULL), font, f"{origin_name or 'Unknown'} "),
+            Span(TC(THEME_LOCATION_ORIGIN_FULL), font, f"{origin_name or 'Unknown'}"),
         ]
         destination_spans = [
             Span(
                 TC(THEME_LOCATION_DESTINATION_FULL),
                 font,
-                f"{destination_name or 'Unknown'} ",
+                f"{destination_name or 'Unknown'}",
             ),
         ]
     return origin_spans, destination_spans

@@ -134,9 +134,10 @@ def _load_airports():
     path = Path(__file__).parent.parent / "assets" / "airports.json"
     if path.exists():
         try:
-            with open(path) as fh:
-                _airports_cache = json.load(fh)
-        except Exception:
+            with open(path, "r", encoding="utf-8") as file:
+                _airports_cache = json.load(file)
+        except Exception as e:
+            logger.warning("Failed to load airports.json: %s", e)
             _airports_cache = {}
 
 

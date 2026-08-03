@@ -29,7 +29,7 @@ from threading import Event, Lock, Thread
 
 import requests
 
-from utilities import route_lookup
+from utilities import route_lookup, routes_cache
 from utilities.flight import Flight
 from utilities.overhead_utilities import (
     clean_field,
@@ -327,6 +327,9 @@ class Overhead:
             with self.lock:
                 self.processing_store = False
             self.done.set()
+            # Flush the route cache once per poll cycle rather than on every
+            # individual put() to reduce SD-card writes on Raspberry Pi.
+            routes_cache.flush()
 
     # ------------------------------------------------------------------
     # Properties
