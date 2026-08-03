@@ -68,6 +68,12 @@ def test_build_flight_rows_uses_flight_fields():
     assert rows[0]["altitude"] == "1200"
 
 
-def test_format_last_updated_value_formats_timestamp():
-    assert _format_last_updated_value(1720000000) == "2024-07-03 10:46:40"
+def test_format_last_updated_value_formats_timestamp(monkeypatch):
+    # Force UTC so the formatted timestamp is deterministic regardless of
+    # the system timezone the tests run under (e.g. CI vs local).
+    monkeypatch.setenv("TZ", "UTC")
+    import time as _time
+
+    _time.tzset()
+    assert _format_last_updated_value(1720000000) == "2024-07-03 09:46:40"
     assert _format_last_updated_value(None) == ""
