@@ -418,10 +418,12 @@ class AeroDataBoxProvider(RouteProvider):
         if not self._api_key:
             return False
         try:
-            # Use a lightweight endpoint - search by registration with a known reg
             resp = _session.get(
-                f"{self.BASE}/aircraft/reg/G-EZWD",
-                headers=self._headers(),
+                f"{self.BASE}/subscriptions/balance",
+                headers={
+                    **self._headers(),
+                    "x-rapidapi-host": "aerodatabox.p.rapidapi.com",
+                },
                 timeout=5,
             )
             return resp.status_code == 200
