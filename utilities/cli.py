@@ -418,6 +418,9 @@ def _print_usage() -> None:
     print("  help                   Show this help message")
     print("  --version              Print the program version")
     print()
+    print("Options (can be combined with any command):")
+    print("  --disable-tests        Skip start-up connectivity tests")
+    print()
     print("Test commands accept --parameters and --interval/--limit for repeated runs.")
     print("Run 'python flight-tracker.py test <target> --help' for details.")
 

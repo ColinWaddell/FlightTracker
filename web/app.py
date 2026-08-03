@@ -26,6 +26,7 @@ import os
 import secrets
 import sys
 import threading
+import time
 from pathlib import Path
 
 from flask import Flask, Response, redirect, render_template, request, session, url_for
@@ -33,7 +34,7 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 from setup.configuration import CONFIG_PATH, Config
 from setup.logging import get_buffer
 from utilities import routes_cache
-from utilities.tle_manager import TLE_CACHE_PATH
+from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
 from utilities.updater import get_update_info, perform_update, version_string
 from version import VERSION
 
@@ -706,3 +707,89 @@ def cache_clear_apply():
     logger.info("Cache cleared, restarting...")
     restart_after(delay=2.0)
     return render_template("restarting.html")
+
+
+# ---------------------------------------------------------------------------
+# Data routes
+# ---------------------------------------------------------------------------
+
+
+@app.route("/live-data")
+@login_required
+def live_data():
+    """Show the live data page (placeholder for now)."""
+    return render_template("live_data.html", active_page="live_data")
+
+
+@app.route("/cached-data")
+@login_required
+def cached_data():
+    """Show cached route and TLE data in tables."""
+    import datetime as _dt
+    import json as _json
+
+    # --- Route cache ---
+    route_entries = []
+    try:
+        if routes_cache.CACHE_PATH.exists():
+            with open(routes_cache.CACHE_PATH) as f:
+                raw = _json.load(f)
+            now = time.time()
+            ttl = routes_cache.CACHE_TTL
+            for callsign, entry in raw.items():
+                ts = entry.get("_ts", 0)
+                cached_at = (
+                    _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+                    if ts
+                    else ""
+                )
+                expired = ts > 0 and (now - ts) > ttl
+                route_entries.append(
+                    {
+                        "callsign": callsign,
+                        "plane": entry.get("plane", ""),
+                        "origin": entry.get("origin", ""),
+                        "destination": entry.get("destination", ""),
+                        "origin_name": entry.get("origin_name", ""),
+                        "destination_name": entry.get("destination_name", ""),
+                        "cached_at": cached_at,
+                        "expired": expired,
+                    }
+                )
+            route_entries.sort(key=lambda e: e["callsign"])
+    except Exception as exc:
+        logger.warning("Failed to read route cache: %s", exc)
+
+    # --- TLE cache ---
+    tle_entries = []
+    tle_fetched_at = ""
+    tle_expired = False
+    try:
+        if TLE_CACHE_PATH.exists():
+            with open(TLE_CACHE_PATH) as f:
+                raw = _json.load(f)
+            ts = raw.get("timestamp", 0)
+            if ts:
+                tle_fetched_at = _dt.datetime.fromtimestamp(ts).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+                tle_expired = (time.time() - ts) > TLE_CACHE_TTL
+            for tle in raw.get("tles", []):
+                tle_entries.append(
+                    {
+                        "name": tle[0] if len(tle) > 0 else "",
+                        "line1": tle[1] if len(tle) > 1 else "",
+                        "line2": tle[2] if len(tle) > 2 else "",
+                    }
+                )
+    except Exception as exc:
+        logger.warning("Failed to read TLE cache: %s", exc)
+
+    return render_template(
+        "cached_data.html",
+        route_entries=route_entries,
+        tle_entries=tle_entries,
+        tle_fetched_at=tle_fetched_at,
+        tle_expired=tle_expired,
+        active_page="cached_data",
+    )

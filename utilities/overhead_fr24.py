@@ -138,12 +138,18 @@ class Overhead:
                 # Check route cache first - avoids expensive API lookups
                 cached = routes_cache.get(icao_callsign) if icao_callsign else None
 
-                if cached is not None:
+                if cached is not None and (
+                    cached.get("origin") or cached.get("destination")
+                ):
                     plane = cached.get("plane", "")
                     origin = cached.get("origin", "")
                     destination = cached.get("destination", "")
                 else:
-                    # Cache miss - fetch details from FR24 API (for plane model only)
+                    # Cache miss or incomplete entry (plane only, no route) -
+                    # fetch details from FR24 API.  If we had a partial cache
+                    # entry, reuse the cached plane type as a fallback.
+                    cached_plane = cached.get("plane", "") if cached else ""
+
                     retries = RETRIES
                     details = None
                     while retries:
@@ -167,7 +173,7 @@ class Overhead:
                         try:
                             plane = details["aircraft"]["model"]["text"]
                         except (KeyError, TypeError):
-                            plane = ""
+                            plane = cached_plane
                         plane = clean_field(plane)
 
                         origin = clean_field(flight.origin_airport_iata)
@@ -184,8 +190,9 @@ class Overhead:
                                 },
                             )
                     else:
-                        # All retries failed - use what we have from the flight object
-                        plane = ""
+                        # All retries failed - use cached plane if available,
+                        # otherwise blank.  Use what we have from the flight object.
+                        plane = cached_plane
                         origin = clean_field(flight.origin_airport_iata)
                         destination = clean_field(flight.destination_airport_iata)
 

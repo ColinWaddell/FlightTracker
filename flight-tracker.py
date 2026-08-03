@@ -367,7 +367,7 @@ def _warn_if_root() -> None:
         )
 
 
-def run_flight_tracker():
+def run_flight_tracker(disable_tests: bool = False):
     setup_logging()
     logger = logging.getLogger("startup")
 
@@ -393,7 +393,8 @@ def run_flight_tracker():
     )
 
     # -- Phase 2: Show start-up tests --------------------------
-    render_tests(panel, canvas)
+    if not disable_tests:
+        render_tests(panel, canvas)
 
     # -- Phase 3: Show splash (loading state, no QR) --------------------------
     render_splash(panel, canvas, Image, loading_font)
@@ -458,7 +459,13 @@ def _save_config_change(key: str, value) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    if "--disable-tests" in sys.argv:
+        sys.argv.remove("--disable-tests")
+        if len(sys.argv) == 1:
+            run_flight_tracker(disable_tests=True)
+        else:
+            sys.exit(dispatch_cli_command(sys.argv))
+    elif len(sys.argv) == 1:
         run_flight_tracker()
     else:
         sys.exit(dispatch_cli_command(sys.argv))

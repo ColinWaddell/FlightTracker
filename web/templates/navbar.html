@@ -29,6 +29,24 @@
             <i class="bi bi-arrow-repeat me-1"></i>Update
           </a>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle{{ ' active' if active_page in ('live_data', 'cached_data') }}"
+             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-database me-1"></i>Data
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item{{ ' active' if active_page == 'live_data' }}" href="{{ url_for('live_data') }}">
+                <i class="bi bi-broadcast me-1"></i>Live Data
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item{{ ' active' if active_page == 'cached_data' }}" href="{{ url_for('cached_data') }}">
+                <i class="bi bi-database-check me-1"></i>Cached Data
+              </a>
+            </li>
+          </ul>
+        </li>
       </ul>
       <a href="/logout" class="btn btn-sm btn-outline-danger">
         <i class="bi bi-box-arrow-right me-1"></i>Sign out
