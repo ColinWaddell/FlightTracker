@@ -80,6 +80,17 @@ def _check_celestrack() -> bool:
         return False
 
 
+def _check_hexdb_reachable() -> bool:
+    """Return True if the hexdb service can be reached."""
+    import requests
+
+    try:
+        requests.get("https://hexdb.io", timeout=5)
+        return True
+    except Exception:
+        return False
+
+
 def _render_ip_address(panel, canvas, y):
     from setup.colours import GREY
 
@@ -133,6 +144,22 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
     panel.swap(canvas)
 
 
+def _render_hexdb_test(panel, canvas, y):
+    from setup.colours import GREEN, GREY, RED
+
+    panel.draw_text(canvas, test_font, 1, y, GREY, "HEXDB: ")
+    panel.swap(canvas)
+
+    ok = _check_hexdb_reachable()
+    result_text = "OK" if ok else "FAIL"
+    result_colour = GREEN if ok else RED
+    result_width = len(result_text) * 4
+    panel.draw_text(
+        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
+    )
+    panel.swap(canvas)
+
+
 def render_tests(panel, canvas):
     from time import sleep
 
@@ -142,6 +169,7 @@ def render_tests(panel, canvas):
 
     _render_data_source_test(panel, canvas, cfg, 5)
     _render_celestrack_test(panel, canvas, cfg, 13)
+    _render_hexdb_test(panel, canvas, 21)
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)
