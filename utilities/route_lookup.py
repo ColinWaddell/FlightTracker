@@ -70,12 +70,9 @@ import logging
 import threading
 import time
 
-from requests.exceptions import RequestException
-
-from utilities import routes_cache
+from utilities import route_providers, routes_cache
 from utilities.flight import RouteInfo
 from utilities.overhead_utilities import clean_field
-from utilities import route_providers
 
 logger = logging.getLogger(__name__)
 

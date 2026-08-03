@@ -70,6 +70,6 @@ def icao_flight_to_iata(flight: str) -> str | None:
 if __name__ == "__main__":
     # quick manual smoke test
     for f in ["BA147", "LH401", "AA100", "UA999", "DL42"]:
-        print(f, "->", iata_flight_to_icao(f))
+        print(f, "->", flight_iata_to_icao(f))
     for f in ["BAW147", "DLH401", "AAL100", "UAL999", "DAL42"]:
         print(f, "->", icao_flight_to_iata(f))

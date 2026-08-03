@@ -31,9 +31,11 @@ other source file needs modification for the provider chain to work.
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
+from pathlib import Path
 
 import requests
 from requests.exceptions import RequestException
@@ -625,9 +627,6 @@ class AeroDataBoxProvider(RouteProvider):
 # ---------------------------------------------------------------------------
 # Bundled ICAO→IATA lookup (moved from route_lookup.py, shared by providers)
 # ---------------------------------------------------------------------------
-
-import json
-from pathlib import Path
 
 _icao_to_iata: dict[str, str] = {}
 _icao_to_iata_loaded = False

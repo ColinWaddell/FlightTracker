@@ -179,7 +179,7 @@ def _build_forecast_rows(forecast_data: list | None) -> tuple[list[dict], list[s
         return [], []
 
     columns = sorted(
-        {key for day in forecast_data if isinstance(day, dict) for key in day.keys()}
+        {key for day in forecast_data if isinstance(day, dict) for key in day}
     )
     rows = []
     for index, day in enumerate(forecast_data, start=1):
