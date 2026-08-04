@@ -90,6 +90,8 @@ class SatelliteScene:
         cfg = Config.instance()
         now_ts = datetime.datetime.utcnow().timestamp()
 
+        self.prune_expired_passes()
+
         # Recompute if windows haven't been built yet, are all expired,
         # or are older than 1 hour (to catch new passes that overlap
         # with currently active ones).
@@ -188,6 +190,11 @@ class SatelliteScene:
             )
         except Exception as exc:
             logger.error("Satellite pass computation failed: %s", exc)
+
+    def prune_expired_passes(self) -> None:
+        """Remove pass windows that have already finished."""
+        now = datetime.datetime.utcnow()
+        self.pass_windows = [w for w in self.pass_windows if w.los >= now]
 
     def draw_trajectories(self, active: list[passes_mod.PassWindow]) -> None:
         """Paint dim trajectory arcs for all currently active passes."""

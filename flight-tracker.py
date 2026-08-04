@@ -149,6 +149,8 @@ def _render_routing_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, RED
 
     if cfg.data_source == "fr24":
+        # when the source is FR24 we don't need to check routing
+        # because FR24 provides its own routing data
         return
 
     panel.draw_text(canvas, test_font, 1, y, GREY, "ROUTE: ")
