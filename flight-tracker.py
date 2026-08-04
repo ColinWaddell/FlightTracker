@@ -146,19 +146,17 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
 
 
 def _render_routing_test(panel, canvas, cfg: Config, y):
-    from setup.colours import GREEN, GREY, ORANGE, RED
+    from setup.colours import GREEN, GREY, RED
+
+    if cfg.data_source == "fr24":
+        return
 
     panel.draw_text(canvas, test_font, 1, y, GREY, "ROUTE: ")
     panel.swap(canvas)
 
-    if cfg.data_source == "fr24":
-        # FR24 provides its own routing - no external lookup needed.
-        result_text = "N/A"
-        result_colour = ORANGE
-    else:
-        working = _check_routing_reachable(cfg)
-        result_text = "OK" if working else "FAIL"
-        result_colour = GREEN if working else RED
+    working = _check_routing_reachable(cfg)
+    result_text = "OK" if working else "FAIL"
+    result_colour = GREEN if working else RED
 
     result_width = len(result_text) * 4
     panel.draw_text(
