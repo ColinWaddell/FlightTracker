@@ -939,5 +939,81 @@ def cached_data():
         tle_entries=tle_entries,
         tle_fetched_at=tle_fetched_at,
         tle_expired=tle_expired,
+        csrf_token=csrf_token(),
         active_page="cached_data",
     )
+
+
+@app.route("/cached-data/routes/delete", methods=["POST"])
+@login_required
+def cached_data_routes_delete():
+    """Delete selected entries from the route cache."""
+    if not validate_csrf(request.form):
+        return (
+            render_template(
+                "cached_data.html",
+                route_entries=[],
+                tle_entries=[],
+                tle_fetched_at="",
+                tle_expired=False,
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+                active_page="cached_data",
+            ),
+            403,
+        )
+
+    keys = request.form.getlist("keys")
+    if not keys:
+        return redirect(url_for("cached_data"))
+
+    removed = routes_cache.delete(keys)
+    logger.info("Deleted %d route cache entries (requested %d)", removed, len(keys))
+    return redirect(url_for("cached_data"))
+
+
+@app.route("/cached-data/tles/delete", methods=["POST"])
+@login_required
+def cached_data_tles_delete():
+    """Delete selected TLE entries from the TLE cache file."""
+    import json as _json
+
+    if not validate_csrf(request.form):
+        return (
+            render_template(
+                "cached_data.html",
+                route_entries=[],
+                tle_entries=[],
+                tle_fetched_at="",
+                tle_expired=False,
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+                active_page="cached_data",
+            ),
+            403,
+        )
+
+    names = request.form.getlist("keys")
+    if not names:
+        return redirect(url_for("cached_data"))
+
+    try:
+        from utilities.tle_manager import load_cache, save_cache
+
+        cached = load_cache()
+        if cached:
+            tles = [tuple(t) for t in cached["tles"]]
+            original = len(tles)
+            tles = [t for t in tles if t[0] not in names]
+            removed = original - len(tles)
+            if removed:
+                save_cache(tles)
+                logger.info(
+                    "Deleted %d TLE cache entries (requested %d)",
+                    removed,
+                    len(names),
+                )
+    except Exception as exc:
+        logger.error("TLE cache delete failed: %s", exc)
+
+    return redirect(url_for("cached_data"))

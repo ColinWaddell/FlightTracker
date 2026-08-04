@@ -191,3 +191,26 @@ def clear():
         _loaded = True
         _save()
         _dirty = False
+
+
+def delete(keys) -> int:
+    """Delete one or more entries from the cache and persist immediately.
+
+    *keys* may be a single string or an iterable of strings.  Returns the
+    number of entries actually removed.
+    """
+    global _dirty
+    if isinstance(keys, str):
+        keys = [keys]
+    with _lock:
+        _load()
+        removed = 0
+        for k in keys:
+            if k in _cache:
+                del _cache[k]
+                removed += 1
+        if removed:
+            _dirty = True
+            _save()
+            _dirty = False
+        return removed
