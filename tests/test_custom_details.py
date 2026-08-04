@@ -523,7 +523,11 @@ class TestValidateTemplate:
 
     def test_all_symbols_valid(self):
         for name in sorted(SYMBOL_MAP):
-            assert validate_template("{symbol:" + name + "}") == []
+            if name == "heading_arrow":
+                # heading_arrow uses {heading_arrow} not {symbol:heading_arrow}
+                assert validate_template("{heading_arrow}") == []
+            else:
+                assert validate_template("{symbol:" + name + "}") == []
 
     def test_all_telemetry_units_valid(self):
         from scenes.flight.custom_details import TELEMETRY_FIELDS
@@ -531,3 +535,131 @@ class TestValidateTemplate:
         for field, (units, _, _) in TELEMETRY_FIELDS.items():
             for unit in units:
                 assert validate_template("{" + field + ":" + unit + "}") == []
+
+
+# ---------------------------------------------------------------------------
+# heading_arrow — dynamic directional symbol
+# ---------------------------------------------------------------------------
+
+
+class TestHeadingArrow:
+    """Verify {heading_arrow} selects the correct glyph for each heading."""
+
+    def test_north_0(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=0), make_cfg()
+        )
+        assert len(spans) == 1
+        assert spans[0].text == chr(128)  # N
+
+    def test_north_360(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=360), make_cfg()
+        )
+        assert spans[0].text == chr(128)  # N
+
+    def test_northeast_45(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=45), make_cfg()
+        )
+        assert spans[0].text == chr(129)  # NE
+
+    def test_east_90(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=90), make_cfg()
+        )
+        assert spans[0].text == chr(130)  # E
+
+    def test_southeast_135(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=135), make_cfg()
+        )
+        assert spans[0].text == chr(131)  # SE
+
+    def test_south_180(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=180), make_cfg()
+        )
+        assert spans[0].text == chr(132)  # S
+
+    def test_southwest_225(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=225), make_cfg()
+        )
+        assert spans[0].text == chr(133)  # SW
+
+    def test_west_270(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=270), make_cfg()
+        )
+        assert spans[0].text == chr(134)  # W
+
+    def test_northwest_315(self):
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=315), make_cfg()
+        )
+        assert spans[0].text == chr(135)  # NW
+
+    def test_boundary_22_rounds_to_ne(self):
+        # 22 / 45 = 0.49 -> round = 0 -> N
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=22), make_cfg()
+        )
+        assert spans[0].text == chr(128)  # N
+
+    def test_boundary_23_rounds_to_ne(self):
+        # 23 / 45 = 0.51 -> round = 1 -> NE
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=23), make_cfg()
+        )
+        assert spans[0].text == chr(129)  # NE
+
+    def test_boundary_337_rounds_to_nw(self):
+        # 337 / 45 = 7.49 -> round = 7 -> NW
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=337), make_cfg()
+        )
+        assert spans[0].text == chr(135)  # NW
+
+    def test_boundary_338_rounds_to_n(self):
+        # 338 / 45 = 7.51 -> round = 8 -> 8 % 8 = 0 -> N
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=338), make_cfg()
+        )
+        assert spans[0].text == chr(128)  # N
+
+    def test_heading_zero_default(self):
+        # heading=0 (falsy) should still produce N
+        spans = build_custom_spans(
+            "{heading_arrow}", make_flight(heading=0), make_cfg()
+        )
+        assert spans[0].text == chr(128)
+
+    def test_custom_colour(self):
+        spans = build_custom_spans(
+            "{heading_arrow:#00FF00}", make_flight(heading=90), make_cfg()
+        )
+        from display.rgbpanel import Colour
+
+        assert spans[0].colour == Colour(0, 255, 0)
+
+    def test_combined_with_heading_value(self):
+        flight = make_flight(heading=270)
+        cfg = make_cfg()
+        spans = build_custom_spans(
+            "{heading}{symbol:degree} {heading_arrow}", flight, cfg
+        )
+        texts = [s.text for s in spans]
+        assert "270" in texts
+        assert "*" in texts  # degree symbol
+        assert chr(134) in texts  # W arrow
+
+    def test_validate_heading_arrow_valid(self):
+        assert validate_template("{heading_arrow}") == []
+
+    def test_validate_heading_arrow_with_colour(self):
+        assert validate_template("{heading_arrow:#FF0000}") == []
+
+    def test_validate_heading_arrow_in_mixed_template(self):
+        template = "{callsign} {heading}{symbol:degree} {heading_arrow}"
+        assert validate_template(template) == []

@@ -20,6 +20,7 @@ flicker while the weather service refreshes every few minutes.
 from __future__ import annotations
 
 import datetime
+import math
 from enum import Enum, auto
 from pathlib import Path
 
@@ -513,7 +514,10 @@ class ConditionsIdleTheme(BaseIdleScene):
     @staticmethod
     def _degrees_to_cardinal(degrees: float) -> str:
         """Convert a wind bearing in degrees to one of 8 cardinal directions."""
-        index = round(degrees / 45.0) % 8
+        # Use floor(x + 0.5) instead of round() because Python's round()
+        # uses banker's rounding (round half to even), which gives wrong
+        # results at the .5 boundaries (e.g. 22.5° should be NE, not N).
+        index = int(math.floor(degrees / 45.0 + 0.5)) % 8
         return _CARDINAL_DIRECTIONS[index]
 
     def _erase_image(self, image, position: list[int]) -> None:

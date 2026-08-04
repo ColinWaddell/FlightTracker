@@ -249,7 +249,7 @@ class FullNameLabel:
             canvas,
             font,
             text_x_origin,
-            _FULL_LINE_Y[0],
+            _FULL_LINE_Y[0] + 1,
             TC(THEME_LOCATION_ORIGIN),
             origin,
         )
@@ -257,7 +257,7 @@ class FullNameLabel:
             canvas,
             font,
             origin_x,
-            _FULL_LINE_Y[0],
+            _FULL_LINE_Y[0] + 1,
             TC(THEME_LOCATION_ORIGIN_ARROW),
             ">",
         )
@@ -266,7 +266,7 @@ class FullNameLabel:
             canvas,
             font,
             text_x_origin,
-            _FULL_LINE_Y[1],
+            _FULL_LINE_Y[1] + 1,
             TC(THEME_LOCATION_DESTINATION),
             destination,
         )
@@ -274,7 +274,7 @@ class FullNameLabel:
             canvas,
             font,
             dest_x,
-            _FULL_LINE_Y[1],
+            _FULL_LINE_Y[1] + 1,
             TC(THEME_LOCATION_DESTINATION_ARROW),
             "<",
         )

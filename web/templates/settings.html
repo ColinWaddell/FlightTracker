@@ -358,12 +358,13 @@
                   <tr><th>Tag</th><th>Icon</th><th>Meaning</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><code>{symbol:altitude}</code></td><td>^</td><td>Altitude icon</td></tr>
-                  <tr><td><code>{symbol:speed}</code></td><td>~</td><td>Speed icon</td></tr>
-                  <tr><td><code>{symbol:heading}</code></td><td>}</td><td>Heading/compass icon</td></tr>
-                  <tr><td><code>{symbol:degree}</code></td><td>*</td><td>Degree symbol</td></tr>
-                  <tr><td><code>{symbol:origin_arrow}</code></td><td>&gt;</td><td>Origin direction arrow</td></tr>
-                  <tr><td><code>{symbol:dest_arrow}</code></td><td>&lt;</td><td>Destination direction arrow</td></tr>
+                  <tr><td><code>{symbol:altitude}</code></td><td><img src="{{ url_for('static', filename='images/symbols_altitude.png') }}" alt="Altitude icon" style="height:20px"></td><td>Altitude icon</td></tr>
+                  <tr><td><code>{symbol:speed}</code></td><td><img src="{{ url_for('static', filename='images/symbols_speed.png') }}" alt="Speed icon" style="height:20px"></td><td>Speed icon</td></tr>
+                  <tr><td><code>{symbol:heading}</code></td><td><img src="{{ url_for('static', filename='images/symbols_heading.png') }}" alt="Heading icon" style="height:20px"></td><td>Heading/compass icon</td></tr>
+                  <tr><td><code>{symbol:degree}</code></td><td><img src="{{ url_for('static', filename='images/symbols_degrees.png') }}" alt="Degree symbol" style="height:20px"></td><td>Degree symbol</td></tr>
+                  <tr><td><code>{symbol:origin_arrow}</code></td><td><img src="{{ url_for('static', filename='images/symbols_origin.png') }}" alt="Origin arrow" style="height:20px"></td><td>Origin direction arrow</td></tr>
+                  <tr><td><code>{symbol:dest_arrow}</code></td><td><img src="{{ url_for('static', filename='images/symbols_destination.png') }}" alt="Destination arrow" style="height:20px"></td><td>Destination direction arrow</td></tr>
+                  <tr><td><code>{heading_arrow}</code></td><td><span class="text-muted small">8 directional arrows</span></td><td>Arrow pointing in the plane's heading direction (N, NE, E, SE, S, SW, W, NW)</td></tr>
                 </tbody>
               </table>
 
@@ -378,6 +379,7 @@
                 <li><code>{symbol:altitude} {altitude} {symbol:speed} {ground_speed} {symbol:heading} {heading}{symbol:degree}</code> - full telemetry with icons</li>
                 <li><code>{callsign} | {origin} -> {destination} | {altitude:ft:#FF8800}</code> - callsign, route, orange altitude</li>
                 <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> - model, reg, metric altitude, knots</li>
+                <li><code>{heading}{symbol:degree} {heading_arrow}</code> - heading value with directional arrow</li>
               </ul>
             </div>
           </div>

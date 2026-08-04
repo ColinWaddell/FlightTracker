@@ -23,6 +23,7 @@ to a ``Spans`` list (``list[Span]``) consumed by the existing
 from __future__ import annotations
 
 import logging
+import math
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
@@ -137,7 +138,29 @@ SYMBOL_MAP: dict[str, str] = {
     "degree": "*",
     "origin_arrow": ">",
     "dest_arrow": "<",
+    # heading_arrow is a dynamic symbol: the glyph is selected at render
+    # time from HEADING_ARROW_GLYPHS based on flight.heading.  The empty
+    # string here is a placeholder so validate_template() accepts it;
+    # build_custom_spans() handles it specially.
+    "heading_arrow": "",
 }
+
+# 8 directional arrow glyphs (encodings 128-135 in 5x8-custom.bdf).
+# Index = floor(heading / 45 + 0.5) % 8 (round half up, matching the
+# cardinal-direction logic from conditions_idle_theme._degrees_to_cardinal()).
+HEADING_ARROW_GLYPHS: tuple[str, ...] = (
+    chr(128),  # 0 = N
+    chr(129),  # 1 = NE
+    chr(130),  # 2 = E
+    chr(131),  # 3 = SE
+    chr(132),  # 4 = S
+    chr(133),  # 5 = SW
+    chr(134),  # 6 = W
+    chr(135),  # 7 = NW
+)
+
+# Cardinal direction names for heading_arrow (used for error messages).
+HEADING_ARROW_DIRECTIONS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 
 # ---------------------------------------------------------------------------
 # Token types
@@ -225,6 +248,20 @@ def _parse_tag(inner: str) -> Token | None:
     """
     if not inner:
         return None
+
+    # Dynamic symbol tag: {heading_arrow} or {heading_arrow:#colour}
+    # (not prefixed with "symbol:" because it's not a static glyph).
+    if inner == "heading_arrow" or inner.startswith("heading_arrow:"):
+        rest = inner[len("heading_arrow") :]
+        if rest:
+            # Strip leading ":" and parse colour
+            if rest.startswith(":"):
+                colour = rest[1:]
+                if not _is_valid_colour(colour):
+                    return None
+                return SymbolToken(name="heading_arrow", colour=colour)
+            return None
+        return SymbolToken(name="heading_arrow", colour=None)
 
     # Symbol tag: {symbol:name} or {symbol:name:#colour}
     if inner.startswith("symbol:"):
@@ -370,7 +407,17 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
             spans.extend(field_spans)
 
         elif isinstance(token, SymbolToken):
-            glyph = SYMBOL_MAP.get(token.name, "")
+            if token.name == "heading_arrow":
+                # Dynamic symbol: select glyph based on flight heading.
+                # Use floor(x + 0.5) instead of round() because Python's
+                # round() uses banker's rounding (round half to even),
+                # which gives wrong results at the .5 boundaries
+                # (e.g. 22.5° should be NE, not N).
+                heading = flight.heading or 0
+                index = int(math.floor(heading / 45.0 + 0.5)) % 8
+                glyph = HEADING_ARROW_GLYPHS[index]
+            else:
+                glyph = SYMBOL_MAP.get(token.name, "")
             if glyph:
                 colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
                 spans.append(Span(colour, fonts.small_symbols, glyph))
@@ -459,6 +506,17 @@ def validate_template(template: str) -> list[str]:
 
         if not inner:
             errors.append("Empty tag '{}' is not allowed.")
+            continue
+
+        # Dynamic heading_arrow tag: {heading_arrow} or {heading_arrow:#colour}
+        if inner == "heading_arrow" or inner.startswith("heading_arrow:"):
+            if ":" in inner:
+                colour_part = inner.split(":", 1)[1]
+                if not _is_valid_colour(colour_part):
+                    errors.append(
+                        f"Invalid colour '{colour_part}' in tag '{inner}'. "
+                        f"Use #RRGGBB format (e.g. #FF8800)."
+                    )
             continue
 
         # Symbol tag.
