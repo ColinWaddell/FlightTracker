@@ -39,6 +39,8 @@ logger = logging.getLogger(__name__)
 
 CACHE_TTL = 86400  # 24 hours – positive / aircraft entries
 CACHE_TTL_MISS = 3600  # 1 hour   – negative / miss entries
+CACHE_TTL_STALE = 604800  # 7 days  – stale fallback threshold
+STALE_RECACHE_ADVANCE = 14400  # 4 hours – how far to advance _ts on stale re-cache
 CACHE_PATH = PLATFORM_DATA_DIR / "routes_cache.json"
 CACHE_PATH = migrate_legacy_json(ROOT_PATH / "routes_cache.json", CACHE_PATH)
 
@@ -80,8 +82,12 @@ def get(key: str) -> dict | None:
 
     Returns a dict (internal ``_``-prefixed keys stripped) or ``None`` when
     the key is absent, expired, or *key* is ``None``.
+
+    Expired entries are **not** deleted here so that :func:`get_stale` can
+    still find them for the stale-fallback path.  Stale entries beyond the
+    7-day :data:`CACHE_TTL_STALE` threshold are purged by :func:`_purge_stale`
+    during :func:`flush`.
     """
-    global _dirty
     with _lock:
         if key is None:
             return None
@@ -91,36 +97,87 @@ def get(key: str) -> dict | None:
             return None
         ttl = entry.get("_ttl", CACHE_TTL)
         if time.time() - entry.get("_ts", 0) > ttl:
-            del _cache[key]
-            _dirty = True
             return None
         return {k: v for k, v in entry.items() if not k.startswith("_")}
 
 
-def put(key: str, info: dict, ttl: int = CACHE_TTL):
+def get_stale(key: str, max_age: int = CACHE_TTL_STALE) -> dict | None:
+    """Return a **raw** expired entry for *key* if it's within *max_age*.
+
+    Unlike :func:`get`, this returns entries that have passed their normal
+    TTL but are still younger than *max_age* (default 7 days).  The returned
+    dict includes internal ``_``-prefixed keys (notably ``_ts``) so the
+    caller can advance the timestamp when re-caching.
+
+    Miss entries (``miss=True``) are never returned — only positive data
+    is eligible for stale fallback.
+
+    Returns ``None`` when the key is absent, is a miss, or is older than
+    *max_age*.
+    """
+    with _lock:
+        if key is None:
+            return None
+        _load()
+        entry = _cache.get(key)
+        if entry is None:
+            return None
+        if entry.get("miss"):
+            return None
+        if time.time() - entry.get("_ts", 0) > max_age:
+            return None
+        return dict(entry)
+
+
+def put(key: str, info: dict, ttl: int = CACHE_TTL, ts: float | None = None):
     """Store *info* under *key*.
 
-    *ttl* overrides the default 24-hour TTL for this entry.  The change is
-    held in memory; call :func:`flush` to persist to disk.
+    *ttl* overrides the default 24-hour TTL for this entry.  *ts* overrides
+    the timestamp (defaults to ``time.time()``); used by the stale-fallback
+    path to advance the timestamp by a partial amount rather than resetting
+    to now.  The change is held in memory; call :func:`flush` to persist.
     """
     global _dirty
     with _lock:
         _load()
         entry = dict(info)
-        entry["_ts"] = time.time()
+        entry["_ts"] = ts if ts is not None else time.time()
         if ttl != CACHE_TTL:
             entry["_ttl"] = ttl
         _cache[key] = entry
         _dirty = True
 
 
+def _purge_stale():
+    """Remove entries older than :data:`CACHE_TTL_STALE`.
+
+    Called from :func:`flush` to prevent the cache growing unbounded when
+    entries are preserved past their normal TTL for the stale-fallback path.
+    Caller must hold *_lock*.
+    """
+    global _dirty
+    now = time.time()
+    stale_keys = [
+        k for k, v in _cache.items() if now - v.get("_ts", 0) > CACHE_TTL_STALE
+    ]
+    for k in stale_keys:
+        del _cache[k]
+    if stale_keys:
+        _dirty = True
+        logger.debug("Purged %d stale cache entries (>7 days old)", len(stale_keys))
+
+
 def flush():
     """Persist the cache to disk if it has been modified since the last flush.
 
-    Call once at the end of each poll cycle rather than after every ``put()``.
+    Also purges entries older than :data:`CACHE_TTL_STALE` (7 days) to
+    prevent unbounded growth from expired entries retained for the
+    stale-fallback path.  Call once at the end of each poll cycle rather
+    than after every ``put()``.
     """
     global _dirty
     with _lock:
+        _purge_stale()
         if _dirty:
             _save()
             _dirty = False
