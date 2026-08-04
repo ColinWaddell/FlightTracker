@@ -4,8 +4,8 @@ The icon is sourced from the operating carrier's ICAO code.  The primary
 source is ``flight.airline_icao`` (populated by the data-source API -
 FR24 provides it directly; tar1090/OSN get it via ``route_lookup``'s FR24
 fallback).  When that is empty, the first 3 alphabetic characters of
-``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` →
-``UAL``).  The resulting code is the PNG filename - e.g. ``BAW`` →
+``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` ->
+``UAL``).  The resulting code is the PNG filename - e.g. ``BAW`` ->
 ``assets/airlines/BAW.png``.  When no code resolves or the PNG is
 missing, a black square with a white outline is drawn as a placeholder.
 
@@ -73,7 +73,7 @@ def _load_airline_icon(lookup: str) -> Image.Image | None:
 # callsign prefix, this table corrects known mismatches before the file
 # lookup.
 _CALLSIGN_PREFIX_OVERRIDES: dict[str, str] = {
-    "EAI": "EIN",  # Aer Lingus regional → Aer Lingus
+    "EAI": "EIN",  # Aer Lingus regional -> Aer Lingus
 }
 
 
@@ -82,7 +82,7 @@ def airline_icao_from_flight(flight: Flight) -> str:
 
     Primary source: ``flight.airline_icao`` (operating carrier ICAO code
     from the data-source API).  Fallback: the first 3 alphabetic
-    characters of ``flight.icao_callsign`` (e.g. ``UAL1583`` → ``UAL``),
+    characters of ``flight.icao_callsign`` (e.g. ``UAL1583`` -> ``UAL``),
     corrected via ``_CALLSIGN_PREFIX_OVERRIDES`` for known mismatches.
     Returns ``""`` if neither yields a code, so the placeholder outline
     is drawn instead.

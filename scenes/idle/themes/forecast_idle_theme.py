@@ -58,7 +58,7 @@ LABEL_FONT_HEIGHT = 5  # pixel height of 4x6 glyphs
 ICON_POSITIONS_X = (3, 23, 43)  # x positions for 3 sprites on a 64px panel
 # Sprite is 18px tall (12px icon + 6px animation).
 # Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
-# within 32px panel → 4px spare, split as 2px top margin + 2px bottom.
+# within 32px panel -> 4px spare, split as 2px top margin + 2px bottom.
 ICON_POSITIONS_Y = 12  # y position for sprite top-left
 TOP_LABEL_Y = 12  # baseline for the label above the sprite
 BOTTOM_LABEL_Y = 32  # baseline for the label below the sprite

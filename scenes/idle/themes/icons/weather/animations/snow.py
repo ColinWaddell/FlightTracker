@@ -17,7 +17,7 @@ Intensity controls:
     1 (medium) - 3 columns, medium spawn chance, medium sway
     2 (heavy)  - 4 columns, high spawn chance, fast sway
 
-Fall speed is constant (0.5 px/frame → 1px every 2 frames) regardless of
+Fall speed is constant (0.5 px/frame -> 1px every 2 frames) regardless of
 intensity - snow falls slowly; what changes is how many flakes are in
 the air.
 """

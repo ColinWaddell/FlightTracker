@@ -478,7 +478,7 @@ def get_route(
 
     Lookup order
     ------------
-    1. Route by callsign via provider chain (hexdb → adsbdb → aerodatabox).
+    1. Route by callsign via provider chain (hexdb -> adsbdb -> aerodatabox).
        Cached; miss entries skip providers for 1 h.
     2. Aircraft type + registration by mode_s via provider chain (cached).
     3. Unified FR24 fallback when providers left the route **or** the plane

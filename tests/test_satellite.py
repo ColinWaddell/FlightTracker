@@ -35,14 +35,14 @@ def _make_pass(name, aos_delta_min, los_delta_min, max_el=45.0):
 
 class TestJdayFromDt:
     def test_j2000_epoch(self):
-        # J2000 epoch: 2000-01-01 12:00 UTC → JD 2451545.0
+        # J2000 epoch: 2000-01-01 12:00 UTC -> JD 2451545.0
         dt = datetime.datetime(2000, 1, 1, 12, 0, 0)
         jd, fr = jday_from_dt(dt)
         total = jd + fr
         assert total == pytest.approx(2451545.0, abs=0.01)
 
     def test_jan_2026(self):
-        # 2026-01-01 00:00 UTC → JD ≈ 2461041.5
+        # 2026-01-01 00:00 UTC -> JD ≈ 2461041.5
         dt = datetime.datetime(2026, 1, 1, 0, 0, 0)
         jd, fr = jday_from_dt(dt)
         total = jd + fr
@@ -142,13 +142,13 @@ class TestVisiblePasses:
         assert len(result) == 1
 
     def test_timeout_active_within_window(self):
-        # Pass started 30 seconds ago, timeout is 60s → still visible
+        # Pass started 30 seconds ago, timeout is 60s -> still visible
         pw = _make_pass("ACTIVE", -0.5, 10)
         result = visible_passes([pw], timeout_enabled=True, timeout_seconds=60)
         assert len(result) == 1
 
     def test_timeout_expired(self):
-        # Pass started 5 minutes ago, timeout is 60s → not visible
+        # Pass started 5 minutes ago, timeout is 60s -> not visible
         pw = _make_pass("ACTIVE", -5, 10)
         result = visible_passes([pw], timeout_enabled=True, timeout_seconds=60)
         assert len(result) == 0

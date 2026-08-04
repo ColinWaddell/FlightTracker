@@ -107,7 +107,7 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 #### What you need
 
 - A free account at [opensky-network.org](https://opensky-network.org)
-- An API client created under Account → API Clients (gives you a Client ID and Client Secret)
+- An API client created under Account -> API Clients (gives you a Client ID and Client Secret)
 
 #### Enabling OpenSky Network
 

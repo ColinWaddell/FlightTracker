@@ -168,7 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stale cache entries with empty origin and destination are now treated as cache misses and re-queried, fixing cases where old backend data blocked fresh lookups.
 
 ### Fixed
-- Origin and destination showing blank for flights whose routes were known to adsbdb via the callsign endpoint but not resolvable via the combined aircraft endpoint (e.g. KLM933 → AMS-DUB).
+- Origin and destination showing blank for flights whose routes were known to adsbdb via the callsign endpoint but not resolvable via the combined aircraft endpoint (e.g. KLM933 -> AMS-DUB).
 - Python 3.13 dummy-thread GC noise (`TypeError: 'NoneType' object does not support the context manager protocol`) eliminated by using persistent `requests.Session` objects in `route_lookup`, `overhead_tar1090`, and `overhead_osn`.
 
 ## [v2.0.7] - 2026-07-11

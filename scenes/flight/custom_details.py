@@ -104,7 +104,7 @@ def _convert_vertical_speed(vertical_speed_fpm: int, unit: str) -> tuple[str, st
     return str(int(vertical_speed_fpm * 0.00508)), "ms"
 
 
-# Map telemetry field → (valid units, conversion function, config default key).
+# Map telemetry field -> (valid units, conversion function, config default key).
 TELEMETRY_FIELDS: dict[str, tuple[frozenset[str], Callable, str | None]] = {
     "altitude": (frozenset({"ft", "m"}), _convert_altitude, "height_unit"),
     "ground_speed": (
@@ -119,17 +119,17 @@ TELEMETRY_FIELDS: dict[str, tuple[frozenset[str], Callable, str | None]] = {
 # All available fields (for validation / UI reference).
 AVAILABLE_FIELDS: frozenset[str] = TEXT_FIELDS | frozenset(TELEMETRY_FIELDS)
 
-# Config unit → canonical unit string for altitude.
+# Config unit -> canonical unit string for altitude.
 _HEIGHT_UNIT_MAP = {"ft": "ft", "m": "m"}
 
-# Config unit → canonical unit string for ground speed.
+# Config unit -> canonical unit string for ground speed.
 _SPEED_UNIT_MAP = {"kts": "kts", "kmh": "kmh", "mph": "mph"}
 
 # ---------------------------------------------------------------------------
 # Symbol metadata
 # ---------------------------------------------------------------------------
 
-# Symbol name → glyph character in fonts.small_symbols (5x8-custom.bdf).
+# Symbol name -> glyph character in fonts.small_symbols (5x8-custom.bdf).
 SYMBOL_MAP: dict[str, str] = {
     "altitude": "^",
     "speed": "~",

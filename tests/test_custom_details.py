@@ -379,16 +379,16 @@ class TestBuildCustomSpans:
 
     def test_literal_text_preserved(self):
         spans = build_custom_spans(
-            "{origin} → {destination}", make_flight(), make_cfg()
+            "{origin} -> {destination}", make_flight(), make_cfg()
         )
         texts = [s.text for s in spans]
-        assert " → " in texts
+        assert " -> " in texts
 
     def test_empty_field_value_skipped(self):
         flight = make_flight(plane="")
         cfg = make_cfg()
         spans = build_custom_spans("{plane}", flight, cfg)
-        # Empty plane → all spans empty → warning
+        # Empty plane -> all spans empty -> warning
         assert len(spans) == 1
         assert spans[0].text == NOT_DEFINED_TEXT
 

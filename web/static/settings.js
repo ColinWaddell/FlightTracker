@@ -1,5 +1,5 @@
 /* ===== FlightTracker settings page logic ===== */
-/* Expects: window.FT_AIRPORTS (JSON object of airport codes → names) */
+/* Expects: window.FT_AIRPORTS (JSON object of airport codes -> names) */
 /* Expects: Leaflet (L), Geoman, Vue, VueRouter to be loaded already   */
 
 (function () {

@@ -227,7 +227,7 @@ class HexdbProvider(RouteProvider):
             return RouteInfo()
         route = RouteInfo()
 
-        # Use bundled ICAO→IATA table for conversion
+        # Use bundled ICAO->IATA table for conversion
         origin_iata = _icao_to_iata_code(origin_icao)
         dest_iata = _icao_to_iata_code(dest_icao)
 
@@ -625,7 +625,7 @@ class AeroDataBoxProvider(RouteProvider):
 
 
 # ---------------------------------------------------------------------------
-# Bundled ICAO→IATA lookup (moved from route_lookup.py, shared by providers)
+# Bundled ICAO->IATA lookup (moved from route_lookup.py, shared by providers)
 # ---------------------------------------------------------------------------
 
 _icao_to_iata: dict[str, str] = {}

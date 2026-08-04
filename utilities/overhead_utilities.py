@@ -3,7 +3,7 @@ Shared helpers for the overhead data-source libraries (fr24, tar1090, osn).
 
 Consolidates:
   - Constants (EARTH_RADIUS_KM, BLANK_FIELDS)
-  - Unit conversions (metres→feet, m/s→knots, m/s→fpm)
+  - Unit conversions (metres->feet, m/s->knots, m/s->fpm)
   - Geometry (in_zone, distance_from_home)
   - Field cleaning (clean_field)
   - Airport info lookup (bundled airports.json)
