@@ -78,9 +78,9 @@ class TestRoutesCachePut:
         rc = isolated_cache
         rc.put("BAW123", {"plane": "A320", "origin": "LHR", "destination": "GLA"})
         # put() no longer writes immediately - must call flush() first
-        assert (
-            not rc.CACHE_PATH.exists()
-        ), "put() should not write to disk before flush()"
+        assert not rc.CACHE_PATH.exists(), (
+            "put() should not write to disk before flush()"
+        )
         rc.flush()
         assert rc.CACHE_PATH.exists()
         data = json.loads(rc.CACHE_PATH.read_text())

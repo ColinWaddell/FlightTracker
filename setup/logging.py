@@ -102,9 +102,7 @@ def setup_logging() -> None:
     # Silence the harmless gzip-decode warning emitted by the
     # FlightRadarAPI package on every feed.js fetch (curl_cffi already
     # decompressed the body, so the fallback decode is expected to fail).
-    logging.getLogger("FlightRadarAPI.request").addFilter(
-        _IgnoreGzipDecodeFilter()
-    )
+    logging.getLogger("FlightRadarAPI.request").addFilter(_IgnoreGzipDecodeFilter())
 
 
 def get_buffer() -> MemoryLogHandler:
