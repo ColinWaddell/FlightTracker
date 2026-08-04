@@ -32,6 +32,16 @@ BUFFER_SIZE = 200
 LEVEL_NAMES = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
 
+class _IgnoreGzipDecodeFilter(logging.Filter):
+    """Drop the harmless 'failed to decode Content-Encoding' warning from
+    FlightRadarAPI.request (curl_cffi already decompressed the body)."""
+
+    _MARKER = "failed to decode Content-Encoding"
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return self._MARKER not in record.getMessage()
+
+
 class MemoryLogHandler(logging.Handler):
     """Bounded in-memory handler.  Stores small dicts, not formatted strings."""
 
@@ -88,6 +98,13 @@ def setup_logging() -> None:
     _buffer = MemoryLogHandler(BUFFER_SIZE)
     _buffer.setLevel(level)
     root.addHandler(_buffer)
+
+    # Silence the harmless gzip-decode warning emitted by the
+    # FlightRadarAPI package on every feed.js fetch (curl_cffi already
+    # decompressed the body, so the fallback decode is expected to fail).
+    logging.getLogger("FlightRadarAPI.request").addFilter(
+        _IgnoreGzipDecodeFilter()
+    )
 
 
 def get_buffer() -> MemoryLogHandler:
