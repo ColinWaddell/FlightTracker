@@ -569,3 +569,74 @@ class TestAirlineNameBar:
         bar.draw(canvas, flights_one, 0)
         assert bar.scroller is not narrow_scroller
         assert bar.scroller.width > narrow_width
+
+
+# ---------------------------------------------------------------------------
+# build_spans — mode selection (0=model, 1=telemetry, 2=custom)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildSpans:
+    """Verify build_spans() dispatches to the correct span builder."""
+
+    def _make_scene(self, flights):
+        """Build a minimal FlightScene with mocked panel/canvas."""
+        from scenes.flight.flight_scene import FlightScene
+
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        overhead = MagicMock()
+        overhead.error = None
+        overhead.new_data = False
+        overhead.data = []
+        overhead.processing = False
+        scene = FlightScene(canvas, panel, overhead, refresh_interval=60)
+        scene.flights = flights
+        return scene
+
+    def test_mode_0_returns_model_spans(self):
+        scene = self._make_scene([Flight(plane="Boeing 787")])
+        cfg = MagicMock()
+        cfg.details = 0
+        spans = scene.build_spans(cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "BOEING 787"
+
+    def test_mode_1_returns_telemetry_spans(self):
+        scene = self._make_scene(
+            [Flight(altitude=38000, ground_speed=480, heading=270)]
+        )
+        cfg = MagicMock()
+        cfg.details = 1
+        cfg.height_unit = "ft"
+        cfg.speed_unit = "kts"
+        spans = scene.build_spans(cfg)
+        texts = [s.text for s in spans]
+        assert "38000" in texts
+        assert "480" in texts
+        assert "270" in texts
+
+    def test_mode_2_returns_custom_spans(self):
+        scene = self._make_scene([Flight(plane="Boeing 787", callsign="BAW123")])
+        cfg = MagicMock()
+        cfg.details = 2
+        cfg.details_custom_template = "{callsign} | {plane}"
+        cfg.height_unit = "ft"
+        cfg.speed_unit = "kts"
+        spans = scene.build_spans(cfg)
+        texts = [s.text for s in spans if s.text]
+        assert "BAW123" in texts
+        assert "BOEING 787" in texts
+
+    def test_mode_2_empty_template_returns_warning(self):
+        from scenes.flight.custom_details import NOT_DEFINED_TEXT
+
+        scene = self._make_scene([Flight(plane="Boeing 787")])
+        cfg = MagicMock()
+        cfg.details = 2
+        cfg.details_custom_template = ""
+        cfg.height_unit = "ft"
+        cfg.speed_unit = "kts"
+        spans = scene.build_spans(cfg)
+        assert len(spans) == 1
+        assert spans[0].text == NOT_DEFINED_TEXT

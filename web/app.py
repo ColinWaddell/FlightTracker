@@ -310,6 +310,9 @@ def parse_settings_form(form, cfg) -> dict:
         "show_airline_icon": bool_val(form.get("show_airline_icon")),
         # Plane info row
         "details": int_val(form.get("details"), 0),
+        "details_custom_template": str_val(
+            form.get("details_custom_template"), cfg.details_custom_template
+        ),
         # Weather
         "weatherapi_key": str_val(form.get("weatherapi_key"), cfg.weatherapi_key),
         "weather_mode": int_val(form.get("weather_mode"), 0),
@@ -521,6 +524,19 @@ def settings():
 
             new_data = parse_settings_form(form, cfg)
             new_password = form.get("new_password", "").strip()
+
+            # Validate custom plane-info template when custom mode is selected.
+            if new_data.get("details") == 2:
+                from scenes.flight.custom_details import validate_template
+
+                template_errors = validate_template(
+                    new_data.get("details_custom_template", "")
+                )
+                if template_errors:
+                    raise ValueError(
+                        "Custom template errors:\n"
+                        + "\n".join(f"  • {e}" for e in template_errors)
+                    )
 
             if using_default_password and not new_password:
                 merged_cfg = {**cfg.as_dict(), **new_data}

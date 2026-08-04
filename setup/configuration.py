@@ -62,7 +62,11 @@ DEFAULT_SHOW_AIRLINE_ICON = (
 )
 
 # Plane info row
-DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = altitude/speed/heading
+DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = telemetry, 2 = custom template
+DEFAULT_DETAILS_CUSTOM_TEMPLATE = (
+    "{plane} | {symbol:altitude} {altitude} {symbol:speed} {ground_speed} "
+    "{symbol:heading} {heading}{symbol:degree}"
+)
 
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
@@ -163,6 +167,7 @@ DEFAULTS: dict[str, Any] = {
     "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
     # Plane info row
     "details": DEFAULT_DETAILS,
+    "details_custom_template": DEFAULT_DETAILS_CUSTOM_TEMPLATE,
     # Weather
     "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
     "weather_mode": DEFAULT_WEATHER_MODE,
@@ -628,7 +633,16 @@ class Config:
 
     @property
     def details(self) -> int:
+        """0 = plane make/model, 1 = telemetry, 2 = custom template."""
         return int(self.data_store.get("details", DEFAULT_DETAILS))
+
+    @property
+    def details_custom_template(self) -> str:
+        return str(
+            self.data_store.get(
+                "details_custom_template", DEFAULT_DETAILS_CUSTOM_TEMPLATE
+            )
+        )
 
     @property
     def weatherapi_key(self) -> str:

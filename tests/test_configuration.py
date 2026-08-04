@@ -605,3 +605,46 @@ class TestWeatherRefreshMinutes:
         cfg = Config.__new__(Config)
         cfg.data_store = {"weather_refresh_minutes": 0}
         assert cfg.weather_refresh_seconds == 60
+
+
+# ---------------------------------------------------------------------------
+# details / details_custom_template properties
+# ---------------------------------------------------------------------------
+
+
+class TestDetails:
+    def test_default_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.details == 0
+
+    def test_stored_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"details": 2}
+        assert cfg.details == 2
+
+
+class TestDetailsCustomTemplate:
+    def test_default_value(self):
+        from setup.configuration import Config, DEFAULT_DETAILS_CUSTOM_TEMPLATE
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.details_custom_template == DEFAULT_DETAILS_CUSTOM_TEMPLATE
+
+    def test_stored_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        custom = "{plane} ({registration})"
+        cfg.data_store = {"details_custom_template": custom}
+        assert cfg.details_custom_template == custom
+
+    def test_default_template_in_defaults(self):
+        from setup.configuration import DEFAULTS, DEFAULT_DETAILS_CUSTOM_TEMPLATE
+
+        assert DEFAULTS["details_custom_template"] == DEFAULT_DETAILS_CUSTOM_TEMPLATE

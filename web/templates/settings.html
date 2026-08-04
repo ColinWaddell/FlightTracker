@@ -289,9 +289,117 @@
                      {% if cfg.details == 1 %}checked{% endif %} />
               <label class="form-check-label" for="details_tlm">Telemetry (altitude / speed / heading)</label>
             </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" name="details" id="details_custom" value="2"
+                     {% if cfg.details == 2 %}checked{% endif %} />
+              <label class="form-check-label" for="details_custom">Custom template</label>
+            </div>
           </div>
           <div class="form-text text-muted small">Shown in the scrolling bar at the bottom of the display while a flight is overhead.</div>
+
+          <!-- Custom template panel — shown only when Custom is selected -->
+          <div id="custom_template_panel" class="mt-3"
+               style="display:{% if cfg.details == 2 %}block{% else %}none{% endif %}">
+            <hr class="my-2" />
+            <label class="form-label small fw-bold" for="details_custom_template">Template string</label>
+            <textarea class="form-control form-control-sm font-monospace" name="details_custom_template"
+                      id="details_custom_template" rows="3"
+                      placeholder="{plane} | {symbol:altitude} {altitude}">{{ cfg.details_custom_template }}</textarea>
+            <div class="form-text text-muted small">Define what appears in the scrolling bar using tags and literal text. See the reference below.</div>
+
+            <!-- Reference panel -->
+            <div class="mt-3 p-3 bg-light rounded border">
+              <p class="fw-bold small mb-2"><i class="bi bi-book me-1"></i>Template Reference</p>
+
+              <!-- Syntax -->
+              <p class="small fw-bold mb-1">Syntax</p>
+              <ul class="small text-muted mb-2" style="line-height:1.5">
+                <li><code>{field}</code> — show a flight field (uses default unit for telemetry)</li>
+                <li><code>{field:unit}</code> — show a field with a specific unit (e.g. <code>{altitude:ft}</code>)</li>
+                <li><code>{field:#RRGGBB}</code> — show a field in a custom colour (e.g. <code>{altitude:#FF8800}</code>)</li>
+                <li><code>{field:unit:#RRGGBB}</code> — both unit and colour</li>
+                <li><code>{symbol:name}</code> — insert an icon glyph</li>
+                <li>Any text outside <code>{}</code> is shown as-is (e.g. <code> | </code>, <code> → </code>)</li>
+              </ul>
+
+              <!-- Fields -->
+              <p class="small fw-bold mb-1">Available fields</p>
+              <table class="table table-sm table-bordered mb-2" style="font-size:0.8rem">
+                <thead class="table-light">
+                  <tr><th>Field</th><th>Shows</th><th>Units</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="3" class="fw-bold bg-light">Text fields</td></tr>
+                  <tr><td><code>callsign</code></td><td>Flight callsign (e.g. BAW123)</td><td>—</td></tr>
+                  <tr><td><code>icao_callsign</code></td><td>ICAO callsign</td><td>—</td></tr>
+                  <tr><td><code>airline_icao</code></td><td>Airline ICAO code</td><td>—</td></tr>
+                  <tr><td><code>plane</code></td><td>Aircraft make &amp; model</td><td>—</td></tr>
+                  <tr><td><code>registration</code></td><td>Aircraft registration</td><td>—</td></tr>
+                  <tr><td><code>origin</code></td><td>Origin airport code</td><td>—</td></tr>
+                  <tr><td><code>destination</code></td><td>Destination airport code</td><td>—</td></tr>
+                  <tr><td><code>origin_name</code></td><td>Origin airport name</td><td>—</td></tr>
+                  <tr><td><code>destination_name</code></td><td>Destination airport name</td><td>—</td></tr>
+                  <tr><td><code>origin_municipality</code></td><td>Origin city</td><td>—</td></tr>
+                  <tr><td><code>destination_municipality</code></td><td>Destination city</td><td>—</td></tr>
+                  <tr><td><code>origin_country</code></td><td>Origin country</td><td>—</td></tr>
+                  <tr><td><code>destination_country</code></td><td>Destination country</td><td>—</td></tr>
+                  <tr><td colspan="3" class="fw-bold bg-light">Telemetry fields</td></tr>
+                  <tr><td><code>altitude</code></td><td>Altitude</td><td><code>ft</code>, <code>m</code></td></tr>
+                  <tr><td><code>ground_speed</code></td><td>Ground speed</td><td><code>knots</code>/<code>kts</code>, <code>kmh</code>/<code>kph</code>, <code>mph</code></td></tr>
+                  <tr><td><code>heading</code></td><td>Heading (degrees)</td><td>— (use <code>{symbol:degree}</code> for °)</td></tr>
+                  <tr><td><code>vertical_speed</code></td><td>Vertical speed</td><td><code>fpm</code>, <code>ms</code></td></tr>
+                </tbody>
+              </table>
+
+              <!-- Symbols -->
+              <p class="small fw-bold mb-1">Symbols</p>
+              <table class="table table-sm table-bordered mb-2" style="font-size:0.8rem">
+                <thead class="table-light">
+                  <tr><th>Tag</th><th>Icon</th><th>Meaning</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>{symbol:altitude}</code></td><td>^</td><td>Altitude icon</td></tr>
+                  <tr><td><code>{symbol:speed}</code></td><td>~</td><td>Speed icon</td></tr>
+                  <tr><td><code>{symbol:heading}</code></td><td>}</td><td>Heading/compass icon</td></tr>
+                  <tr><td><code>{symbol:degree}</code></td><td>*</td><td>Degree symbol</td></tr>
+                  <tr><td><code>{symbol:origin_arrow}</code></td><td>&gt;</td><td>Origin direction arrow</td></tr>
+                  <tr><td><code>{symbol:dest_arrow}</code></td><td>&lt;</td><td>Destination direction arrow</td></tr>
+                </tbody>
+              </table>
+
+              <!-- Colours -->
+              <p class="small fw-bold mb-1">Colours</p>
+              <p class="small text-muted mb-2">Add <code>#RRGGBB</code> to any tag to override its colour. Omitting it uses the current theme's default colours.</p>
+
+              <!-- Examples -->
+              <p class="small fw-bold mb-1">Examples</p>
+              <ul class="small text-muted mb-0" style="line-height:1.6">
+                <li><code>{plane}</code> — just the aircraft model</li>
+                <li><code>{symbol:altitude} {altitude} {symbol:speed} {ground_speed} {symbol:heading} {heading}{symbol:degree}</code> — full telemetry with icons</li>
+                <li><code>{callsign} | {origin} → {destination} | {altitude:ft:#FF8800}</code> — callsign, route, orange altitude</li>
+                <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> — model, reg, metric altitude, knots</li>
+              </ul>
+            </div>
+          </div>
         </div>
+
+        <script>
+        // Show/hide the custom template panel based on radio selection.
+        (function() {
+          var radios = document.querySelectorAll('input[name="details"]');
+          var panel = document.getElementById('custom_template_panel');
+          function updatePanel() {
+            var selected = document.querySelector('input[name="details"]:checked');
+            if (selected && selected.value === '2') {
+              panel.style.display = 'block';
+            } else {
+              panel.style.display = 'none';
+            }
+          }
+          radios.forEach(function(r) { r.addEventListener('change', updatePanel); });
+          updatePanel();
+        })();
+        </script>
 
         <!-- ====== Satellite Tracking ====== -->
         <div id="group-satellite" class="card mb-3 p-3">

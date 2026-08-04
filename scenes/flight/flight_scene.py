@@ -27,6 +27,7 @@ from display.scroller import Scroller
 from display.spans import Span, Spans
 from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
 from scenes.flight.callsign_bar import make_callsign_bar
+from scenes.flight.custom_details import build_custom_spans
 from scenes.flight.journey import make_label
 from setup import fonts, screen
 from setup.configuration import Config
@@ -312,7 +313,15 @@ class FlightScene:
     # ------------------------------------------------------------------
 
     def build_spans(self, cfg) -> Spans:
-        return self.telemetry_spans(cfg) if cfg.details == 1 else self.model_spans()
+        if cfg.details == 1:
+            return self.telemetry_spans(cfg)
+        if cfg.details == 2:
+            return build_custom_spans(
+                cfg.details_custom_template,
+                self.flights[self.flight_index],
+                cfg,
+            )
+        return self.model_spans()
 
     def model_spans(self) -> Spans:
         text = self.flights[self.flight_index].plane
