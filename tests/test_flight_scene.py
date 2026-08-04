@@ -285,7 +285,7 @@ class TestAirlineLogoWidget:
         flight = Flight(airline_icao="BCO")
         widget.draw(canvas, flight)
         panel.reset_mock()
-        # Second draw with same airline_icao — should skip
+        # Second draw with same airline_icao - should skip
         widget.draw(canvas, flight)
         assert not panel.set_pixel.called
         assert not panel.draw_image.called
@@ -313,7 +313,7 @@ class TestAirlineLogoWidget:
     def test_missing_icon_no_draw(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        # QQQ icon file does not exist — no outline, no image, width=0
+        # QQQ icon file does not exist - no outline, no image, width=0
         widget.draw(canvas, Flight(airline_icao="QQQ"))
         assert panel.set_pixel.called  # blanks the region
         assert not panel.draw_image.called
@@ -547,14 +547,14 @@ class TestAirlineNameBar:
         """The scroller width depends on flight_count (index area reserved
         when >1 flight).  Dropping to a single flight must rebuild the
         scroller at full width even when the displayed flight_id is
-        unchanged — otherwise the bar keeps its narrow width and leaves
+        unchanged - otherwise the bar keeps its narrow width and leaves
         a blank gap where the N/M index used to be.
         """
         panel, canvas = _make_panel_and_canvas()
         panel.draw_text.side_effect = lambda *a, **k: 5
         bar = AirlineNameBar(panel)
         # Two flights sharing the same flight_id (e.g. duplicate feed
-        # entries) — callsigns_match sees the set change only via length.
+        # entries) - callsigns_match sees the set change only via length.
         flights_two = [
             Flight(icao_callsign="BAW123", airline_icao="BAW"),
             Flight(icao_callsign="BAW123", airline_icao="BAW"),
@@ -572,7 +572,7 @@ class TestAirlineNameBar:
 
 
 # ---------------------------------------------------------------------------
-# build_spans — mode selection (0=model, 1=telemetry, 2=custom)
+# build_spans - mode selection (0=model, 1=telemetry, 2=custom)
 # ---------------------------------------------------------------------------
 
 

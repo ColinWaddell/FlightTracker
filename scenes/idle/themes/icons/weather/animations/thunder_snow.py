@@ -1,4 +1,4 @@
-"""Thunder + snow animation — falling snow with random lightning flashes.
+"""Thunder + snow animation - falling snow with random lightning flashes.
 
 Combines the cross-shaped snow flake pattern from ``snow.py`` with the
 random lightning bolt flash logic from ``_thunder.py`` (via
@@ -13,9 +13,9 @@ The box is fixed (shared with rain/snow/sleet):
 Intensity controls snow density (columns + spawn chance + sway) and
 lightning frequency/brightness.
 
-    0 (light)  — 2 snow columns, rare dim flashes
-    1 (medium) — 3 snow columns, occasional bright flashes
-    2 (heavy)  — 4 snow columns, frequent bright flashes
+    0 (light)  - 2 snow columns, rare dim flashes
+    1 (medium) - 3 snow columns, occasional bright flashes
+    2 (heavy)  - 4 snow columns, frequent bright flashes
 """
 
 from __future__ import annotations
@@ -155,7 +155,7 @@ class ThunderSnowAnimation(ThunderMixin, BaseAnimation):
             self._thunder_tick()
             return
 
-        # Bolt pixels that are currently lit — precipitation must not
+        # Bolt pixels that are currently lit - precipitation must not
         # clear or overwrite these during a flash.
         bolt_pixels = self._thunder_active_pixels()
 

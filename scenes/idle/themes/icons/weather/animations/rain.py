@@ -1,4 +1,4 @@
-"""Rain animation — random falling drops within a bounded box.
+"""Rain animation - random falling drops within a bounded box.
 
 Each frame there is a random chance of spawning a new drop in a randomly
 chosen column.  Multiple drops can be in flight at once, and because
@@ -12,9 +12,9 @@ Intensity controls two things:
     - the pool of columns that drops can fall in
     - the per-frame spawn probability (higher = more frequent drops)
 
-    0 (light)  — 2 columns, low spawn chance
-    1 (medium) — 4 columns, medium spawn chance
-    2 (heavy)  — 6 columns, high spawn chance
+    0 (light)  - 2 columns, low spawn chance
+    1 (medium) - 4 columns, medium spawn chance
+    2 (heavy)  - 6 columns, high spawn chance
 """
 
 from __future__ import annotations
@@ -98,7 +98,7 @@ class RainAnimation(BaseAnimation):
 
         # --- Pass 1: clear every drop's current pixel -----------------
         # The drop was drawn at ``drop.y`` last frame, so that's the
-        # pixel we need to clear — not ``prev_y``.
+        # pixel we need to clear - not ``prev_y``.
         for drop in self._drops:
             self.set_pixel(drop.x, drop.y, 0, 0, 0)
 
@@ -108,7 +108,7 @@ class RainAnimation(BaseAnimation):
             drop.y += _FALL_SPEED
             if drop.y <= _BOX_BOTTOM:
                 survivors.append(drop)
-            # else: drop has left the box — its last pixel was already
+            # else: drop has left the box - its last pixel was already
             # cleared in pass 1, so nothing remains "on the ground".
 
         self._drops = survivors

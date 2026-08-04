@@ -1,5 +1,5 @@
 """
-weather_sprites.py — standalone manual test harness for forecast sprites.
+weather_sprites.py - standalone manual test harness for forecast sprites.
 
 Displays 3 weather sprites on the LED panel (or simulator) with live
 animations, mimicking the real idle scene render loop.  Use this to
@@ -107,8 +107,8 @@ def draw_labels(canvas, panel):
 
 
 def run_loop(animations, canvas, panel):
-    """Main render loop — mimics display.run() at FRAME_PERIOD cadence."""
-    print(f"Showing {len(animations)} animations — press Ctrl+C to exit.")
+    """Main render loop - mimics display.run() at FRAME_PERIOD cadence."""
+    print(f"Showing {len(animations)} animations - press Ctrl+C to exit.")
     print(f"Condition codes: {CONDITION_CODES} (night={NIGHT_MODE})")
 
     try:

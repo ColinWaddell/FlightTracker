@@ -2,7 +2,7 @@
 
 Used by ``ForecastSprite`` to instantiate the correct animation engine
 from the ``codes.py`` mapping.  Returns ``None`` for a ``None`` animation
-name (no animation — e.g., static cloudy conditions).
+name (no animation - e.g., static cloudy conditions).
 """
 
 from __future__ import annotations

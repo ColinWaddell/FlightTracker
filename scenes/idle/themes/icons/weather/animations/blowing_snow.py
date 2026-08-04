@@ -1,4 +1,4 @@
-"""Blowing snow animation — wind-driven horizontal snow streaks.
+"""Blowing snow animation - wind-driven horizontal snow streaks.
 
 Snow particles move right-to-left across the bounding box with a slight
 downward drift, simulating strong wind.  Each particle is a short
@@ -15,9 +15,9 @@ Intensity controls:
     - the wind speed (horizontal px/frame)
     - the streak length
 
-    0 (light)  — 2 particles, medium wind, 2px streaks
-    1 (medium) — 3 particles, strong wind, 2px streaks
-    2 (heavy)  — 4 particles, blizzard, 3px streaks
+    0 (light)  - 2 particles, medium wind, 2px streaks
+    1 (medium) - 3 particles, strong wind, 2px streaks
+    2 (heavy)  - 4 particles, blizzard, 3px streaks
 """
 
 from __future__ import annotations

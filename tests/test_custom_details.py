@@ -1,4 +1,4 @@
-"""Tests for scenes/flight/custom_details.py — template parser and span builder."""
+"""Tests for scenes/flight/custom_details.py - template parser and span builder."""
 
 from unittest.mock import MagicMock, patch
 
@@ -55,7 +55,7 @@ def make_cfg(**kwargs):
 
 
 # ---------------------------------------------------------------------------
-# parse_template — tokenization
+# parse_template - tokenization
 # ---------------------------------------------------------------------------
 
 
@@ -146,7 +146,7 @@ class TestParseTemplate:
         assert tokens[0].text == "hello {world"
 
     def test_text_field_with_unit_becomes_literal(self):
-        # Text fields don't accept units — should fall back to literal.
+        # Text fields don't accept units - should fall back to literal.
         tokens = parse_template("{plane:ft}")
         assert len(tokens) == 1
         assert isinstance(tokens[0], LiteralToken)
@@ -175,7 +175,7 @@ class TestParseTemplate:
 
 
 # ---------------------------------------------------------------------------
-# build_custom_spans — span construction
+# build_custom_spans - span construction
 # ---------------------------------------------------------------------------
 
 

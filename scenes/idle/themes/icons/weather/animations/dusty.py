@@ -1,4 +1,4 @@
-"""Dusty animation — blowing dust streaks drifting left-to-right.
+"""Dusty animation - blowing dust streaks drifting left-to-right.
 
 Dust streaks blow across the full sprite area (no icon for these weather
 codes).  Each streak is a short horizontal line of 2-3 pixels moving
@@ -15,9 +15,9 @@ Intensity controls:
     - the wind speed (horizontal px/frame)
     - the streak length
 
-    0 (light)  — 3 particles, slow wind, 2px streaks
-    1 (medium) — 5 particles, medium wind, 2px streaks
-    2 (heavy)  — 8 particles, strong wind, 3px streaks
+    0 (light)  - 3 particles, slow wind, 2px streaks
+    1 (medium) - 5 particles, medium wind, 2px streaks
+    2 (heavy)  - 8 particles, strong wind, 3px streaks
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ R = 200
 G = 170
 B = 100
 
-# Sprite dimensions (full 15×15 area — no icon for dusty codes).
+# Sprite dimensions (full 15×15 area - no icon for dusty codes).
 SPRITE_WIDTH = 15
 SPRITE_HEIGHT = 15
 

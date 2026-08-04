@@ -47,7 +47,7 @@ def font_text_width(font: BDFFont, text: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Placed spans — a Span with an (x, y) baseline position, used by scenes
+# Placed spans - a Span with an (x, y) baseline position, used by scenes
 # that draw text at fixed positions (e.g. the satellite telemetry panel).
 # ---------------------------------------------------------------------------
 

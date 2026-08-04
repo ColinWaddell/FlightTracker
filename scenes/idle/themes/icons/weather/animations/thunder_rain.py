@@ -1,4 +1,4 @@
-"""Thunder + rain animation — falling rain with random lightning flashes.
+"""Thunder + rain animation - falling rain with random lightning flashes.
 
 Combines the probabilistic rain drop pattern from ``rain.py`` with the
 random lightning bolt flash logic from ``_thunder.py`` (via
@@ -13,9 +13,9 @@ The box is fixed (shared with rain/snow/sleet):
 Intensity controls rain density (columns + spawn chance) and lightning
 frequency/brightness.
 
-    0 (light)  — 2 rain columns, rare dim flashes
-    1 (medium) — 4 rain columns, occasional bright flashes
-    2 (heavy)  — 6 rain columns, frequent bright flashes
+    0 (light)  - 2 rain columns, rare dim flashes
+    1 (medium) - 4 rain columns, occasional bright flashes
+    2 (heavy)  - 6 rain columns, frequent bright flashes
 """
 
 from __future__ import annotations
@@ -97,7 +97,7 @@ class ThunderRainAnimation(ThunderMixin, BaseAnimation):
             self._thunder_tick()
             return
 
-        # Bolt pixels that are currently lit — precipitation must not
+        # Bolt pixels that are currently lit - precipitation must not
         # clear or overwrite these during a flash.
         bolt_pixels = self._thunder_active_pixels()
 

@@ -109,7 +109,7 @@ def get_stale(key: str, max_age: int = CACHE_TTL_STALE) -> dict | None:
     dict includes internal ``_``-prefixed keys (notably ``_ts``) so the
     caller can advance the timestamp when re-caching.
 
-    Miss entries (``miss=True``) are never returned — only positive data
+    Miss entries (``miss=True``) are never returned - only positive data
     is eligible for stale fallback.
 
     Returns ``None`` when the key is absent, is a miss, or is older than

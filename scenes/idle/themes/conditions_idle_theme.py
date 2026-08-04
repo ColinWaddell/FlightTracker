@@ -127,7 +127,7 @@ class _ScrollState(Enum):
 class DescriptionScroller:
     """Bounce-scroll text that's too wide for the display.
 
-    Simplified version of flight_scene.LineScroller — no loop-done
+    Simplified version of flight_scene.LineScroller - no loop-done
     signalling, just bounces back and forth indefinitely when the
     text exceeds the available width.
     """

@@ -1,4 +1,4 @@
-# Installation Guide — Raspberry Pi 3 / 4 / Zero
+# Installation Guide - Raspberry Pi 3 / 4 / Zero
 
 This guide covers both fresh installations and upgrades from previous versions of FlightTracker.
 

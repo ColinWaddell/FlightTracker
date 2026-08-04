@@ -73,7 +73,7 @@ def telemetry_changed(old: list, new: list) -> bool:
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
-# Callsign bar — delegated to a widget built once at construction via
+# Callsign bar - delegated to a widget built once at construction via
 # make_callsign_bar() in scenes/flight/callsign_bar.py.
 # ---------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ class FlightScene:
         self.all_looped_flag: bool = False
         self.frame: int = 0
 
-        # Airline icon + journey label — built once from current config.
+        # Airline icon + journey label - built once from current config.
         # Settings changes force a restart, so selection at construction is
         # safe and avoids per-frame config branching.
         cfg = Config.instance()

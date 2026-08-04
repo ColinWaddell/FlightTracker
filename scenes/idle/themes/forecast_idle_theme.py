@@ -85,7 +85,7 @@ class ForecastIdleTheme(BaseIdleScene):
         self.bar.reset()
 
     # ------------------------------------------------------------------
-    # draw() — overridden for per-frame animation
+    # draw() - overridden for per-frame animation
     # ------------------------------------------------------------------
     #
     # The base class throttles draw_content() to ~1 fps.  The forecast

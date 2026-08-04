@@ -1,18 +1,18 @@
-"""Moon rays animation — gentle sparkling on the moon icon pixels.
+"""Moon rays animation - gentle sparkling on the moon icon pixels.
 
 The moon pixels defined by ``MOON_LOCATION`` occasionally light up with
 a gentle, non-looping sparkle.  Each pixel has its own random brightness
 target and transition speed, so sparkles appear and fade independently
-— there is no fixed period or detectable loop.
+- there is no fixed period or detectable loop.
 
 Most of the time the pixels are dark; a sparkle is a brief rise to a
 random brightness followed by a slow fade back down.  This produces an
 occasional, organic twinkle rather than a constant glow.
 
 Intensity controls sparkle frequency and brightness:
-    0 — rare, dim sparkles
-    1 — occasional, medium sparkles
-    2 — frequent, bright sparkles
+    0 - rare, dim sparkles
+    1 - occasional, medium sparkles
+    2 - frequent, bright sparkles
 """
 
 from __future__ import annotations
@@ -135,7 +135,7 @@ class MoonRaysAnimation(BaseAnimation):
                     1.0, sparkle.speed * DT
                 )
                 if abs(sparkle.target - sparkle.brightness) < FADED:
-                    # Reached peak — start fading.
+                    # Reached peak - start fading.
                     sparkle.rising = False
                     sparkle.speed = random.uniform(*self.fade_range)
             elif sparkle.brightness > FADED:
@@ -144,7 +144,7 @@ class MoonRaysAnimation(BaseAnimation):
                 if sparkle.brightness < FADED:
                     sparkle.brightness = 0.0
             else:
-                # Dark — maybe start a new sparkle.
+                # Dark - maybe start a new sparkle.
                 if random.random() < self.sparkle_chance:
                     sparkle.rising = True
                     sparkle.target = random.uniform(*self.peak_range)

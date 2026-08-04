@@ -49,7 +49,7 @@ NOT_DEFINED_TEXT = "<custom scroller not defined>"
 # Field metadata
 # ---------------------------------------------------------------------------
 
-# Text fields — rendered with fonts.regular, colour THEME_PLANE.
+# Text fields - rendered with fonts.regular, colour THEME_PLANE.
 TEXT_FIELDS: frozenset[str] = frozenset(
     {
         "callsign",
@@ -68,7 +68,7 @@ TEXT_FIELDS: frozenset[str] = frozenset(
     }
 )
 
-# Telemetry fields — rendered with fonts.small_symbols, colour THEME_PLANE_TLM.
+# Telemetry fields - rendered with fonts.small_symbols, colour THEME_PLANE_TLM.
 # Each maps to a set of valid unit strings and a conversion function.
 # Conversion functions take (raw_value, unit) and return (value_str, unit_str).
 
@@ -92,7 +92,7 @@ def _convert_ground_speed(ground_speed_kts: int, unit: str) -> tuple[str, str]:
 
 
 def _convert_heading(heading: int, unit: str) -> tuple[str, str]:
-    """Heading has no unit options — always degrees."""
+    """Heading has no unit options - always degrees."""
     return str(int(heading)), ""
 
 
@@ -204,7 +204,7 @@ def parse_template(template: str) -> list[Token]:
         if tag_token is not None:
             tokens.append(tag_token)
         else:
-            # Unparseable tag — keep the raw text as a literal so the
+            # Unparseable tag - keep the raw text as a literal so the
             # display shows something rather than crashing.
             tokens.append(LiteralToken(match.group(0)))
 
@@ -260,11 +260,11 @@ def _parse_tag(inner: str) -> Token | None:
         unit = parts[1]
         colour = parts[2]
 
-    # Validate field name — if unknown, return None (treated as literal).
+    # Validate field name - if unknown, return None (treated as literal).
     if field not in AVAILABLE_FIELDS:
         return None
 
-    # Validate unit if present — if invalid, return None.
+    # Validate unit if present - if invalid, return None.
     if unit is not None and field in TELEMETRY_FIELDS:
         valid_units = TELEMETRY_FIELDS[field][0]
         if valid_units and unit not in valid_units:
@@ -332,7 +332,7 @@ def _resolve_unit(field: str, requested_unit: str | None, cfg: Config) -> str:
 
     _valid_units, _convert, config_key = TELEMETRY_FIELDS[field]
     if config_key is None:
-        # heading — no unit
+        # heading - no unit
         return ""
 
     config_val = getattr(cfg, config_key)
@@ -386,7 +386,7 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
     """Build Span(s) for a single field token."""
     raw_value = getattr(flight, token.field, "")
 
-    # Text fields — simple value span.
+    # Text fields - simple value span.
     if token.field in TEXT_FIELDS:
         text = str(raw_value) if raw_value else ""
         if not text:
@@ -398,7 +398,7 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
             text = text.upper()
         return [Span(colour, fonts.regular, text)]
 
-    # Telemetry fields — value + optional unit suffix.
+    # Telemetry fields - value + optional unit suffix.
     if token.field in TELEMETRY_FIELDS:
         valid_units, convert, _ = TELEMETRY_FIELDS[token.field]
         unit = _resolve_unit(token.field, token.unit, cfg)
@@ -441,7 +441,7 @@ def validate_template(template: str) -> list[str]:
     errors: list[str] = []
 
     if not template or not template.strip():
-        # Empty template is allowed — it will show the warning message.
+        # Empty template is allowed - it will show the warning message.
         return []
 
     # Check for unclosed braces.

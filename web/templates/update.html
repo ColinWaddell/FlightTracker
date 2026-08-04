@@ -91,7 +91,7 @@
 const csrfToken = "{{ csrf_token }}";
 const initialTag = "{{ info.tag if info.update_available else '' }}";
 
-// Render markdown to HTML (lightweight — handles headings, bold, italic,
+// Render markdown to HTML (lightweight - handles headings, bold, italic,
 // code blocks, lists, links, and paragraphs)
 function renderMarkdown(md) {
   if (!md) return '<span class="text-muted">No release notes available.</span>';

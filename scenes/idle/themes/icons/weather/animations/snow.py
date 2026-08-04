@@ -1,4 +1,4 @@
-"""Snow animation — drifting cross-shaped flakes falling within a bounded box.
+"""Snow animation - drifting cross-shaped flakes falling within a bounded box.
 
 Each flake is a 3×3 cross (5 pixels) that falls slowly and sways ±1px
 horizontally on its own random schedule.  Spawning is probabilistic so
@@ -13,12 +13,12 @@ Intensity controls:
     - the per-frame spawn probability
     - the sway frequency (how often a flake picks a new horizontal offset)
 
-    0 (light)  — 2 columns, low spawn chance, slow sway
-    1 (medium) — 3 columns, medium spawn chance, medium sway
-    2 (heavy)  — 4 columns, high spawn chance, fast sway
+    0 (light)  - 2 columns, low spawn chance, slow sway
+    1 (medium) - 3 columns, medium spawn chance, medium sway
+    2 (heavy)  - 4 columns, high spawn chance, fast sway
 
 Fall speed is constant (0.5 px/frame → 1px every 2 frames) regardless of
-intensity — snow falls slowly; what changes is how many flakes are in
+intensity - snow falls slowly; what changes is how many flakes are in
 the air.
 """
 
@@ -189,7 +189,7 @@ class SnowAnimation(BaseAnimation):
 
             if flake.y <= _BOX_BOTTOM:
                 survivors.append(flake)
-            # else: flake has left the box — its pixels were already
+            # else: flake has left the box - its pixels were already
             # cleared in pass 1, so nothing remains "on the ground".
 
         self._flakes = survivors

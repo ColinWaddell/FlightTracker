@@ -1,4 +1,4 @@
-"""Short-code journey label — static IATA codes + pixel arrow."""
+"""Short-code journey label - static IATA codes + pixel arrow."""
 
 from __future__ import annotations
 
@@ -14,11 +14,11 @@ from setup.themes import (
 from utilities.flight import Flight
 
 # Vertical position of the IATA code baselines (unchanged from the
-# original draw_iata_mode — both codes share y=12).
+# original draw_iata_mode - both codes share y=12).
 _IATA_Y = 12
 
 # Relative offsets from the text x-origin.  The original layout used
-# IATA_ORIGIN_X=1, IATA_DESTINATION_X=40, ARROW_TIP_X=34 — i.e. origin at
+# IATA_ORIGIN_X=1, IATA_DESTINATION_X=40, ARROW_TIP_X=34 - i.e. origin at
 # +0, arrow tip at +33, destination at +39 relative to the origin.
 _DEST_OFFSET = 39
 _ARROW_TIP_OFFSET = 33
@@ -32,7 +32,7 @@ _ARROW_HEIGHT_SMALL = 6
 class ShortCodeLabel:
     """Static IATA origin/destination codes with a pixel-drawn arrow.
 
-    ``loop_completed`` is ``True`` immediately after the first draw —
+    ``loop_completed`` is ``True`` immediately after the first draw -
     there is no scrolling to wait for.
     """
 
@@ -65,7 +65,7 @@ class ShortCodeLabel:
         self.loop_completed = True
 
     # ------------------------------------------------------------------
-    # No-icon layout — original positioning (origin at text_x_origin,
+    # No-icon layout - original positioning (origin at text_x_origin,
     # destination at +39, arrow tip at +33)
     # ------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ class ShortCodeLabel:
         )
 
     # ------------------------------------------------------------------
-    # Icon layout — repositioned to fit the narrower space beside the icon
+    # Icon layout - repositioned to fit the narrower space beside the icon
     # ------------------------------------------------------------------
 
     def _draw_with_icon(

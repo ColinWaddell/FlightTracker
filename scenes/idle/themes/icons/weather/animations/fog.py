@@ -1,6 +1,6 @@
-"""Fog animation — subtle patchy background with prominent sinusoidal lines.
+"""Fog animation - subtle patchy background with prominent sinusoidal lines.
 
-Fog uses the same configuration as mist — a patchy shimmer background
+Fog uses the same configuration as mist - a patchy shimmer background
 with prominent undulating sinusoidal lines on top.
 
 Uses the shared ``FogMistAnimation`` engine from ``fog_mist.py``.
@@ -10,9 +10,9 @@ Intensity controls:
     - line brightness
     - the number of background rows
 
-    0 (light)  — 2 lines, 8 bg rows, dim
-    1 (medium) — 3 lines, 10 bg rows, medium
-    2 (heavy)  — 4 lines, 12 bg rows, bright
+    0 (light)  - 2 lines, 8 bg rows, dim
+    1 (medium) - 3 lines, 10 bg rows, medium
+    2 (heavy)  - 4 lines, 12 bg rows, bright
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from scenes.idle.themes.icons.weather.animations.fog_mist import (
 # Fog colour (grey-white)
 COLOUR = (160, 160, 170)
 
-# Background rows per intensity — same coverage as mist.
+# Background rows per intensity - same coverage as mist.
 BG_ROWS = {
     0: [3, 4, 5, 6, 7, 8, 9, 10],  # 8 rows
     1: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],  # 10 rows
@@ -46,7 +46,7 @@ BG_SPEED_RANGE = {
     2: (0.5, 1.1),
 }
 
-# Sinusoidal lines — same as mist.
+# Sinusoidal lines - same as mist.
 LINE_COUNT = {
     0: 2,
     1: 2,

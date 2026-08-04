@@ -1,15 +1,15 @@
-"""Info bar widget — callsign or airline name in the middle bar row.
+"""Info bar widget - callsign or airline name in the middle bar row.
 
 Two modes, selected at construction via ``cfg.info_bar_mode``:
 
-* :class:`CallsignBar` — draws the callsign with numeric/alpha colouring
+* :class:`CallsignBar` - draws the callsign with numeric/alpha colouring
   via :class:`Span` objects, plus the dividing bar and N/M index.
-* :class:`AirlineNameBar` — looks up the airline name from
+* :class:`AirlineNameBar` - looks up the airline name from
   ``assets/airlines.json`` via the resolved ICAO code and bounce-scrolls
   it using the :class:`Scroller`, same font/position as the callsign bar.
 
-Both modes use :func:`build_info_spans` so that every text string —
-callsign, airline name, or fallback — gets the same numeric/alpha
+Both modes use :func:`build_info_spans` so that every text string -
+callsign, airline name, or fallback - gets the same numeric/alpha
 colour scheme (digits in ``THEME_FLIGHT_NUMERIC``, everything else in
 ``THEME_FLIGHT_ALPHA``).
 """
@@ -124,7 +124,7 @@ class CallsignBar:
 
     @property
     def loop_completed(self) -> bool:
-        """Static text — always considered fully revealed."""
+        """Static text - always considered fully revealed."""
         return True
 
     def draw(self, canvas, flights: list, flight_index: int) -> None:

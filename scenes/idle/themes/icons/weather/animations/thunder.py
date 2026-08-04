@@ -1,4 +1,4 @@
-"""Thunder animation — random lightning bolts flashing under the cloud.
+"""Thunder animation - random lightning bolts flashing under the cloud.
 
 Lightning bolts flash briefly in the bounding box beneath the cloud icon.
 Each flash picks a random bolt shape and random horizontal position, so
@@ -15,9 +15,9 @@ Intensity controls:
     - flash frequency (per-frame chance of a new flash)
     - bolt brightness
 
-    0 (light)  — rare flashes, dimmer bolts
-    1 (medium) — occasional flashes, bright bolts
-    2 (heavy)  — frequent flashes, brightest bolts
+    0 (light)  - rare flashes, dimmer bolts
+    1 (medium) - occasional flashes, bright bolts
+    2 (heavy)  - frequent flashes, brightest bolts
 """
 
 from __future__ import annotations

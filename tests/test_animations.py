@@ -1,7 +1,7 @@
 """Tests for the live-draw weather animation engines.
 
 Each engine implements ``draw(frame_idx)``, called every frame by
-``tick()``.  The base class does no automatic restoration — engines are
+``tick()``.  The base class does no automatic restoration - engines are
 responsible for clearing pixels they no longer want.  These tests mock
 the panel and assert on the ``set_pixel`` / ``draw_*`` calls that
 ``tick()`` produces.
@@ -174,7 +174,7 @@ class TestReset:
         assert anim.frame == 0
 
     def test_reset_does_not_touch_canvas(self):
-        # The base reset() does not blank the canvas — the caller is
+        # The base reset() does not blank the canvas - the caller is
         # responsible for blanking the area at teardown.
         anim = _make_animation(RainAnimation)
         anim.tick()

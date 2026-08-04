@@ -1,20 +1,20 @@
-"""Weather sprite helpers — icon drawing + animation lifecycle.
+"""Weather sprite helpers - icon drawing + animation lifecycle.
 
 This module provides the helpers the forecast theme uses to manage
-weather sprites.  There is no ``ForecastSprite`` class — the theme owns
+weather sprites.  There is no ``ForecastSprite`` class - the theme owns
 the lifecycle directly:
 
-    1. ``blank_area()``      — clear the sprite region to black.
-    2. ``draw_icon()``       — draw the static icon PNG once.
-    3. ``build_original()``  — snapshot the pre-animation colours.
-    4. ``create_animation()``— instantiate the animation engine.
-    5. ``anim.tick()``       — call every frame to advance the animation.
-    6. ``blank_area()``      — clear again at teardown.
+    1. ``blank_area()``      - clear the sprite region to black.
+    2. ``draw_icon()``       - draw the static icon PNG once.
+    3. ``build_original()``  - snapshot the pre-animation colours.
+    4. ``create_animation()``- instantiate the animation engine.
+    5. ``anim.tick()``       - call every frame to advance the animation.
+    6. ``blank_area()``      - clear again at teardown.
 
 The animation engine receives the ``original`` snapshot so it can query
 ``original_pixel(lx, ly)`` to restore icon pixels it overwrites.  The
 engine is fully responsible for clearing its own pixels between frames
-— the base class does no automatic restoration.
+- the base class does no automatic restoration.
 """
 
 from __future__ import annotations

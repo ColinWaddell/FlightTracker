@@ -23,7 +23,7 @@
               aria-expanded="false" aria-controls="mobile-sidebar">
         <i class="bi bi-list me-1"></i>Configuration Menu
       </button>
-      <!-- Sidebar content — always visible on desktop, collapsible on mobile -->
+      <!-- Sidebar content - always visible on desktop, collapsible on mobile -->
       <div class="collapse d-md-block" id="mobile-sidebar">
       <div class="sidebar" id="settings-sidebar">
         <div class="menu-section">
@@ -297,7 +297,7 @@
           </div>
           <div class="form-text text-muted small">Shown in the scrolling bar at the bottom of the display while a flight is overhead.</div>
 
-          <!-- Custom template panel — shown only when Custom is selected -->
+          <!-- Custom template panel - shown only when Custom is selected -->
           <div id="custom_template_panel" class="mt-3"
                style="display:{% if cfg.details == 2 %}block{% else %}none{% endif %}">
             <hr class="my-2" />
@@ -314,11 +314,11 @@
               <!-- Syntax -->
               <p class="small fw-bold mb-1">Syntax</p>
               <ul class="small text-muted mb-2" style="line-height:1.5">
-                <li><code>{field}</code> — show a flight field (uses default unit for telemetry)</li>
-                <li><code>{field:unit}</code> — show a field with a specific unit (e.g. <code>{altitude:ft}</code>)</li>
-                <li><code>{field:#RRGGBB}</code> — show a field in a custom colour (e.g. <code>{altitude:#FF8800}</code>)</li>
-                <li><code>{field:unit:#RRGGBB}</code> — both unit and colour</li>
-                <li><code>{symbol:name}</code> — insert an icon glyph</li>
+                <li><code>{field}</code> - show a flight field (uses default unit for telemetry)</li>
+                <li><code>{field:unit}</code> - show a field with a specific unit (e.g. <code>{altitude:ft}</code>)</li>
+                <li><code>{field:#RRGGBB}</code> - show a field in a custom colour (e.g. <code>{altitude:#FF8800}</code>)</li>
+                <li><code>{field:unit:#RRGGBB}</code> - both unit and colour</li>
+                <li><code>{symbol:name}</code> - insert an icon glyph</li>
                 <li>Any text outside <code>{}</code> is shown as-is (e.g. <code> | </code>, <code> → </code>)</li>
               </ul>
 
@@ -330,23 +330,23 @@
                 </thead>
                 <tbody>
                   <tr><td colspan="3" class="fw-bold bg-light">Text fields</td></tr>
-                  <tr><td><code>callsign</code></td><td>Flight callsign (e.g. BAW123)</td><td>—</td></tr>
-                  <tr><td><code>icao_callsign</code></td><td>ICAO callsign</td><td>—</td></tr>
-                  <tr><td><code>airline_icao</code></td><td>Airline ICAO code</td><td>—</td></tr>
-                  <tr><td><code>plane</code></td><td>Aircraft make &amp; model</td><td>—</td></tr>
-                  <tr><td><code>registration</code></td><td>Aircraft registration</td><td>—</td></tr>
-                  <tr><td><code>origin</code></td><td>Origin airport code</td><td>—</td></tr>
-                  <tr><td><code>destination</code></td><td>Destination airport code</td><td>—</td></tr>
-                  <tr><td><code>origin_name</code></td><td>Origin airport name</td><td>—</td></tr>
-                  <tr><td><code>destination_name</code></td><td>Destination airport name</td><td>—</td></tr>
-                  <tr><td><code>origin_municipality</code></td><td>Origin city</td><td>—</td></tr>
-                  <tr><td><code>destination_municipality</code></td><td>Destination city</td><td>—</td></tr>
-                  <tr><td><code>origin_country</code></td><td>Origin country</td><td>—</td></tr>
-                  <tr><td><code>destination_country</code></td><td>Destination country</td><td>—</td></tr>
+                  <tr><td><code>callsign</code></td><td>Flight callsign (e.g. BAW123)</td><td>-</td></tr>
+                  <tr><td><code>icao_callsign</code></td><td>ICAO callsign</td><td>-</td></tr>
+                  <tr><td><code>airline_icao</code></td><td>Airline ICAO code</td><td>-</td></tr>
+                  <tr><td><code>plane</code></td><td>Aircraft make &amp; model</td><td>-</td></tr>
+                  <tr><td><code>registration</code></td><td>Aircraft registration</td><td>-</td></tr>
+                  <tr><td><code>origin</code></td><td>Origin airport code</td><td>-</td></tr>
+                  <tr><td><code>destination</code></td><td>Destination airport code</td><td>-</td></tr>
+                  <tr><td><code>origin_name</code></td><td>Origin airport name</td><td>-</td></tr>
+                  <tr><td><code>destination_name</code></td><td>Destination airport name</td><td>-</td></tr>
+                  <tr><td><code>origin_municipality</code></td><td>Origin city</td><td>-</td></tr>
+                  <tr><td><code>destination_municipality</code></td><td>Destination city</td><td>-</td></tr>
+                  <tr><td><code>origin_country</code></td><td>Origin country</td><td>-</td></tr>
+                  <tr><td><code>destination_country</code></td><td>Destination country</td><td>-</td></tr>
                   <tr><td colspan="3" class="fw-bold bg-light">Telemetry fields</td></tr>
                   <tr><td><code>altitude</code></td><td>Altitude</td><td><code>ft</code>, <code>m</code></td></tr>
                   <tr><td><code>ground_speed</code></td><td>Ground speed</td><td><code>knots</code>/<code>kts</code>, <code>kmh</code>/<code>kph</code>, <code>mph</code></td></tr>
-                  <tr><td><code>heading</code></td><td>Heading (degrees)</td><td>— (use <code>{symbol:degree}</code> for °)</td></tr>
+                  <tr><td><code>heading</code></td><td>Heading (degrees)</td><td>- (use <code>{symbol:degree}</code> for °)</td></tr>
                   <tr><td><code>vertical_speed</code></td><td>Vertical speed</td><td><code>fpm</code>, <code>ms</code></td></tr>
                 </tbody>
               </table>
@@ -374,10 +374,10 @@
               <!-- Examples -->
               <p class="small fw-bold mb-1">Examples</p>
               <ul class="small text-muted mb-0" style="line-height:1.6">
-                <li><code>{plane}</code> — just the aircraft model</li>
-                <li><code>{symbol:altitude} {altitude} {symbol:speed} {ground_speed} {symbol:heading} {heading}{symbol:degree}</code> — full telemetry with icons</li>
-                <li><code>{callsign} | {origin} → {destination} | {altitude:ft:#FF8800}</code> — callsign, route, orange altitude</li>
-                <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> — model, reg, metric altitude, knots</li>
+                <li><code>{plane}</code> - just the aircraft model</li>
+                <li><code>{symbol:altitude} {altitude} {symbol:speed} {ground_speed} {symbol:heading} {heading}{symbol:degree}</code> - full telemetry with icons</li>
+                <li><code>{callsign} | {origin} → {destination} | {altitude:ft:#FF8800}</code> - callsign, route, orange altitude</li>
+                <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> - model, reg, metric altitude, knots</li>
               </ul>
             </div>
           </div>

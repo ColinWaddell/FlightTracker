@@ -1,4 +1,4 @@
-"""Sun rays animation — shimmering halo ring around the sun icon.
+"""Sun rays animation - shimmering halo ring around the sun icon.
 
 Each ring pixel drifts towards its own random brightness target at its
 own speed, producing an organic, non-looping glow.  Because targets are
@@ -12,9 +12,9 @@ rather than covering it.  Every ring pixel is written every frame, so
 no clearing is needed between frames.
 
 Intensity controls the colour palette:
-    0 — mostly yellow
-    1 — yellow/orange
-    2 — orange/red
+    0 - mostly yellow
+    1 - yellow/orange
+    2 - orange/red
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ _DT = frames.PERIOD
 # palette is used for all intensity levels.
 _PALETTE = ((255, 230, 40), (0, 120, 40))  # mostly yellow
 
-# Single ring radius centred on (7, 7) — outline only, not a filled disc.
+# Single ring radius centred on (7, 7) - outline only, not a filled disc.
 _CENTRE = (7, 6)
 _RADII = (5,)
 

@@ -47,55 +47,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.2.1] - 2026-07-25
 
 ### Fixed
-- **Map longitude wrapping bug** — the Leaflet maps in settings allowed zooming out to see multiple Earth copies. Clicking on a repeated copy could produce longitudes > 180 or < -180, which were stored verbatim. Fixed with three layers of defence:
+- **Map longitude wrapping bug** - the Leaflet maps in settings allowed zooming out to see multiple Earth copies. Clicking on a repeated copy could produce longitudes > 180 or < -180, which were stored verbatim. Fixed with three layers of defence:
   - `worldCopyJump: true` on both maps so Leaflet snaps click coordinates to the primary world copy
   - `maxBounds` + `maxBoundsViscosity` to prevent panning/zooming beyond a single Earth
   - `noWrap: true` on tile layers to stop repeated tile rendering
   - `wrapLng()` normalisation on every click, drag, double-click, and manual input handler in settings.js
-- **Config longitude normalisation on load** — `Config.load()` now wraps all stored longitude fields (`flight_lng`, `flight_observer_lng`, `flight_zone_tl_x`, `flight_zone_br_x`) to [-180, 180) on startup, automatically fixing any bad data from the map bug
-- **Form submission longitude normalisation** — `parse_settings_form()` in `web/app.py` now wraps longitudes before saving, as a backend safety net
+- **Config longitude normalisation on load** - `Config.load()` now wraps all stored longitude fields (`flight_lng`, `flight_observer_lng`, `flight_zone_tl_x`, `flight_zone_br_x`) to [-180, 180) on startup, automatically fixing any bad data from the map bug
+- **Form submission longitude normalisation** - `parse_settings_form()` in `web/app.py` now wraps longitudes before saving, as a backend safety net
 
 ## [v2.2.0] - 2026-07-24
 
 ### Added
-- **Idle theme system** — the idle screen is now themeable, with a pluggable architecture making it easy to introduce new idle themes
-- **Conditions idle theme** — new theme showing current weather conditions with animated weather sprites, wind direction, sunrise/sunset times, moon phase, and temperature
-- **Forecast idle theme** — new theme displaying the weather forecast with min/max temperature colouring, sun rays, moon phase icons, and bouncy text descriptions
-- **Classic idle theme** — the previous idle screen layout, preserved as a selectable theme
-- **Animated weather sprites** — a sprite-based animation engine with animations for rain, snow, blowing snow, fog, mist, dust, sleet, thunder, moon rays, and sun rays, mapped to weather codes from all supported data sources
-- **Moon phase display** — moon phase calculation with custom-drawn icons (new, waxing crescent, first quarter, waxing gibbous, full, waning gibbous, last quarter, waning crescent)
-- **Wind direction icons** — compass direction icons (N, NE, E, SE, S, SW, W, NW) for weather display
-- **Sunrise/sunset icons** — dedicated sunrise and sunset icons in the conditions theme
-- **Sun times utility** — new `sun_times.py` module for sunrise/sunset lookups, cached locally as they are queried frequently
-- **FR24 fallback for route lookups** — when hexdb.io returns no origin/destination for a callsign, the lookup now falls back to FlightRadar24, improving route coverage while keeping FR24 usage minimal (only on hexdb misses)
-- **Release notes inline on update page** — the web UI update page now fetches and displays release notes from GitHub directly, with a lightweight markdown renderer
-- **Theme selection in web UI** — theme picker added to settings, with a warning when selecting a new theme
-- **Optional mist effect** — mist animation can be toggled off
-- **Optional blinker** — the loading blinker LED is now optional (configurable)
+- **Idle theme system** - the idle screen is now themeable, with a pluggable architecture making it easy to introduce new idle themes
+- **Conditions idle theme** - new theme showing current weather conditions with animated weather sprites, wind direction, sunrise/sunset times, moon phase, and temperature
+- **Forecast idle theme** - new theme displaying the weather forecast with min/max temperature colouring, sun rays, moon phase icons, and bouncy text descriptions
+- **Classic idle theme** - the previous idle screen layout, preserved as a selectable theme
+- **Animated weather sprites** - a sprite-based animation engine with animations for rain, snow, blowing snow, fog, mist, dust, sleet, thunder, moon rays, and sun rays, mapped to weather codes from all supported data sources
+- **Moon phase display** - moon phase calculation with custom-drawn icons (new, waxing crescent, first quarter, waxing gibbous, full, waning gibbous, last quarter, waning crescent)
+- **Wind direction icons** - compass direction icons (N, NE, E, SE, S, SW, W, NW) for weather display
+- **Sunrise/sunset icons** - dedicated sunrise and sunset icons in the conditions theme
+- **Sun times utility** - new `sun_times.py` module for sunrise/sunset lookups, cached locally as they are queried frequently
+- **FR24 fallback for route lookups** - when hexdb.io returns no origin/destination for a callsign, the lookup now falls back to FlightRadar24, improving route coverage while keeping FR24 usage minimal (only on hexdb misses)
+- **Release notes inline on update page** - the web UI update page now fetches and displays release notes from GitHub directly, with a lightweight markdown renderer
+- **Theme selection in web UI** - theme picker added to settings, with a warning when selecting a new theme
+- **Optional mist effect** - mist animation can be toggled off
+- **Optional blinker** - the loading blinker LED is now optional (configurable)
 - 26 new route lookup tests covering hexdb success/failure, FR24 fallback, and the public `get_route` interface
 - New test suites for animations (290 tests), weather codes (113 tests), forecast (129 tests), and forecast sprites (182 tests)
 
 ### Changed
-- **Idle scene refactored** — the monolithic idle scene has been split into a theme system under `scenes/idle/themes/`, with shared utilities in `theme_utilities.py`
-- **Weather data expanded** — the conditions theme pulls in more weather data including wind direction and current conditions
-- **Forecast trimmed to future-only** — forecast data is now trimmed to only include future time periods
-- **Time display customised** — time font size bumped up and given more character in the idle themes
-- **Temperature-based colour** — forecast min/max temperatures now drive the colour of the display text
-- **Theme-aware loading blinker** — the blinker position now adjusts based on the active theme
-- **Airport name fixes** — airport display names corrected; having no blinker is now an option
-- **de421.bsp** — added to `.gitignore` and removed from git tracking
-- **Animation engine rewritten** — the animation engine was rewritten for the new sprite-based system
+- **Idle scene refactored** - the monolithic idle scene has been split into a theme system under `scenes/idle/themes/`, with shared utilities in `theme_utilities.py`
+- **Weather data expanded** - the conditions theme pulls in more weather data including wind direction and current conditions
+- **Forecast trimmed to future-only** - forecast data is now trimmed to only include future time periods
+- **Time display customised** - time font size bumped up and given more character in the idle themes
+- **Temperature-based colour** - forecast min/max temperatures now drive the colour of the display text
+- **Theme-aware loading blinker** - the blinker position now adjusts based on the active theme
+- **Airport name fixes** - airport display names corrected; having no blinker is now an option
+- **de421.bsp** - added to `.gitignore` and removed from git tracking
+- **Animation engine rewritten** - the animation engine was rewritten for the new sprite-based system
 
 ### Fixed
-- **Frame stall on TLE fetch** — `SatelliteScene.poll()` was blocking for 5 seconds when Celestrak was down because `recompute_passes()` called `tle_manager.get(timeout=5.0)`. Added a non-blocking `try_get()` variant to `TLEManager` so the display loop is no longer stalled
-- **Celestrak failures no longer slow everything down** — TLE lookup failures are now handled gracefully with back-off
-- **TLE lookup back-off** — added back-off logic to prevent hammering Celestrak on repeated failures
-- **None guard** — added guard against `None` values in theme display
-- **File handle leak** — file now properly closed after use in moon phase calculation
-- **Update save error message** — improved error message when saving settings fails
+- **Frame stall on TLE fetch** - `SatelliteScene.poll()` was blocking for 5 seconds when Celestrak was down because `recompute_passes()` called `tle_manager.get(timeout=5.0)`. Added a non-blocking `try_get()` variant to `TLEManager` so the display loop is no longer stalled
+- **Celestrak failures no longer slow everything down** - TLE lookup failures are now handled gracefully with back-off
+- **TLE lookup back-off** - added back-off logic to prevent hammering Celestrak on repeated failures
+- **None guard** - added guard against `None` values in theme display
+- **File handle leak** - file now properly closed after use in moon phase calculation
+- **Update save error message** - improved error message when saving settings fails
 
 ### Removed
-- **Astro theme** — the astronomy-themed idle screen has been removed (superseded by the new theme system)
+- **Astro theme** - the astronomy-themed idle screen has been removed (superseded by the new theme system)
 
 ## [v2.1.7] - 2026-07-19
 

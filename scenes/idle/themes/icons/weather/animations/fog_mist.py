@@ -1,13 +1,13 @@
-"""Shared fog/mist animation engine — patchy background + sinusoidal lines.
+"""Shared fog/mist animation engine - patchy background + sinusoidal lines.
 
 Two visual layers combined:
 
-1. **Patchy background** — a per-pixel shimmer (same technique as
+1. **Patchy background** - a per-pixel shimmer (same technique as
    ``rays.py``) applied to a subset of rows.  Each pixel drifts towards
    its own random brightness target at its own speed, producing an
    organic, non-looping, undulating cloud effect.
 
-2. **Sinusoidal lines** — one or more horizontal lines whose y-position
+2. **Sinusoidal lines** - one or more horizontal lines whose y-position
    follows a sine wave.  Each line has its own amplitude, frequency,
    phase, and speed so they don't move in lockstep.  The lines are
    drawn on top of the background.
@@ -32,7 +32,7 @@ from setup import frames
 # Fixed time step per frame (seconds).
 DT = frames.PERIOD
 
-# Sprite dimensions (full 15×15 area — no icon for fog/mist codes).
+# Sprite dimensions (full 15×15 area - no icon for fog/mist codes).
 SPRITE_WIDTH = 15
 SPRITE_HEIGHT = 15
 
@@ -90,25 +90,25 @@ class FogMistConfig:
 
     Attributes:
         colour:           (r, g, b) base colour for both layers.
-        background_enabled: bool — if False, the patchy shimmer
+        background_enabled: bool - if False, the patchy shimmer
                           background is skipped entirely and only the
                           sinusoidal lines are drawn.
-        bg_rows:          dict[intensity -> list[y]] — rows that get the
+        bg_rows:          dict[intensity -> list[y]] - rows that get the
                           patchy shimmer background.
-        bg_target_range:  dict[intensity -> (min, max)] — shimmer target
+        bg_target_range:  dict[intensity -> (min, max)] - shimmer target
                           range for the background (0 = dark, 1 = full
                           colour).
-        bg_speed_range:   dict[intensity -> (min, max)] — shimmer
+        bg_speed_range:   dict[intensity -> (min, max)] - shimmer
                           transition speed for the background.
-        line_count:       dict[intensity -> int] — number of sinusoidal
+        line_count:       dict[intensity -> int] - number of sinusoidal
                           lines.
-        line_amplitude:   dict[intensity -> float] — sine wave amplitude
+        line_amplitude:   dict[intensity -> float] - sine wave amplitude
                           in pixels.
-        line_frequency:   dict[intensity -> float] — sine wave frequency
+        line_frequency:   dict[intensity -> float] - sine wave frequency
                           (radians per pixel of x).
-        line_speed:       dict[intensity -> float] — how fast the wave
+        line_speed:       dict[intensity -> float] - how fast the wave
                           travels (radians per second).
-        line_brightness:  dict[intensity -> float] — brightness of the
+        line_brightness:  dict[intensity -> float] - brightness of the
                           lines relative to the base colour (0-1).
     """
 

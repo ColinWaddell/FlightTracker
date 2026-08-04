@@ -51,7 +51,7 @@ def _bdf_path_for_font(font) -> str | None:
     ``__dict__``, so the path can't be stored on it.  Instead the panel
     driver registers it in a module-level dict keyed by ``id(font)``.
     The import is lazy so platforms without the rgbmatrix binding (Pi 5,
-    simulator) don't pay for — or fail on — importing it.
+    simulator) don't pay for - or fail on - importing it.
     """
     try:
         from display.rgbpanel_rgbmatrix import bdf_path_for_font

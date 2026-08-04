@@ -3,7 +3,7 @@
 An animation engine owns a rectangular area of the canvas (which may
 overlap the static icon) and is called every frame to draw its current
 state.  The base class does **no** automatic restoration between frames
-— the engine is fully responsible for clearing pixels it no longer
+- the engine is fully responsible for clearing pixels it no longer
 wants and for restoring icon pixels it has overwritten.
 
 The caller (theme) is responsible for the surrounding lifecycle:
@@ -11,7 +11,7 @@ blanking the area, drawing the icon once, snapshotting the pre-animation
 colours into ``original``, and blanking again at teardown.
 
 Engines can query ``original_pixel(lx, ly)`` to read back what a pixel
-looked like before any animation touched it — useful for restoring icon
+looked like before any animation touched it - useful for restoring icon
 pixels (``self.set_pixel(lx, ly, *self.original_pixel(lx, ly))``) or
 for blending effects that tint the icon rather than overwrite it.
 
@@ -81,7 +81,7 @@ class BaseAnimation:
         return (0, 0, 0)
 
     # ------------------------------------------------------------------
-    # Drawing helpers (local coordinates — offset applied automatically)
+    # Drawing helpers (local coordinates - offset applied automatically)
     # ------------------------------------------------------------------
 
     def set_pixel(self, lx: int, ly: int, r: int, g: int, b: int) -> None:
@@ -137,7 +137,7 @@ class BaseAnimation:
         """Draw this frame onto the canvas in local coordinates.
 
         Override in subclasses.  The base does **not** restore the area
-        between frames — you must clear pixels you no longer want
+        between frames - you must clear pixels you no longer want
         (via ``self.set_pixel(lx, ly, 0, 0, 0)`` or
         ``self.set_pixel(lx, ly, *self.original_pixel(lx, ly))`` for
         pixels that sit on the icon).
@@ -147,7 +147,7 @@ class BaseAnimation:
     def reset(self) -> None:
         """Reset the frame counter.
 
-        Does **not** touch the canvas — if the engine needs to clear its
+        Does **not** touch the canvas - if the engine needs to clear its
         pixels on teardown it should override this and do so explicitly.
         The caller is expected to blank the area when discarding the
         animation.

@@ -1,17 +1,17 @@
-"""Airline logo widget — draws a 16×16 airline icon at (0, 0).
+"""Airline logo widget - draws a 16×16 airline icon at (0, 0).
 
 The icon is sourced from the operating carrier's ICAO code.  The primary
-source is ``flight.airline_icao`` (populated by the data-source API —
+source is ``flight.airline_icao`` (populated by the data-source API -
 FR24 provides it directly; tar1090/OSN get it via ``route_lookup``'s FR24
 fallback).  When that is empty, the first 3 alphabetic characters of
 ``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` →
-``UAL``).  The resulting code is the PNG filename — e.g. ``BAW`` →
+``UAL``).  The resulting code is the PNG filename - e.g. ``BAW`` →
 ``assets/airlines/BAW.png``.  When no code resolves or the PNG is
 missing, a black square with a white outline is drawn as a placeholder.
 
 The widget is draw-once: it caches the last prefix rendered and skips
 repainting while the prefix is unchanged (the icon is static per flight).
-``reset()`` clears the cache so the next ``draw()`` always repaints —
+``reset()`` clears the cache so the next ``draw()`` always repaints -
 used on flight change, route change, and scene re-entry to avoid leaving
 a stale icon behind.
 """
@@ -123,7 +123,7 @@ class AirlineLogoWidget:
     """Draws the airline logo at (0, 0), once per flight.
 
     When no icon PNG exists for the resolved airline code, nothing is
-    drawn and ``icon_drawn`` is ``False`` — the caller uses this to
+    drawn and ``icon_drawn`` is ``False`` - the caller uses this to
     decide whether to shift the journey text right or start at x=0.
     """
 

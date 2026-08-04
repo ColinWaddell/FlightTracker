@@ -1,4 +1,4 @@
-"""Full-name journey label — bounce-scrolled ``"IATA>name"`` lines."""
+"""Full-name journey label - bounce-scrolled ``"IATA>name"`` lines."""
 
 from __future__ import annotations
 

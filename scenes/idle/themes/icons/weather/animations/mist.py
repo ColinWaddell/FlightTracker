@@ -1,4 +1,4 @@
-"""Mist animation — subtle patchy background with prominent sinusoidal lines.
+"""Mist animation - subtle patchy background with prominent sinusoidal lines.
 
 Mist emphasises the sinusoidal lines (more lines, brighter) over a
 thinner patchy shimmer background.  The result is a lighter, more
@@ -11,9 +11,9 @@ Intensity controls:
     - line brightness
     - the number of background rows
 
-    0 (light)  — 2 lines, 3 bg rows, dim
-    1 (medium) — 3 lines, 4 bg rows, medium
-    2 (heavy)  — 4 lines, 5 bg rows, bright
+    0 (light)  - 2 lines, 3 bg rows, dim
+    1 (medium) - 3 lines, 4 bg rows, medium
+    2 (heavy)  - 4 lines, 5 bg rows, bright
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from scenes.idle.themes.icons.weather.animations.fog_mist import (
 # Mist colour (grey-blue)
 COLOUR = (170, 170, 180)
 
-# Background rows per intensity — mist covers more than before but
+# Background rows per intensity - mist covers more than before but
 # less than fog at each intensity level.
 BG_ROWS = {
     0: [3, 4, 5, 6, 7, 8, 9, 10],  # 8 rows
@@ -41,14 +41,14 @@ BG_TARGET_RANGE = {
     2: (0.2, 0.6),  # heavy:  bright
 }
 
-# Shimmer transition speed — slightly faster than fog.
+# Shimmer transition speed - slightly faster than fog.
 BG_SPEED_RANGE = {
     0: (0.3, 0.7),
     1: (0.4, 0.9),
     2: (0.5, 1.1),
 }
 
-# Sinusoidal lines — mist has more, brighter lines.
+# Sinusoidal lines - mist has more, brighter lines.
 LINE_COUNT = {
     0: 2,
     1: 2,

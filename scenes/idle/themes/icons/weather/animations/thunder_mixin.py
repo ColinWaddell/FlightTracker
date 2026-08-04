@@ -29,7 +29,7 @@ _BOX_RIGHT = 11  # inclusive
 _BOX_TOP = 11
 _BOX_BOTTOM = 14  # inclusive
 
-# Bolt variants — each is a 3-column-wide zigzag spanning all 4 rows.
+# Bolt variants - each is a 3-column-wide zigzag spanning all 4 rows.
 # Coordinates are relative to the bolt's top-left corner.
 _BOLTS = [
     # Variant A: zigzag right then left
@@ -92,7 +92,7 @@ class ThunderMixin:
     """
 
     # ------------------------------------------------------------------
-    # Initialisation — call from the subclass __init__
+    # Initialisation - call from the subclass __init__
     # ------------------------------------------------------------------
 
     def _thunder_init(self) -> None:
@@ -101,7 +101,7 @@ class ThunderMixin:
         self._thunder_colour: tuple[int, int, int] = _COLOURS.get(
             self.intensity, _COLOURS[1]
         )
-        # No active flash at start — the box begins dark.
+        # No active flash at start - the box begins dark.
         self._flash: _Flash | None = None
 
     # ------------------------------------------------------------------
@@ -135,7 +135,7 @@ class ThunderMixin:
         return set(self._bolt_pixels(self._flash))
 
     # ------------------------------------------------------------------
-    # Per-frame tick — call *after* the precipitation draw
+    # Per-frame tick - call *after* the precipitation draw
     # ------------------------------------------------------------------
 
     def _thunder_tick(self) -> None:
@@ -153,13 +153,13 @@ class ThunderMixin:
                 # Full brightness
                 self._draw_bolt(flash, r, g, b)
             elif flash.timer < _FLASH_TOTAL:
-                # Afterglow — dimmer
+                # Afterglow - dimmer
                 ar = int(r * _AFTERGLOW)
                 ag = int(g * _AFTERGLOW)
                 ab = int(b * _AFTERGLOW)
                 self._draw_bolt(flash, ar, ag, ab)
             else:
-                # Flash ended — clear and reset
+                # Flash ended - clear and reset
                 self._clear_bolt(flash)
                 self._flash = None
 

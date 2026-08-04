@@ -1,4 +1,4 @@
-"""Sleet animation — long white stripes falling within a bounded box.
+"""Sleet animation - long white stripes falling within a bounded box.
 
 Sleet looks like rain but with elongated white streaks instead of
 single-pixel blue drops.  Each streak is a vertical line of 2-3 pixels
@@ -14,9 +14,9 @@ Intensity controls:
     - the per-frame spawn probability
     - the streak length (longer streaks at higher intensity)
 
-    0 (light)  — 2 columns, low spawn chance, 2px streaks
-    1 (medium) — 4 columns, medium spawn chance, 2px streaks
-    2 (heavy)  — 6 columns, high spawn chance, 3px streaks
+    0 (light)  - 2 columns, low spawn chance, 2px streaks
+    1 (medium) - 4 columns, medium spawn chance, 2px streaks
+    2 (heavy)  - 6 columns, high spawn chance, 3px streaks
 """
 
 from __future__ import annotations
@@ -141,7 +141,7 @@ class SleetAnimation(BaseAnimation):
             # A streak is done when its top pixel has left the box.
             if (streak.y - streak.length + 1) <= _BOX_BOTTOM:
                 survivors.append(streak)
-            # else: streak has fully left the box — its pixels were
+            # else: streak has fully left the box - its pixels were
             # already cleared in pass 1, so nothing remains "on the ground".
 
         self._streaks = survivors
