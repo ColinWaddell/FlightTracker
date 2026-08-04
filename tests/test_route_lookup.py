@@ -1,5 +1,6 @@
 """Tests for utilities/route_lookup.py - multi-provider lookups and FR24 fallback."""
 
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -224,6 +225,121 @@ class TestLookupRouteHexdbOnly:
         assert result.origin == "GLA"
         assert result.destination == "AGP"
         mock_fr24.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _lookup_route - stale cache fallback (expired entry reused when providers fail)
+# ---------------------------------------------------------------------------
+
+
+class TestLookupRouteStaleFallback:
+    """When providers return nothing, fall back to a recently-expired cache entry."""
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_reused_when_providers_fail(self, mock_session, mock_fr24):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_route
+
+        # Seed an expired cache entry (25h old, within 7-day stale threshold)
+        rc.put("BAW123", {"origin": "LHR", "destination": "GLA"})
+        rc._cache["BAW123"]["_ts"] = time.time() - rc.CACHE_TTL - 1
+
+        # Providers return 404
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        result = _lookup_route("BAW123")
+
+        assert result.origin == "LHR"
+        assert result.destination == "GLA"
+        # FR24 not called - stale data fills the gap
+        mock_fr24.assert_not_called()
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_recached_with_advanced_ts(self, mock_session, mock_fr24):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_route
+
+        # Seed an expired cache entry
+        rc.put("BAW123", {"origin": "LHR", "destination": "GLA"})
+        original_ts = time.time() - rc.CACHE_TTL - 1
+        rc._cache["BAW123"]["_ts"] = original_ts
+
+        # Providers return 404
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        _lookup_route("BAW123")
+
+        # Entry should be re-cached with ts advanced by 4h, not reset to now
+        new_ts = rc._cache["BAW123"]["_ts"]
+        expected_ts = original_ts + rc.STALE_RECACHE_ADVANCE
+        assert new_ts == expected_ts
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_providers._session")
+    def test_no_stale_entry_caches_miss(self, mock_session, mock_fr24):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_route
+
+        # No cache entry at all
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        result = _lookup_route("BAW123")
+
+        assert result.origin == ""
+        assert result.destination == ""
+        # Should have cached a miss entry
+        assert rc._cache["BAW123"].get("miss") is True
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_past_7_days_not_reused(self, mock_session, mock_fr24):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_route
+
+        # Seed a cache entry older than 7 days
+        rc.put("BAW123", {"origin": "LHR", "destination": "GLA"})
+        rc._cache["BAW123"]["_ts"] = time.time() - rc.CACHE_TTL_STALE - 1
+
+        # Providers return 404
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        result = _lookup_route("BAW123")
+
+        assert result.origin == ""
+        assert result.destination == ""
+        # Should have cached a miss, not reused the too-old entry
+        assert rc._cache["BAW123"].get("miss") is True
+
+    @patch("utilities.route_lookup._fr24_fallback")
+    @patch("utilities.route_providers._session")
+    def test_stale_miss_entry_not_reused(self, mock_session, mock_fr24):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_route
+
+        # Seed an expired miss entry
+        rc.put("BAW123", {"miss": True}, ttl=rc.CACHE_TTL_MISS)
+        rc._cache["BAW123"]["_ts"] = time.time() - rc.CACHE_TTL - 1
+
+        # Providers return 404
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        result = _lookup_route("BAW123")
+
+        # Miss entries are not eligible for stale fallback
+        assert result.origin == ""
+        assert result.destination == ""
 
 
 # ---------------------------------------------------------------------------
@@ -808,3 +924,83 @@ class TestGetRoute:
         # Plane + registration cached under the mode_s key so subsequent polls
         # skip FR24 entirely
         assert rc.get("a1b2c3") == {"plane": "Boeing 737-800", "registration": "G-ABCD"}
+
+
+# ---------------------------------------------------------------------------
+# _lookup_aircraft - stale cache fallback
+# ---------------------------------------------------------------------------
+
+
+class TestLookupAircraftStaleFallback:
+    """When providers return nothing, fall back to a recently-expired cache entry."""
+
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_reused_when_providers_fail(self, mock_session):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_aircraft
+
+        # Seed an expired cache entry (25h old, within 7-day stale threshold)
+        rc.put("a1b2c3", {"plane": "Airbus A320", "registration": "G-ABCD"})
+        rc._cache["a1b2c3"]["_ts"] = time.time() - rc.CACHE_TTL - 1
+
+        # Providers return 404
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        plane, registration = _lookup_aircraft("a1b2c3")
+
+        assert plane == "Airbus A320"
+        assert registration == "G-ABCD"
+
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_recached_with_advanced_ts(self, mock_session):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_aircraft
+
+        rc.put("a1b2c3", {"plane": "Airbus A320", "registration": "G-ABCD"})
+        original_ts = time.time() - rc.CACHE_TTL - 1
+        rc._cache["a1b2c3"]["_ts"] = original_ts
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        _lookup_aircraft("a1b2c3")
+
+        new_ts = rc._cache["a1b2c3"]["_ts"]
+        expected_ts = original_ts + rc.STALE_RECACHE_ADVANCE
+        assert new_ts == expected_ts
+
+    @patch("utilities.route_providers._session")
+    def test_no_stale_entry_caches_empty(self, mock_session):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_aircraft
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        plane, registration = _lookup_aircraft("a1b2c3")
+
+        assert plane == ""
+        assert registration == ""
+        # Should have cached an empty entry
+        assert rc._cache["a1b2c3"]["plane"] == ""
+
+    @patch("utilities.route_providers._session")
+    def test_stale_entry_past_7_days_not_reused(self, mock_session):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_aircraft
+
+        rc.put("a1b2c3", {"plane": "Airbus A320", "registration": "G-ABCD"})
+        rc._cache["a1b2c3"]["_ts"] = time.time() - rc.CACHE_TTL_STALE - 1
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_session.get.return_value = mock_resp
+
+        plane, registration = _lookup_aircraft("a1b2c3")
+
+        assert plane == ""
+        assert registration == ""

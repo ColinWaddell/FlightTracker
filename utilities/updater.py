@@ -293,13 +293,4 @@ def perform_update(tag: str) -> tuple[bool, str]:
     except Exception as exc:  # noqa: BLE001
         return False, f"pip install error: {exc}"
 
-    # 5. Clear on-disk caches so stale entries don't survive the update
-    logger.info("Clearing caches...")
-    routes_cache.clear()
-    if TLE_CACHE_PATH.exists():
-        try:
-            TLE_CACHE_PATH.unlink()
-        except OSError as exc:
-            logger.warning("Could not delete TLE cache: %s", exc)
-
     return True, f"Successfully updated to {tag}."

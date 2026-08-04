@@ -385,7 +385,35 @@ def _lookup_route(callsign: str) -> RouteInfo:
     route = route_providers.lookup_route(callsign)
 
     if not route.origin and not route.destination:
-        # All providers returned nothing.  Cache as miss.
+        # All providers returned nothing.  Try the stale fallback: if we
+        # have a recently-expired positive entry (within 7 days), re-cache
+        # it with the timestamp advanced by 4 h and return it so the screen
+        # shows real data instead of "Unknown".  Providers will be retried
+        # every 4 h while they keep failing.
+        stale = routes_cache.get_stale(callsign)
+        if stale is not None and (stale.get("origin") or stale.get("destination")):
+            ri = RouteInfo.from_dict(stale)
+            if _enrich_route_names(ri):
+                routes_cache.put(
+                    callsign,
+                    ri.to_dict(),
+                    ts=stale["_ts"] + routes_cache.STALE_RECACHE_ADVANCE,
+                )
+            else:
+                routes_cache.put(
+                    callsign,
+                    ri.to_dict(),
+                    ts=stale["_ts"] + routes_cache.STALE_RECACHE_ADVANCE,
+                )
+            logger.debug(
+                "Providers returned nothing for %r - reusing stale cached "
+                "route (age %.1fh)",
+                callsign,
+                (time.time() - stale["_ts"]) / 3600,
+            )
+            return ri
+
+        # No stale fallback available - cache as miss.
         routes_cache.put(callsign, {"miss": True}, ttl=PROVIDER_MISS_TTL)
         return RouteInfo()
 
@@ -407,6 +435,28 @@ def _lookup_aircraft(mode_s: str) -> tuple[str, str]:
         return cached.get("plane", ""), cached.get("registration", "")
 
     plane, registration = route_providers.lookup_aircraft(mode_s)
+
+    if not plane and not registration:
+        # Providers returned nothing.  Try the stale fallback: if we have a
+        # recently-expired entry (within 7 days), re-cache it with the
+        # timestamp advanced by 4 h and return it so the screen shows real
+        # data instead of blank aircraft info.
+        stale = routes_cache.get_stale(mode_s)
+        if stale is not None and (stale.get("plane") or stale.get("registration")):
+            plane = stale.get("plane", "")
+            registration = stale.get("registration", "")
+            routes_cache.put(
+                mode_s,
+                {"plane": plane, "registration": registration},
+                ts=stale["_ts"] + routes_cache.STALE_RECACHE_ADVANCE,
+            )
+            logger.debug(
+                "Providers returned nothing for mode_s %r - reusing stale "
+                "aircraft info (age %.1fh)",
+                mode_s,
+                (time.time() - stale["_ts"]) / 3600,
+            )
+            return plane, registration
 
     routes_cache.put(mode_s, {"plane": plane, "registration": registration})
     return plane, registration

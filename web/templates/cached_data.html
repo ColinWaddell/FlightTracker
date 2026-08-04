@@ -23,39 +23,48 @@
   <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
       <span class="fw-semibold"><i class="bi bi-airplane me-1"></i>Route Cache</span>
-      <span class="badge text-bg-secondary">{{ route_entries|length }} entries</span>
+      {% if route_entries %}
+      <button type="submit" form="route-delete-form" class="btn btn-outline-danger btn-sm" onclick="return confirmDelete('route-delete-form')">
+        <i class="bi bi-trash3 me-1"></i>Delete selected cached items
+      </button>
+      {% endif %}
     </div>
     <div class="card-body p-0">
       {% if route_entries %}
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col">Callsign</th>
-              <th scope="col">Aircraft</th>
-              <th scope="col">Origin</th>
-              <th scope="col">Destination</th>
-              <th scope="col">Cached</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for entry in route_entries %}
-            <tr>
-              <td class="fw-semibold">{{ entry.callsign }}</td>
-              <td>{{ entry.plane }}</td>
-              <td>{{ entry.origin }}{% if entry.origin_name %} <span class="text-muted small">{{ entry.origin_name }}</span>{% endif %}</td>
-              <td>{{ entry.destination }}{% if entry.destination_name %} <span class="text-muted small">{{ entry.destination_name }}</span>{% endif %}</td>
-              <td class="text-muted small">
-                {{ entry.cached_at }}
-                {% if entry.expired %}
-                <span class="badge text-bg-warning ms-1">expired</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <form id="route-delete-form" action="{{ url_for('cached_data_routes_delete') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width:28px"><input type="checkbox" class="form-check-input form-check-sm" id="route-select-all" onclick="toggleAll('route-select-all','route-entry-cb')" /></th>
+                <th scope="col">Callsign</th>
+                <th scope="col">Aircraft</th>
+                <th scope="col">Origin</th>
+                <th scope="col">Destination</th>
+                <th scope="col">Cached</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in route_entries %}
+              <tr>
+                <td><input type="checkbox" class="form-check-input form-check-sm route-entry-cb" name="keys" value="{{ entry.callsign }}" /></td>
+                <td class="fw-semibold">{{ entry.callsign }}</td>
+                <td>{{ entry.plane }}</td>
+                <td>{{ entry.origin }}{% if entry.origin_name %} <span class="text-muted small">{{ entry.origin_name }}</span>{% endif %}</td>
+                <td>{{ entry.destination }}{% if entry.destination_name %} <span class="text-muted small">{{ entry.destination_name }}</span>{% endif %}</td>
+                <td class="text-muted small">
+                  {{ entry.cached_at }}
+                  {% if entry.expired %}
+                  <span class="badge text-bg-warning ms-1">expired</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
       {% else %}
       <div class="text-center py-4 empty-state">
         <i class="bi bi-inbox fs-3 d-block mb-1"></i>
@@ -69,30 +78,39 @@
   <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
       <span class="fw-semibold"><i class="bi bi-rocket-takeoff me-1"></i>TLE Cache</span>
-      <span class="badge text-bg-secondary">{{ tle_entries|length }} entries</span>
+      {% if tle_entries %}
+      <button type="submit" form="tle-delete-form" class="btn btn-outline-danger btn-sm" onclick="return confirmDelete('tle-delete-form')">
+        <i class="bi bi-trash3 me-1"></i>Delete selected cached items
+      </button>
+      {% endif %}
     </div>
     <div class="card-body p-0">
       {% if tle_entries %}
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">TLE Line 1</th>
-              <th scope="col">TLE Line 2</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for entry in tle_entries %}
-            <tr>
-              <td class="fw-semibold">{{ entry.name }}</td>
-              <td class="font-monospace small text-muted">{{ entry.line1 }}</td>
-              <td class="font-monospace small text-muted">{{ entry.line2 }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <form id="tle-delete-form" action="{{ url_for('cached_data_tles_delete') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width:28px"><input type="checkbox" class="form-check-input form-check-sm" id="tle-select-all" onclick="toggleAll('tle-select-all','tle-entry-cb')" /></th>
+                <th scope="col">Name</th>
+                <th scope="col">TLE Line 1</th>
+                <th scope="col">TLE Line 2</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in tle_entries %}
+              <tr>
+                <td><input type="checkbox" class="form-check-input form-check-sm tle-entry-cb" name="keys" value="{{ entry.name }}" /></td>
+                <td class="fw-semibold">{{ entry.name }}</td>
+                <td class="font-monospace small text-muted">{{ entry.line1 }}</td>
+                <td class="font-monospace small text-muted">{{ entry.line2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
       {% else %}
       <div class="text-center py-4 empty-state">
         <i class="bi bi-inbox fs-3 d-block mb-1"></i>
@@ -111,5 +129,20 @@
   </p>
   {% endif %}
 </div>
+<script>
+function toggleAll(selectAllId, cbClass) {
+  var checked = document.getElementById(selectAllId).checked;
+  document.querySelectorAll('.' + cbClass).forEach(function(cb) { cb.checked = checked; });
+}
+function confirmDelete(formId) {
+  var form = document.getElementById(formId);
+  var checked = form.querySelectorAll('input[type="checkbox"][name="keys"]:checked');
+  if (checked.length === 0) {
+    alert('Please select at least one item to delete.');
+    return false;
+  }
+  return confirm('Delete ' + checked.length + ' selected item(s)?');
+}
+</script>
 </body>
 </html>
