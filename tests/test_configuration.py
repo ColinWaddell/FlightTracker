@@ -630,7 +630,7 @@ class TestDetails:
 
 class TestDetailsCustomTemplate:
     def test_default_value(self):
-        from setup.configuration import Config, DEFAULT_DETAILS_CUSTOM_TEMPLATE
+        from setup.configuration import DEFAULT_DETAILS_CUSTOM_TEMPLATE, Config
 
         cfg = Config.__new__(Config)
         cfg.data_store = {}
@@ -645,6 +645,6 @@ class TestDetailsCustomTemplate:
         assert cfg.details_custom_template == custom
 
     def test_default_template_in_defaults(self):
-        from setup.configuration import DEFAULTS, DEFAULT_DETAILS_CUSTOM_TEMPLATE
+        from setup.configuration import DEFAULT_DETAILS_CUSTOM_TEMPLATE, DEFAULTS
 
         assert DEFAULTS["details_custom_template"] == DEFAULT_DETAILS_CUSTOM_TEMPLATE

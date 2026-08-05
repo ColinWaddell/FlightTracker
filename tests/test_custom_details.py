@@ -1,11 +1,11 @@
 """Tests for scenes/flight/custom_details.py - template parser and span builder."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from display.spans import Span
 from scenes.flight.custom_details import (
-    NOT_DEFINED_TEXT,
     AVAILABLE_FIELDS,
+    NOT_DEFINED_TEXT,
     SYMBOL_MAP,
     FieldToken,
     LiteralToken,

@@ -1012,7 +1012,6 @@ def cached_data_routes_delete():
 @login_required
 def cached_data_tles_delete():
     """Delete selected TLE entries from the TLE cache file."""
-    import json as _json
 
     if not validate_csrf(request.form):
         return (

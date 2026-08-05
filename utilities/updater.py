@@ -13,8 +13,6 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from utilities import routes_cache
-from utilities.tle_manager import TLE_CACHE_PATH
 from version import VERSION
 
 logger = logging.getLogger("updater")

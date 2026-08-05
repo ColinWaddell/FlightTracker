@@ -528,7 +528,7 @@ def validate_template(template: str) -> list[str]:
                 errors.append(f"Unknown symbol '{name}'. Valid symbols: {valid}.")
             if ":" in rest and colour is None:
                 errors.append(
-                    f"Invalid colour in symbol tag '{inner}'. " f"Use #RRGGBB format."
+                    f"Invalid colour in symbol tag '{inner}'. Use #RRGGBB format."
                 )
             continue
 
@@ -557,9 +557,7 @@ def validate_template(template: str) -> list[str]:
         # Validate unit.
         if unit is not None:
             if field in TEXT_FIELDS:
-                errors.append(
-                    f"Field '{field}' does not accept units " f"(got ':{unit}')."
-                )
+                errors.append(f"Field '{field}' does not accept units (got ':{unit}').")
             elif field in TELEMETRY_FIELDS:
                 valid_units = TELEMETRY_FIELDS[field][0]
                 if valid_units and unit not in valid_units:
