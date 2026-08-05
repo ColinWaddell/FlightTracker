@@ -14,8 +14,8 @@
 <div class="container-fluid py-4" style="max-width:1100px">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="fs-4 fw-semibold mb-0"><i class="bi bi-database-check me-2"></i>Cached Data</h2>
-    <a href="{{ url_for('cache_clear') }}" class="btn btn-outline-danger btn-sm">
-      <i class="bi bi-trash3 me-1"></i>Clear Cache
+    <a href="{{ url_for('cache_clear') }}" class="btn btn-danger btn-sm">
+      <i class="bi bi-trash3 me-1"></i>Clear All Caches (Flights + Satellites)
     </a>
   </div>
 
@@ -24,7 +24,7 @@
     <div class="card-header d-flex align-items-center justify-content-between">
       <span class="fw-semibold"><i class="bi bi-airplane me-1"></i>Route Cache</span>
       {% if route_entries %}
-      <button type="submit" form="route-delete-form" class="btn btn-outline-danger btn-sm" onclick="return confirmDelete('route-delete-form')">
+      <button type="submit" form="route-delete-form" class="btn btn-warning btn-sm" onclick="return confirmDelete('route-delete-form')">
         <i class="bi bi-trash3 me-1"></i>Delete selected cached items
       </button>
       {% endif %}
@@ -79,7 +79,7 @@
     <div class="card-header d-flex align-items-center justify-content-between">
       <span class="fw-semibold"><i class="bi bi-rocket-takeoff me-1"></i>TLE Cache</span>
       {% if tle_entries %}
-      <button type="submit" form="tle-delete-form" class="btn btn-outline-danger btn-sm" onclick="return confirmDelete('tle-delete-form')">
+      <button type="submit" form="tle-delete-form" class="btn btn-warning btn-sm" onclick="return confirmDelete('tle-delete-form')">
         <i class="bi bi-trash3 me-1"></i>Delete selected cached items
       </button>
       {% endif %}
