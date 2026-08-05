@@ -76,6 +76,20 @@
       <form method="post" action="/settings" id="settings-form" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
+        {% if template_errors %}
+        <div class="alert alert-danger mb-3">
+          <strong><i class="bi bi-exclamation-triangle me-1"></i>Template errors:</strong>
+          Please fix the following issues in the
+          <a href="javascript:void(0)" onclick="document.getElementById('group-plane-info').scrollIntoView({behavior:'smooth',block:'start'})" class="alert-link fw-bold">Plane Details</a>
+          section:
+          <ul class="mb-0 mt-1">
+            {% for err in template_errors %}
+            <li>{{ err }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
         <!-- ====== Sky Monitoring page ====== -->
         <div class="settings-page" id="page-sky-monitoring" data-page="sky-monitoring">
         <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-rocket-takeoff-pin me-2"></i>Sky Monitoring</h2>
@@ -240,13 +254,6 @@
         <div id="group-airline-info" class="card mb-3 p-3">
           <p class="section-heading"><i class="bi bi-ticket-perforated me-2"></i>Airline Info</p>
           
-          <div class="alert alert-warning small d-flex align-items-start mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
-            <div>
-              <strong>Experimental feature.</strong> This is a new, work-in-progress theme and may be a bit rough around the edges. Expect some jankiness, and please report any issues on <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
-            </div>
-          </div>
-          
           <div class="mb-2 form-check">
             <input type="checkbox" class="form-check-input" name="show_airline_icon" id="show_airline_icon"
                    {% if cfg.show_airline_icon %}checked{% endif %} />
@@ -301,7 +308,12 @@
           <div id="custom_template_panel" class="mt-3"
                style="display:{% if cfg.details == 2 %}block{% else %}none{% endif %}">
             <hr class="my-2" />
-            <label class="form-label small fw-bold" for="details_custom_template">Template string</label>
+            <label class="form-label small fw-bold" for="details_custom_template">
+              Template string
+              {% if template_errors %}
+              <span class="badge bg-danger ms-1">Template Error</span>
+              {% endif %}
+            </label>
             <textarea class="form-control form-control-sm font-monospace" name="details_custom_template"
                       id="details_custom_template" rows="3"
                       placeholder="{plane} | {symbol:altitude} {altitude}">{{ cfg.details_custom_template }}</textarea>
@@ -689,12 +701,6 @@
             <p class="section-heading"><i class="bi bi-cloud-sun-fill me-2"></i>Forecast</p>
             <p class="text-muted small mb-0">Display upcoming weather forecasts as icons on the idle screen.</p>
           </div>
-          <div class="alert alert-warning small d-flex align-items-start mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
-            <div>
-              <strong>Experimental feature.</strong> This is a new, work-in-progress feature and may be a bit rough around the edges. Expect some jankiness, and please report any issues on <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
-            </div>
-          </div>
           <div class="card mb-3 p-3">
             <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Forecast Duration</p>
             <div class="mb-3">
@@ -724,12 +730,6 @@
           <div class="card mb-3 p-3">
             <p class="section-heading"><i class="bi bi-thermometer-half me-2"></i>Current Conditions</p>
             <p class="text-muted small mb-0">Display the current weather at a glance: a weather sprite, temperature, humidity, wind, UV index, moon-phase and sunrise/sunset.</p>
-          </div>
-          <div class="alert alert-warning small d-flex align-items-start mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
-            <div>
-              <strong>Experimental feature.</strong> This is a new, work-in-progress theme and may be a bit rough around the edges. Expect some jankiness, and please report any issues on <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
-            </div>
           </div>
         </div><!-- /idle-theme-conditions -->
 

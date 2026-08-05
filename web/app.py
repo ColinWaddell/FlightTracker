@@ -526,6 +526,7 @@ def settings():
             new_password = form.get("new_password", "").strip()
 
             # Validate custom plane-info template when custom mode is selected.
+            template_errors = []
             if new_data.get("details") == 2:
                 from scenes.flight.custom_details import validate_template
 
@@ -533,9 +534,22 @@ def settings():
                     new_data.get("details_custom_template", "")
                 )
                 if template_errors:
-                    raise ValueError(
-                        "Custom template errors:\n"
-                        + "\n".join(f"  • {e}" for e in template_errors)
+                    # Don't raise — pass errors to the template for inline
+                    # display next to the textarea.
+                    merged_cfg = {**cfg.as_dict(), **new_data}
+                    return (
+                        render_template(
+                            "settings.html",
+                            cfg=merged_cfg,
+                            airports_json=airports_json(),
+                            template_errors=template_errors,
+                            csrf_token=csrf_token(),
+                            in_schedule=cfg.is_in_brightness_schedule(),
+                            schedule_window=cfg.brightness_schedule_window,
+                            current_version=version_string(VERSION),
+                            active_page="settings",
+                        ),
+                        400,
                     )
 
             if using_default_password and not new_password:
@@ -546,6 +560,7 @@ def settings():
                         cfg=merged_cfg,
                         airports_json=airports_json(),
                         error="To change any setting you must update the default web-interface password, even if you plan on disabling the web-interface.",
+                        template_errors=[],
                         csrf_token=csrf_token(),
                         in_schedule=cfg.is_in_brightness_schedule(),
                         schedule_window=cfg.brightness_schedule_window,
@@ -578,6 +593,7 @@ def settings():
                     ),
                     airports_json=airports_json(),
                     error=str(exc),
+                    template_errors=[],
                     csrf_token=csrf_token(),
                     in_schedule=cfg.is_in_brightness_schedule(),
                     schedule_window=cfg.brightness_schedule_window,
@@ -594,6 +610,7 @@ def settings():
         "settings.html",
         cfg=cfg.as_dict(),
         airports_json=airports_json(),
+        template_errors=[],
         csrf_token=csrf_token(),
         in_schedule=cfg.is_in_brightness_schedule(),
         schedule_window=cfg.brightness_schedule_window,
