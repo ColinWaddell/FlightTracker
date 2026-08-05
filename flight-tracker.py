@@ -116,9 +116,7 @@ def _render_celestrack_test(panel, canvas, cfg: Config, y):
 
     # Right-align the result label on the 64px-wide screen
     result_width = len(result_text) * 4
-    panel.draw_text(
-        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
-    )
+    panel.draw_text(canvas, test_font, 64 - result_width, y, result_colour, result_text)
     panel.swap(canvas)
 
 
@@ -139,9 +137,7 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
     result_colour = GREEN if ok else RED
     # Right-align the result label on the 64px-wide screen
     result_width = len(result_text) * 4
-    panel.draw_text(
-        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
-    )
+    panel.draw_text(canvas, test_font, 64 - result_width, y, result_colour, result_text)
     panel.swap(canvas)
 
 
@@ -161,9 +157,7 @@ def _render_routing_test(panel, canvas, cfg: Config, y):
     result_colour = GREEN if working else RED
 
     result_width = len(result_text) * 4
-    panel.draw_text(
-        canvas, test_font, 64 - result_width - 1, y, result_colour, result_text
-    )
+    panel.draw_text(canvas, test_font, 64 - result_width, y, result_colour, result_text)
     panel.swap(canvas)
 
 
@@ -175,8 +169,8 @@ def render_tests(panel, canvas):
     cfg = Config.instance()
 
     _render_data_source_test(panel, canvas, cfg, 5)
-    _render_celestrack_test(panel, canvas, cfg, 13)
-    _render_routing_test(panel, canvas, cfg, 21)
+    _render_celestrack_test(panel, canvas, cfg, 11)
+    _render_routing_test(panel, canvas, cfg, 17)
     _render_ip_address(panel, canvas, 31)
 
     panel.swap(canvas)

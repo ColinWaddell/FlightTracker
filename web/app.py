@@ -955,12 +955,15 @@ def cached_data():
                     "%Y-%m-%d %H:%M"
                 )
                 tle_expired = (time.time() - ts) > TLE_CACHE_TTL
+            cached_at = tle_fetched_at
             for tle in raw.get("tles", []):
                 tle_entries.append(
                     {
                         "name": tle[0] if len(tle) > 0 else "",
                         "line1": tle[1] if len(tle) > 1 else "",
                         "line2": tle[2] if len(tle) > 2 else "",
+                        "cached_at": cached_at,
+                        "expired": tle_expired,
                     }
                 )
     except Exception as exc:

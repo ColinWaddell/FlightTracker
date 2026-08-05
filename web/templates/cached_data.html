@@ -96,6 +96,7 @@
                 <th scope="col">Name</th>
                 <th scope="col">TLE Line 1</th>
                 <th scope="col">TLE Line 2</th>
+                <th scope="col">Cached</th>
               </tr>
             </thead>
             <tbody>
@@ -105,6 +106,12 @@
                 <td class="fw-semibold">{{ entry.name }}</td>
                 <td class="font-monospace small text-muted">{{ entry.line1 }}</td>
                 <td class="font-monospace small text-muted">{{ entry.line2 }}</td>
+                <td class="text-muted small">
+                  {{ entry.cached_at }}
+                  {% if entry.expired %}
+                  <span class="badge text-bg-warning ms-1">expired</span>
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>

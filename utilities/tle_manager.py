@@ -32,6 +32,11 @@ TLE_CACHE_PATH = migrate_legacy_json(
 )
 HTTP_TIMEOUT = 15
 
+# When a refresh fails but we have a stale cached TLE set, advance the
+# fetched_at timestamp by this much so we retry in 4 hours rather than
+# immediately.  Mirrors routes_cache.STALE_RECACHE_ADVANCE.
+STALE_RECACHE_ADVANCE = 14400  # 4 hours
+
 # Backoff after a failed refresh: starts at 1 minute, doubles each failure,
 # capped at 1 hour. Reset to the minimum on a successful refresh.
 BACKOFF_MIN = 60.0
@@ -82,11 +87,17 @@ def load_cache() -> dict | None:
     return None
 
 
-def save_cache(tles: list[tuple[str, str, str]]) -> None:
+def save_cache(
+    tles: list[tuple[str, str, str]], timestamp: float | None = None
+) -> None:
     try:
         TLE_CACHE_PATH.write_text(
             json.dumps(
-                {"timestamp": time.time(), "tles": [list(t) for t in tles]}, indent=2
+                {
+                    "timestamp": time.time() if timestamp is None else timestamp,
+                    "tles": [list(t) for t in tles],
+                },
+                indent=2,
             )
         )
     except Exception as exc:
@@ -193,17 +204,36 @@ class TLEManager:
                 len(norad_ids),
             )
         else:
+            # API returned nothing.  If we have a stale cached TLE set,
+            # reuse it and advance the timestamp by STALE_RECACHE_ADVANCE
+            # so we retry in 4 hours rather than immediately.  This mirrors
+            # the route_lookup stale-fallback behaviour.
             with self.lock:
-                self.backoff_seconds = (
-                    BACKOFF_MIN
-                    if self.backoff_seconds <= 0.0
-                    else min(self.backoff_seconds * 2.0, BACKOFF_MAX)
-                )
-                self.next_attempt_at = time.time() + self.backoff_seconds
-            logger.warning(
-                "TLE refresh returned no results - keeping existing cache; "
-                "next retry in %.0fs",
-                self.backoff_seconds,
-            )
+                if self.tles:
+                    bumped_ts = time.time() - TLE_CACHE_TTL + STALE_RECACHE_ADVANCE
+                    self.fetched_at = bumped_ts
+                    self.backoff_seconds = 0.0
+                    self.next_attempt_at = 0.0
+                    logger.warning(
+                        "TLE refresh returned no results - reusing stale cache; "
+                        "next retry in %d hours",
+                        STALE_RECACHE_ADVANCE // 3600,
+                    )
+                    # Persist the bumped timestamp so the stale-fallback
+                    # survives a restart.
+                    save_cache(self.tles, timestamp=bumped_ts)
+                else:
+                    # No cached data at all - use exponential backoff.
+                    self.backoff_seconds = (
+                        BACKOFF_MIN
+                        if self.backoff_seconds <= 0.0
+                        else min(self.backoff_seconds * 2.0, BACKOFF_MAX)
+                    )
+                    self.next_attempt_at = time.time() + self.backoff_seconds
+                    logger.warning(
+                        "TLE refresh returned no results - no cached data; "
+                        "next retry in %.0fs",
+                        self.backoff_seconds,
+                    )
 
         self.ready.set()

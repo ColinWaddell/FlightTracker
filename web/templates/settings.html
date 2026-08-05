@@ -316,7 +316,9 @@
             </label>
             <textarea class="form-control form-control-sm font-monospace" name="details_custom_template"
                       id="details_custom_template" rows="3"
-                      placeholder="{plane} | {symbol:altitude} {altitude}">{{ cfg.details_custom_template }}</textarea>
+                      placeholder="{plane} | {symbol:altitude} {altitude}"
+                      autocomplete="off">{{ cfg.details_custom_template }}</textarea>
+            <div id="brace_balance" class="form-text small" style="display:none"></div>
             <div class="form-text text-muted small">Define what appears in the scrolling bar using tags and literal text. See the reference below.</div>
 
             <!-- Reference panel -->
@@ -412,6 +414,230 @@
           }
           radios.forEach(function(r) { r.addEventListener('change', updatePanel); });
           updatePanel();
+        })();
+
+        // ---- Brace-balance indicator ----
+        // Trivially correct: counts { vs } — no field/unit knowledge needed.
+        (function() {
+          var textarea = document.getElementById('details_custom_template');
+          var indicator = document.getElementById('brace_balance');
+          if (!textarea || !indicator) return;
+
+          function checkBraces() {
+            var val = textarea.value;
+            var opens = (val.match(/\{/g) || []).length;
+            var closes = (val.match(/\}/g) || []).length;
+            if (opens === closes) {
+              indicator.style.display = 'none';
+            } else {
+              indicator.style.display = 'block';
+              indicator.style.color = '#dc3545';
+              indicator.textContent = 'Unbalanced braces: ' + opens + ' opening { but ' + closes + ' closing }.';
+            }
+          }
+
+          textarea.addEventListener('input', checkBraces);
+          checkBraces();
+        })();
+
+        // ---- Autocomplete on { keypress ----
+        // Reads field/symbol names from the reference table in the DOM
+        // (single source of truth — no duplicated list to maintain).
+        (function() {
+          var textarea = document.getElementById('details_custom_template');
+          if (!textarea) return;
+
+          // Collect valid tag names from the reference table.
+          // Fields: <code>fieldname</code> in the fields table.
+          // Symbols: {symbol:name} and {heading_arrow} in the symbols table.
+          var tagNames = [];
+
+          // Fields table — first <code> in each data row.
+          var fieldCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
+          fieldCodes.forEach(function(code) {
+            var text = code.textContent.trim();
+            // Skip group header rows (colspan rows have no <code>).
+            if (text && !text.startsWith('{')) {
+              tagNames.push(text);
+            }
+          });
+
+          // Symbols table — extract names from {symbol:name} and {heading_arrow}.
+          var symbolCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
+          symbolCodes.forEach(function(code) {
+            var text = code.textContent.trim();
+            if (text.startsWith('{symbol:')) {
+              // Extract the name between {symbol: and }
+              var name = text.replace('{symbol:', '').replace('}', '').split(':')[0];
+              if (name) tagNames.push('symbol:' + name);
+            } else if (text === '{heading_arrow}') {
+              tagNames.push('heading_arrow');
+            }
+          });
+
+          // Build the dropdown element.
+          var dropdown = document.createElement('div');
+          dropdown.id = 'template_autocomplete';
+          dropdown.style.cssText = 'position:absolute;display:none;z-index:9999;'
+            + 'background:#fff;border:1px solid #dee2e6;border-radius:0.375rem;'
+            + 'box-shadow:0 0.125rem 0.25rem rgba(0,0,0,0.15);max-height:200px;'
+            + 'overflow-y:auto;font-size:0.8rem;min-width:180px;';
+          panel = document.getElementById('custom_template_panel');
+          panel.style.position = 'relative';
+          panel.appendChild(dropdown);
+
+          var currentItems = [];
+          var selectedIndex = -1;
+
+          function showDropdown(items, caretX, caretY) {
+            dropdown.innerHTML = '';
+            currentItems = items;
+            selectedIndex = -1;
+            if (items.length === 0) {
+              dropdown.style.display = 'none';
+              return;
+            }
+            items.forEach(function(item, i) {
+              var div = document.createElement('div');
+              div.textContent = item;
+              div.style.cssText = 'padding:4px 12px;cursor:pointer;';
+              div.addEventListener('mouseenter', function() {
+                selectedIndex = i;
+                highlightSelected();
+              });
+              div.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                insertTag(item);
+              });
+              dropdown.appendChild(div);
+            });
+            dropdown.style.display = 'block';
+            dropdown.style.left = caretX + 'px';
+            dropdown.style.top = caretY + 'px';
+          }
+
+          function highlightSelected() {
+            var children = dropdown.children;
+            for (var i = 0; i < children.length; i++) {
+              children[i].style.background = (i === selectedIndex) ? '#e9ecef' : '';
+            }
+          }
+
+          function hideDropdown() {
+            dropdown.style.display = 'none';
+            currentItems = [];
+            selectedIndex = -1;
+          }
+
+          function insertTag(tagName) {
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var val = textarea.value;
+            // Find the { that triggered autocomplete (last unclosed { before cursor).
+            var bracePos = val.lastIndexOf('{', start - 1);
+            if (bracePos === -1) { hideDropdown(); return; }
+            // Build the full tag: {tagName} (or {symbol:name} already includes prefix).
+            var insertion = tagName + '}';
+            var newVal = val.substring(0, bracePos + 1) + insertion + val.substring(end);
+            textarea.value = newVal;
+            var newCursor = bracePos + 1 + insertion.length;
+            textarea.setSelectionRange(newCursor, newCursor);
+            textarea.focus();
+            hideDropdown();
+            // Trigger brace-balance check.
+            textarea.dispatchEvent(new Event('input'));
+          }
+
+          function getCaretCoordinates() {
+            // Approximate caret position using a mirror div.
+            var style = window.getComputedStyle(textarea);
+            var div = document.createElement('div');
+            div.style.position = 'absolute';
+            div.style.visibility = 'hidden';
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.font = style.font;
+            div.style.fontSize = style.fontSize;
+            div.style.fontFamily = style.fontFamily;
+            div.style.lineHeight = style.lineHeight;
+            div.style.padding = style.padding;
+            div.style.border = style.border;
+            div.style.boxSizing = 'border-box';
+            div.style.width = textarea.clientWidth + 'px';
+            var textBefore = textarea.value.substring(0, textarea.selectionStart);
+            div.textContent = textBefore;
+            var span = document.createElement('span');
+            span.textContent = '|';
+            div.appendChild(span);
+            document.body.appendChild(div);
+            var rect = textarea.getBoundingClientRect();
+            var spanRect = span.getBoundingClientRect();
+            var x = spanRect.left - rect.left;
+            var y = spanRect.top - rect.top + spanRect.height;
+            document.body.removeChild(div);
+            // Adjust for scroll position within the panel.
+            return { x: x, y: y };
+          }
+
+          textarea.addEventListener('keydown', function(e) {
+            if (dropdown.style.display === 'none' || currentItems.length === 0) return;
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              selectedIndex = Math.min(selectedIndex + 1, currentItems.length - 1);
+              highlightSelected();
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              selectedIndex = Math.max(selectedIndex - 1, 0);
+              highlightSelected();
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+              if (selectedIndex >= 0) {
+                e.preventDefault();
+                insertTag(currentItems[selectedIndex]);
+              }
+            } else if (e.key === 'Escape') {
+              hideDropdown();
+            }
+          });
+
+          textarea.addEventListener('input', function(e) {
+            var val = textarea.value;
+            var cursor = textarea.selectionStart;
+
+            // Check if we're inside an unclosed { tag.
+            var lastOpen = val.lastIndexOf('{', cursor - 1);
+            if (lastOpen === -1) { hideDropdown(); return; }
+
+            // Check there's no } between the { and cursor.
+            var closeAfterOpen = val.indexOf('}', lastOpen);
+            if (closeAfterOpen !== -1 && closeAfterOpen < cursor) {
+              hideDropdown();
+              return;
+            }
+
+            // Get the partial text after {.
+            var partial = val.substring(lastOpen + 1, cursor).toLowerCase();
+
+            // Filter tag names.
+            var matches = tagNames.filter(function(name) {
+              return name.toLowerCase().startsWith(partial);
+            }).sort();
+
+            if (matches.length === 0) {
+              hideDropdown();
+              return;
+            }
+
+            // Position dropdown below the textarea.
+            var coords = getCaretCoordinates();
+            var textareaRect = textarea.getBoundingClientRect();
+            showDropdown(matches, coords.x, textarea.offsetHeight);
+          });
+
+          // Hide dropdown when clicking elsewhere.
+          document.addEventListener('click', function(e) {
+            if (e.target !== textarea && e.target !== dropdown) {
+              hideDropdown();
+            }
+          });
         })();
         </script>
 
