@@ -376,7 +376,14 @@ class ConditionsIdleTheme(BaseIdleScene):
         else:
             display_temp = temp_c
             unit_char = "C"
-        temp_str = f"{round(display_temp)}{unit_char}"
+        rounded_temp = round(display_temp)
+        # Only show the unit suffix when the temperature is two
+        # characters wide (i.e. -9..99); drop it for longer values so
+        # three-digit (or "-10" and below) readings still fit.
+        if -10 < rounded_temp < 100:
+            temp_str = f"{rounded_temp}{unit_char}"
+        else:
+            temp_str = f"{rounded_temp}"
 
         if temp_str == self.last_temp_str:
             return
