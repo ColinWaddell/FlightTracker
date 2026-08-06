@@ -303,13 +303,39 @@ class ForecastIdleTheme(BaseIdleScene):
             return temp_c + 273.15
         return temp_c
 
+    @staticmethod
+    def _unit_char() -> str:
+        """Return the unit suffix for the configured temperature unit."""
+        cfg = Config.instance()
+        if cfg.temperature_unit == "f":
+            return "F"
+        if cfg.temperature_unit == "k":
+            return "K"
+        return "C"
+
     def _format_temp_value(self, temp_c: float) -> str:
-        """Format a temperature as an integer string (no unit), respecting units."""
-        return str(round(self._convert_temp(temp_c)))
+        """Format a temperature as an integer string, respecting units.
+
+        The unit suffix is only appended when the value is two
+        characters wide (i.e. -9..99); longer values omit it so they
+        still fit the display.
+        """
+        rounded = round(self._convert_temp(temp_c))
+        if -10 < rounded < 100:
+            return f"{rounded}{self._unit_char()}"
+        return str(rounded)
 
     def _format_temp(self, temp_c: float) -> str:
-        """Format a temperature for the hourly label, respecting units."""
-        return str(round(self._convert_temp(temp_c)))
+        """Format a temperature for the hourly label, respecting units.
+
+        The unit suffix is only appended when the value is two
+        characters wide (i.e. -9..99); longer values omit it so they
+        still fit the display.
+        """
+        rounded = round(self._convert_temp(temp_c))
+        if -10 < rounded < 100:
+            return f"{rounded}{self._unit_char()}"
+        return str(rounded)
 
     @staticmethod
     def _format_hour(slot_time: datetime.datetime) -> str:
