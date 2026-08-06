@@ -220,9 +220,15 @@ def draw_text(canvas, font: BDFFont, x: int, y: int, colour, text: str) -> int:
 
     else:
         putpixel = canvas.putpixel
+        canvas_w = canvas.width
+        canvas_h = canvas.height
 
         def _put(px, py):
-            putpixel((px, py), (cr, cg, cb))
+            # PIL's putpixel raises IndexError for out-of-bounds
+            # coordinates, so skip any pixels that fall outside the
+            # canvas (glyphs can overhang their advance box or baseline).
+            if 0 <= px < canvas_w and 0 <= py < canvas_h:
+                putpixel((px, py), (cr, cg, cb))
 
     advance = 0
 
