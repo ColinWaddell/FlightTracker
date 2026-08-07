@@ -280,6 +280,7 @@ class AirlineNameBar:
                 self.spans,
                 bounce=True,
             )
+            self.scroller.draw()
         elif self.scroller is not None:
             self.scroller.draw()
 

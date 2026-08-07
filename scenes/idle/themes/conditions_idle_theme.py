@@ -50,6 +50,7 @@ from setup.themes import (
     THEME_CONDITIONS_SUNSET,
     THEME_CONDITIONS_TIME,
     THEME_CONDITIONS_WIND,
+    THEME_PLANE_TLM_UNITS,
 )
 from utilities.sun_times import is_daytime
 
@@ -376,7 +377,8 @@ class ConditionsIdleTheme(BaseIdleScene):
         else:
             display_temp = temp_c
             unit_char = "C"
-        temp_str = f"{round(display_temp)}{unit_char}"
+        temp_val = round(display_temp)
+        temp_str = f"{temp_val}{unit_char}"
 
         if temp_str == self.last_temp_str:
             return
@@ -395,13 +397,24 @@ class ConditionsIdleTheme(BaseIdleScene):
             )
 
         self.last_temp_str = temp_str
+        # Draw the numeric value in the temperature colour, then the
+        # unit suffix in the telemetry-units colour.
         self.panel.draw_text(
             self.canvas,
             TEXT_FONT,
             temp_x,
             TEMPERATURE_POSITION[1],
             temperature_to_colour(temp_c),
-            temp_str,
+            str(temp_val),
+        )
+        unit_x = temp_x + font_text_width(TEXT_FONT, str(temp_val))
+        self.panel.draw_text(
+            self.canvas,
+            TEXT_FONT,
+            unit_x,
+            TEMPERATURE_POSITION[1],
+            TC(THEME_PLANE_TLM_UNITS),
+            unit_char,
         )
 
     # ------------------------------------------------------------------
