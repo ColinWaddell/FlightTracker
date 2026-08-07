@@ -76,7 +76,7 @@ _FALL_SPEED = 0.5
 
 
 class _Flake:
-    """A single falling snow flake (3×3 cross)."""
+    """A single falling snow flake (3x3 cross)."""
 
     __slots__ = ("x", "y", "sway", "sway_timer", "fall_accum")
 

@@ -68,7 +68,7 @@ def _load_icon(filename: str) -> Image.Image | None:
 
 
 def blank_area(panel: RGBPanel, canvas, x: int, y: int) -> None:
-    """Blank the full sprite region (SPRITE_WIDTH × SPRITE_HEIGHT) to black."""
+    """Blank the full sprite region (SPRITE_WIDTH x SPRITE_HEIGHT) to black."""
     for py in range(y, y + SPRITE_HEIGHT):
         for px in range(x, x + SPRITE_WIDTH):
             panel.set_pixel(canvas, px, py, 0, 0, 0)

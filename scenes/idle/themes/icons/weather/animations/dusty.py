@@ -31,7 +31,7 @@ R = 200
 G = 170
 B = 100
 
-# Sprite dimensions (full 15×15 area - no icon for dusty codes).
+# Sprite dimensions (full 15x15 area - no icon for dusty codes).
 SPRITE_WIDTH = 15
 SPRITE_HEIGHT = 15
 

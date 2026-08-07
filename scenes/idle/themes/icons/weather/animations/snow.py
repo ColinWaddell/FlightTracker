@@ -1,6 +1,6 @@
 """Snow animation - drifting cross-shaped flakes falling within a bounded box.
 
-Each flake is a 3×3 cross (5 pixels) that falls slowly and sways ±1px
+Each flake is a 3x3 cross (5 pixels) that falls slowly and sways ±1px
 horizontally on its own random schedule.  Spawning is probabilistic so
 there is no fixed period or detectable loop.
 
@@ -81,7 +81,7 @@ _FALL_SPEED = 0.5
 
 
 class _Flake:
-    """A single falling snow flake (3×3 cross)."""
+    """A single falling snow flake (3x3 cross)."""
 
     __slots__ = ("x", "y", "sway", "sway_timer", "fall_accum")
 

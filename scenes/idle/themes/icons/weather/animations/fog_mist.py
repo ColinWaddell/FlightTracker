@@ -32,7 +32,7 @@ from setup import frames
 # Fixed time step per frame (seconds).
 DT = frames.PERIOD
 
-# Sprite dimensions (full 15×15 area - no icon for fog/mist codes).
+# Sprite dimensions (full 15x15 area - no icon for fog/mist codes).
 SPRITE_WIDTH = 15
 SPRITE_HEIGHT = 15
 

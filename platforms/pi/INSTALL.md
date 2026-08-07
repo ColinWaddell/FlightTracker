@@ -33,7 +33,7 @@ You will need:
 
 * A Raspberry Pi 3, Raspberry Pi 4, or Raspberry Pi Zero W
 * An [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview)
-* A 64×32 HUB75 RGB LED matrix
+* A 64x32 HUB75 RGB LED matrix
 * A suitable 5 V power supply for the matrix
 * A microSD card containing Raspberry Pi OS
 
@@ -230,7 +230,7 @@ cd ~/rgb-matrix-install/rpi-rgb-led-matrix/examples-api-use
 make demo
 ```
 
-Run the demo for a single 64×32 matrix:
+Run the demo for a single 64x32 matrix:
 
 ```bash
 sudo ./demo \

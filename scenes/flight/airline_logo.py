@@ -1,4 +1,4 @@
-"""Airline logo widget - draws a 16×16 airline icon at (0, 0).
+"""Airline logo widget - draws a 16x16 airline icon at (0, 0).
 
 The icon is sourced from the operating carrier's ICAO code.  The primary
 source is ``flight.airline_icao`` (populated by the data-source API -
@@ -32,7 +32,7 @@ from utilities.flight import Flight
 # Dimensions / position
 # -----------------------------------------------------------------------
 
-AIRLINE_ICON_SIZE = 16  # square: 16×16
+AIRLINE_ICON_SIZE = 16  # square: 16x16
 AIRLINE_ICON_X = 0
 AIRLINE_ICON_Y = 0
 
@@ -103,7 +103,7 @@ def airline_icao_from_flight(flight: Flight) -> str:
 
 
 def _blank_region(panel: RGBPanel, canvas, x: int, y: int, size: int) -> None:
-    """Blank a ``size``×``size`` region to black."""
+    """Blank a ``size``x``size`` region to black."""
     for py in range(y, y + size):
         for px in range(x, x + size):
             panel.set_pixel(canvas, px, py, 0, 0, 0)
