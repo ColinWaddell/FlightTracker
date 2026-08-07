@@ -132,9 +132,14 @@ class DescriptionScroller:
     Simplified version of flight_scene.LineScroller - no loop-done
     signalling, just bounces back and forth indefinitely when the
     text exceeds the available width.
+
+    When ``enabled`` is False the scroller is inert: ``tick()`` returns
+    the current position (0) without advancing, so the text is shown
+    statically and clipped to the screen width.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, enabled: bool = True) -> None:
+        self.enabled = enabled
         self.reset()
 
     def reset(self) -> None:
@@ -143,7 +148,21 @@ class DescriptionScroller:
         self.position: int = 0
         self.scroll_max: int = 0
 
+    def enable(self) -> None:
+        """Re-enable bounce-scrolling."""
+        self.enabled = True
+
+    def disable(self) -> None:
+        """Disable scrolling; text will be shown statically and clipped."""
+        self.enabled = False
+        self.position = 0
+        self.state = _ScrollState.INITIAL
+        self.timer = 0
+
     def tick(self) -> int:
+        if not self.enabled:
+            return self.position
+
         st = self.state
 
         if st == _ScrollState.REVEAL:
@@ -238,13 +257,16 @@ class ConditionsIdleTheme(BaseIdleScene):
     # ------------------------------------------------------------------
 
     def theme_init(self) -> None:
+        cfg = Config.instance()
         self.bar = ClockDateBar(self.panel, self.canvas, THEME_CONDITIONS_TIME)
         self.last_temp_str: str | None = None
         self.last_humidity_str: str | None = None
         self.last_wind_str: str | None = None
         self.last_wind_dir: str | None = None
         self.last_description: str | None = None
-        self.description_scroller = DescriptionScroller()
+        self.description_scroller = DescriptionScroller(
+            enabled=not cfg.theme_conditions["disable_description_scroll"]
+        )
         self.last_moon_phase: str | None = None
         self.last_uv: float | None = None
         self.last_sun_str: str | None = None
@@ -683,6 +705,9 @@ class ConditionsIdleTheme(BaseIdleScene):
         draw_content() which is throttled to ~1 fps.
         """
         if self.last_description is None:
+            return
+
+        if not self.description_scroller.enabled:
             return
 
         prev_pos = self.description_scroller.position

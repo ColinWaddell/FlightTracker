@@ -402,6 +402,52 @@ class TestThemeForecast:
         assert cfg.theme_forecast["duration"] == "3hour"
 
 
+class TestThemeConditions:
+    def test_default_disable_scroll(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.theme_conditions["disable_description_scroll"] is False
+
+    def test_disable_scroll_true(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {"conditions": {"disable_description_scroll": True}}}
+        assert cfg.theme_conditions["disable_description_scroll"] is True
+
+    def test_disable_scroll_coerced_to_bool(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "theme": {"conditions": {"disable_description_scroll": "yes"}}
+        }
+        assert cfg.theme_conditions["disable_description_scroll"] is True
+
+    def test_missing_conditions_key(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {}}
+        assert cfg.theme_conditions["disable_description_scroll"] is False
+
+    def test_non_dict_conditions(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {"conditions": "not a dict"}}
+        assert cfg.theme_conditions["disable_description_scroll"] is False
+
+    def test_non_dict_theme(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": "not a dict"}
+        assert cfg.theme_conditions["disable_description_scroll"] is False
+
+
 class TestColourTheme:
     def test_default_value(self):
         from setup.configuration import Config

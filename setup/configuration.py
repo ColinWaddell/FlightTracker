@@ -88,7 +88,11 @@ DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
 # Per-theme configuration (nested dict under "theme" in config.json)
 DEFAULT_FORECAST_DURATION = "3hour"  # 3hour / 12hour / 3day
 DEFAULT_THEME_FORECAST = {"duration": DEFAULT_FORECAST_DURATION}
-DEFAULT_THEME = {"forecast": DEFAULT_THEME_FORECAST}
+DEFAULT_THEME_CONDITIONS = {"disable_description_scroll": False}
+DEFAULT_THEME = {
+    "forecast": DEFAULT_THEME_FORECAST,
+    "conditions": DEFAULT_THEME_CONDITIONS,
+}
 
 # Brightness schedule
 DEFAULT_SCREEN_SCHEDULE_ENABLED = False
@@ -726,6 +730,21 @@ class Config:
         merged = {**DEFAULT_THEME_FORECAST, **forecast}
         if merged.get("duration") not in ("3hour", "12hour", "3day"):
             merged["duration"] = DEFAULT_FORECAST_DURATION
+        return merged
+
+    @property
+    def theme_conditions(self) -> dict:
+        """Conditions theme settings, merged over defaults so new sub-keys always have a value."""
+        val = self.data_store.get("theme", {})
+        if not isinstance(val, dict):
+            val = {}
+        conditions = val.get("conditions", {})
+        if not isinstance(conditions, dict):
+            conditions = {}
+        merged = {**DEFAULT_THEME_CONDITIONS, **conditions}
+        merged["disable_description_scroll"] = bool(
+            merged.get("disable_description_scroll", False)
+        )
         return merged
 
     @property

@@ -358,7 +358,12 @@ def parse_settings_form(form, cfg) -> dict:
                         else "3hour"
                     )
                 ),
-            }
+            },
+            "conditions": {
+                "disable_description_scroll": bool_val(
+                    form.get("theme_conditions_disable_scroll")
+                ),
+            },
         },
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),

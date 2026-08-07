@@ -957,6 +957,15 @@
             <p class="section-heading"><i class="bi bi-thermometer-half me-2"></i>Current Conditions</p>
             <p class="text-muted small mb-0">Display the current weather at a glance: a weather sprite, temperature, humidity, wind, UV index, moon-phase and sunrise/sunset.</p>
           </div>
+          <div class="card mb-3 p-3">
+            <p class="section-heading"><i class="bi bi-card-text me-2"></i>Description</p>
+            <div class="mb-2 form-check">
+              <input type="checkbox" class="form-check-input" name="theme_conditions_disable_scroll" id="theme_conditions_disable_scroll"
+                     {% if cfg.theme.conditions.disable_description_scroll %}checked{% endif %} />
+              <label class="form-check-label" for="theme_conditions_disable_scroll">Disable scrolling weather description</label>
+              <div class="form-text text-muted small">When checked, long weather descriptions are shown statically and clipped to the screen width instead of bounce-scrolling.</div>
+            </div>
+          </div>
         </div><!-- /idle-theme-conditions -->
 
         </div><!-- /page-default-screen -->
