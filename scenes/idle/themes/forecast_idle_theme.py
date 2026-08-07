@@ -45,6 +45,7 @@ from setup.themes import (
     TC,
     THEME_FORECAST_TIME,
     THEME_FORECAST_TOP_TEXT,
+    THEME_PLANE_TLM_UNITS,
 )
 from utilities.sun_times import is_daytime
 
@@ -245,7 +246,7 @@ class ForecastIdleTheme(BaseIdleScene):
             slot_time = now + datetime.timedelta(hours=idx)
             day = is_daytime(lat, lng, slot_time)
             top_label = self._format_hour(slot_time)
-            bottom_label = [(self._format_temp(temp_c), temperature_to_colour(temp_c))]
+            bottom_label = self._format_temp(temp_c)
             slots.append((condition_code, day, top_label, bottom_label, temp_c))
 
         return slots
@@ -279,10 +280,7 @@ class ForecastIdleTheme(BaseIdleScene):
             top_label = _DAY_ABBREVS[day_date.weekday()]
             min_str = self._format_temp_value(temp_min)
             max_str = self._format_temp_value(temp_max)
-            bottom_label = [
-                (min_str, temperature_to_colour(temp_min)),
-                (max_str, temperature_to_colour(temp_max)),
-            ]
+            bottom_label = min_str + max_str
             # Use the average temperature for colouring
             temp_avg = (temp_min + temp_max) / 2
             slots.append((condition_code, is_day, top_label, bottom_label, temp_avg))
@@ -313,29 +311,39 @@ class ForecastIdleTheme(BaseIdleScene):
             return "K"
         return "C"
 
-    def _format_temp_value(self, temp_c: float) -> str:
-        """Format a temperature as an integer string, respecting units.
+    def _format_temp_value(self, temp_c: float) -> list[tuple[str, object]]:
+        """Format a temperature as label segments, respecting units.
 
-        The unit suffix is only appended when the value is two
-        characters wide (i.e. -9..99); longer values omit it so they
-        still fit the display.
+        Returns a list of (text, colour) segments.  The unit suffix is
+        only appended when the value is two characters wide (i.e.
+        -9..99); longer values omit it so they still fit the display.
+        When present the unit suffix is coloured with
+        ``THEME_PLANE_TLM_UNITS``.
         """
         rounded = round(self._convert_temp(temp_c))
         if -10 < rounded < 100:
-            return f"{rounded}{self._unit_char()}"
-        return str(rounded)
+            return [
+                (str(rounded), temperature_to_colour(temp_c)),
+                (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
+            ]
+        return [(str(rounded), temperature_to_colour(temp_c))]
 
-    def _format_temp(self, temp_c: float) -> str:
+    def _format_temp(self, temp_c: float) -> list[tuple[str, object]]:
         """Format a temperature for the hourly label, respecting units.
 
-        The unit suffix is only appended when the value is two
-        characters wide (i.e. -9..99); longer values omit it so they
-        still fit the display.
+        Returns a list of (text, colour) segments.  The unit suffix is
+        only appended when the value is two characters wide (i.e.
+        -9..99); longer values omit it so they still fit the display.
+        When present the unit suffix is coloured with
+        ``THEME_PLANE_TLM_UNITS``.
         """
         rounded = round(self._convert_temp(temp_c))
         if -10 < rounded < 100:
-            return f"{rounded}{self._unit_char()}"
-        return str(rounded)
+            return [
+                (str(rounded), temperature_to_colour(temp_c)),
+                (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
+            ]
+        return [(str(rounded), temperature_to_colour(temp_c))]
 
     @staticmethod
     def _format_hour(slot_time: datetime.datetime) -> str:
