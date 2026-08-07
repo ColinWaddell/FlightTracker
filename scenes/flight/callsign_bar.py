@@ -247,7 +247,7 @@ class AirlineNameBar:
             self.last_flight_id = flight_id
             self.last_flight_count_for_scroller = flight_count
             name = airline_name_from_flight(flight)
-            callsign = flight.callsign or ""
+            callsign = flight.callsign or (flight.registration or "")
 
             if self.cfg.info_bar_mode == "callsign_airline":
                 if callsign and name:
