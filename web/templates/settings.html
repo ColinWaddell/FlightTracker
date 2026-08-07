@@ -961,9 +961,8 @@
             <p class="section-heading"><i class="bi bi-card-text me-2"></i>Description</p>
             <div class="mb-2 form-check">
               <input type="checkbox" class="form-check-input" name="theme_conditions_disable_scroll" id="theme_conditions_disable_scroll"
-                     {% if cfg.theme.conditions.disable_description_scroll %}checked{% endif %} />
+                     {% if cfg.theme.conditions and cfg.theme.conditions.disable_description_scroll %}checked{% endif %} />
               <label class="form-check-label" for="theme_conditions_disable_scroll">Disable scrolling weather description</label>
-              <div class="form-text text-muted small">When checked, long weather descriptions are shown statically and clipped to the screen width instead of bounce-scrolling.</div>
             </div>
           </div>
         </div><!-- /idle-theme-conditions -->

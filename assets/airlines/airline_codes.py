@@ -7303,6 +7303,7 @@ icao_to_name = {
     "SUV": "Sundance Air",
     "SUW": "Interavia Airlines",
     "SUY": "Aerial Surveys (1980) Limited",
+    "SUZ": "Zeusch Aviation",
     "SVA": "Saudia",
     "SVB": "Siavia",
     "SVD": "St. Vincent Grenadines Air (1990)",
