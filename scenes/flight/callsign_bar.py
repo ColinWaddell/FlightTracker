@@ -249,14 +249,25 @@ class AirlineNameBar:
             name = airline_name_from_flight(flight)
             callsign = flight.callsign or ""
 
-            if self.cfg.info_bar_mode == "callsign_airline" and callsign and name:
-                self.spans = build_info_spans(callsign=callsign, airline=name)
-            elif self.cfg.info_bar_mode == "airline" and name:
-                self.spans = build_info_spans(airline=name)
-            elif self.cfg.info_bar_mode == "callsign" and callsign:
-                self.spans = build_info_spans(callsign=callsign)
-            else:
-                self.spans = build_info_spans(callsign="Unknown")
+            if self.cfg.info_bar_mode == "callsign_airline":
+                if callsign and name:
+                    self.spans = build_info_spans(callsign=callsign, airline=name)
+                elif callsign:
+                    self.spans = build_info_spans(callsign=callsign)
+                else:
+                    self.spans = build_info_spans(callsign="Unknown")
+            elif self.cfg.info_bar_mode == "airline":
+                if name:
+                    self.spans = build_info_spans(airline=name)
+                elif callsign:
+                    self.spans = build_info_spans(callsign=callsign)
+                else:
+                    self.spans = build_info_spans(callsign="Unknown")
+            else:  # callsign mode
+                if callsign:
+                    self.spans = build_info_spans(callsign=callsign)
+                else:
+                    self.spans = build_info_spans(callsign="")
 
             if self.scroller is not None:
                 self.scroller.clear()
