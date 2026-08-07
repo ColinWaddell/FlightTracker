@@ -154,6 +154,13 @@ class FlightScene:
         self.error_logged: bool = False
         self.retry_at: float = 0.0
 
+        # Deferred background clear.  reset() sets this flag instead of
+        # drawing immediately so the clear only happens on the next draw()
+        # call - i.e. when this scene is actually the active scene.  This
+        # prevents reset() (triggered from poll() -> on_data()) from
+        # blacking out another scene's canvas while it is displayed.
+        self._needs_bg_clear: bool = False
+
     # ------------------------------------------------------------------
     # Data ownership
     # ------------------------------------------------------------------
@@ -246,10 +253,13 @@ class FlightScene:
     def reset(self) -> None:
         self.frame = 0
 
-        # Blank the entire top half (journey band + icon area, rows 0-15)
-        # in one go on flight-to-flight transitions, rather than letting
-        # each widget clear its own slice separately.
-        self.panel.draw_square(self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG))
+        # Defer the top-half blank (journey band + icon area, rows 0-15)
+        # to the next draw() call.  reset() can be invoked from poll() ->
+        # on_data() while a different scene (e.g. SatelliteScene) is the
+        # active scene; drawing here would clobber that scene's canvas.
+        # The flag is consumed at the top of draw(), which only runs when
+        # this scene is the one being displayed.
+        self._needs_bg_clear = True
 
         self.airline_logo.reset()
         self.journey_label.reset()
@@ -264,6 +274,15 @@ class FlightScene:
         self.last_details_mode = None
 
     def draw(self) -> None:
+        # Consume the deferred background clear from reset().  This only
+        # runs when this scene is the active scene, so it never clobbers
+        # another scene's canvas.
+        if self._needs_bg_clear:
+            self.panel.draw_square(
+                self.canvas, 0, 0, screen.WIDTH - 1, 15, TC(THEME_BG)
+            )
+            self._needs_bg_clear = False
+
         self.frame += 1
         self.airline_logo.draw(self.canvas, self.flights[self.flight_index])
         self.draw_callsign()
