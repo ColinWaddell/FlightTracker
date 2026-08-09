@@ -207,6 +207,97 @@ class TestTar1090DataUnavailability:
         assert overhead_instance.data[0].callsign == "BAW123"
         assert overhead_instance.data[0].altitude == 35000
 
+    def test_dump1090_field_names(self, overhead_instance):
+        """tar1090/dump1090 forks may use altitude/speed/vert_rate instead of
+        alt_baro/gs/baro_rate.  Ensure the parser handles both field names."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "aircraft": [
+                {
+                    "hex": "485779",
+                    "flight": "KLM1127 ",
+                    "lat": 55.5,
+                    "lon": -4.0,
+                    "altitude": 34000,   # dump1090 name (no alt_baro)
+                    "speed": 415,         # dump1090 name (no gs)
+                    "vert_rate": 64,      # dump1090 name (no baro_rate)
+                    "track": 277,
+                    # no "desc" field — common when --db-file-lt isn't set
+                }
+            ]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        mock_route = RouteInfo(
+            origin="AMS",
+            destination="GLA",
+            plane="Boeing 737",
+            origin_name="Amsterdam Schiphol",
+            origin_municipality="Amsterdam",
+            origin_country="Netherlands",
+            destination_name="Glasgow Airport",
+            destination_municipality="Glasgow",
+            destination_country="United Kingdom",
+        )
+
+        overhead_instance._session.get = MagicMock(return_value=mock_response)
+
+        with patch(
+            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
+        ):
+            overhead_instance.refresh()
+
+        assert overhead_instance.error is None
+        assert overhead_instance.data_is_empty is False
+        assert len(overhead_instance.data) == 1
+        flight = overhead_instance.data[0]
+        assert flight.callsign == "KLM1127"
+        assert flight.altitude == 34000
+        assert flight.ground_speed == 415
+        assert flight.vertical_speed == 64
+
+    def test_mixed_field_names(self, overhead_instance):
+        """A mix of readsb and dump1090 field names in the same feed should work."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "aircraft": [
+                {
+                    "hex": "408134",
+                    "flight": "BAW506 ",
+                    "lat": 55.5,
+                    "lon": -4.0,
+                    "alt_baro": 14025,   # readsb name
+                    "gs": 388,            # readsb name
+                    "baro_rate": 2624,    # readsb name
+                    "track": 221,
+                    "desc": "A320",
+                },
+                {
+                    "hex": "a3728a",
+                    "flight": "N321FF ",
+                    "lat": 55.6,
+                    "lon": -3.9,
+                    "altitude": 4050,    # dump1090 name
+                    "speed": 143,        # dump1090 name
+                    "vert_rate": 0,      # dump1090 name
+                    "track": 217,
+                },
+            ]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        mock_route = RouteInfo()
+
+        overhead_instance._session.get = MagicMock(return_value=mock_response)
+
+        with patch(
+            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
+        ):
+            overhead_instance.refresh()
+
+        assert overhead_instance.error is None
+        assert len(overhead_instance.data) == 2
+
 
 # ---------------------------------------------------------------------------
 # FR24 helpers

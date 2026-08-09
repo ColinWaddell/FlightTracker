@@ -104,11 +104,16 @@ class Overhead:
             zone = self.zone_home
             home = self.location_home
 
+            # readsb/tar1090 uses alt_baro, gs, baro_rate, desc
+            # dump1090 (and older forks) uses altitude, speed, vert_rate
+            # Accept either field name so the parser works with both.
             candidates = []
             for ac in aircraft_list:
                 lat = ac.get("lat")
                 lon = ac.get("lon")
                 alt = ac.get("alt_baro")
+                if alt is None:
+                    alt = ac.get("altitude")
 
                 if lat is None or lon is None:
                     continue
@@ -123,7 +128,8 @@ class Overhead:
 
             candidates.sort(
                 key=lambda ac: distance_from_home(
-                    ac["lat"], ac["lon"], ac["alt_baro"], home
+                    ac["lat"], ac["lon"],
+                    ac.get("alt_baro") or ac.get("altitude"), home
                 )
             )
 
@@ -132,8 +138,9 @@ class Overhead:
                     callsign = clean_field(ac.get("flight"))
 
                     # tar1090 provides aircraft type directly from its local DB
-                    # (tar1090-db enrichment). We keep this as the primary source
-                    # since it's local and instant. hexdb may fill it in if blank.
+                    # (tar1090-db enrichment, requires --db-file-lt flag). We keep
+                    # this as the primary source since it's local and instant.
+                    # hexdb may fill it in if blank.
                     plane = clean_field(ac.get("desc"))
 
                     # mode_s (hex) enables the hexdb aircraft endpoint which
@@ -147,7 +154,7 @@ class Overhead:
                     lat = ac.get("lat")
                     lng = ac.get("lon")
                     try:
-                        gs_knots = float(ac.get("gs", 0) or 0)
+                        gs_knots = float(ac.get("gs") or ac.get("speed") or 0)
                     except (TypeError, ValueError):
                         gs_knots = 0.0
                     ground_speed_mps = gs_knots * 0.514444
@@ -176,7 +183,7 @@ class Overhead:
 
                     # Telemetry
                     try:
-                        ground_speed = int(ac.get("gs", 0) or 0)
+                        ground_speed = int(ac.get("gs") or ac.get("speed") or 0)
                     except (TypeError, ValueError):
                         ground_speed = 0
 
@@ -191,13 +198,14 @@ class Overhead:
                             plane=plane,
                             callsign=display_callsign,
                             icao_callsign=icao_callsign,
-                            altitude=ac.get("alt_baro", 0),
+                            altitude=ac.get("alt_baro") or ac.get("altitude") or 0,
                             ground_speed=ground_speed,
                             heading=heading,
-                            # baro_rate may be None when the transponder doesn't
-                            # report vertical rate; default to 0 to keep the
-                            # Flight.vertical_speed field an int, not None.
-                            vertical_speed=ac.get("baro_rate") or 0,
+                            # baro_rate/vert_rate may be None when the
+                            # transponder doesn't report vertical rate;
+                            # default to 0 to keep the Flight.vertical_speed
+                            # field an int, not None.
+                            vertical_speed=ac.get("baro_rate") or ac.get("vert_rate") or 0,
                         )
                     )
 
