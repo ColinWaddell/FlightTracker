@@ -68,12 +68,12 @@ def test_build_flight_rows_uses_flight_fields():
     assert rows[0]["altitude"] == "1200"
 
 
-def test_format_last_updated_value_formats_timestamp(monkeypatch):
-    # Force UTC so the formatted timestamp is deterministic regardless of
-    # the system timezone the tests run under (e.g. CI vs local).
-    monkeypatch.setenv("TZ", "UTC")
-    import time as _time
+def test_format_last_updated_value_formats_timestamp():
+    # The function formats using the local timezone, so compute the
+    # expected value the same way to keep the test timezone-agnostic.
+    # (Previously used time.tzset() to force UTC, but that is Unix-only.)
+    import datetime as _dt
 
-    _time.tzset()
-    assert _format_last_updated_value(1720000000) == "2024-07-03 09:46:40"
+    expected = _dt.datetime.fromtimestamp(1720000000).strftime("%Y-%m-%d %H:%M:%S")
+    assert _format_last_updated_value(1720000000) == expected
     assert _format_last_updated_value(None) == ""
