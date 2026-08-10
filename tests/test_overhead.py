@@ -218,9 +218,9 @@ class TestTar1090DataUnavailability:
                     "flight": "KLM1127 ",
                     "lat": 55.5,
                     "lon": -4.0,
-                    "altitude": 34000,   # dump1090 name (no alt_baro)
-                    "speed": 415,         # dump1090 name (no gs)
-                    "vert_rate": 64,      # dump1090 name (no baro_rate)
+                    "altitude": 34000,  # dump1090 name (no alt_baro)
+                    "speed": 415,  # dump1090 name (no gs)
+                    "vert_rate": 64,  # dump1090 name (no baro_rate)
                     "track": 277,
                     # no "desc" field — common when --db-file-lt isn't set
                 }
@@ -266,9 +266,9 @@ class TestTar1090DataUnavailability:
                     "flight": "BAW506 ",
                     "lat": 55.5,
                     "lon": -4.0,
-                    "alt_baro": 14025,   # readsb name
-                    "gs": 388,            # readsb name
-                    "baro_rate": 2624,    # readsb name
+                    "alt_baro": 14025,  # readsb name
+                    "gs": 388,  # readsb name
+                    "baro_rate": 2624,  # readsb name
                     "track": 221,
                     "desc": "A320",
                 },
@@ -277,9 +277,9 @@ class TestTar1090DataUnavailability:
                     "flight": "N321FF ",
                     "lat": 55.6,
                     "lon": -3.9,
-                    "altitude": 4050,    # dump1090 name
-                    "speed": 143,        # dump1090 name
-                    "vert_rate": 0,      # dump1090 name
+                    "altitude": 4050,  # dump1090 name
+                    "speed": 143,  # dump1090 name
+                    "vert_rate": 0,  # dump1090 name
                     "track": 217,
                 },
             ]

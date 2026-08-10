@@ -128,8 +128,7 @@ class Overhead:
 
             candidates.sort(
                 key=lambda ac: distance_from_home(
-                    ac["lat"], ac["lon"],
-                    ac.get("alt_baro") or ac.get("altitude"), home
+                    ac["lat"], ac["lon"], ac.get("alt_baro") or ac.get("altitude"), home
                 )
             )
 
@@ -205,7 +204,9 @@ class Overhead:
                             # transponder doesn't report vertical rate;
                             # default to 0 to keep the Flight.vertical_speed
                             # field an int, not None.
-                            vertical_speed=ac.get("baro_rate") or ac.get("vert_rate") or 0,
+                            vertical_speed=ac.get("baro_rate")
+                            or ac.get("vert_rate")
+                            or 0,
                         )
                     )
 
