@@ -263,6 +263,20 @@ def _parse_tag(inner: str) -> Token | None:
             return None
         return SymbolToken(name="heading_arrow", colour=None)
 
+    # Dynamic text tag: {heading_direction} or {heading_direction:#colour}
+    # Outputs the cardinal direction (N, NE, E, ...) as text rather than a
+    # glyph.  Not in SYMBOL_MAP so {symbol:heading_direction} is rejected.
+    if inner == "heading_direction" or inner.startswith("heading_direction:"):
+        rest = inner[len("heading_direction") :]
+        if rest:
+            if rest.startswith(":"):
+                colour = rest[1:]
+                if not _is_valid_colour(colour):
+                    return None
+                return SymbolToken(name="heading_direction", colour=colour)
+            return None
+        return SymbolToken(name="heading_direction", colour=None)
+
     # Symbol tag: {symbol:name} or {symbol:name:#colour}
     if inner.startswith("symbol:"):
         rest = inner[len("symbol:") :]
@@ -416,11 +430,23 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
                 heading = flight.heading or 0
                 index = int(math.floor(heading / 45.0 + 0.5)) % 8
                 glyph = HEADING_ARROW_GLYPHS[index]
+                if glyph:
+                    colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
+                    spans.append(Span(colour, fonts.small_symbols, glyph))
+            elif token.name == "heading_direction":
+                # Dynamic text tag: select cardinal direction text (N, NE,
+                # E, ...) based on flight heading.  Same rounding math as
+                # heading_arrow to avoid banker's rounding at .5 boundaries.
+                heading = flight.heading or 0
+                index = int(math.floor(heading / 45.0 + 0.5)) % 8
+                text = HEADING_ARROW_DIRECTIONS[index]
+                colour = _resolve_colour(token.colour, THEME_PLANE)
+                spans.append(Span(colour, fonts.regular, text))
             else:
                 glyph = SYMBOL_MAP.get(token.name, "")
-            if glyph:
-                colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
-                spans.append(Span(colour, fonts.small_symbols, glyph))
+                if glyph:
+                    colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
+                    spans.append(Span(colour, fonts.small_symbols, glyph))
 
     # If all spans are empty or the list is empty, show the warning.
     if not spans or all(s.text == "" for s in spans):
@@ -510,6 +536,18 @@ def validate_template(template: str) -> list[str]:
 
         # Dynamic heading_arrow tag: {heading_arrow} or {heading_arrow:#colour}
         if inner == "heading_arrow" or inner.startswith("heading_arrow:"):
+            if ":" in inner:
+                colour_part = inner.split(":", 1)[1]
+                if not _is_valid_colour(colour_part):
+                    errors.append(
+                        f"Invalid colour '{colour_part}' in tag '{inner}'. "
+                        f"Use #RRGGBB format (e.g. #FF8800)."
+                    )
+            continue
+
+        # Dynamic heading_direction tag: {heading_direction} or
+        # {heading_direction:#colour} — cardinal direction text (N, NE, ...).
+        if inner == "heading_direction" or inner.startswith("heading_direction:"):
             if ":" in inner:
                 colour_part = inner.split(":", 1)[1]
                 if not _is_valid_colour(colour_part):

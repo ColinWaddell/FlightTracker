@@ -379,6 +379,7 @@
                   <tr><td><code>{symbol:origin_arrow}</code></td><td><img src="{{ url_for('static', filename='images/symbols_origin.png') }}" alt="Origin arrow" style="height:20px"></td><td>Origin direction arrow</td></tr>
                   <tr><td><code>{symbol:dest_arrow}</code></td><td><img src="{{ url_for('static', filename='images/symbols_destination.png') }}" alt="Destination arrow" style="height:20px"></td><td>Destination direction arrow</td></tr>
                   <tr><td><code>{heading_arrow}</code></td><td><span class="text-muted small">8 directional arrows</span></td><td>Arrow pointing in the plane's heading direction (N, NE, E, SE, S, SW, W, NW)</td></tr>
+                  <tr><td><code>{heading_direction}</code></td><td><span class="text-muted small">text</span></td><td>Cardinal direction text (N, NE, E, SE, S, SW, W, NW) based on the plane's heading</td></tr>
                 </tbody>
               </table>
 
@@ -394,6 +395,7 @@
                 <li><code>{callsign} | {origin} -> {destination} | {altitude:ft:#FF8800}</code> - callsign, route, orange altitude</li>
                 <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> - model, reg, metric altitude, knots</li>
                 <li><code>{heading}{symbol:degree} {heading_arrow}</code> - heading value with directional arrow</li>
+                <li><code>{heading}{symbol:degree} {heading_direction} {heading_arrow}</code> - heading value, cardinal direction text, and directional arrow</li>
               </ul>
             </div>
           </div>
@@ -462,7 +464,7 @@
             }
           });
 
-          // Symbols table — extract names from {symbol:name} and {heading_arrow}.
+          // Symbols table — extract names from {symbol:name}, {heading_arrow}, and {heading_direction}.
           var symbolCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
           symbolCodes.forEach(function(code) {
             var text = code.textContent.trim();
@@ -472,6 +474,8 @@
               if (name) tagNames.push('symbol:' + name);
             } else if (text === '{heading_arrow}') {
               tagNames.push('heading_arrow');
+            } else if (text === '{heading_direction}') {
+              tagNames.push('heading_direction');
             }
           });
 
@@ -788,7 +792,7 @@
           <p class="section-heading"><i class="bi bi-geo-alt me-2"></i>Routing data</p>
           
           <div id="mode_help_simple" class="form-text text-muted small" style="display:block">
-            If we're not using Flight Radar 24 for routing information then we check these proivders in the 
+            If we're not using Flight Radar 24 for routing information then we check these providers in the 
             following order: AeroDataBox (if an API key is provided), hexdb.io then adsbdb.com.
             If none of these providers have routing information for a flight then the route will
             be shown as unknown.
@@ -1064,7 +1068,7 @@
                         <div class="text-center" style="font-size: 2em;">💤</div>
                     </div>
                     <div class="col-11">
-                        <p>Setting a brightness of <code>0</code> in the schdule puts the device in standy-by and will prevent polling of data-sources. Useful for keeping data-usage low.</p>
+                        <p>Setting a brightness of <code>0</code> in the schedule puts the device in stand-by and will prevent polling of data-sources. Useful for keeping data-usage low.</p>
                     </div>
                 </div>
               </div>
