@@ -27,7 +27,7 @@ from display.scroller import Scroller
 from display.spans import Span, Spans
 from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
 from scenes.flight.callsign_bar import make_callsign_bar
-from scenes.flight.custom_details import build_custom_spans
+from scenes.flight.custom_details import build_custom_spans, format_number
 from scenes.flight.journey import make_label
 from setup import fonts, screen
 from setup.configuration import Config
@@ -351,22 +351,23 @@ class FlightScene:
         altitude_ft = flight.altitude or 0
         ground_speed_kts = flight.ground_speed or 0
         heading = flight.heading or 0
+        sep = cfg.number_separator
 
         if cfg.height_unit == "ft":
-            alt_val = str(int(altitude_ft))
+            alt_val = format_number(int(altitude_ft), sep)
             alt_unit = "ft"
         else:
-            alt_val = str(int(altitude_ft * 0.3048))
+            alt_val = format_number(int(altitude_ft * 0.3048), sep)
             alt_unit = "m"
 
         if cfg.speed_unit == "kts":
-            speed_val = str(int(ground_speed_kts))
+            speed_val = format_number(int(ground_speed_kts), sep)
             speed_unit = "kts"
         elif cfg.speed_unit == "mph":
-            speed_val = str(int(ground_speed_kts * 1.15078))
+            speed_val = format_number(int(ground_speed_kts * 1.15078), sep)
             speed_unit = "mph"
         else:
-            speed_val = str(int(ground_speed_kts * 1.852))
+            speed_val = format_number(int(ground_speed_kts * 1.852), sep)
             speed_unit = "kmh"
 
         f = fonts.small_symbols
@@ -383,7 +384,7 @@ class FlightScene:
             Span(ico, f, speed_unit),
             Span(val, f, " "),
             Span(ico, f, "}"),
-            Span(val, f, str(heading)),
+            Span(val, f, format_number(int(heading), sep)),
             Span(ico, f, "*"),
         ]
 

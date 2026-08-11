@@ -51,6 +51,7 @@ def make_cfg(**kwargs):
     cfg = MagicMock()
     cfg.height_unit = kwargs.get("height_unit", "ft")
     cfg.speed_unit = kwargs.get("speed_unit", "kts")
+    cfg.number_separator = kwargs.get("number_separator", "none")
     return cfg
 
 
@@ -436,6 +437,49 @@ class TestBuildCustomSpans:
         for s in spans:
             if s.text.isdigit() or s.text == "ft":
                 assert s.colour == Colour(255, 136, 0)
+
+
+# ---------------------------------------------------------------------------
+# Number separator formatting
+# ---------------------------------------------------------------------------
+
+
+class TestNumberSeparator:
+    def test_none_separator(self):
+        flight = make_flight(altitude=38000)
+        cfg = make_cfg(height_unit="ft", number_separator="none")
+        spans = build_custom_spans("{altitude}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "38000" in texts
+
+    def test_comma_separator(self):
+        flight = make_flight(altitude=38000)
+        cfg = make_cfg(height_unit="ft", number_separator="comma")
+        spans = build_custom_spans("{altitude}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "38,000" in texts
+
+    def test_period_separator(self):
+        flight = make_flight(altitude=38000)
+        cfg = make_cfg(height_unit="ft", number_separator="period")
+        spans = build_custom_spans("{altitude}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "38.000" in texts
+
+    def test_comma_separator_speed(self):
+        flight = make_flight(ground_speed=1200)
+        cfg = make_cfg(speed_unit="kts", number_separator="comma")
+        spans = build_custom_spans("{ground_speed}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "1,200" in texts
+
+    def test_separator_applies_to_heading(self):
+        flight = make_flight(heading=270)
+        cfg = make_cfg(number_separator="comma")
+        spans = build_custom_spans("{heading}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 270 is below 1000 so no separator visible, but should still work
+        assert "270" in texts
 
 
 # ---------------------------------------------------------------------------
