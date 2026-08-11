@@ -5,7 +5,11 @@ source is ``flight.airline_icao`` (populated by the data-source API -
 FR24 provides it directly; tar1090/OSN get it via ``route_lookup``'s FR24
 fallback).  When that is empty, the first 3 alphabetic characters of
 ``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` ->
-``UAL``).  The resulting code is the PNG filename - e.g. ``BAW`` ->
+``UAL``), corrected via ``_CALLSIGN_PREFIX_OVERRIDES`` for known
+regional-subsidiary mismatches, and validated by an IATA-mapping gate
+that rejects non-commercial operators (military, government, cargo)
+whose 3-letter ICAO designators might otherwise match a logo file.  The
+resulting code is the PNG filename - e.g. ``BAW`` ->
 ``assets/airlines/BAW.png``.  When no code resolves or the PNG is
 missing, a black square with a white outline is drawn as a placeholder.
 
@@ -18,15 +22,20 @@ a stale icon behind.
 
 from __future__ import annotations
 
+import logging
+
 from PIL import Image
 
 from assets.airlines.lookups import (
     AirlineLogoNotFound,
     iata_to_png,
+    icao_has_iata,
     icao_to_png,
 )
 from display.rgbpanel import Colour, RGBPanel
 from utilities.flight import Flight
+
+logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------
 # Dimensions / position
@@ -72,6 +81,8 @@ def _load_airline_icon(lookup: str) -> Image.Image | None:
 # the API doesn't provide ``airline_icao`` and we fall back to the
 # callsign prefix, this table corrects known mismatches before the file
 # lookup.
+#
+# Expand this table as new callsign-to-ICAO mismatches are observed.
 _CALLSIGN_PREFIX_OVERRIDES: dict[str, str] = {
     "EAI": "EIN",  # Aer Lingus regional -> Aer Lingus
 }
@@ -81,11 +92,23 @@ def airline_icao_from_flight(flight: Flight) -> str:
     """Resolve the 3-letter ICAO airline code for logo lookup.
 
     Primary source: ``flight.airline_icao`` (operating carrier ICAO code
-    from the data-source API).  Fallback: the first 3 alphabetic
-    characters of ``flight.icao_callsign`` (e.g. ``UAL1583`` -> ``UAL``),
-    corrected via ``_CALLSIGN_PREFIX_OVERRIDES`` for known mismatches.
-    Returns ``""`` if neither yields a code, so the placeholder outline
-    is drawn instead.
+    from the data-source API).  This is trusted as-is and returned
+    directly, even when the code has no IATA mapping (e.g. cargo carriers
+    reported by FR24).
+
+    Fallback: the first 3 alphabetic characters of
+    ``flight.icao_callsign`` (e.g. ``UAL1583`` -> ``UAL``), corrected via
+    ``_CALLSIGN_PREFIX_OVERRIDES`` for known regional-subsidiary
+    mismatches.  The fallback is then validated with an IATA-mapping gate:
+    codes without an IATA mapping are rejected (return ``""``) to avoid
+    false positives from military, government, or other non-commercial
+    operators whose 3-letter ICAO designators happen to match a logo
+    file.  Commercial airlines virtually all have IATA codes; the gate
+    is a pure local lookup via :func:`assets.airlines.lookups.icao_has_iata`
+    and works for every data source.
+
+    Returns ``""`` if neither path yields a valid code, so the
+    placeholder outline is drawn instead.
     """
     icao = (flight.airline_icao or "").strip().upper()
     if icao:
@@ -93,7 +116,14 @@ def airline_icao_from_flight(flight: Flight) -> str:
     callsign = (flight.icao_callsign or "").strip()
     if len(callsign) >= 3 and callsign[:3].isalpha():
         prefix = callsign[:3].upper()
-        return _CALLSIGN_PREFIX_OVERRIDES.get(prefix, prefix)
+        resolved = _CALLSIGN_PREFIX_OVERRIDES.get(prefix, prefix)
+        if icao_has_iata(resolved):
+            return resolved
+        logger.debug(
+            "Callsign-prefix fallback %r (from %r) rejected: no IATA mapping",
+            resolved,
+            prefix,
+        )
     return ""
 
 

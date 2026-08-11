@@ -243,6 +243,20 @@ class TestAirlineIcaoFromFlight:
         flight = Flight(airline_icao="  baw  ")
         assert airline_icao_from_flight(flight) == "BAW"
 
+    def test_callsign_fallback_rejected_without_iata(self):
+        # GAF (German Air Force) is a valid 3-letter ICAO designator
+        # but has no IATA mapping - rejected by the IATA gate.
+        assert airline_icao_from_flight(Flight(icao_callsign="GAF123")) == ""
+
+    def test_callsign_fallback_with_override_passes_iata_gate(self):
+        # EAI (Aer Lingus Regional) -> override -> EIN, which has IATA "EI".
+        assert airline_icao_from_flight(Flight(icao_callsign="EAI123")) == "EIN"
+
+    def test_api_airline_icao_not_gated_by_iata(self):
+        # An API-provided airline_icao with no IATA mapping (e.g. a cargo
+        # carrier) is trusted as-is - the gate only applies to the fallback.
+        assert airline_icao_from_flight(Flight(airline_icao="BOX")) == "BOX"
+
 
 # ---------------------------------------------------------------------------
 # AirlineLogoWidget
@@ -335,6 +349,17 @@ class TestAirlineLogoWidget:
         widget = AirlineLogoWidget(panel)
         # No airline_icao, callsign prefix is alphabetic but has no matching icon
         widget.draw(canvas, Flight(icao_callsign="QQQ999"))
+        assert not panel.draw_image.called
+        assert not panel.draw_line.called
+        assert widget.width == 0
+        assert widget.icon_drawn is False
+
+    def test_callsign_fallback_no_iata_no_draw(self):
+        panel, canvas = _make_panel_and_canvas()
+        widget = AirlineLogoWidget(panel)
+        # GAF (German Air Force) has no IATA mapping - rejected by the
+        # IATA gate, so no icon is drawn even if a logo file existed.
+        widget.draw(canvas, Flight(icao_callsign="GAF123"))
         assert not panel.draw_image.called
         assert not panel.draw_line.called
         assert widget.width == 0
