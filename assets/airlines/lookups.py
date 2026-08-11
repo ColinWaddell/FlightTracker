@@ -60,17 +60,6 @@ def icao_to_airline(icao_code: str) -> str | None:
 
 
 @cache
-def icao_has_iata(icao_code: str) -> bool:
-    """Return True if *icao_code* has an IATA airline code mapping.
-
-    Used as a commercial-airline filter: virtually all scheduled passenger
-    airlines have an IATA code, while military, government, cargo and
-    charter operators typically do not.  Respects :func:`configure` overrides.
-    """
-    return icao_code.strip().upper() in _ICAO_TO_IATA
-
-
-@cache
 def icao_to_png(icao_code: str) -> str:
     """Return the path to the 16x16 PNG for a given ICAO airline code."""
     code = icao_code.strip().upper()

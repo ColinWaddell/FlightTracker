@@ -6,10 +6,10 @@ FR24 provides it directly; tar1090/OSN get it via ``route_lookup``'s FR24
 fallback).  When that is empty, the first 3 alphabetic characters of
 ``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` ->
 ``UAL``), corrected via ``_CALLSIGN_PREFIX_OVERRIDES`` for known
-regional-subsidiary mismatches, and validated by an IATA-mapping gate
-that rejects non-commercial operators (military, government, cargo)
-whose 3-letter ICAO designators might otherwise match a logo file.  The
-resulting code is the PNG filename - e.g. ``BAW`` ->
+regional-subsidiary mismatches, and validated against a non-airline
+blocklist that rejects military, government, and other non-commercial
+operators whose 3-letter ICAO designators might otherwise match a logo
+file.  The resulting code is the PNG filename - e.g. ``BAW`` ->
 ``assets/airlines/BAW.png``.  When no code resolves or the PNG is
 missing, a black square with a white outline is drawn as a placeholder.
 
@@ -29,7 +29,7 @@ from PIL import Image
 from assets.airlines.lookups import (
     AirlineLogoNotFound,
     iata_to_png,
-    icao_has_iata,
+    icao_to_airline,
     icao_to_png,
 )
 from display.rgbpanel import Colour, RGBPanel
@@ -87,6 +87,48 @@ _CALLSIGN_PREFIX_OVERRIDES: dict[str, str] = {
     "EAI": "EIN",  # Aer Lingus regional -> Aer Lingus
 }
 
+# Keywords in airline names that indicate a non-commercial operator
+# (military, government, police, etc.).  When the callsign-prefix
+# fallback resolves to a code whose ``icao_to_name`` entry contains one
+# of these keywords, the fallback is rejected to avoid showing a
+# military/government logo for a civilian flight (or vice-versa).
+# This is more targeted than an IATA-mapping gate: many commercial
+# shuttle/cargo/regional subsidiaries lack IATA codes but are still
+# legitimate airlines with logos (e.g. SHT = British Airways Shuttle).
+_NON_AIRLINE_KEYWORDS: tuple[str, ...] = (
+    "air force",
+    "army",
+    "navy",
+    "military",
+    "government",
+    "police",
+    "coast guard",
+    "ministry",
+    "department of",
+    "national guard",
+    "armed forces",
+    "air corps",
+    "patrol",
+    "squadron",
+    "wing raf",
+    "raf ",
+)
+
+
+def _is_non_airline(icao_code: str) -> bool:
+    """Return True if *icao_code* is a known non-commercial operator.
+
+    Checks the airline name in ``icao_to_name`` for military, government,
+    police, or other non-commercial keywords.  Returns False for commercial
+    airlines (including those without IATA codes, e.g. shuttle services)
+    and for codes with no name mapping (treated as unknown, not non-airline).
+    """
+    name = icao_to_airline(icao_code)
+    if not name:
+        return False
+    name_lower = name.lower()
+    return any(kw in name_lower for kw in _NON_AIRLINE_KEYWORDS)
+
 
 def airline_icao_from_flight(flight: Flight) -> str:
     """Resolve the 3-letter ICAO airline code for logo lookup.
@@ -94,18 +136,16 @@ def airline_icao_from_flight(flight: Flight) -> str:
     Primary source: ``flight.airline_icao`` (operating carrier ICAO code
     from the data-source API).  This is trusted as-is and returned
     directly, even when the code has no IATA mapping (e.g. cargo carriers
-    reported by FR24).
+    or shuttle services reported by FR24).
 
     Fallback: the first 3 alphabetic characters of
     ``flight.icao_callsign`` (e.g. ``UAL1583`` -> ``UAL``), corrected via
     ``_CALLSIGN_PREFIX_OVERRIDES`` for known regional-subsidiary
-    mismatches.  The fallback is then validated with an IATA-mapping gate:
-    codes without an IATA mapping are rejected (return ``""``) to avoid
-    false positives from military, government, or other non-commercial
-    operators whose 3-letter ICAO designators happen to match a logo
-    file.  Commercial airlines virtually all have IATA codes; the gate
-    is a pure local lookup via :func:`assets.airlines.lookups.icao_has_iata`
-    and works for every data source.
+    mismatches.  The fallback is then validated against a non-airline
+    blocklist: codes whose ``icao_to_name`` entry indicates a military,
+    government, or other non-commercial operator are rejected (return
+    ``""``) to avoid false positives.  Commercial airlines without IATA
+    codes (e.g. SHT = British Airways Shuttle) pass through correctly.
 
     Returns ``""`` if neither path yields a valid code, so the
     placeholder outline is drawn instead.
@@ -117,13 +157,15 @@ def airline_icao_from_flight(flight: Flight) -> str:
     if len(callsign) >= 3 and callsign[:3].isalpha():
         prefix = callsign[:3].upper()
         resolved = _CALLSIGN_PREFIX_OVERRIDES.get(prefix, prefix)
-        if icao_has_iata(resolved):
-            return resolved
-        logger.debug(
-            "Callsign-prefix fallback %r (from %r) rejected: no IATA mapping",
-            resolved,
-            prefix,
-        )
+        if _is_non_airline(resolved):
+            logger.debug(
+                "Callsign-prefix fallback %r (from %r) rejected: "
+                "non-commercial operator",
+                resolved,
+                prefix,
+            )
+            return ""
+        return resolved
     return ""
 
 
