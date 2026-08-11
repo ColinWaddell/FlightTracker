@@ -392,26 +392,26 @@ class ConditionsIdleTheme(BaseIdleScene):
 
         if cfg.temperature_unit == "f":
             display_temp = temp_c * 9.0 / 5.0 + 32
-            unit_char = "F"
+            unit_char = "*F"
         elif cfg.temperature_unit == "k":
             display_temp = temp_c + 273.15
             unit_char = "K"
         else:
             display_temp = temp_c
-            unit_char = "C"
+            unit_char = "*C"
         temp_val = round(display_temp)
         temp_str = f"{temp_val}{unit_char}"
 
         if temp_str == self.last_temp_str:
             return
 
-        temp_x = 64 - font_text_width(TEXT_FONT, temp_str)
+        temp_x = 64 - font_text_width(fonts.small_symbols, temp_str)
 
         if self.last_temp_str is not None:
-            old_x = 64 - font_text_width(TEXT_FONT, self.last_temp_str)
+            old_x = 64 - font_text_width(fonts.small_symbols, self.last_temp_str)
             self.panel.draw_text(
                 self.canvas,
-                TEXT_FONT,
+                fonts.small_symbols,
                 old_x,
                 TEMPERATURE_POSITION[1],
                 TC(THEME_BG),
@@ -423,16 +423,16 @@ class ConditionsIdleTheme(BaseIdleScene):
         # unit suffix in the telemetry-units colour.
         self.panel.draw_text(
             self.canvas,
-            TEXT_FONT,
+            fonts.small_symbols,
             temp_x,
             TEMPERATURE_POSITION[1],
             temperature_to_colour(temp_c),
             str(temp_val),
         )
-        unit_x = temp_x + font_text_width(TEXT_FONT, str(temp_val))
+        unit_x = temp_x + font_text_width(fonts.small_symbols, str(temp_val))
         self.panel.draw_text(
             self.canvas,
-            TEXT_FONT,
+            fonts.small_symbols,
             unit_x,
             TEMPERATURE_POSITION[1],
             TC(THEME_PLANE_TLM_UNITS),
