@@ -278,8 +278,8 @@ class ForecastIdleTheme(BaseIdleScene):
             temp_max = day_data.get("maxtemp_c", 0.0)
             day_date = now + datetime.timedelta(days=day_offset)
             top_label = _DAY_ABBREVS[day_date.weekday()]
-            min_str = self._format_temp_value(temp_min)
-            max_str = self._format_temp_value(temp_max)
+            min_str = self._format_temp_value(temp_min, units=False)
+            max_str = self._format_temp_value(temp_max, units=False)
             bottom_label = min_str + max_str
             # Use the average temperature for colouring
             temp_avg = (temp_min + temp_max) / 2
@@ -306,12 +306,14 @@ class ForecastIdleTheme(BaseIdleScene):
         """Return the unit suffix for the configured temperature unit."""
         cfg = Config.instance()
         if cfg.temperature_unit == "f":
-            return "F"
+            return "°F"
         if cfg.temperature_unit == "k":
             return "K"
-        return "C"
+        return "°C"
 
-    def _format_temp_value(self, temp_c: float) -> list[tuple[str, object]]:
+    def _format_temp_value(
+        self, temp_c: float, units: bool = True
+    ) -> list[tuple[str, object]]:
         """Format a temperature as label segments, respecting units.
 
         Returns a list of (text, colour) segments.  The unit suffix is
@@ -321,11 +323,12 @@ class ForecastIdleTheme(BaseIdleScene):
         ``THEME_PLANE_TLM_UNITS``.
         """
         rounded = round(self._convert_temp(temp_c))
-        if -10 < rounded < 100:
-            return [
-                (str(rounded), temperature_to_colour(temp_c)),
-                (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
-            ]
+        if units:
+            if -10 < rounded < 100:
+                return [
+                    (str(rounded), temperature_to_colour(temp_c)),
+                    (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
+                ]
         return [(str(rounded), temperature_to_colour(temp_c))]
 
     def _format_temp(self, temp_c: float) -> list[tuple[str, object]]:
@@ -350,7 +353,7 @@ class ForecastIdleTheme(BaseIdleScene):
         """Format the hour respecting the 12/24h clock setting."""
         cfg = Config.instance()
         if cfg.clock_24hr:
-            return str(slot_time.hour)
+            return str(slot_time.hour) + "00"
         # 12-hour format: 1-12 with no leading zero, plus AM/PM suffix
         hour = slot_time.hour % 12
         if hour == 0:
