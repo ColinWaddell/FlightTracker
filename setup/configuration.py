@@ -105,6 +105,9 @@ DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
 DEFAULT_CLOCK_24HR = True
 DEFAULT_DATE_FORMAT = 0  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
 
+# Number formatting
+DEFAULT_NUMBER_SEPARATOR = "none"  # 'none', 'comma', 'period'
+
 # Idle screen theme
 DEFAULT_IDLE_SCREEN_THEME = "classic"  # classic / forecast
 
@@ -196,6 +199,8 @@ DEFAULTS: dict[str, Any] = {
     # Clock / date
     "clock_24hr": DEFAULT_CLOCK_24HR,
     "date_format": DEFAULT_DATE_FORMAT,
+    # Number formatting
+    "number_separator": DEFAULT_NUMBER_SEPARATOR,
     # Idle screen theme
     "idle_screen_theme": DEFAULT_IDLE_SCREEN_THEME,
     # Web interface
@@ -868,6 +873,14 @@ class Config:
     @property
     def date_format(self) -> int:
         return int(self.data_store.get("date_format", DEFAULT_DATE_FORMAT))
+
+    @property
+    def number_separator(self) -> str:
+        """'none' = no separator, 'comma' = thousands comma, 'period' = thousands period."""
+        val = str(
+            self.data_store.get("number_separator", DEFAULT_NUMBER_SEPARATOR)
+        ).lower()
+        return val if val in ("none", "comma", "period") else DEFAULT_NUMBER_SEPARATOR
 
     @property
     def idle_screen_theme(self) -> str:

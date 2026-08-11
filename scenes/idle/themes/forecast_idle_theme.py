@@ -323,12 +323,11 @@ class ForecastIdleTheme(BaseIdleScene):
         ``THEME_PLANE_TLM_UNITS``.
         """
         rounded = round(self._convert_temp(temp_c))
-        if units:
-            if -10 < rounded < 100:
-                return [
-                    (str(rounded), temperature_to_colour(temp_c)),
-                    (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
-                ]
+        if units and (-10 < rounded < 100):
+            return [
+                (str(rounded), temperature_to_colour(temp_c)),
+                (self._unit_char(), TC(THEME_PLANE_TLM_UNITS)),
+            ]
         return [(str(rounded), temperature_to_colour(temp_c))]
 
     def _format_temp(self, temp_c: float) -> list[tuple[str, object]]:
