@@ -962,6 +962,7 @@ class TestGetRoute:
             "plane": "Boeing 737-800",
             "registration": "G-ABCD",
             "operator_icao": "",
+            "owner": "",
         }
 
 
@@ -1196,3 +1197,69 @@ class TestOperatorIcaoCaching:
         assert info.plane == "Airbus A320"
         assert info.operator_icao == ""
         mock_lookup.assert_not_called()
+
+
+class TestOwnerLookup:
+    """Registered owner name - the only identity a GA aircraft has."""
+
+    def test_hexdb_parses_registered_owners(self):
+        from utilities.route_providers import HexdbProvider
+
+        p = HexdbProvider()
+        assert (
+            p._parse_owner({"RegisteredOwners": "Leading Edge Flight Training"})
+            == "Leading Edge Flight Training"
+        )
+
+    def test_hexdb_owner_missing(self):
+        from utilities.route_providers import HexdbProvider
+
+        p = HexdbProvider()
+        assert p._parse_owner({}) == ""
+
+    def test_owner_carried_from_earlier_provider(self):
+        import utilities.route_providers as rp
+
+        first = MagicMock()
+        first.lookup_aircraft.return_value = AircraftInfo(owner="Flying Club")
+        second = MagicMock()
+        second.lookup_aircraft.return_value = AircraftInfo("C172", "G-BSFE")
+
+        with patch.object(rp, "available_providers", return_value=[first, second]):
+            info = rp.lookup_aircraft("400f5a")
+
+        assert info.registration == "G-BSFE"
+        assert info.owner == "Flying Club"
+
+    @patch("utilities.route_providers.lookup_aircraft")
+    def test_owner_round_trips_through_mode_s_cache(self, mock_lookup):
+        from utilities.route_lookup import _lookup_aircraft
+
+        mock_lookup.return_value = AircraftInfo(
+            "Cessna C172", "G-BSFE", "", "Leading Edge Flight Training"
+        )
+
+        _lookup_aircraft("400f5a")
+        cached = _lookup_aircraft("400f5a")
+
+        assert cached.owner == "Leading Edge Flight Training"
+        mock_lookup.assert_called_once()
+
+    @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
+    @patch("utilities.route_lookup._lookup_aircraft")
+    @patch("utilities.route_lookup._lookup_route")
+    def test_owner_not_stored_under_callsign_key(
+        self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
+    ):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import get_route
+
+        mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
+        mock_lookup_aircraft.return_value = AircraftInfo(
+            "C172", "G-BSFE", "", "Leading Edge Flight Training"
+        )
+
+        result = get_route("BAW123", mode_s="400f5a")
+
+        assert result.owner == "Leading Edge Flight Training"
+        assert "owner" not in rc.get("BAW123")

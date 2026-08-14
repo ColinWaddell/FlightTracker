@@ -16,14 +16,14 @@ Two kinds of entries in routes_cache.json, distinguished by key:
       destination_country, registration, airline_icao
 
   mode_s keys    (e.g. "400f5a")
-      plane, registration, operator_icao
+      plane, registration, operator_icao, owner
 
 Both key types use a 24-hour TTL by default.  Miss entries use a 1-hour TTL.
 
-``operator_icao`` is deliberately stored **only** under the mode_s key, never
-under a callsign key: it describes the airframe, not the flight.  Caching it
-per-callsign would let one day's airframe decide tomorrow's logo when a
-different aircraft operates the same flight number.
+``operator_icao`` and ``owner`` are deliberately stored **only** under the
+mode_s key, never under a callsign key: they describe the airframe, not the
+flight.  Caching them per-callsign would let one day's airframe decide
+tomorrow's logo when a different aircraft operates the same flight number.
 
 Miss caching
 ------------
@@ -433,6 +433,7 @@ def _aircraft_cache_entry(info: AircraftInfo) -> dict:
         "plane": info.plane,
         "registration": info.registration,
         "operator_icao": info.operator_icao,
+        "owner": info.owner,
     }
 
 
@@ -456,6 +457,7 @@ def _lookup_aircraft(mode_s: str) -> AircraftInfo:
             plane=cached.get("plane", ""),
             registration=cached.get("registration", ""),
             operator_icao=cached.get("operator_icao", ""),
+            owner=cached.get("owner", ""),
         )
 
     info = route_providers.lookup_aircraft(mode_s)
@@ -470,8 +472,9 @@ def _lookup_aircraft(mode_s: str) -> AircraftInfo:
             stale_info = AircraftInfo(
                 plane=stale.get("plane", ""),
                 registration=stale.get("registration", ""),
-                # A freshly-resolved operator code beats a stale one.
+                # A freshly-resolved identity beats a stale one.
                 operator_icao=info.operator_icao or stale.get("operator_icao", ""),
+                owner=info.owner or stale.get("owner", ""),
             )
             routes_cache.put(
                 mode_s,
@@ -543,6 +546,7 @@ def get_route(
         if not result.registration:
             result.registration = aircraft.registration
         result.operator_icao = aircraft.operator_icao
+        result.owner = aircraft.owner
 
     # -- Unified FR24 fallback -------------------------------------
     # Run when providers left the route OR the plane blank.  The FR24 miss
@@ -595,6 +599,7 @@ def get_route(
                                 plane=result.plane,
                                 registration=result.registration,
                                 operator_icao=result.operator_icao,
+                                owner=result.owner,
                             )
                         ),
                     )
@@ -613,12 +618,13 @@ def get_route(
     # Persist a positive route result under the callsign key.
     # This also overwrites any stale miss entry from a previous lookup.
     #
-    # operator_icao is stripped: it belongs to the airframe (mode_s key), not
-    # the flight.  Storing it here would pin the logo to whichever aircraft
-    # happened to fly this callsign first.
+    # operator_icao and owner are stripped: they belong to the airframe
+    # (mode_s key), not the flight.  Storing them here would pin the logo to
+    # whichever aircraft happened to fly this callsign first.
     if callsign and (result.origin or result.destination):
         entry = result.to_dict()
         entry.pop("operator_icao", None)
+        entry.pop("owner", None)
         routes_cache.put(callsign, entry)
 
     return result

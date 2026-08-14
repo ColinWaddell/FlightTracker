@@ -238,6 +238,11 @@ class HexdbProvider(RouteProvider):
         """
         return clean_operator_code(data.get("OperatorFlagCode"))
 
+    @staticmethod
+    def _parse_owner(data: dict) -> str:
+        """Return the registered owner's name from a hexdb response."""
+        return (data.get("RegisteredOwners") or "").strip()
+
     # -- Lookup methods ------------------------------------------------
 
     def lookup_route(self, callsign: str) -> RouteInfo:
@@ -308,6 +313,7 @@ class HexdbProvider(RouteProvider):
             plane=self._parse_aircraft_type(data),
             registration=self._parse_aircraft_registration(data),
             operator_icao=self._parse_operator_icao(data),
+            owner=self._parse_owner(data),
         )
 
         _mark_healthy(self.name)
@@ -429,14 +435,18 @@ class AdsbdbProvider(RouteProvider):
         else:
             plane = icao_type or manufacturer
 
-        # adsbdb's equivalent of hexdb's OperatorFlagCode.
+        # adsbdb's equivalents of hexdb's OperatorFlagCode / RegisteredOwners.
         operator_icao = clean_operator_code(
             ac.get("registered_owner_operator_flag_code")
         )
+        owner = (ac.get("registered_owner") or "").strip()
 
         _mark_healthy(self.name)
         return AircraftInfo(
-            plane=plane, registration=registration, operator_icao=operator_icao
+            plane=plane,
+            registration=registration,
+            operator_icao=operator_icao,
+            owner=owner,
         )
 
 
@@ -669,13 +679,22 @@ class AeroDataBoxProvider(RouteProvider):
 
         # AeroDataBox nests the operator under an "airline" object when known.
         airline = ac.get("airline") or {}
+        is_airline_dict = isinstance(airline, dict)
         operator_icao = clean_operator_code(
-            airline.get("icao") if isinstance(airline, dict) else None
+            airline.get("icao") if is_airline_dict else None
         )
+        owner = (
+            (airline.get("name") if is_airline_dict else None)
+            or ac.get("airlineName")
+            or ""
+        ).strip()
 
         _mark_healthy(self.name)
         return AircraftInfo(
-            plane=plane, registration=registration, operator_icao=operator_icao
+            plane=plane,
+            registration=registration,
+            operator_icao=operator_icao,
+            owner=owner,
         )
 
 
@@ -777,11 +796,12 @@ def lookup_aircraft(mode_s: str) -> AircraftInfo:
     same condition as before ``operator_icao`` existed, so provider ordering
     and call counts are unchanged.
 
-    A provider that returns *only* an operator code (no type, no
-    registration) does not stop the chain, but its operator code is
-    retained and returned if no later provider produces a full hit.  This
-    keeps the operator signal available for logo resolution even when the
-    aircraft type could not be determined.
+    A provider that returns *only* identity fields (an operator code or an
+    owner name, but no type and no registration) does not stop the chain,
+    but those fields are retained and returned if no later provider
+    produces a full hit.  This keeps the identity signals available for
+    logo and airline-name resolution even when the aircraft type could not
+    be determined.
 
     Returns an empty :class:`AircraftInfo` if all providers fail or return
     nothing.
@@ -790,12 +810,16 @@ def lookup_aircraft(mode_s: str) -> AircraftInfo:
     for provider in available_providers():
         info = provider.lookup_aircraft(mode_s)
         if info.plane or info.registration:
-            if not info.operator_icao and fallback.operator_icao:
+            if not info.operator_icao:
                 info.operator_icao = fallback.operator_icao
+            if not info.owner:
+                info.owner = fallback.owner
             logger.debug("Aircraft for %r found via %s", mode_s, provider.name)
             return info
         if info.operator_icao and not fallback.operator_icao:
             fallback.operator_icao = info.operator_icao
+        if info.owner and not fallback.owner:
+            fallback.owner = info.owner
     return fallback
 
 

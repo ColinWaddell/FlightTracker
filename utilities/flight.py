@@ -32,15 +32,21 @@ class AircraftInfo:
     hex addresses.  It is a weaker signal than a flight-level
     ``airline_icao`` from a route provider, because a wet-leased airframe
     reports its owner rather than the brand it is flying for.
+
+    ``owner`` is the registered owner's *name* (hexdb ``RegisteredOwners``,
+    adsbdb ``registered_owner``) - free text, not a code.  Most general
+    aviation aircraft have an owner but no ICAO designator and no logo,
+    so this is the only identity available for them.
     """
 
     plane: str = ""
     registration: str = ""
     operator_icao: str = ""
+    owner: str = ""
 
     def __bool__(self) -> bool:
         """True when any field was resolved."""
-        return bool(self.plane or self.registration or self.operator_icao)
+        return bool(self.plane or self.registration or self.operator_icao or self.owner)
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +65,7 @@ class RouteInfo:
     registration: str = ""
     airline_icao: str = ""  # operating carrier ICAO code for logo lookup
     operator_icao: str = ""  # registered operator of the airframe (from Mode S hex)
+    owner: str = ""  # registered owner's name (GA aircraft have no airline)
     origin: str = ""
     destination: str = ""
     origin_name: str = ""
@@ -102,6 +109,7 @@ class Flight:
     icao_callsign: str = ""
     airline_icao: str = ""  # operating carrier ICAO code for logo lookup
     operator_icao: str = ""  # registered operator of the airframe (from Mode S hex)
+    owner: str = ""  # registered owner's name (GA aircraft have no airline)
 
     # Route info
     plane: str = ""

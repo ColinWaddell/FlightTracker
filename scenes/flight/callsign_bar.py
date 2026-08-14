@@ -44,12 +44,26 @@ DATA_INDEX_FONT = fonts.extrasmall
 
 
 def airline_name_from_flight(flight: Flight) -> str:
-    """Look up the airline name from the flight's resolved ICAO code."""
-    icao = airline_icao_from_flight(flight)
-    if not icao:
-        return ""
+    """Return a display name for whoever is operating this flight.
 
-    return icao_to_airline(icao) or ""
+    Prefers the airline name for the resolved ICAO code.  When no airline
+    resolves - or the code is not in the airline database - falls back to
+    the airframe's registered owner (``flight.owner``, from the Mode S hex
+    lookup).
+
+    That fallback is what identifies general aviation: a training or
+    private aircraft broadcasts its registration as its callsign and has no
+    ICAO designator at all, so the registered owner ("Leading Edge Flight
+    Training") is the only name there is.  Returns ``""`` when neither is
+    known.
+    """
+    icao = airline_icao_from_flight(flight)
+    if icao:
+        name = icao_to_airline(icao)
+        if name:
+            return name
+
+    return (getattr(flight, "owner", "") or "").strip()
 
 
 def build_info_spans(callsign: str = "", airline: str = "") -> Spans:
