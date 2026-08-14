@@ -17,7 +17,7 @@ Each provider implements the ``RouteProvider`` protocol:
         name: str
         def is_available() -> bool
         def lookup_route(callsign) -> RouteInfo
-        def lookup_aircraft(mode_s) -> tuple[str, str]
+        def lookup_aircraft(mode_s) -> AircraftInfo
 
 ``is_available()`` returns False when the provider is quarantined (failed
 recently) or lacks required configuration (e.g. aerodatabox without a key).
@@ -40,7 +40,7 @@ from pathlib import Path
 import requests
 from requests.exceptions import RequestException
 
-from utilities.flight import RouteInfo
+from utilities.flight import AircraftInfo, RouteInfo
 from utilities.overhead_utilities import airport_info as _bundled_airport_info
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,30 @@ AERODATABOX_BASE = "https://aerodatabox.p.rapidapi.com"
 _lock = threading.Lock()
 # provider_name -> monotonic timestamp of last failure (0 = never failed / healthy)
 _failed_at: dict[str, float] = {}
+
+
+# ---------------------------------------------------------------------------
+# Operator code normalisation
+# ---------------------------------------------------------------------------
+
+
+def clean_operator_code(value) -> str:
+    """Normalise a provider operator-flag value to a 3-letter ICAO code.
+
+    Providers expose the registered operator as an "operator flag code"
+    (hexdb ``OperatorFlagCode``, adsbdb
+    ``registered_owner_operator_flag_code``).  In practice these are ICAO
+    airline designators, but the field is free-form and providers
+    occasionally return blanks, registration prefixes, or longer strings.
+
+    Returns the upper-cased code when it is exactly 3 alphabetic
+    characters, otherwise ``""`` - so a malformed value is treated as
+    "no operator" rather than being passed on to a logo lookup.
+    """
+    code = (value or "").strip().upper()
+    if len(code) == 3 and code.isalpha():
+        return code
+    return ""
 
 
 def _quarantine(name: str) -> None:
@@ -131,8 +155,11 @@ class RouteProvider:
         """Return route info for *callsign*.  Returns empty RouteInfo on miss/error."""
         raise NotImplementedError
 
-    def lookup_aircraft(self, mode_s: str) -> tuple[str, str]:
-        """Return ``(plane, registration)`` for *mode_s*.  Returns ("", "") on miss/error."""
+    def lookup_aircraft(self, mode_s: str) -> AircraftInfo:
+        """Return an :class:`AircraftInfo` for *mode_s*.
+
+        Returns an empty ``AircraftInfo`` on miss/error.
+        """
         raise NotImplementedError
 
     # -- Helpers shared by all providers --------------------------------
@@ -201,6 +228,16 @@ class HexdbProvider(RouteProvider):
     def _parse_aircraft_registration(data: dict) -> str:
         return (data.get("Registration") or "").strip()
 
+    @staticmethod
+    def _parse_operator_icao(data: dict) -> str:
+        """Return the registered operator's ICAO code from a hexdb response.
+
+        hexdb exposes this as ``OperatorFlagCode`` - the operator-flag image
+        name used by Virtual Radar Server, which for airline aircraft is the
+        3-letter ICAO airline designator (e.g. ``EIN``, ``BAW``).
+        """
+        return clean_operator_code(data.get("OperatorFlagCode"))
+
     # -- Lookup methods ------------------------------------------------
 
     def lookup_route(self, callsign: str) -> RouteInfo:
@@ -252,26 +289,29 @@ class HexdbProvider(RouteProvider):
         _mark_healthy(self.name)
         return route
 
-    def lookup_aircraft(self, mode_s: str) -> tuple[str, str]:
+    def lookup_aircraft(self, mode_s: str) -> AircraftInfo:
         resp = self._get(f"{self.BASE}/aircraft/{mode_s.lower()}")
         if resp is None:
-            return "", ""
+            return AircraftInfo()
         if resp.status_code == 404:
             logger.debug("hexdb: unknown aircraft %r", mode_s)
-            return "", ""
+            return AircraftInfo()
         try:
             resp.raise_for_status()
             data = resp.json()
         except (RequestException, ValueError) as e:
             logger.debug("hexdb aircraft lookup failed for %r: %s", mode_s, e)
             _quarantine(self.name)
-            return "", ""
+            return AircraftInfo()
 
-        plane = self._parse_aircraft_type(data)
-        registration = self._parse_aircraft_registration(data)
+        info = AircraftInfo(
+            plane=self._parse_aircraft_type(data),
+            registration=self._parse_aircraft_registration(data),
+            operator_icao=self._parse_operator_icao(data),
+        )
 
         _mark_healthy(self.name)
-        return plane, registration
+        return info
 
 
 # ---------------------------------------------------------------------------
@@ -355,24 +395,24 @@ class AdsbdbProvider(RouteProvider):
             _mark_healthy(self.name)
         return route
 
-    def lookup_aircraft(self, mode_s: str) -> tuple[str, str]:
+    def lookup_aircraft(self, mode_s: str) -> AircraftInfo:
         resp = self._get(f"{self.BASE}/aircraft/{mode_s.lower()}")
         if resp is None:
-            return "", ""
+            return AircraftInfo()
         if resp.status_code == 404:
             logger.debug("adsbdb: unknown aircraft %r", mode_s)
-            return "", ""
+            return AircraftInfo()
         try:
             resp.raise_for_status()
             data = resp.json()
         except (RequestException, ValueError) as e:
             logger.debug("adsbdb aircraft lookup failed for %r: %s", mode_s, e)
             _quarantine(self.name)
-            return "", ""
+            return AircraftInfo()
 
         ac = data.get("response", {}).get("aircraft", {})
         if not ac:
-            return "", ""
+            return AircraftInfo()
 
         manufacturer = (ac.get("manufacturer") or "").strip()
         type_full = (ac.get("type") or "").strip()
@@ -389,8 +429,15 @@ class AdsbdbProvider(RouteProvider):
         else:
             plane = icao_type or manufacturer
 
+        # adsbdb's equivalent of hexdb's OperatorFlagCode.
+        operator_icao = clean_operator_code(
+            ac.get("registered_owner_operator_flag_code")
+        )
+
         _mark_healthy(self.name)
-        return plane, registration
+        return AircraftInfo(
+            plane=plane, registration=registration, operator_icao=operator_icao
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -564,18 +611,18 @@ class AeroDataBoxProvider(RouteProvider):
             _mark_healthy(self.name)
         return route
 
-    def lookup_aircraft(self, mode_s: str) -> tuple[str, str]:
+    def lookup_aircraft(self, mode_s: str) -> AircraftInfo:
         if not self._api_key:
-            return "", ""
+            return AircraftInfo()
         resp = self._get(
             f"{self.BASE}/aircrafts/icao24/{mode_s.lower()}",
             headers=self._headers(),
         )
         if resp is None:
-            return "", ""
+            return AircraftInfo()
         if resp.status_code == 404:
             logger.debug("aerodatabox: unknown aircraft %r", mode_s)
-            return "", ""
+            return AircraftInfo()
         # Explicit rate-limit / quota handling (see lookup_route for rationale).
         if resp.status_code in self._RATE_LIMIT_CODES:
             logger.warning(
@@ -586,14 +633,14 @@ class AeroDataBoxProvider(RouteProvider):
                 PROVIDER_RETRY_INTERVAL,
             )
             _quarantine(self.name)
-            return "", ""
+            return AircraftInfo()
         try:
             resp.raise_for_status()
             data = resp.json()
         except (RequestException, ValueError) as e:
             logger.debug("aerodatabox aircraft lookup failed for %r: %s", mode_s, e)
             _quarantine(self.name)
-            return "", ""
+            return AircraftInfo()
 
         # Detect 200-with-error-body rate-limit responses (see lookup_route).
         if self._is_error_response(data):
@@ -609,19 +656,27 @@ class AeroDataBoxProvider(RouteProvider):
                 PROVIDER_RETRY_INTERVAL,
             )
             _quarantine(self.name)
-            return "", ""
+            return AircraftInfo()
 
         # Response may be a list or single object
         ac_list = data if isinstance(data, list) else [data]
         if not ac_list:
-            return "", ""
+            return AircraftInfo()
 
         ac = ac_list[0]
         plane = (ac.get("typeName") or ac.get("productionLine") or "").strip()
         registration = (ac.get("reg") or "").strip()
 
+        # AeroDataBox nests the operator under an "airline" object when known.
+        airline = ac.get("airline") or {}
+        operator_icao = clean_operator_code(
+            airline.get("icao") if isinstance(airline, dict) else None
+        )
+
         _mark_healthy(self.name)
-        return plane, registration
+        return AircraftInfo(
+            plane=plane, registration=registration, operator_icao=operator_icao
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -715,17 +770,33 @@ def lookup_route(callsign: str) -> RouteInfo:
     return RouteInfo()
 
 
-def lookup_aircraft(mode_s: str) -> tuple[str, str]:
+def lookup_aircraft(mode_s: str) -> AircraftInfo:
     """Try each available provider in turn until one returns aircraft data.
 
-    Returns ("", "") if all providers fail or return nothing.
+    A provider "hits" when it returns a plane type or a registration - the
+    same condition as before ``operator_icao`` existed, so provider ordering
+    and call counts are unchanged.
+
+    A provider that returns *only* an operator code (no type, no
+    registration) does not stop the chain, but its operator code is
+    retained and returned if no later provider produces a full hit.  This
+    keeps the operator signal available for logo resolution even when the
+    aircraft type could not be determined.
+
+    Returns an empty :class:`AircraftInfo` if all providers fail or return
+    nothing.
     """
+    fallback = AircraftInfo()
     for provider in available_providers():
-        plane, reg = provider.lookup_aircraft(mode_s)
-        if plane or reg:
+        info = provider.lookup_aircraft(mode_s)
+        if info.plane or info.registration:
+            if not info.operator_icao and fallback.operator_icao:
+                info.operator_icao = fallback.operator_icao
             logger.debug("Aircraft for %r found via %s", mode_s, provider.name)
-            return plane, reg
-    return "", ""
+            return info
+        if info.operator_icao and not fallback.operator_icao:
+            fallback.operator_icao = info.operator_icao
+    return fallback
 
 
 def check_routing() -> bool:

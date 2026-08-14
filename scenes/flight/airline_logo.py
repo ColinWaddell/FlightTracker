@@ -1,17 +1,18 @@
 """Airline logo widget - draws a 16x16 airline icon at (0, 0).
 
-The icon is sourced from the operating carrier's ICAO code.  The primary
-source is ``flight.airline_icao`` (populated by the data-source API -
-FR24 provides it directly; tar1090/OSN get it via ``route_lookup``'s FR24
-fallback).  When that is empty, the first 3 alphabetic characters of
-``flight.icao_callsign`` are used as a fallback (e.g. ``UAL1583`` ->
-``UAL``), corrected via ``_CALLSIGN_PREFIX_OVERRIDES`` for known
-regional-subsidiary mismatches, and validated against a non-airline
-blocklist that rejects military, government, and other non-commercial
-operators whose 3-letter ICAO designators might otherwise match a logo
-file.  The resulting code is the PNG filename - e.g. ``BAW`` ->
-``assets/airlines/BAW.png``.  When no code resolves or the PNG is
-missing, a black square with a white outline is drawn as a placeholder.
+The icon is sourced from the operating carrier's ICAO code, resolved by
+:func:`airline_icao_from_flight` from three sources in descending order of
+confidence: ``flight.airline_icao`` (the flight's carrier, from a route
+provider), ``flight.operator_icao`` (the airframe's registered operator,
+from its Mode S hex address), and finally the first 3 alphabetic
+characters of ``flight.icao_callsign``.  The two inferred sources are
+corrected via ``_BRAND_OVERRIDES`` for franchise/wet-lease arrangements
+and validated against a non-airline blocklist that rejects military,
+government, and other non-commercial operators whose 3-letter ICAO
+designators might otherwise match a logo file.  The resulting code is the
+PNG filename - e.g. ``BAW`` -> ``assets/airlines/BAW.png``.  When no code
+resolves or the PNG is missing, a black square with a white outline is
+drawn as a placeholder.
 
 The widget is draw-once: it caches the last prefix rendered and skips
 repainting while the prefix is unchanged (the icon is static per flight).
@@ -75,16 +76,26 @@ def _load_airline_icon(lookup: str) -> Image.Image | None:
     return _image_cache[lookup]
 
 
-# Some regional/commuter callsign prefixes differ from the ICAO airline
-# code used for the logo file.  For example, Aer Lingus regional flights
-# use callsign prefix ``EAI`` but the logo is filed under ``EIN``.  When
-# the API doesn't provide ``airline_icao`` and we fall back to the
-# callsign prefix, this table corrects known mismatches before the file
-# lookup.
+# Franchise / wet-lease brand overrides.
 #
-# Expand this table as new callsign-to-ICAO mismatches are observed.
-_CALLSIGN_PREFIX_OVERRIDES: dict[str, str] = {
-    "EAI": "EIN",  # Aer Lingus regional -> Aer Lingus
+# These map an *operator* to the *brand* whose logo should be shown.  They
+# are not data patches: they encode the stable commercial fact that one
+# airline flies in another's livery.  Emerald Airlines (``EAI``) operates
+# as Aer Lingus Regional, so its flights should show the Aer Lingus
+# (``EIN``) logo even though the operator is a separate company.
+#
+# The table is applied to both resolution paths that produce an operator
+# rather than a brand - the Mode S hex operator code and the callsign
+# prefix - but never to a flight-level ``airline_icao`` from a provider,
+# which is already the marketing carrier.
+#
+# Deliberately absent: entries for codes that merely *collide* with another
+# operator (e.g. ``EAG``, shared by Emerald Airlines UK and European
+# Aeronautical Group UK).  Collisions are resolved per-airframe by the Mode
+# S hex operator code, which is unique to the aircraft; adding them here
+# would show the wrong logo for whichever operator was not listed.
+_BRAND_OVERRIDES: dict[str, str] = {
+    "EAI": "EIN",  # Emerald Airlines / Aer Lingus Regional -> Aer Lingus
 }
 
 # Keywords in airline names that indicate a non-commercial operator
@@ -133,30 +144,64 @@ def _is_non_airline(icao_code: str) -> bool:
 def airline_icao_from_flight(flight: Flight) -> str:
     """Resolve the 3-letter ICAO airline code for logo lookup.
 
-    Primary source: ``flight.airline_icao`` (operating carrier ICAO code
-    from the data-source API).  This is trusted as-is and returned
-    directly, even when the code has no IATA mapping (e.g. cargo carriers
-    or shuttle services reported by FR24).
+    Three sources are tried in descending order of confidence.
 
-    Fallback: the first 3 alphabetic characters of
-    ``flight.icao_callsign`` (e.g. ``UAL1583`` -> ``UAL``), corrected via
-    ``_CALLSIGN_PREFIX_OVERRIDES`` for known regional-subsidiary
-    mismatches.  The fallback is then validated against a non-airline
-    blocklist: codes whose ``icao_to_name`` entry indicates a military,
-    government, or other non-commercial operator are rejected (return
-    ``""``) to avoid false positives.  Commercial airlines without IATA
-    codes (e.g. SHT = British Airways Shuttle) pass through correctly.
+    1. ``flight.airline_icao`` - the operating carrier reported by a route
+       provider (adsbdb, AeroDataBox, FR24) for *this flight*.  Trusted
+       as-is and returned directly, even when the code has no IATA mapping
+       (e.g. cargo carriers or shuttle services) and even when it is a
+       non-commercial operator: the blocklist below only guards the
+       inferred paths.
 
-    Returns ``""`` if neither path yields a valid code, so the
-    placeholder outline is drawn instead.
+    2. ``flight.operator_icao`` - the registered operator of *this
+       airframe*, resolved from its Mode S hex address (see
+       ``route_lookup._lookup_aircraft``).  This is the only per-aircraft
+       signal available, so it is what resolves ICAO designator
+       collisions: two operators sharing a 3-letter code still have
+       distinct hex addresses.  Brand overrides and the non-airline
+       blocklist both apply.  An operator code that matches no known
+       airline name falls through to the callsign prefix rather than
+       resolving to a logo that does not exist.
+
+    3. The first 3 alphabetic characters of ``flight.icao_callsign``
+       (e.g. ``UAL1583`` -> ``UAL``).  Weakest signal - a callsign prefix
+       is not guaranteed to be the operator's ICAO code - so brand
+       overrides and the blocklist apply here too.  Commercial airlines
+       without IATA codes (e.g. ``SHT`` = British Airways Shuttle) pass
+       through correctly.
+
+    Returns ``""`` if no path yields a usable code, so the placeholder
+    outline is drawn instead.
     """
     icao = (flight.airline_icao or "").strip().upper()
     if icao:
         return icao
+
+    operator = (getattr(flight, "operator_icao", "") or "").strip().upper()
+    if len(operator) == 3 and operator.isalpha():
+        resolved = _BRAND_OVERRIDES.get(operator, operator)
+        if _is_non_airline(resolved):
+            logger.debug(
+                "Mode S operator %r (from %r) rejected: non-commercial operator",
+                resolved,
+                operator,
+            )
+            return ""
+        # Only trust the operator code when it names a known airline.  An
+        # unrecognised code would just produce a missing-logo placeholder,
+        # so give the callsign prefix a chance instead.
+        if icao_to_airline(resolved):
+            return resolved
+        logger.debug(
+            "Mode S operator %r unknown to the airline database - "
+            "falling through to the callsign prefix",
+            resolved,
+        )
+
     callsign = (flight.icao_callsign or "").strip()
     if len(callsign) >= 3 and callsign[:3].isalpha():
         prefix = callsign[:3].upper()
-        resolved = _CALLSIGN_PREFIX_OVERRIDES.get(prefix, prefix)
+        resolved = _BRAND_OVERRIDES.get(prefix, prefix)
         if _is_non_airline(resolved):
             logger.debug(
                 "Callsign-prefix fallback %r (from %r) rejected: "

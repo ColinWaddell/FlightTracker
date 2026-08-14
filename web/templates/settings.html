@@ -347,6 +347,7 @@
                   <tr><td><code>callsign</code></td><td>Flight callsign (e.g. BAW123)</td><td>-</td></tr>
                   <tr><td><code>icao_callsign</code></td><td>ICAO callsign</td><td>-</td></tr>
                   <tr><td><code>airline_icao</code></td><td>Airline ICAO code</td><td>-</td></tr>
+                  <tr><td><code>operator_icao</code></td><td>Registered operator ICAO code (from Mode S hex)</td><td>-</td></tr>
                   <tr><td><code>plane</code></td><td>Aircraft make &amp; model</td><td>-</td></tr>
                   <tr><td><code>registration</code></td><td>Aircraft registration</td><td>-</td></tr>
                   <tr><td><code>origin</code></td><td>Origin airport code</td><td>-</td></tr>
@@ -832,7 +833,7 @@
                    name="weather_refresh_minutes" id="weather_refresh_minutes"
                    value="{{ cfg.weather_refresh_minutes }}"
                    min="1" max="120" step="1" style="max-width:120px" />
-            <div class="form-text text-muted small">How often to fetch new weather data (1–120 minutes). Lower values use more API calls.</div>
+            <div class="form-text text-muted small">How often to fetch new weather data (1-120 minutes). Lower values use more API calls.</div>
           </div>
         </div>
 
@@ -1171,6 +1172,16 @@
               <option value="ft" {% if cfg.height_unit == 'ft' %}selected{% endif %}>Feet (ft)</option>
             </select>
             <div class="form-text text-muted small">How aircraft and satellite altitudes are shown.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small">Number separator</label>
+            <select class="form-select form-select-sm" name="number_separator" style="max-width:180px">
+              <option value="none" {% if cfg.number_separator == 'none' %}selected{% endif %}>None (10000)</option>
+              <option value="comma" {% if cfg.number_separator == 'comma' %}selected{% endif %}>Comma (10,000)</option>
+              <option value="period" {% if cfg.number_separator == 'period' %}selected{% endif %}>Period (10.000)</option>
+            </select>
+            <div class="form-text text-muted small">How large numbers are grouped in the plane details scroller.</div>
           </div>
 
           <h5>Clock and Date</h5>

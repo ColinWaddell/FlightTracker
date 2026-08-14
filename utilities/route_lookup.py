@@ -16,9 +16,14 @@ Two kinds of entries in routes_cache.json, distinguished by key:
       destination_country, registration, airline_icao
 
   mode_s keys    (e.g. "400f5a")
-      plane, registration
+      plane, registration, operator_icao
 
 Both key types use a 24-hour TTL by default.  Miss entries use a 1-hour TTL.
+
+``operator_icao`` is deliberately stored **only** under the mode_s key, never
+under a callsign key: it describes the airframe, not the flight.  Caching it
+per-callsign would let one day's airframe decide tomorrow's logo when a
+different aircraft operates the same flight number.
 
 Miss caching
 ------------
@@ -71,7 +76,7 @@ import threading
 import time
 
 from utilities import route_providers, routes_cache
-from utilities.flight import RouteInfo
+from utilities.flight import AircraftInfo, RouteInfo
 from utilities.overhead_utilities import clean_field
 
 logger = logging.getLogger(__name__)
@@ -422,32 +427,55 @@ def _lookup_route(callsign: str) -> RouteInfo:
     return route
 
 
-def _lookup_aircraft(mode_s: str) -> tuple[str, str]:
-    """Return aircraft type and registration for *mode_s* via the provider chain.
+def _aircraft_cache_entry(info: AircraftInfo) -> dict:
+    """Serialise an :class:`AircraftInfo` for the mode_s cache key."""
+    return {
+        "plane": info.plane,
+        "registration": info.registration,
+        "operator_icao": info.operator_icao,
+    }
 
-    Fetches via the provider chain and returns a ``(plane, registration)``
-    tuple.  Cached by mode_s (24-hour TTL, including blank entries for 404s
-    so they aren't repeated on every poll).
-    Returns ``("", "")`` on any error.  Never raises.
+
+def _lookup_aircraft(mode_s: str) -> AircraftInfo:
+    """Return aircraft info for *mode_s* via the provider chain.
+
+    Fetches via the provider chain and returns an :class:`AircraftInfo`
+    carrying the aircraft type, registration, and the airframe's registered
+    operator ICAO code.  Cached by mode_s (24-hour TTL, including blank
+    entries for 404s so they aren't repeated on every poll).
+
+    Cache entries written before ``operator_icao`` existed simply have no
+    such key; ``.get()`` yields ``""`` and the entry refreshes naturally
+    when its 24-hour TTL expires.
+
+    Returns an empty ``AircraftInfo`` on any error.  Never raises.
     """
     cached = routes_cache.get(mode_s)
     if cached is not None:
-        return cached.get("plane", ""), cached.get("registration", "")
+        return AircraftInfo(
+            plane=cached.get("plane", ""),
+            registration=cached.get("registration", ""),
+            operator_icao=cached.get("operator_icao", ""),
+        )
 
-    plane, registration = route_providers.lookup_aircraft(mode_s)
+    info = route_providers.lookup_aircraft(mode_s)
 
-    if not plane and not registration:
+    if not info.plane and not info.registration:
         # Providers returned nothing.  Try the stale fallback: if we have a
         # recently-expired entry (within 7 days), re-cache it with the
         # timestamp advanced by 4 h and return it so the screen shows real
         # data instead of blank aircraft info.
         stale = routes_cache.get_stale(mode_s)
         if stale is not None and (stale.get("plane") or stale.get("registration")):
-            plane = stale.get("plane", "")
-            registration = stale.get("registration", "")
+            stale_info = AircraftInfo(
+                plane=stale.get("plane", ""),
+                registration=stale.get("registration", ""),
+                # A freshly-resolved operator code beats a stale one.
+                operator_icao=info.operator_icao or stale.get("operator_icao", ""),
+            )
             routes_cache.put(
                 mode_s,
-                {"plane": plane, "registration": registration},
+                _aircraft_cache_entry(stale_info),
                 ts=stale["_ts"] + routes_cache.STALE_RECACHE_ADVANCE,
             )
             logger.debug(
@@ -456,10 +484,10 @@ def _lookup_aircraft(mode_s: str) -> tuple[str, str]:
                 mode_s,
                 (time.time() - stale["_ts"]) / 3600,
             )
-            return plane, registration
+            return stale_info
 
-    routes_cache.put(mode_s, {"plane": plane, "registration": registration})
-    return plane, registration
+    routes_cache.put(mode_s, _aircraft_cache_entry(info))
+    return info
 
 
 # ---------------------------------------------------------------------------
@@ -480,7 +508,11 @@ def get_route(
     ------------
     1. Route by callsign via provider chain (hexdb -> adsbdb -> aerodatabox).
        Cached; miss entries skip providers for 1 h.
-    2. Aircraft type + registration by mode_s via provider chain (cached).
+    2. Aircraft type, registration, and registered-operator ICAO code by
+       mode_s via provider chain (cached).  This runs whenever the plane
+       **or** the airline is still unknown, because the mode_s lookup is the
+       only per-airframe signal available: it resolves ICAO designator
+       collisions that a callsign prefix cannot.
     3. Unified FR24 fallback when providers left the route **or** the plane
        blank - keyed on the aircraft's live position + callsign.
        - ``want_plane`` is only set when providers also returned no aircraft
@@ -501,8 +533,16 @@ def get_route(
     if callsign:
         result = _lookup_route(callsign)
 
-    if mode_s and not result.plane:
-        result.plane, result.registration = _lookup_aircraft(mode_s)
+    # The mode_s lookup fills two independent gaps: the aircraft type, and the
+    # airframe's registered operator (used for logo resolution when no
+    # flight-level airline_icao is available).  Run it when either is missing.
+    if mode_s and (not result.plane or not result.airline_icao):
+        aircraft = _lookup_aircraft(mode_s)
+        if not result.plane:
+            result.plane = aircraft.plane
+        if not result.registration:
+            result.registration = aircraft.registration
+        result.operator_icao = aircraft.operator_icao
 
     # -- Unified FR24 fallback -------------------------------------
     # Run when providers left the route OR the plane blank.  The FR24 miss
@@ -550,7 +590,13 @@ def get_route(
                 if mode_s:
                     routes_cache.put(
                         mode_s,
-                        {"plane": result.plane, "registration": result.registration},
+                        _aircraft_cache_entry(
+                            AircraftInfo(
+                                plane=result.plane,
+                                registration=result.registration,
+                                operator_icao=result.operator_icao,
+                            )
+                        ),
                     )
 
             if fr24.airline_icao:
@@ -566,7 +612,13 @@ def get_route(
 
     # Persist a positive route result under the callsign key.
     # This also overwrites any stale miss entry from a previous lookup.
+    #
+    # operator_icao is stripped: it belongs to the airframe (mode_s key), not
+    # the flight.  Storing it here would pin the logo to whichever aircraft
+    # happened to fly this callsign first.
     if callsign and (result.origin or result.destination):
-        routes_cache.put(callsign, result.to_dict())
+        entry = result.to_dict()
+        entry.pop("operator_icao", None)
+        routes_cache.put(callsign, entry)
 
     return result

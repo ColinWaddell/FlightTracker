@@ -56,6 +56,7 @@ TEXT_FIELDS: frozenset[str] = frozenset(
         "callsign",
         "icao_callsign",
         "airline_icao",
+        "operator_icao",
         "plane",
         "registration",
         "origin",
@@ -72,6 +73,20 @@ TEXT_FIELDS: frozenset[str] = frozenset(
 # Telemetry fields - rendered with fonts.small_symbols, colour THEME_PLANE_TLM.
 # Each maps to a set of valid unit strings and a conversion function.
 # Conversion functions take (raw_value, unit) and return (value_str, unit_str).
+
+
+def format_number(value: int, separator: str) -> str:
+    """Format an integer with the requested thousands separator.
+
+    * ``"none"``   - ``10000``
+    * ``"comma"``  - ``10,000``
+    * ``"period"`` - ``10.000``
+    """
+    if separator == "comma":
+        return f"{value:,}"
+    if separator == "period":
+        return f"{value:,}".replace(",", ".")
+    return str(value)
 
 
 def _convert_altitude(altitude_ft: float, unit: str) -> tuple[str, str]:
@@ -478,6 +493,7 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
 
         raw_num = raw_value if raw_value else 0
         value_str, unit_str = convert(raw_num, unit)
+        value_str = format_number(int(value_str), cfg.number_separator)
 
         colour = _resolve_colour(token.colour, THEME_PLANE_TLM)
         result: Spans = [Span(colour, fonts.small_symbols, value_str)]
