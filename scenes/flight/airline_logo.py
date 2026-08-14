@@ -24,6 +24,7 @@ a stale icon behind.
 from __future__ import annotations
 
 import logging
+import re
 
 from PIL import Image
 
@@ -126,6 +127,25 @@ _NON_AIRLINE_KEYWORDS: tuple[str, ...] = (
 )
 
 
+# An ICAO flight identification (Doc 8585) is a 3-letter airline designator
+# followed by a flight number, and that flight number always begins with a
+# digit: ``BAW117``, ``UAL1583``, ``SHT7Z``, ``EAG56R``.
+#
+# Aircraft registrations do not have this shape.  Most non-US registrations
+# are all-alphabetic once the dash is stripped by the ADS-B feed - ``G-BSFE``
+# arrives as ``GBSFE``, ``D-AIZY`` as ``DAIZY``, ``EI-DEA`` as ``EIDEA`` -
+# and general-aviation aircraft broadcast their registration in the callsign
+# field because they have no flight number.  Taking the first 3 characters of
+# one of those yields a meaningless prefix that nonetheless collides with a
+# real airline designator (``GBSFE`` -> ``GBS`` -> "Global Air Services
+# Nigeria"), so the prefix fallback must only run on callsigns that actually
+# look like airline flights.
+#
+# Registrations that *do* contain digits fail the alphabetic prefix test
+# instead (``N512SP`` -> ``N51``, ``JA8089`` -> ``JA8``, ``HL7402`` -> ``HL7``).
+_AIRLINE_CALLSIGN_RE = re.compile(r"^([A-Z]{3})[0-9]")
+
+
 def _is_non_airline(icao_code: str) -> bool:
     """Return True if *icao_code* is a known non-commercial operator.
 
@@ -163,12 +183,16 @@ def airline_icao_from_flight(flight: Flight) -> str:
        airline name falls through to the callsign prefix rather than
        resolving to a logo that does not exist.
 
-    3. The first 3 alphabetic characters of ``flight.icao_callsign``
-       (e.g. ``UAL1583`` -> ``UAL``).  Weakest signal - a callsign prefix
-       is not guaranteed to be the operator's ICAO code - so brand
-       overrides and the blocklist apply here too.  Commercial airlines
-       without IATA codes (e.g. ``SHT`` = British Airways Shuttle) pass
-       through correctly.
+    3. The 3-letter designator of ``flight.icao_callsign``, but only when
+       the callsign has the ICAO flight-identification shape of 3 letters
+       followed by a digit (e.g. ``UAL1583`` -> ``UAL``).  A callsign that
+       is a bare aircraft registration (``GBSFE``, ``DAIZY``) is rejected
+       outright: a general-aviation aircraft has no airline, and slicing
+       its first 3 characters would invent one.  Weakest signal even so -
+       a callsign designator is not guaranteed to be the operator's ICAO
+       code - so brand overrides and the blocklist apply here too.
+       Commercial airlines without IATA codes (e.g. ``SHT`` = British
+       Airways Shuttle) pass through correctly.
 
     Returns ``""`` if no path yields a usable code, so the placeholder
     outline is drawn instead.
@@ -198,20 +222,27 @@ def airline_icao_from_flight(flight: Flight) -> str:
             resolved,
         )
 
-    callsign = (flight.icao_callsign or "").strip()
-    if len(callsign) >= 3 and callsign[:3].isalpha():
-        prefix = callsign[:3].upper()
-        resolved = _BRAND_OVERRIDES.get(prefix, prefix)
-        if _is_non_airline(resolved):
+    callsign = (flight.icao_callsign or "").strip().upper()
+    match = _AIRLINE_CALLSIGN_RE.match(callsign)
+    if not match:
+        if callsign:
             logger.debug(
-                "Callsign-prefix fallback %r (from %r) rejected: "
-                "non-commercial operator",
-                resolved,
-                prefix,
+                "Callsign %r is not an airline flight identification "
+                "(likely an aircraft registration) - no airline resolved",
+                callsign,
             )
-            return ""
-        return resolved
-    return ""
+        return ""
+
+    prefix = match.group(1)
+    resolved = _BRAND_OVERRIDES.get(prefix, prefix)
+    if _is_non_airline(resolved):
+        logger.debug(
+            "Callsign-prefix fallback %r (from %r) rejected: non-commercial operator",
+            resolved,
+            prefix,
+        )
+        return ""
+    return resolved
 
 
 # -----------------------------------------------------------------------

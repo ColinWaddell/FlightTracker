@@ -713,3 +713,66 @@ class TestBuildSpans:
         spans = scene.build_spans(cfg)
         assert len(spans) == 1
         assert spans[0].text == NOT_DEFINED_TEXT
+
+
+class TestRegistrationCallsigns:
+    """A bare aircraft registration must never resolve to an airline.
+
+    General aviation aircraft broadcast their registration in the callsign
+    field.  Stripped of its dash by the feed, G-BSFE arrives as ``GBSFE`` -
+    and its first 3 characters collide with a real ICAO designator (GBS =
+    Global Air Services Nigeria).
+    """
+
+    def test_uk_registration_rejected(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="GBSFE")) == ""
+
+    def test_german_registration_rejected(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="DAIZY")) == ""
+
+    def test_irish_registration_rejected(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="EIDEA")) == ""
+
+    def test_canadian_registration_rejected(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="CGABC")) == ""
+
+    def test_us_registration_rejected(self):
+        # N512SP fails the alphabetic-prefix test rather than the digit test.
+        assert airline_icao_from_flight(Flight(icao_callsign="N512SP")) == ""
+
+    def test_three_letter_callsign_with_no_flight_number_rejected(self):
+        assert airline_icao_from_flight(Flight(icao_callsign="GBS")) == ""
+
+    def test_airline_callsigns_still_resolve(self):
+        for callsign, expected in [
+            ("BAW117", "BAW"),
+            ("UAL1583", "UAL"),
+            ("SHT7Z", "SHT"),
+            ("EAG56R", "EAG"),
+            ("EAI123", "EIN"),
+        ]:
+            assert airline_icao_from_flight(Flight(icao_callsign=callsign)) == expected
+
+    def test_api_airline_icao_still_wins_for_registration_callsign(self):
+        # If a provider positively identified the carrier, the registration
+        # shape of the callsign is irrelevant.
+        flight = Flight(airline_icao="EIN", icao_callsign="GBSFE")
+        assert airline_icao_from_flight(flight) == "EIN"
+
+
+class TestAirlineNameOwnerFallback:
+    def test_owner_used_when_no_airline(self):
+        flight = Flight(icao_callsign="GBSFE", owner="Leading Edge Flight Training")
+        assert airline_name_from_flight(flight) == "Leading Edge Flight Training"
+
+    def test_airline_name_preferred_over_owner(self):
+        flight = Flight(icao_callsign="BAW117", owner="Some Leasing Co")
+        assert airline_name_from_flight(flight) == "British Airways"
+
+    def test_owner_used_when_code_not_in_database(self):
+        # ZZZ resolves to no airline name -> owner fills the bar instead.
+        flight = Flight(airline_icao="ZZZ", owner="Private Owner")
+        assert airline_name_from_flight(flight) == "Private Owner"
+
+    def test_empty_when_neither_known(self):
+        assert airline_name_from_flight(Flight(icao_callsign="GBSFE")) == ""
