@@ -37,10 +37,10 @@ from setup.configuration import PLATFORM_DATA_DIR, ROOT_PATH, migrate_legacy_jso
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL = 86400  # 24 hours – positive / aircraft entries
-CACHE_TTL_MISS = 3600  # 1 hour   – negative / miss entries
-CACHE_TTL_STALE = 604800  # 7 days  – stale fallback threshold
-STALE_RECACHE_ADVANCE = 14400  # 4 hours – how far to advance _ts on stale re-cache
+CACHE_TTL = 86400  # 24 hours - positive / aircraft entries
+CACHE_TTL_MISS = 3600  # 1 hour   - negative / miss entries
+CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
+STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance _ts on stale re-cache
 CACHE_PATH = PLATFORM_DATA_DIR / "routes_cache.json"
 CACHE_PATH = migrate_legacy_json(ROOT_PATH / "routes_cache.json", CACHE_PATH)
 
