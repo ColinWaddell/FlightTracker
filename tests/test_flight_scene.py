@@ -261,8 +261,49 @@ class TestAirlineIcaoFromFlight:
     def test_api_airline_icao_not_gated_by_blocklist(self):
         # An API-provided airline_icao for a non-commercial operator (e.g.
         # a military code) is trusted as-is - the blocklist only applies to
-        # the callsign-prefix fallback.
+        # the inferred paths.
         assert airline_icao_from_flight(Flight(airline_icao="GAF")) == "GAF"
+
+
+class TestAirlineIcaoFromOperator:
+    """The Mode S operator code sits between airline_icao and the callsign."""
+
+    def test_operator_used_when_no_airline_icao(self):
+        flight = Flight(operator_icao="BAW", icao_callsign="SHT7Z")
+        assert airline_icao_from_flight(flight) == "BAW"
+
+    def test_airline_icao_takes_priority_over_operator(self):
+        flight = Flight(airline_icao="EIN", operator_icao="EAI")
+        assert airline_icao_from_flight(flight) == "EIN"
+
+    def test_operator_resolves_callsign_collision(self):
+        # EAG is shared by Emerald Airlines UK and European Aeronautical
+        # Group UK.  The callsign prefix alone cannot tell them apart; the
+        # per-airframe operator code can.
+        flight = Flight(operator_icao="EIN", icao_callsign="EAG56R")
+        assert airline_icao_from_flight(flight) == "EIN"
+
+    def test_operator_brand_override_applied(self):
+        # Emerald Airlines (EAI) flies as Aer Lingus Regional -> EIN logo.
+        flight = Flight(operator_icao="EAI", icao_callsign="EAG56R")
+        assert airline_icao_from_flight(flight) == "EIN"
+
+    def test_operator_rejected_when_non_airline(self):
+        flight = Flight(operator_icao="GAF", icao_callsign="GAF123")
+        assert airline_icao_from_flight(flight) == ""
+
+    def test_unknown_operator_falls_through_to_callsign(self):
+        # A code the airline database has never heard of would only produce
+        # a missing-logo placeholder, so the callsign prefix gets a turn.
+        flight = Flight(operator_icao="ZZZ", icao_callsign="BAW117")
+        assert airline_icao_from_flight(flight) == "BAW"
+
+    def test_malformed_operator_ignored(self):
+        flight = Flight(operator_icao="G-ABCD", icao_callsign="BAW117")
+        assert airline_icao_from_flight(flight) == "BAW"
+
+    def test_operator_strips_whitespace_and_case(self):
+        assert airline_icao_from_flight(Flight(operator_icao="  ein  ")) == "EIN"
 
 
 # ---------------------------------------------------------------------------

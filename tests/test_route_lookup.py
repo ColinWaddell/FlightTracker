@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from utilities.flight import RouteInfo
+from utilities.flight import AircraftInfo, RouteInfo
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -658,7 +658,8 @@ class TestGetRoute:
 
     The FR24 fallback is bounds+callsign keyed: it fires when route OR plane is
     missing AND a callsign + lat/lng are available.  ``_lookup_aircraft``
-    returns a ``(plane, registration)`` tuple.
+    returns an ``AircraftInfo`` (plane, registration, operator_icao) and runs
+    whenever the plane **or** the airline is still unknown.
 
     The FR24 fallback is patched to a no-op (empty RouteInfo) by default so the
     existing hexdb-merge tests are unaffected; dedicated tests below verify the
@@ -674,7 +675,7 @@ class TestGetRoute:
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
-        mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
+        mock_lookup_aircraft.return_value = AircraftInfo("Airbus A320", "G-ABCD")
 
         result = get_route(
             "BAW123",
@@ -694,13 +695,45 @@ class TestGetRoute:
     @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
     @patch("utilities.route_lookup._lookup_aircraft")
     @patch("utilities.route_lookup._lookup_route")
-    def test_no_aircraft_when_route_has_plane(
+    def test_route_plane_not_overwritten_by_aircraft_lookup(
         self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
     ):
+        """A plane from the route lookup survives the mode_s lookup.
+
+        The mode_s lookup still runs - it is the only source of
+        ``operator_icao`` - but must not clobber a plane the route lookup
+        already resolved.
+        """
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo(
             origin="LHR", destination="GLA", plane="B738"
+        )
+        mock_lookup_aircraft.return_value = AircraftInfo("Airbus A320", "G-ABCD", "EIN")
+
+        result = get_route(
+            "BAW123",
+            mode_s="a1b2c3",
+            lat=_RT_LAT,
+            lng=_RT_LNG,
+            ground_speed_mps=_RT_SPEED,
+        )
+
+        assert result.plane == "B738"
+        assert result.operator_icao == "EIN"
+        mock_fr24.assert_not_called()
+
+    @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
+    @patch("utilities.route_lookup._lookup_aircraft")
+    @patch("utilities.route_lookup._lookup_route")
+    def test_no_aircraft_lookup_when_plane_and_airline_known(
+        self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
+    ):
+        """Nothing left to resolve -> the mode_s lookup is skipped entirely."""
+        from utilities.route_lookup import get_route
+
+        mock_lookup_route.return_value = RouteInfo(
+            origin="LHR", destination="GLA", plane="B738", airline_icao="BAW"
         )
 
         result = get_route(
@@ -723,7 +756,7 @@ class TestGetRoute:
     ):
         from utilities.route_lookup import get_route
 
-        mock_lookup_aircraft.return_value = ("A320", "G-ABCD")
+        mock_lookup_aircraft.return_value = AircraftInfo("A320", "G-ABCD")
 
         result = get_route(
             "", mode_s="a1b2c3", lat=_RT_LAT, lng=_RT_LNG, ground_speed_mps=_RT_SPEED
@@ -759,7 +792,7 @@ class TestGetRoute:
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo()  # hexdb route miss
-        mock_lookup_aircraft.return_value = ("", "G-ABCD")  # plane miss
+        mock_lookup_aircraft.return_value = AircraftInfo("", "G-ABCD")  # plane miss
         mock_fr24.return_value = RouteInfo(
             origin="LHR", destination="GLA", plane="Boeing 737-800"
         )
@@ -789,7 +822,7 @@ class TestGetRoute:
 
         # hexdb route miss, but hexdb aircraft hit -> plane already known
         mock_lookup_route.return_value = RouteInfo()
-        mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
+        mock_lookup_aircraft.return_value = AircraftInfo("Airbus A320", "G-ABCD")
         mock_fr24.return_value = RouteInfo(origin="LHR", destination="GLA")
 
         result = get_route(
@@ -818,7 +851,7 @@ class TestGetRoute:
 
         # hexdb route hit, hexdb aircraft miss (plane blank)
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
-        mock_lookup_aircraft.return_value = ("", "G-ABCD")
+        mock_lookup_aircraft.return_value = AircraftInfo("", "G-ABCD")
         mock_fr24.return_value = RouteInfo(plane="Boeing 737-800")
 
         result = get_route(
@@ -845,7 +878,7 @@ class TestGetRoute:
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
-        mock_lookup_aircraft.return_value = ("Airbus A320", "G-ABCD")
+        mock_lookup_aircraft.return_value = AircraftInfo("Airbus A320", "G-ABCD")
 
         result = get_route(
             "BAW123",
@@ -870,7 +903,7 @@ class TestGetRoute:
 
         # hexdb route+plane miss, but no lat/lng -> can't build a bubble
         mock_lookup_route.return_value = RouteInfo()
-        mock_lookup_aircraft.return_value = ("", "")
+        mock_lookup_aircraft.return_value = AircraftInfo("", "")
 
         result = get_route("BAW123", mode_s="a1b2c3")  # no lat/lng/speed
 
@@ -889,7 +922,7 @@ class TestGetRoute:
 
         # No callsign -> can't disambiguate in the bubble
         mock_lookup_route.return_value = RouteInfo()
-        mock_lookup_aircraft.return_value = ("", "")
+        mock_lookup_aircraft.return_value = AircraftInfo("", "")
 
         result = get_route(
             "", mode_s="a1b2c3", lat=_RT_LAT, lng=_RT_LNG, ground_speed_mps=_RT_SPEED
@@ -909,7 +942,9 @@ class TestGetRoute:
         from utilities.route_lookup import get_route
 
         mock_lookup_route.return_value = RouteInfo()  # route miss
-        mock_lookup_aircraft.return_value = ("", "G-ABCD")  # plane miss, reg present
+        mock_lookup_aircraft.return_value = AircraftInfo(
+            "", "G-ABCD"
+        )  # plane miss, reg present
         mock_fr24.return_value = RouteInfo(plane="Boeing 737-800")  # plane only
 
         result = get_route(
@@ -923,7 +958,11 @@ class TestGetRoute:
         assert result.plane == "Boeing 737-800"
         # Plane + registration cached under the mode_s key so subsequent polls
         # skip FR24 entirely
-        assert rc.get("a1b2c3") == {"plane": "Boeing 737-800", "registration": "G-ABCD"}
+        assert rc.get("a1b2c3") == {
+            "plane": "Boeing 737-800",
+            "registration": "G-ABCD",
+            "operator_icao": "",
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -948,10 +987,10 @@ class TestLookupAircraftStaleFallback:
         mock_resp.status_code = 404
         mock_session.get.return_value = mock_resp
 
-        plane, registration = _lookup_aircraft("a1b2c3")
+        info = _lookup_aircraft("a1b2c3")
 
-        assert plane == "Airbus A320"
-        assert registration == "G-ABCD"
+        assert info.plane == "Airbus A320"
+        assert info.registration == "G-ABCD"
 
     @patch("utilities.route_providers._session")
     def test_stale_entry_recached_with_advanced_ts(self, mock_session):
@@ -981,10 +1020,10 @@ class TestLookupAircraftStaleFallback:
         mock_resp.status_code = 404
         mock_session.get.return_value = mock_resp
 
-        plane, registration = _lookup_aircraft("a1b2c3")
+        info = _lookup_aircraft("a1b2c3")
 
-        assert plane == ""
-        assert registration == ""
+        assert info.plane == ""
+        assert info.registration == ""
         # Should have cached an empty entry
         assert rc._cache["a1b2c3"]["plane"] == ""
 
@@ -1000,7 +1039,160 @@ class TestLookupAircraftStaleFallback:
         mock_resp.status_code = 404
         mock_session.get.return_value = mock_resp
 
-        plane, registration = _lookup_aircraft("a1b2c3")
+        info = _lookup_aircraft("a1b2c3")
 
-        assert plane == ""
-        assert registration == ""
+        assert info.plane == ""
+        assert info.registration == ""
+
+
+# ---------------------------------------------------------------------------
+# Operator ICAO code (Mode S hex -> registered operator)
+# ---------------------------------------------------------------------------
+
+
+class TestCleanOperatorCode:
+    """Provider operator-flag fields are free-form; only 3-letter codes count."""
+
+    def test_valid_code(self):
+        from utilities.route_providers import clean_operator_code
+
+        assert clean_operator_code("ein") == "EIN"
+
+    def test_strips_whitespace(self):
+        from utilities.route_providers import clean_operator_code
+
+        assert clean_operator_code("  BAW  ") == "BAW"
+
+    def test_rejects_wrong_length(self):
+        from utilities.route_providers import clean_operator_code
+
+        assert clean_operator_code("EI") == ""
+        assert clean_operator_code("EINX") == ""
+
+    def test_rejects_non_alpha(self):
+        from utilities.route_providers import clean_operator_code
+
+        assert clean_operator_code("E1N") == ""
+
+    def test_rejects_blank_and_none(self):
+        from utilities.route_providers import clean_operator_code
+
+        assert clean_operator_code("") == ""
+        assert clean_operator_code(None) == ""
+
+
+class TestHexdbParseOperatorIcao:
+    def test_operator_flag_code(self):
+        from utilities.route_providers import HexdbProvider
+
+        p = HexdbProvider()
+        assert p._parse_operator_icao({"OperatorFlagCode": "EIN"}) == "EIN"
+
+    def test_missing_field(self):
+        from utilities.route_providers import HexdbProvider
+
+        p = HexdbProvider()
+        assert p._parse_operator_icao({}) == ""
+
+    def test_malformed_field_rejected(self):
+        from utilities.route_providers import HexdbProvider
+
+        p = HexdbProvider()
+        assert p._parse_operator_icao({"OperatorFlagCode": "G-ABCD"}) == ""
+
+
+class TestLookupAircraftChain:
+    """route_providers.lookup_aircraft merges operator codes across providers."""
+
+    def test_operator_only_provider_does_not_stop_chain(self):
+        import utilities.route_providers as rp
+        from utilities.flight import AircraftInfo
+
+        first = MagicMock()
+        first.lookup_aircraft.return_value = AircraftInfo(operator_icao="EIN")
+        second = MagicMock()
+        second.lookup_aircraft.return_value = AircraftInfo("Airbus A320", "G-ABCD")
+
+        with patch.object(rp, "available_providers", return_value=[first, second]):
+            info = rp.lookup_aircraft("a1b2c3")
+
+        assert info.plane == "Airbus A320"
+        assert info.registration == "G-ABCD"
+        # Operator from the first provider is carried through
+        assert info.operator_icao == "EIN"
+
+    def test_first_hit_wins_for_operator_too(self):
+        import utilities.route_providers as rp
+        from utilities.flight import AircraftInfo
+
+        first = MagicMock()
+        first.lookup_aircraft.return_value = AircraftInfo("A320", "G-ABCD", "EIN")
+        second = MagicMock()
+
+        with patch.object(rp, "available_providers", return_value=[first, second]):
+            info = rp.lookup_aircraft("a1b2c3")
+
+        assert info.operator_icao == "EIN"
+        second.lookup_aircraft.assert_not_called()
+
+    def test_all_empty(self):
+        import utilities.route_providers as rp
+        from utilities.flight import AircraftInfo
+
+        provider = MagicMock()
+        provider.lookup_aircraft.return_value = AircraftInfo()
+
+        with patch.object(rp, "available_providers", return_value=[provider]):
+            info = rp.lookup_aircraft("a1b2c3")
+
+        assert not info
+
+
+class TestOperatorIcaoCaching:
+    """operator_icao belongs to the airframe, not the flight."""
+
+    @patch("utilities.route_lookup._fr24_fallback", return_value=RouteInfo())
+    @patch("utilities.route_lookup._lookup_aircraft")
+    @patch("utilities.route_lookup._lookup_route")
+    def test_operator_icao_not_stored_under_callsign_key(
+        self, mock_lookup_route, mock_lookup_aircraft, mock_fr24
+    ):
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import get_route
+
+        mock_lookup_route.return_value = RouteInfo(origin="LHR", destination="GLA")
+        mock_lookup_aircraft.return_value = AircraftInfo("A320", "G-ABCD", "EIN")
+
+        result = get_route("EAG56R", mode_s="a1b2c3")
+
+        assert result.operator_icao == "EIN"
+        # ...but the callsign cache entry must not carry it, or tomorrow's
+        # airframe on the same flight number would inherit today's operator.
+        assert "operator_icao" not in rc.get("EAG56R")
+
+    @patch("utilities.route_providers.lookup_aircraft")
+    def test_operator_icao_round_trips_through_mode_s_cache(self, mock_lookup):
+        from utilities.route_lookup import _lookup_aircraft
+
+        mock_lookup.return_value = AircraftInfo("A320", "G-ABCD", "EIN")
+
+        first = _lookup_aircraft("a1b2c3")
+        second = _lookup_aircraft("a1b2c3")  # served from cache
+
+        assert first.operator_icao == "EIN"
+        assert second.operator_icao == "EIN"
+        mock_lookup.assert_called_once()
+
+    @patch("utilities.route_providers.lookup_aircraft")
+    def test_legacy_cache_entry_without_operator_icao(self, mock_lookup):
+        """Entries written before operator_icao existed must not blow up."""
+        import utilities.routes_cache as rc
+        from utilities.route_lookup import _lookup_aircraft
+
+        rc.put("a1b2c3", {"plane": "Airbus A320", "registration": "G-ABCD"})
+
+        info = _lookup_aircraft("a1b2c3")
+
+        assert info.plane == "Airbus A320"
+        assert info.operator_icao == ""
+        mock_lookup.assert_not_called()

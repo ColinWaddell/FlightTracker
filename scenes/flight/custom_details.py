@@ -56,6 +56,7 @@ TEXT_FIELDS: frozenset[str] = frozenset(
         "callsign",
         "icao_callsign",
         "airline_icao",
+        "operator_icao",
         "plane",
         "registration",
         "origin",

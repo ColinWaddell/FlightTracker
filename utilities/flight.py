@@ -13,6 +13,37 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 
 # ---------------------------------------------------------------------------
+# AircraftInfo - per-airframe lookup result (keyed by Mode S hex)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class AircraftInfo:
+    """Result of a Mode S hex (``icao24``) aircraft lookup.
+
+    Returned by :func:`utilities.route_providers.lookup_aircraft` and
+    :func:`utilities.route_lookup._lookup_aircraft`.
+
+    ``operator_icao`` is the *registered operator* of the airframe, taken
+    from the provider's operator-flag field (hexdb ``OperatorFlagCode``,
+    adsbdb ``registered_owner_operator_flag_code``).  Unlike a callsign
+    prefix it is unique per airframe, so it disambiguates ICAO designator
+    collisions - two operators sharing a 3-letter code still have distinct
+    hex addresses.  It is a weaker signal than a flight-level
+    ``airline_icao`` from a route provider, because a wet-leased airframe
+    reports its owner rather than the brand it is flying for.
+    """
+
+    plane: str = ""
+    registration: str = ""
+    operator_icao: str = ""
+
+    def __bool__(self) -> bool:
+        """True when any field was resolved."""
+        return bool(self.plane or self.registration or self.operator_icao)
+
+
+# ---------------------------------------------------------------------------
 # RouteInfo - origin/destination/aircraft lookup result
 # ---------------------------------------------------------------------------
 
@@ -27,6 +58,7 @@ class RouteInfo:
     plane: str = ""
     registration: str = ""
     airline_icao: str = ""  # operating carrier ICAO code for logo lookup
+    operator_icao: str = ""  # registered operator of the airframe (from Mode S hex)
     origin: str = ""
     destination: str = ""
     origin_name: str = ""
@@ -69,6 +101,7 @@ class Flight:
     callsign: str = ""
     icao_callsign: str = ""
     airline_icao: str = ""  # operating carrier ICAO code for logo lookup
+    operator_icao: str = ""  # registered operator of the airframe (from Mode S hex)
 
     # Route info
     plane: str = ""

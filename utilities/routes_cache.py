@@ -9,7 +9,7 @@ Stores two kinds of entries in a single JSON file, distinguished by their key:
       destination_country, registration, airline_icao
 
   mode_s keys    (e.g. "400f5a")
-      plane, registration
+      plane, registration, operator_icao
 
 Both key types use a 24-hour TTL by default.  Pass ``ttl=`` to :func:`put`
 to override per-entry (e.g. use CACHE_TTL_MISS for negative results).
