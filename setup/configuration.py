@@ -697,7 +697,7 @@ class Config:
 
     @property
     def weather_refresh_minutes(self) -> int:
-        """How often (minutes) to re-fetch weather data. Clamped 1–120."""
+        """How often (minutes) to re-fetch weather data. Clamped 1-120."""
         try:
             return max(
                 1,

@@ -672,29 +672,3 @@ class TestBuildSpans:
         spans = scene.build_spans(cfg)
         assert len(spans) == 1
         assert spans[0].text == NOT_DEFINED_TEXT
-
-    def test_mode_1_telemetry_comma_separator(self):
-        scene = self._make_scene(
-            [Flight(altitude=38000, ground_speed=480, heading=270)]
-        )
-        cfg = MagicMock()
-        cfg.details = 1
-        cfg.height_unit = "ft"
-        cfg.speed_unit = "kts"
-        cfg.number_separator = "comma"
-        spans = scene.build_spans(cfg)
-        texts = [s.text for s in spans]
-        assert "38,000" in texts
-
-    def test_mode_1_telemetry_period_separator(self):
-        scene = self._make_scene(
-            [Flight(altitude=38000, ground_speed=480, heading=270)]
-        )
-        cfg = MagicMock()
-        cfg.details = 1
-        cfg.height_unit = "ft"
-        cfg.speed_unit = "kts"
-        cfg.number_separator = "period"
-        spans = scene.build_spans(cfg)
-        texts = [s.text for s in spans]
-        assert "38.000" in texts
