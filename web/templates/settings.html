@@ -65,6 +65,7 @@
               <router-link class="nav-link" to="/admin" data-section="group-password"><i class="bi bi-key me-2"></i>Change Password</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-clear-cache"><i class="bi bi-trash3 me-2"></i>Clear Cache</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-backup"><i class="bi bi-file-earmark-arrow-down me-2"></i>Backup</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-help"><i class="bi bi-question-circle me-2"></i>Help &amp; Support</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-version"><i class="bi bi-info-circle me-2"></i>Version</router-link>
           </nav>
         </div>
@@ -1305,6 +1306,25 @@
           </div>
         </div>
 
+        <!-- ====== Help & Support ====== -->
+        <div id="group-help" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-question-circle me-2"></i>Help &amp; Support</p>
+          <div class="text-muted small mb-2">
+            <p>
+                Found a bug or need a hand? Open an issue on
+                <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">GitHub</a>.
+            </p>
+
+            <p>
+                If you need to post your config data use the button below, it removes your password and
+                API keys making it safe to post online.
+            </p>
+          </div>
+          <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>Download debug config
+          </a>
+        </div>
+
         </div><!-- /page-admin -->
 
         {% if error %}
@@ -1318,21 +1338,20 @@
         </div>
 
       </form>
+
+      <footer class="mt-4 pt-3 border-top text-muted small">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <p class="mb-0">
+            <a href="https://colinwaddell.github.io/FlightTracker/" target="_blank">Flight Tracker</a>
+            made by <a href="https://www.colinwaddell.com" target="_blank">Colin Waddell</a>
+            &middot;
+            Released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a>
+          </p>
+        </div>
+      </footer>
+
     </div><!-- /col-md-9 -->
   </div><!-- /row -->
-
-  <footer class="mt-4 pt-3 border-top text-muted small">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <p class="mb-0" style="max-width:700px">
-        Need help? Download a safe copy of your configuration below &mdash; API keys
-        and passwords are automatically removed so you can paste it straight into a
-        <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">GitHub issue</a>.
-      </p>
-      <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-download me-1"></i>Download debug config
-      </a>
-    </div>
-  </footer>
 </div><!-- /container-fluid -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
