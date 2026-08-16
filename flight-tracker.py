@@ -424,9 +424,9 @@ def apply_pending_config_update() -> None:
     if failed_marker.exists():
         return
 
-    if not update_path.exists():
-        return
-
+    # Check for a crash FIRST: the marker survives a crash, but the
+    # config-update.json that triggered the swap has already been consumed
+    # (renamed to config.json), so we can't gate on its presence here.
     if in_progress.exists():
         # Previous boot crashed mid-import: restore the backup.
         print(
@@ -444,6 +444,10 @@ def apply_pending_config_update() -> None:
             in_progress.unlink()
         with contextlib.suppress(OSError):
             failed_marker.touch()
+        return
+
+    # No crash marker - check for a fresh staged import.
+    if not update_path.exists():
         return
 
     # Fresh import: swap config.json -> config-backup.json,
