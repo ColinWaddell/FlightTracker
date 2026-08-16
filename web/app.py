@@ -449,6 +449,9 @@ def parse_settings_form(form, cfg) -> dict:
             in ("default", "slower", "faster")
             else cfg.display_speed
         ),
+        "display_scan_rate": (
+            32 if str_val(form.get("display_scan_rate"), "").lower() == "32" else 16
+        ),
         # Brightness schedule
         "screen_schedule_enabled": bool_val(form.get("screen_schedule_enabled")),
         "screen_schedule_auto": bool_val(form.get("screen_schedule_auto")),

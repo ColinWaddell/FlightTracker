@@ -1119,6 +1119,24 @@
             <div class="form-text text-muted small">If you soldered the bridge and selected Quality during setup, choose Quality Mode here to enable Adafruit PWM mode. Otherwise choose Convenience Mode. These options have no effect on a Pi 5; they only apply to older Pi models using the rgbmatrix library.</div>
           </div>
 
+          <hr class="my-3" />
+
+          <div class="mb-3">
+            <label class="form-label small">Display Scan Rate</label>
+            <div class="btn-group w-100" role="group" aria-label="Display Scan Rate">
+              <input type="radio" class="btn-check" name="display_scan_rate" id="display_scan_rate_16" value="16" autocomplete="off"
+                     {% if cfg.display_scan_rate != 32 %}checked{% endif %} />
+              <label class="btn btn-outline-primary btn-sm" for="display_scan_rate_16">1:16</label>
+
+              <input type="radio" class="btn-check" name="display_scan_rate" id="display_scan_rate_32" value="32" autocomplete="off"
+                     {% if cfg.display_scan_rate == 32 %}checked{% endif %} />
+              <label class="btn btn-outline-primary btn-sm" for="display_scan_rate_32">1:32</label>
+            </div>
+            <div class="form-text text-muted small">LED panels are either 1:16 or 1:32 scan rate. 64×32 panels are usually 1:16, but if you can only see half the image you likely have a 1:32 panel (these are normally cut-down 64×64 panels). You can sometimes tell from the serial number on the back of the panel &mdash; look for <code>16S</code> or <code>32S</code>.</div>
+          </div>
+          
+          <hr class="my-3" />
+
           <div class="mb-3">
             <label class="form-label small">GPIO slowdown (1-4)</label>
             <input type="number" min="1" max="4" class="form-control form-control-sm"
