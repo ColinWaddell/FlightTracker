@@ -64,6 +64,7 @@
               <router-link class="nav-link" to="/admin" data-section="group-logging"><i class="bi bi-terminal me-2"></i>Logging</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-password"><i class="bi bi-key me-2"></i>Change Password</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-clear-cache"><i class="bi bi-trash3 me-2"></i>Clear Cache</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-backup"><i class="bi bi-shield-plus me-2"></i>Backup</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-version"><i class="bi bi-info-circle me-2"></i>Version</router-link>
           </nav>
         </div>
@@ -87,6 +88,14 @@
             <li>{{ err }}</li>
             {% endfor %}
           </ul>
+        </div>
+        {% endif %}
+
+        {% if import_failed %}
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+          <strong><i class="bi bi-exclamation-triangle me-1"></i>Import failed:</strong>
+          The last config import failed and your previous settings have been restored.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endif %}
 
@@ -1257,6 +1266,23 @@
             </div>
             <a href="/cache-clear" class="btn btn-outline-danger btn-sm">
               <i class="bi bi-trash3 me-1"></i>Clear Cache</a>
+          </div>
+        </div>
+
+        <!-- ====== Backup ====== -->
+        <div id="group-backup" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-shield-plus me-2"></i>Backup</p>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="text-muted small">Download a full copy of your settings (including API keys) or restore from a previous export.</div>
+              <div class="fw-semibold">Restoring will overwrite all settings and restart.</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <a href="/backup/export" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-download me-1"></i>Export</a>
+              <a href="/backup/restore" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-upload me-1"></i>Restore</a>
+            </div>
           </div>
         </div>
 

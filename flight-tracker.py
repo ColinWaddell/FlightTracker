@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import socket
@@ -11,7 +12,7 @@ from PIL import Image
 # Only the panel factory + PIL + qrcode are needed here.  Imported before the
 # background threads start to avoid GIL contention with heavy imports.
 from display.panel_factory import get_panel
-from setup.configuration import CONFIG_PATH, Config
+from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import setup_logging
 from utilities.cli import dispatch_cli_command
 from version import VERSION
@@ -396,7 +397,92 @@ def _warn_if_root() -> None:
         )
 
 
+def apply_pending_config_update() -> None:
+    """Swap a staged config import into place before the app boots.
+
+    The web import flow writes ``config-update.json`` and reboots.  This
+    function runs at the very start of boot — before logging or
+    ``Config.instance()`` — to atomically swap it into ``config.json``,
+    preserving the previous config as ``config-backup.json``.
+
+    A ``.import-in-progress`` marker records that a swap has happened.  If
+    the process crashes before :func:`cleanup_successful_import` removes
+    it, the next boot sees the marker still present, restores the backup,
+    and writes a ``.import-failed`` marker so the web UI can notify the
+    user.
+
+    This logic lives only in the boot path — CLI commands and other entry
+    points are unaffected.
+    """
+    update_path = PLATFORM_DATA_DIR / "config-update.json"
+    backup_path = PLATFORM_DATA_DIR / "config-backup.json"
+    in_progress = PLATFORM_DATA_DIR / ".import-in-progress"
+    failed_marker = PLATFORM_DATA_DIR / ".import-failed"
+
+    # A previous import failed and was already restored — leave the marker
+    # for the UI to read this boot, then nothing else to do.
+    if failed_marker.exists():
+        return
+
+    if not update_path.exists():
+        return
+
+    if in_progress.exists():
+        # Previous boot crashed mid-import: restore the backup.
+        print(
+            "[startup] Previous config import crashed — restoring backup",
+            file=sys.stderr,
+        )
+        try:
+            if backup_path.exists():
+                os.replace(backup_path, CONFIG_PATH)
+        except OSError as exc:
+            print(f"[startup] Failed to restore config backup: {exc}", file=sys.stderr)
+        with contextlib.suppress(OSError):
+            update_path.unlink()
+        with contextlib.suppress(OSError):
+            in_progress.unlink()
+        with contextlib.suppress(OSError):
+            failed_marker.touch()
+        return
+
+    # Fresh import: swap config.json -> config-backup.json,
+    # config-update.json -> config.json, write marker.
+    try:
+        if CONFIG_PATH.exists():
+            os.replace(CONFIG_PATH, backup_path)
+        os.replace(update_path, CONFIG_PATH)
+        in_progress.touch()
+        print("[startup] Staged config import applied", file=sys.stderr)
+    except OSError as exc:
+        print(f"[startup] Failed to apply config import: {exc}", file=sys.stderr)
+        # Roll back if we got partway.
+        with contextlib.suppress(OSError):
+            if backup_path.exists() and not CONFIG_PATH.exists():
+                os.replace(backup_path, CONFIG_PATH)
+        with contextlib.suppress(OSError):
+            update_path.unlink()
+
+
+def cleanup_successful_import() -> None:
+    """Discard the backup and marker after boot completes successfully.
+
+    Called once ``app_ready.set()`` fires, meaning the app booted without
+    crashing.  The imported config is now confirmed good, so the backup is
+    no longer needed.
+    """
+    backup_path = PLATFORM_DATA_DIR / "config-backup.json"
+    in_progress = PLATFORM_DATA_DIR / ".import-in-progress"
+    with contextlib.suppress(OSError):
+        backup_path.unlink()
+    with contextlib.suppress(OSError):
+        in_progress.unlink()
+
+
 def run_flight_tracker(disable_tests: bool = False):
+    # Apply any staged config import before anything else initialises.
+    apply_pending_config_update()
+
     setup_logging()
     logger = logging.getLogger("startup")
 
@@ -450,6 +536,9 @@ def run_flight_tracker(disable_tests: bool = False):
             app_ready.set()
         except Exception:
             pass
+
+    # Boot completed successfully — discard any import backup/marker.
+    cleanup_successful_import()
 
     display = result["display"]
     logger.info("Display built - entering main loop")
