@@ -401,8 +401,8 @@ def apply_pending_config_update() -> None:
     """Swap a staged config import into place before the app boots.
 
     The web import flow writes ``config-update.json`` and reboots.  This
-    function runs at the very start of boot — before logging or
-    ``Config.instance()`` — to atomically swap it into ``config.json``,
+    function runs at the very start of boot - before logging or
+    ``Config.instance()`` - to atomically swap it into ``config.json``,
     preserving the previous config as ``config-backup.json``.
 
     A ``.import-in-progress`` marker records that a swap has happened.  If
@@ -411,7 +411,7 @@ def apply_pending_config_update() -> None:
     and writes a ``.import-failed`` marker so the web UI can notify the
     user.
 
-    This logic lives only in the boot path — CLI commands and other entry
+    This logic lives only in the boot path - CLI commands and other entry
     points are unaffected.
     """
     update_path = PLATFORM_DATA_DIR / "config-update.json"
@@ -419,7 +419,7 @@ def apply_pending_config_update() -> None:
     in_progress = PLATFORM_DATA_DIR / ".import-in-progress"
     failed_marker = PLATFORM_DATA_DIR / ".import-failed"
 
-    # A previous import failed and was already restored — leave the marker
+    # A previous import failed and was already restored - leave the marker
     # for the UI to read this boot, then nothing else to do.
     if failed_marker.exists():
         return
@@ -430,7 +430,7 @@ def apply_pending_config_update() -> None:
     if in_progress.exists():
         # Previous boot crashed mid-import: restore the backup.
         print(
-            "[startup] Previous config import crashed — restoring backup",
+            "[startup] Previous config import crashed - restoring backup",
             file=sys.stderr,
         )
         try:
@@ -537,7 +537,7 @@ def run_flight_tracker(disable_tests: bool = False):
         except Exception:
             pass
 
-    # Boot completed successfully — discard any import backup/marker.
+    # Boot completed successfully - discard any import backup/marker.
     cleanup_successful_import()
 
     display = result["display"]

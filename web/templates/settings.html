@@ -64,7 +64,7 @@
               <router-link class="nav-link" to="/admin" data-section="group-logging"><i class="bi bi-terminal me-2"></i>Logging</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-password"><i class="bi bi-key me-2"></i>Change Password</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-clear-cache"><i class="bi bi-trash3 me-2"></i>Clear Cache</router-link>
-              <router-link class="nav-link" to="/admin" data-section="group-backup"><i class="bi bi-shield-plus me-2"></i>Backup</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-backup"><i class="bi bi-file-earmark-arrow-down me-2"></i>Backup</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-version"><i class="bi bi-info-circle me-2"></i>Version</router-link>
           </nav>
         </div>
@@ -428,7 +428,7 @@
         })();
 
         // ---- Brace-balance indicator ----
-        // Trivially correct: counts { vs } — no field/unit knowledge needed.
+        // Trivially correct: counts { vs } - no field/unit knowledge needed.
         (function() {
           var textarea = document.getElementById('details_custom_template');
           var indicator = document.getElementById('brace_balance');
@@ -453,7 +453,7 @@
 
         // ---- Autocomplete on { keypress ----
         // Reads field/symbol names from the reference table in the DOM
-        // (single source of truth — no duplicated list to maintain).
+        // (single source of truth - no duplicated list to maintain).
         (function() {
           var textarea = document.getElementById('details_custom_template');
           if (!textarea) return;
@@ -463,7 +463,7 @@
           // Symbols: {symbol:name} and {heading_arrow} in the symbols table.
           var tagNames = [];
 
-          // Fields table — first <code> in each data row.
+          // Fields table - first <code> in each data row.
           var fieldCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
           fieldCodes.forEach(function(code) {
             var text = code.textContent.trim();
@@ -473,7 +473,7 @@
             }
           });
 
-          // Symbols table — extract names from {symbol:name}, {heading_arrow}, and {heading_direction}.
+          // Symbols table - extract names from {symbol:name}, {heading_arrow}, and {heading_direction}.
           var symbolCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
           symbolCodes.forEach(function(code) {
             var text = code.textContent.trim();
@@ -1271,7 +1271,7 @@
 
         <!-- ====== Backup ====== -->
         <div id="group-backup" class="card mb-3 p-3">
-          <p class="section-heading"><i class="bi bi-shield-plus me-2"></i>Backup</p>
+          <p class="section-heading"><i class="bi bi-file-earmark-arrow-down me-2"></i>Backup</p>
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
               <div class="text-muted small">Download a full copy of your settings (including API keys) or restore from a previous export.</div>

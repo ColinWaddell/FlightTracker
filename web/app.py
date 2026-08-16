@@ -301,7 +301,7 @@ def parse_backup_json(raw: bytes) -> tuple[dict | None, list[int] | None, str | 
     Validation is intentionally minimal and permissive: only valid JSON
     and a top-level dict are required.  No key checks against ``DEFAULTS``
     are performed, so backups from newer or older FlightTracker versions
-    are accepted — the version-mismatch warning is the user's informed
+    are accepted - the version-mismatch warning is the user's informed
     consent, and ``Config.load()`` merges unknown/missing keys gracefully.
     An empty ``{}`` is accepted (it merges to ``DEFAULTS`` on load).
     """
@@ -615,7 +615,7 @@ def settings():
                     new_data.get("details_custom_template", "")
                 )
                 if template_errors:
-                    # Don't raise — pass errors to the template for inline
+                    # Don't raise - pass errors to the template for inline
                     # display next to the textarea.
                     merged_cfg = {**cfg.as_dict(), **new_data}
                     return (
@@ -792,8 +792,8 @@ def backup_export():
 def backup_restore():
     """Upload a backup file and confirm before overwriting settings.
 
-    GET  — show the upload form with the overwrite warning.
-    POST — parse the uploaded file, check the version, and either show an
+    GET  - show the upload form with the overwrite warning.
+    POST - parse the uploaded file, check the version, and either show an
            error or render the confirm view.  The parsed config is stashed
            to ``config-update.json`` only when the user confirms via the
            separate ``/backup/restore/apply`` endpoint, so this step never
@@ -806,7 +806,7 @@ def backup_restore():
             active_page="backup",
         )
 
-    # POST — parse upload
+    # POST - parse upload
     if not validate_csrf(request.form):
         return (
             render_template(
@@ -915,7 +915,7 @@ def backup_restore_apply():
     """Write the staged backup to ``config-update.json`` and reboot.
 
     The actual overwrite of ``config.json`` happens on the next boot via
-    the swap-on-boot logic in ``flight-tracker.py`` — this endpoint never
+    the swap-on-boot logic in ``flight-tracker.py`` - this endpoint never
     touches the live config directly.
     """
     if not validate_csrf(request.form):
@@ -980,12 +980,12 @@ def backup_restore_apply():
             500,
         )
 
-    # Clean up the stash — config-update.json is now the source of truth.
+    # Clean up the stash - config-update.json is now the source of truth.
     with contextlib.suppress(OSError):
         stash_path.unlink()
 
     logger.info(
-        "Config import confirmed — wrote %s, restarting to apply",
+        "Config import confirmed - wrote %s, restarting to apply",
         CONFIG_UPDATE_PATH,
     )
     restart_after(delay=1.0)

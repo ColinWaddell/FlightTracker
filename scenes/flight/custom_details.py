@@ -546,7 +546,7 @@ def validate_template(template: str) -> list[str]:
             continue
 
         # Dynamic heading_direction tag: {heading_direction} or
-        # {heading_direction:#colour} — cardinal direction text (N, NE, ...).
+        # {heading_direction:#colour} - cardinal direction text (N, NE, ...).
         if inner == "heading_direction" or inner.startswith("heading_direction:"):
             if ":" in inner:
                 colour_part = inner.split(":", 1)[1]

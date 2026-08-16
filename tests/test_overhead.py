@@ -222,7 +222,7 @@ class TestTar1090DataUnavailability:
                     "speed": 415,  # dump1090 name (no gs)
                     "vert_rate": 64,  # dump1090 name (no baro_rate)
                     "track": 277,
-                    # no "desc" field — common when --db-file-lt isn't set
+                    # no "desc" field - common when --db-file-lt isn't set
                 }
             ]
         }
