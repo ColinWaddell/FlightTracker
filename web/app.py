@@ -410,6 +410,12 @@ def parse_settings_form(form, cfg) -> dict:
             if (v := str_val(form.get("height_unit"), "m").lower()) in ("m", "ft")
             else "m"
         ),
+        "number_separator": (
+            v
+            if (v := str_val(form.get("number_separator"), "none").lower())
+            in ("none", "comma", "period")
+            else "none"
+        ),
         "weather_refresh_minutes": max(
             1,
             min(

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Experimental support for 1:32 panels
 - Move "Help" into its own card
 
+## [v2.6.3] - 2026-08-10
+ - Date/Time formatting fixes
+ - Numeric seperator adding to config options
+ - Plane details scroller is now the correct width
+
 ## [v2.6.2] - 2026-08-10
 - Better TAR1090 support 
 - New `{heading_direction}` tag for custom plane details scroller

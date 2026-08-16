@@ -1202,6 +1202,16 @@
             <div class="form-text text-muted small">How aircraft and satellite altitudes are shown.</div>
           </div>
 
+          <div class="mb-3">
+            <label class="form-label small">Number separator</label>
+            <select class="form-select form-select-sm" name="number_separator" style="max-width:180px">
+              <option value="none" {% if cfg.number_separator == 'none' %}selected{% endif %}>None (10000)</option>
+              <option value="comma" {% if cfg.number_separator == 'comma' %}selected{% endif %}>Comma (10,000)</option>
+              <option value="period" {% if cfg.number_separator == 'period' %}selected{% endif %}>Period (10.000)</option>
+            </select>
+            <div class="form-text text-muted small">How large numbers are grouped in the plane details scroller.</div>
+          </div>
+
           <h5>Clock and Date</h5>
           <div class="mb-2 form-check">
             <input type="checkbox" class="form-check-input" name="clock_24hr" id="clock_24hr"

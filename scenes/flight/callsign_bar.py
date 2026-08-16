@@ -287,7 +287,7 @@ class AirlineNameBar:
                 canvas,
                 FLIGHT_NO_POSITION[0],
                 FLIGHT_NO_POSITION[1] - 1,
-                DATA_INDEX_POSITION[0] - 2 if flight_count > 1 else screen.WIDTH - 1,
+                DATA_INDEX_POSITION[0] - 2 if flight_count > 1 else screen.WIDTH,
                 self.spans,
                 bounce=True,
             )
