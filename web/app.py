@@ -19,8 +19,10 @@ GET  /logs/download  -> download full log buffer as .txt
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import hashlib
+import json
 import logging
 import os
 import secrets
@@ -31,12 +33,17 @@ from pathlib import Path
 
 from flask import Flask, Response, redirect, render_template, request, session, url_for
 
-from setup.configuration import CONFIG_PATH, Config
+from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
 from utilities import routes_cache
 from utilities.flight import Flight
 from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
-from utilities.updater import get_update_info, perform_update, version_string
+from utilities.updater import (
+    compare_versions,
+    get_update_info,
+    perform_update,
+    version_string,
+)
 from version import VERSION
 
 # Port is read from config.json via Config.web_port (default 8584).
@@ -259,6 +266,75 @@ def restart_after(delay: float = 1.0):
 
 
 # ---------------------------------------------------------------------------
+# Backup import / export helpers
+# ---------------------------------------------------------------------------
+
+# Files used by the swap-on-boot import mechanism (see flight-tracker.py).
+# The web layer only writes CONFIG_UPDATE_PATH; the boot logic handles the
+# rest.  Kept here so both modules share a single source of truth.
+CONFIG_UPDATE_PATH = PLATFORM_DATA_DIR / "config-update.json"
+CONFIG_BACKUP_PATH = PLATFORM_DATA_DIR / "config-backup.json"
+IMPORT_IN_PROGRESS_MARKER = PLATFORM_DATA_DIR / ".import-in-progress"
+IMPORT_FAILED_MARKER = PLATFORM_DATA_DIR / ".import-failed"
+
+
+def build_backup_dict(cfg: Config) -> dict:
+    """Return a copy of the current config tagged with the running version.
+
+    The ``_version`` key is forced to :data:`VERSION` so the export always
+    reflects the software that produced it, even if the on-disk config
+    carries a stale value from an older release.
+    """
+    data = dict(cfg.as_dict())
+    data["_version"] = list(VERSION)
+    return data
+
+
+def parse_backup_json(raw: bytes) -> tuple[dict | None, list[int] | None, str | None]:
+    """Parse an uploaded backup file.
+
+    Returns ``(data, backup_version, error)``.  On success ``error`` is
+    ``None`` and ``data`` is the parsed dict.  ``backup_version`` is the
+    ``_version`` list from the file, or ``None`` when the key is absent
+    (e.g. an export from before version tagging existed).
+
+    Validation is intentionally minimal and permissive: only valid JSON
+    and a top-level dict are required.  No key checks against ``DEFAULTS``
+    are performed, so backups from newer or older FlightTracker versions
+    are accepted - the version-mismatch warning is the user's informed
+    consent, and ``Config.load()`` merges unknown/missing keys gracefully.
+    An empty ``{}`` is accepted (it merges to ``DEFAULTS`` on load).
+    """
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        return None, None, f"File is not valid JSON: {exc}"
+    if not isinstance(data, dict):
+        return None, None, "File is not a valid config (expected a JSON object)."
+    version = data.get("_version")
+    if version is not None and (
+        not isinstance(version, list) or not all(isinstance(n, int) for n in version)
+    ):
+        version = None
+    return data, version, None
+
+
+def _consume_import_failed_marker() -> bool:
+    """Return True if a failed-import marker was present, and delete it.
+
+    Called by the settings route so the user sees a one-shot alert after
+    a crashed import was auto-restored on boot.
+    """
+    try:
+        IMPORT_FAILED_MARKER.unlink()
+        return True
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False
+
+
+# ---------------------------------------------------------------------------
 # Settings form parsing
 # ---------------------------------------------------------------------------
 
@@ -378,6 +454,9 @@ def parse_settings_form(form, cfg) -> dict:
             if str_val(form.get("display_speed"), cfg.display_speed).lower()
             in ("default", "slower", "faster")
             else cfg.display_speed
+        ),
+        "display_scan_rate": (
+            32 if str_val(form.get("display_scan_rate"), "").lower() == "32" else 16
         ),
         # Brightness schedule
         "screen_schedule_enabled": bool_val(form.get("screen_schedule_enabled")),
@@ -545,7 +624,7 @@ def settings():
                     new_data.get("details_custom_template", "")
                 )
                 if template_errors:
-                    # Don't raise — pass errors to the template for inline
+                    # Don't raise - pass errors to the template for inline
                     # display next to the textarea.
                     merged_cfg = {**cfg.as_dict(), **new_data}
                     return (
@@ -617,6 +696,7 @@ def settings():
         restart_after(delay=1.0)
         return render_template("restarting.html")
 
+    import_failed = _consume_import_failed_marker()
     return render_template(
         "settings.html",
         cfg=cfg.as_dict(),
@@ -627,6 +707,7 @@ def settings():
         schedule_window=cfg.brightness_schedule_window,
         current_version=version_string(VERSION),
         active_page="settings",
+        import_failed=import_failed,
     )
 
 
@@ -690,6 +771,234 @@ def debug_config():
             "Content-Disposition": "attachment; filename=flighttracker-debug-config.json"
         },
     )
+
+
+@app.route("/backup/export")
+@login_required
+def backup_export():
+    """Download a full, unredacted copy of the current config as a backup.
+
+    The filename includes a timestamp so successive exports don't collide.
+    The ``_version`` key is set to the running version so imports can
+    detect version mismatches.
+    """
+    import datetime as _dt
+
+    cfg = Config.instance()
+    payload = json.dumps(build_backup_dict(cfg), indent=2, sort_keys=True)
+    timestamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"config-{timestamp}.json"
+    logger.info("Exporting config backup: %s", filename)
+    return Response(
+        payload,
+        mimetype="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.route("/backup/restore", methods=["GET", "POST"])
+@login_required
+def backup_restore():
+    """Upload a backup file and confirm before overwriting settings.
+
+    GET  - show the upload form with the overwrite warning.
+    POST - parse the uploaded file, check the version, and either show an
+           error or render the confirm view.  The parsed config is stashed
+           to ``config-update.json`` only when the user confirms via the
+           separate ``/backup/restore/apply`` endpoint, so this step never
+           touches the live config.
+    """
+    if request.method == "GET":
+        return render_template(
+            "restore.html",
+            csrf_token=csrf_token(),
+            active_page="backup",
+        )
+
+    # POST - parse upload
+    if not validate_csrf(request.form):
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+                active_page="backup",
+            ),
+            403,
+        )
+
+    uploaded = request.files.get("backup_file")
+    if uploaded is None or not uploaded.filename:
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error="No file selected. Please choose a backup file to import.",
+                active_page="backup",
+            ),
+            400,
+        )
+
+    raw = uploaded.read()
+    data, backup_version, error = parse_backup_json(raw)
+    if error is not None:
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error=error,
+                active_page="backup",
+            ),
+            400,
+        )
+
+    # Version comparison for the confirm view.
+    current_version = list(VERSION)
+    if backup_version is None:
+        version_warning = (
+            "This backup does not contain a version tag. It may be from an "
+            "older release of Flight Tracker; some settings may not apply."
+        )
+        comparison = None
+    else:
+        comparison = compare_versions(backup_version, current_version)
+        if comparison < 0:
+            version_warning = (
+                f"This backup is from an older version of Flight Tracker "
+                f"({version_string(backup_version)}). You are running "
+                f"{version_string(current_version)}. Some settings may not "
+                f"apply."
+            )
+        elif comparison > 0:
+            version_warning = (
+                f"This backup is from a newer version of Flight Tracker "
+                f"({version_string(backup_version)}). You are running "
+                f"{version_string(current_version)}. Some settings may not "
+                f"be recognised by your version."
+            )
+        else:
+            version_warning = None
+
+    # Stash the parsed config server-side so the apply step doesn't need the
+    # file re-uploaded.  A nonce in the session ties the confirm POST to this
+    # specific upload.
+    nonce = secrets.token_hex(16)
+    stash_path = PLATFORM_DATA_DIR / f".pending-backup-{nonce}.json"
+    tmp_path = stash_path.with_suffix(".tmp")
+    try:
+        with open(tmp_path, "w") as fh:
+            json.dump(data, fh, indent=2)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, stash_path)
+    except OSError as exc:
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error=f"Failed to stage backup for import: {exc}",
+                active_page="backup",
+            ),
+            500,
+        )
+
+    session["pending_backup_nonce"] = nonce
+    logger.info("Backup staged for import (nonce %s)", nonce)
+
+    return render_template(
+        "restore.html",
+        csrf_token=csrf_token(),
+        confirm=True,
+        backup_version=(
+            version_string(backup_version) if backup_version is not None else "unknown"
+        ),
+        current_version=version_string(current_version),
+        version_warning=version_warning,
+        active_page="backup",
+    )
+
+
+@app.route("/backup/restore/apply", methods=["POST"])
+@login_required
+def backup_restore_apply():
+    """Write the staged backup to ``config-update.json`` and reboot.
+
+    The actual overwrite of ``config.json`` happens on the next boot via
+    the swap-on-boot logic in ``flight-tracker.py`` - this endpoint never
+    touches the live config directly.
+    """
+    if not validate_csrf(request.form):
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error="Invalid CSRF token.",
+                active_page="backup",
+            ),
+            403,
+        )
+
+    nonce = session.pop("pending_backup_nonce", None)
+    if not nonce:
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error="No pending backup found. Please upload a file again.",
+                active_page="backup",
+            ),
+            400,
+        )
+
+    stash_path = PLATFORM_DATA_DIR / f".pending-backup-{nonce}.json"
+    try:
+        with open(stash_path) as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        # Clean up the stash if it's unreadable.
+        with contextlib.suppress(OSError):
+            stash_path.unlink()
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error=f"Staged backup is unreadable: {exc}. Please upload again.",
+                active_page="backup",
+            ),
+            500,
+        )
+
+    # Write the confirmed config to config-update.json atomically.
+    try:
+        tmp_path = CONFIG_UPDATE_PATH.with_suffix(CONFIG_UPDATE_PATH.suffix + ".tmp")
+        with open(tmp_path, "w") as fh:
+            json.dump(data, fh, indent=2)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, CONFIG_UPDATE_PATH)
+    except OSError as exc:
+        with contextlib.suppress(OSError):
+            stash_path.unlink()
+        return (
+            render_template(
+                "restore.html",
+                csrf_token=csrf_token(),
+                error=f"Failed to write config update file: {exc}",
+                active_page="backup",
+            ),
+            500,
+        )
+
+    # Clean up the stash - config-update.json is now the source of truth.
+    with contextlib.suppress(OSError):
+        stash_path.unlink()
+
+    logger.info(
+        "Config import confirmed - wrote %s, restarting to apply",
+        CONFIG_UPDATE_PATH,
+    )
+    restart_after(delay=1.0)
+    return render_template("restarting.html")
 
 
 @app.route("/logs")
