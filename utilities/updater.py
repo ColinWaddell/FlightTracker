@@ -63,6 +63,26 @@ def is_newer(remote: list[int], local: list[int]) -> bool:
     return False  # equal
 
 
+def compare_versions(a: list[int], b: list[int]) -> int:
+    """Compare two version lists element-wise.
+
+    Returns -1 if ``a`` < ``b``, 0 if equal, +1 if ``a`` > ``b``.
+
+    Unlike :func:`is_newer` this performs a full three-way comparison and
+    handles differing lengths by treating missing elements as 0, so
+    ``[2, 6]`` compares equal to ``[2, 6, 0]``.
+    """
+    max_len = max(len(a), len(b))
+    for i in range(max_len):
+        ai = a[i] if i < len(a) else 0
+        bi = b[i] if i < len(b) else 0
+        if ai < bi:
+            return -1
+        if ai > bi:
+            return 1
+    return 0
+
+
 def version_string(version: list[int]) -> str:
     """Format a version list as 'v2.0.1'."""
     return "v" + ".".join(map(str, version))

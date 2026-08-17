@@ -64,6 +64,8 @@
               <router-link class="nav-link" to="/admin" data-section="group-logging"><i class="bi bi-terminal me-2"></i>Logging</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-password"><i class="bi bi-key me-2"></i>Change Password</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-clear-cache"><i class="bi bi-trash3 me-2"></i>Clear Cache</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-backup"><i class="bi bi-file-earmark-arrow-down me-2"></i>Backup</router-link>
+              <router-link class="nav-link" to="/admin" data-section="group-help"><i class="bi bi-question-circle me-2"></i>Help &amp; Support</router-link>
               <router-link class="nav-link" to="/admin" data-section="group-version"><i class="bi bi-info-circle me-2"></i>Version</router-link>
           </nav>
         </div>
@@ -87,6 +89,14 @@
             <li>{{ err }}</li>
             {% endfor %}
           </ul>
+        </div>
+        {% endif %}
+
+        {% if import_failed %}
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+          <strong><i class="bi bi-exclamation-triangle me-1"></i>Import failed:</strong>
+          The last config import failed and your previous settings have been restored.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endif %}
 
@@ -419,7 +429,7 @@
         })();
 
         // ---- Brace-balance indicator ----
-        // Trivially correct: counts { vs } — no field/unit knowledge needed.
+        // Trivially correct: counts { vs } - no field/unit knowledge needed.
         (function() {
           var textarea = document.getElementById('details_custom_template');
           var indicator = document.getElementById('brace_balance');
@@ -444,7 +454,7 @@
 
         // ---- Autocomplete on { keypress ----
         // Reads field/symbol names from the reference table in the DOM
-        // (single source of truth — no duplicated list to maintain).
+        // (single source of truth - no duplicated list to maintain).
         (function() {
           var textarea = document.getElementById('details_custom_template');
           if (!textarea) return;
@@ -454,7 +464,7 @@
           // Symbols: {symbol:name} and {heading_arrow} in the symbols table.
           var tagNames = [];
 
-          // Fields table — first <code> in each data row.
+          // Fields table - first <code> in each data row.
           var fieldCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
           fieldCodes.forEach(function(code) {
             var text = code.textContent.trim();
@@ -464,7 +474,7 @@
             }
           });
 
-          // Symbols table — extract names from {symbol:name}, {heading_arrow}, and {heading_direction}.
+          // Symbols table - extract names from {symbol:name}, {heading_arrow}, and {heading_direction}.
           var symbolCodes = document.querySelectorAll('#custom_template_panel table tbody tr td:first-child code');
           symbolCodes.forEach(function(code) {
             var text = code.textContent.trim();
@@ -1110,6 +1120,25 @@
             <div class="form-text text-muted small">If you soldered the bridge and selected Quality during setup, choose Quality Mode here to enable Adafruit PWM mode. Otherwise choose Convenience Mode. These options have no effect on a Pi 5; they only apply to older Pi models using the rgbmatrix library.</div>
           </div>
 
+          <hr class="my-3" />
+
+          <div class="mb-3">
+            <label class="form-label small">Display Scan Rate</label>
+            <div class="btn-group w-100" role="group" aria-label="Display Scan Rate">
+              <input type="radio" class="btn-check" name="display_scan_rate" id="display_scan_rate_16" value="16" autocomplete="off"
+                     {% if cfg.display_scan_rate != 32 %}checked{% endif %} />
+              <label class="btn btn-outline-primary btn-sm" for="display_scan_rate_16">1:16</label>
+
+              <input type="radio" class="btn-check" name="display_scan_rate" id="display_scan_rate_32" value="32" autocomplete="off"
+                     {% if cfg.display_scan_rate == 32 %}checked{% endif %} />
+              <label class="btn btn-outline-primary btn-sm" for="display_scan_rate_32">1:32</label>
+            </div>
+            <div class="form-text text-muted small">LED panels are either 1:16 or 1:32 scan rate. 64×32 panels are usually 1:16, but if you can only see half the image you likely have a 1:32 panel (these are normally cut-down 64×64 panels). You can sometimes tell from the serial number on the back of the panel &mdash; look for <code>16S</code> or <code>32S</code>.</div>
+            <div class="form-text text-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Experimental feature.</div>
+          </div>
+          
+          <hr class="my-3" />
+
           <div class="mb-3">
             <label class="form-label small">GPIO slowdown (1-4)</label>
             <input type="number" min="1" max="4" class="form-control form-control-sm"
@@ -1182,6 +1211,8 @@
             </select>
             <div class="form-text text-muted small">How large numbers are grouped in the plane details scroller.</div>
           </div>
+
+          <hr />
 
           <h5>Clock and Date</h5>
           <div class="mb-2 form-check">
@@ -1270,6 +1301,42 @@
           </div>
         </div>
 
+        <!-- ====== Backup ====== -->
+        <div id="group-backup" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-file-earmark-arrow-down me-2"></i>Backup</p>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="text-muted small">Download a full copy of your settings (including API keys) or restore from a previous export.</div>
+              <div class="fw-semibold">Restoring will overwrite all settings and restart.</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <a href="/backup/export" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-download me-1"></i>Export</a>
+              <a href="/backup/restore" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-upload me-1"></i>Restore</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Help & Support ====== -->
+        <div id="group-help" class="card mb-3 p-3">
+          <p class="section-heading"><i class="bi bi-question-circle me-2"></i>Help &amp; Support</p>
+          <div class="text-muted small mb-2">
+            <p>
+                Found a bug or need a hand? Open an issue on
+                <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">GitHub</a>.
+            </p>
+
+            <p>
+                If you need to post your config data use the button below, it removes your password and
+                API keys making it safe to post online.
+            </p>
+          </div>
+          <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>Download debug config
+          </a>
+        </div>
+
         </div><!-- /page-admin -->
 
         {% if error %}
@@ -1283,21 +1350,20 @@
         </div>
 
       </form>
+
+      <footer class="mt-4 pt-3 border-top text-muted small">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <p class="mb-0">
+            <a href="https://colinwaddell.github.io/FlightTracker/" target="_blank">Flight Tracker</a>
+            by <a href="https://www.colinwaddell.com" target="_blank">Colin Waddell</a>
+            &middot;
+            Released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a>
+          </p>
+        </div>
+      </footer>
+
     </div><!-- /col-md-9 -->
   </div><!-- /row -->
-
-  <footer class="mt-4 pt-3 border-top text-muted small">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <p class="mb-0" style="max-width:700px">
-        Need help? Download a safe copy of your configuration below &mdash; API keys
-        and passwords are automatically removed so you can paste it straight into a
-        <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">GitHub issue</a>.
-      </p>
-      <a href="/debug-config" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-download me-1"></i>Download debug config
-      </a>
-    </div>
-  </footer>
 </div><!-- /container-fluid -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

@@ -230,6 +230,9 @@ python flight-tracker.py config
 sudo systemctl start FlightTracker.service
 ```
 
+- **Only half my screen is lit up:**
+  Head into `Setting -> Hardware` and select `1:32` as your scan-rate.
+
 ---
 
 

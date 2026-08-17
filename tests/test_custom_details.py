@@ -582,7 +582,7 @@ class TestValidateTemplate:
 
 
 # ---------------------------------------------------------------------------
-# heading_arrow — dynamic directional symbol
+# heading_arrow - dynamic directional symbol
 # ---------------------------------------------------------------------------
 
 
@@ -710,7 +710,7 @@ class TestHeadingArrow:
 
 
 # ---------------------------------------------------------------------------
-# heading_direction — dynamic cardinal-direction text tag
+# heading_direction - dynamic cardinal-direction text tag
 # ---------------------------------------------------------------------------
 
 
