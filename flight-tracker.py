@@ -498,7 +498,7 @@ def run_flight_tracker(disable_tests: bool = False):
     # Initialise matrix once with full config values
     panel.init_matrix(
         width=64,
-        height=32,
+        height=64 if cfg.display_scan_rate == 32 else 32,
         brightness=cfg.brightness_percent,
         rotation=180 if cfg.screen_rotate else 0,
         hat_pwm=cfg.hat_pwm_enabled,
