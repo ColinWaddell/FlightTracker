@@ -306,6 +306,9 @@ class AirlineNameBar:
                 bounce=True,
             )
             self.scroller.draw()
+            # Bar was just cleared — force x/N to redraw even if index/count unchanged.
+            self.last_index_drawn = None
+            self.last_flight_count_drawn = None
         elif self.scroller is not None:
             self.scroller.draw()
 
