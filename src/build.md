@@ -96,6 +96,30 @@ permalink: "/build/"
         
     </div>
 
+   <h3>3D Printed Case</h3>
+    <div class="narrative">
+        <p>There's an official 3D-printable case for FlightTracker, designed for the 64×32 HUB75 RGB LED matrix (4mm pitch) from the shopping list above.</p>
+        <ul>
+            <li>Works with any Raspberry Pi model — full-size boards (Pi 3, 4, 5) and smaller boards (Pi Zero W, Zero 2)</li>
+            <li>Two-piece interlocking design, prints on a normal-sized print bed</li>
+            <li>Built-in tabs hold the matrix securely — no extra fixings needed</li>
+            <li>OpenSCAD source available, so it's fully customisable</li>
+            <li>Licensed CC BY-NC 4.0 (non-commercial)</li>
+        </ul>
+        <p>Download the ready-to-print files or grab the OpenSCAD source:</p>
+        <ul>
+            <li><a href="https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6">Printables - download the STL files</a></li>
+            <li><a href="https://github.com/ColinWaddell/FlightTracker-Case">GitHub - OpenSCAD source and assembly instructions</a></li>
+        </ul>
+
+        <div class="card">
+          <div class="card-body p-2 bg-black">
+            <img src="/images/flight-tracker-case.jpg" alt="FlightTracker in the 3D printed case" loading="lazy" class="w-100 d-block">
+          </div>
+          <div class="card-header">FlightTracker in the 3D printed case</div>
+        </div>
+    </div>
+
    <h2>Optional extras</h2>
     <div class="info-panel narrative">
       <div class="info-panel-header">Optional extras</div>
