@@ -52,6 +52,15 @@ If you'd rather do it manually - or you want to understand what the script does 
 | Raspberry Pi 5 | [platforms/pi5/INSTALL.md](platforms/pi5/INSTALL.md) |
 | Desktop simulator | [platforms/simulator/INSTALL.md](platforms/simulator/INSTALL.md) |
 
+## 3D Printed Case
+
+There's an official 3D-printable case for FlightTracker, designed for the 64×32 HUB75 RGB LED matrix (4mm pitch). It's a two-piece interlocking design that works with any Raspberry Pi model and prints on a normal-sized bed with minimal supports.
+
+- Ready-to-print files on [Printables](https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6)
+- OpenSCAD source and assembly instructions on [GitHub](https://github.com/ColinWaddell/FlightTracker-Case)
+
+![FlightTracker in the 3D printed case](assets/flight-tracker-case.jpg)
+
 ---
 
 ## Optional features
