@@ -597,6 +597,76 @@ def logout():
     return redirect(url_for("login"))
 
 
+def _settings_page_data(
+    cfg,
+    template_errors=None,
+    error=None,
+    import_failed=False,
+):
+    """Build the context dict passed to settings.html.
+
+    The Vue app reads ``window.FT_CONFIG`` (the raw config dict) and
+    ``window.FT_PAGE_DATA`` (everything else: airports, version, URLs,
+    template errors, etc.).  This helper keeps both in sync so every
+    render_template call produces the same shape.
+    """
+    from flask import url_for as _url_for
+
+    schedule_window = cfg.brightness_schedule_window
+    # Serialise datetime.time objects to {hour, minute} dicts for JSON.
+    sw_json = [None, None]
+    if schedule_window and len(schedule_window) == 2:
+        sw_json = [
+            {"hour": t.hour, "minute": t.minute} if t else None for t in schedule_window
+        ]
+
+    return {
+        "cfg": cfg.as_dict(),
+        "airports_json": airports_json(),
+        "template_errors": template_errors or [],
+        "error": error,
+        "import_failed": import_failed,
+        "csrf_token": csrf_token(),
+        "in_schedule": cfg.is_in_brightness_schedule(),
+        "schedule_window": schedule_window,
+        "schedule_window_json": sw_json,
+        "current_version": version_string(VERSION),
+        "active_page": "settings",
+        "static_urls": {
+            "weatherExplained": _url_for(
+                "static", filename="images/weather_explained.png"
+            ),
+            "scaleExplained": _url_for("static", filename="images/scale_explained.png"),
+        },
+        "symbol_images": {
+            "{symbol:altitude}": _url_for(
+                "static", filename="images/symbols_altitude.png"
+            ),
+            "{symbol:speed}": _url_for("static", filename="images/symbols_speed.png"),
+            "{symbol:heading}": _url_for(
+                "static", filename="images/symbols_heading.png"
+            ),
+            "{symbol:degree}": _url_for(
+                "static", filename="images/symbols_degrees.png"
+            ),
+            "{symbol:origin_arrow}": _url_for(
+                "static", filename="images/symbols_origin.png"
+            ),
+            "{symbol:dest_arrow}": _url_for(
+                "static", filename="images/symbols_destination.png"
+            ),
+        },
+        "urls": {
+            "logs": _url_for("logs"),
+            "update": _url_for("update"),
+            "cacheClear": "/cache-clear",
+            "backupExport": "/backup/export",
+            "backupRestore": "/backup/restore",
+            "debugConfig": "/debug-config",
+        },
+    }
+
+
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
@@ -626,36 +696,29 @@ def settings():
                 if template_errors:
                     # Don't raise - pass errors to the template for inline
                     # display next to the textarea.
-                    merged_cfg = {**cfg.as_dict(), **new_data}
+                    merged_cfg = Config.__new__(Config)
+                    merged_cfg.data_store = {**cfg.as_dict(), **new_data}
                     return (
                         render_template(
                             "settings.html",
-                            cfg=merged_cfg,
-                            airports_json=airports_json(),
-                            template_errors=template_errors,
-                            csrf_token=csrf_token(),
-                            in_schedule=cfg.is_in_brightness_schedule(),
-                            schedule_window=cfg.brightness_schedule_window,
-                            current_version=version_string(VERSION),
-                            active_page="settings",
+                            **_settings_page_data(
+                                merged_cfg,
+                                template_errors=template_errors,
+                            ),
                         ),
                         400,
                     )
 
             if using_default_password and not new_password:
-                merged_cfg = {**cfg.as_dict(), **new_data}
+                merged_cfg = Config.__new__(Config)
+                merged_cfg.data_store = {**cfg.as_dict(), **new_data}
                 return (
                     render_template(
                         "settings.html",
-                        cfg=merged_cfg,
-                        airports_json=airports_json(),
-                        error="To change any setting you must update the default web-interface password, even if you plan on disabling the web-interface.",
-                        template_errors=[],
-                        csrf_token=csrf_token(),
-                        in_schedule=cfg.is_in_brightness_schedule(),
-                        schedule_window=cfg.brightness_schedule_window,
-                        current_version=version_string(VERSION),
-                        active_page="settings",
+                        **_settings_page_data(
+                            merged_cfg,
+                            error="To change any setting you must update the default web-interface password, even if you plan on disabling the web-interface.",
+                        ),
                     ),
                     400,
                 )
@@ -673,22 +736,16 @@ def settings():
             import traceback
 
             traceback.print_exc()
+            merged_cfg = Config.__new__(Config)
+            merged_cfg.data_store = (
+                {**cfg.as_dict(), **new_data}
+                if "new_data" in locals()
+                else cfg.as_dict()
+            )
             return (
                 render_template(
                     "settings.html",
-                    cfg=(
-                        {**cfg.as_dict(), **new_data}
-                        if "new_data" in locals()
-                        else cfg.as_dict()
-                    ),
-                    airports_json=airports_json(),
-                    error=str(exc),
-                    template_errors=[],
-                    csrf_token=csrf_token(),
-                    in_schedule=cfg.is_in_brightness_schedule(),
-                    schedule_window=cfg.brightness_schedule_window,
-                    current_version=version_string(VERSION),
-                    active_page="settings",
+                    **_settings_page_data(merged_cfg, error=str(exc)),
                 ),
                 400,
             )
@@ -699,15 +756,7 @@ def settings():
     import_failed = _consume_import_failed_marker()
     return render_template(
         "settings.html",
-        cfg=cfg.as_dict(),
-        airports_json=airports_json(),
-        template_errors=[],
-        csrf_token=csrf_token(),
-        in_schedule=cfg.is_in_brightness_schedule(),
-        schedule_window=cfg.brightness_schedule_window,
-        current_version=version_string(VERSION),
-        active_page="settings",
-        import_failed=import_failed,
+        **_settings_page_data(cfg, import_failed=import_failed),
     )
 
 
