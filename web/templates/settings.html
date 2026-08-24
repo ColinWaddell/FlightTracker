@@ -157,7 +157,7 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Search Radius: <span id="radius_display">{{ cfg.flight_radius }}</span> km</label>
+              <label class="form-label">Search Radius: <span id="radius_display">{{ cfg.flight_radius }}</span> <span id="radius_unit_label">km</span></label>
               <input type="range" class="form-range pt-3 px-2" name="flight_radius" id="flight_radius"
                      min="1" max="100" step="0.5" value="{{ cfg.flight_radius }}" />
             </div>
@@ -188,17 +188,17 @@
 
           <div class="row g-3">
             <div class="col">
-              <label class="form-label small">Min Altitude (m)</label>
+              <label class="form-label small">Min Altitude (<span id="min_alt_unit_label">m</span>)</label>
               <input type="number" step="10" min="10" max="20000" class="form-control form-control-sm"
-                     name="flight_min_altitude" value="{{ cfg.flight_min_altitude }}" />
+                     name="flight_min_altitude" id="flight_min_altitude" value="{{ cfg.flight_min_altitude }}" />
             </div>
             <div class="col">
-              <label class="form-label small">Max Altitude (m)</label>
+              <label class="form-label small">Max Altitude (<span id="max_alt_unit_label">m</span>)</label>
               <input type="number" step="100" min="100" max="40000" class="form-control form-control-sm"
-                     name="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
+                     name="flight_max_altitude" id="flight_max_altitude" value="{{ cfg.flight_max_altitude }}" />
             </div>
           </div>
-          <p class="form-text small text-muted mt-1 mb-0">
+          <p class="form-text small text-muted mt-1 mb-0" id="altitude_help_text">
             <i class="bi bi-info-circle me-1"></i>Setting a non-zero minimum altitude (say, <code>10m</code>) prevents the device always listing aircraft on the tarmac.
           </p>
         </div>
@@ -1203,7 +1203,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small">Height</label>
+            <label class="form-label small">Height and Distance</label>
             <select class="form-select form-select-sm" name="height_unit" style="max-width:180px">
               <option value="m" {% if cfg.height_unit == 'm' %}selected{% endif %}>Metres (m)</option>
               <option value="ft" {% if cfg.height_unit == 'ft' %}selected{% endif %}>Feet (ft)</option>

@@ -158,6 +158,126 @@
   const initLng = parseFloat(document.getElementById("flight_lng").value) || -4.25;
   const initRadius = parseFloat(document.getElementById("flight_radius").value) || 20;
 
+  // ===========================================================================
+  // Height / distance unit helpers (metric ↔ imperial)
+  // ===========================================================================
+  // The backend always stores flight_radius in km and altitudes in metres.
+  // When height_unit is "ft" we display radius in miles and altitudes in feet,
+  // converting back to the stored units just before the form is submitted.
+  const FT_PER_M = 3.28084;
+  const MI_PER_KM = 0.621371;
+  const mToFt = (m) => m * FT_PER_M;
+  const ftToM = (ft) => ft / FT_PER_M;
+  const kmToMi = (km) => km * MI_PER_KM;
+  const miToKm = (mi) => mi / MI_PER_KM;
+
+  // Slider / input bounds expressed in the *stored* (metric) unit.
+  const RADIUS_BOUNDS = { min: 1, max: 100, step: 0.5 };          // km
+  const MIN_ALT_BOUNDS = { min: 10, max: 20000, step: 10 };       // metres
+  const MAX_ALT_BOUNDS = { min: 100, max: 40000, step: 100 };     // metres
+
+  function isImperial() {
+    const sel = document.querySelector('select[name="height_unit"]');
+    return sel ? sel.value === "ft" : false;
+  }
+
+  // Track which unit the fields are *currently displayed in* so we know how
+  // to interpret the existing input values when toggling.  Jinja renders the
+  // raw stored values (metric) on page load, so we start as metric.
+  let fieldsAreImperial = false;
+
+  // Convert the radius / altitude fields between metric and imperial for
+  // display.  The Leaflet circle is always sized in metres so the map stays
+  // physically correct regardless of the chosen unit.
+  function applyUnitToFields() {
+    const imperial = isImperial();
+    const radiusInput = document.getElementById("flight_radius");
+    const radiusDisplay = document.getElementById("radius_display");
+    const radiusUnitLabel = document.getElementById("radius_unit_label");
+    const minAltInput = document.getElementById("flight_min_altitude");
+    const maxAltInput = document.getElementById("flight_max_altitude");
+    const minAltLabel = document.getElementById("min_alt_unit_label");
+    const maxAltLabel = document.getElementById("max_alt_unit_label");
+    const helpText = document.getElementById("altitude_help_text");
+
+    // No-op if the display unit hasn't changed (e.g. re-called on load after
+    // already being in the right unit).
+    if (imperial === fieldsAreImperial) {
+      // Still update labels + circle in case this is the first call.
+      radiusUnitLabel.textContent = imperial ? "mi" : "km";
+      minAltLabel.textContent = imperial ? "ft" : "m";
+      maxAltLabel.textContent = imperial ? "ft" : "m";
+    } else {
+      // -- Convert existing values from the current display unit to the new one --
+      // Radius: km ↔ miles
+      const curRadius = parseFloat(radiusInput.value) || RADIUS_BOUNDS.min;
+      const newRadius = imperial ? kmToMi(curRadius) : miToKm(curRadius);
+      radiusInput.min = imperial
+        ? (RADIUS_BOUNDS.min * MI_PER_KM).toFixed(3)
+        : RADIUS_BOUNDS.min;
+      radiusInput.max = imperial
+        ? (RADIUS_BOUNDS.max * MI_PER_KM).toFixed(3)
+        : RADIUS_BOUNDS.max;
+      radiusInput.step = imperial
+        ? (RADIUS_BOUNDS.step * MI_PER_KM).toFixed(3)
+        : RADIUS_BOUNDS.step;
+      radiusInput.value = imperial ? newRadius.toFixed(3) : newRadius;
+      radiusUnitLabel.textContent = imperial ? "mi" : "km";
+
+      // Min altitude: metres ↔ feet
+      const curMinAlt = parseFloat(minAltInput.value) || MIN_ALT_BOUNDS.min;
+      const newMinAlt = imperial ? mToFt(curMinAlt) : ftToM(curMinAlt);
+      minAltInput.min = imperial
+        ? (MIN_ALT_BOUNDS.min * FT_PER_M).toFixed(0)
+        : MIN_ALT_BOUNDS.min;
+      minAltInput.max = imperial
+        ? (MIN_ALT_BOUNDS.max * FT_PER_M).toFixed(0)
+        : MIN_ALT_BOUNDS.max;
+      minAltInput.step = imperial
+        ? (MIN_ALT_BOUNDS.step * FT_PER_M).toFixed(0)
+        : MIN_ALT_BOUNDS.step;
+      minAltInput.value = Math.round(newMinAlt);
+      minAltLabel.textContent = imperial ? "ft" : "m";
+
+      // Max altitude: metres ↔ feet
+      const curMaxAlt = parseFloat(maxAltInput.value) || MAX_ALT_BOUNDS.min;
+      const newMaxAlt = imperial ? mToFt(curMaxAlt) : ftToM(curMaxAlt);
+      maxAltInput.min = imperial
+        ? (MAX_ALT_BOUNDS.min * FT_PER_M).toFixed(0)
+        : MAX_ALT_BOUNDS.min;
+      maxAltInput.max = imperial
+        ? (MAX_ALT_BOUNDS.max * FT_PER_M).toFixed(0)
+        : MAX_ALT_BOUNDS.max;
+      maxAltInput.step = imperial
+        ? (MAX_ALT_BOUNDS.step * FT_PER_M).toFixed(0)
+        : MAX_ALT_BOUNDS.step;
+      maxAltInput.value = Math.round(newMaxAlt);
+      maxAltLabel.textContent = imperial ? "ft" : "m";
+
+      fieldsAreImperial = imperial;
+    }
+
+    radiusDisplay.textContent = radiusInput.value;
+
+    // -- Help text example value --
+    if (helpText) {
+      const exampleVal = imperial ? "30ft" : "10m";
+      helpText.innerHTML =
+        '<i class="bi bi-info-circle me-1"></i>Setting a non-zero minimum altitude (say, <code>'
+        + exampleVal + '</code>) prevents the device always listing aircraft on the tarmac.';
+    }
+
+    // -- Keep the Leaflet circle in sync (always metres) --
+    if (typeof circle !== "undefined") {
+      const displayRadius = parseFloat(radiusInput.value) || RADIUS_BOUNDS.min;
+      const radiusKm = imperial ? miToKm(displayRadius) : displayRadius;
+      circle.setRadius(radiusKm * 1000);
+      if (typeof map !== "undefined") {
+        map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+      }
+    }
+  }
+
   const map = L.map("map", {
     worldCopyJump: true,
     maxBounds: WORLD_BOUNDS,
@@ -318,9 +438,21 @@
   document.getElementById("flight_radius").addEventListener("input", e => {
     const r = parseFloat(e.target.value);
     document.getElementById("radius_display").textContent = r;
-    circle.setRadius(r * 1000);
+    const radiusKm = isImperial() ? miToKm(r) : r;
+    circle.setRadius(radiusKm * 1000);
     map.fitBounds(circle.getBounds(), { padding: [20, 20] });
   });
+
+  // -- Height / distance unit toggle --
+  // Re-render the radius + altitude fields in the newly selected unit.
+  const heightUnitSelect = document.querySelector('select[name="height_unit"]');
+  if (heightUnitSelect) {
+    heightUnitSelect.addEventListener("change", applyUnitToFields);
+  }
+
+  // Apply the stored unit preference to the fields on first load (after the
+  // map + circle are ready).
+  applyUnitToFields();
 
   // ===========================================================================
   // Advanced map - editable rectangle + draggable observer marker
@@ -589,6 +721,30 @@
   // Save button feedback
   // ===========================================================================
   document.getElementById("settings-form").addEventListener("submit", (e) => {
+    // -- Convert radius / altitude fields back to stored units (km / metres) --
+    // The backend always expects flight_radius in km and altitudes in metres,
+    // so when the fields are currently displayed in imperial we convert in
+    // place just before the browser submits the form.
+    if (fieldsAreImperial) {
+      const radiusInput = document.getElementById("flight_radius");
+      const minAltInput = document.getElementById("flight_min_altitude");
+      const maxAltInput = document.getElementById("flight_max_altitude");
+
+      const radiusKm = miToKm(parseFloat(radiusInput.value) || RADIUS_BOUNDS.min);
+      radiusInput.value = radiusKm;
+
+      const minAltM = ftToM(parseFloat(minAltInput.value) || MIN_ALT_BOUNDS.min);
+      minAltInput.value = minAltM;
+
+      const maxAltM = ftToM(parseFloat(maxAltInput.value) || MAX_ALT_BOUNDS.min);
+      maxAltInput.value = maxAltM;
+
+      // The inputs now hold metric values; mark them as such so a subsequent
+      // applyUnitToFields() (e.g. on a failed-submit restore) converts the
+      // right way.
+      fieldsAreImperial = false;
+    }
+
     const weatherModeRadio = document.querySelector('input[name="weather_mode"]:checked');
     const weatherMode = weatherModeRadio ? weatherModeRadio.value : "0";
     const weatherKey = document.getElementById("weatherapi_key").value.trim();
@@ -600,6 +756,8 @@
       const btn = document.getElementById("save-btn");
       btn.disabled = false;
       btn.innerHTML = "Save &amp; Restart";
+      // Restore the display-unit values so the fields still show miles/feet.
+      applyUnitToFields();
       return;
     }
     weatherErr.style.display = "none";
