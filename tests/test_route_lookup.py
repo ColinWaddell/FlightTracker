@@ -1,11 +1,27 @@
 """Tests for utilities/route_lookup.py - multi-provider lookups and FR24 fallback."""
 
+import sys
 import time
+import types
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from utilities.flight import AircraftInfo, RouteInfo
+
+# ---------------------------------------------------------------------------
+# Stub the FlightRadar24 package so @patch("FlightRadar24.api.FlightRadar24API")
+# can resolve the target without the real package being installed (e.g. on CI).
+# The production code imports it lazily inside a try/except, but unittest.mock
+# eagerly imports the patch target at decoration time.
+# ---------------------------------------------------------------------------
+if "FlightRadar24" not in sys.modules:
+    _fr24_pkg = types.ModuleType("FlightRadar24")
+    _fr24_api = types.ModuleType("FlightRadar24.api")
+    _fr24_api.FlightRadar24API = MagicMock()
+    _fr24_pkg.api = _fr24_api
+    sys.modules["FlightRadar24"] = _fr24_pkg
+    sys.modules["FlightRadar24.api"] = _fr24_api
 
 # ---------------------------------------------------------------------------
 # Fixtures
