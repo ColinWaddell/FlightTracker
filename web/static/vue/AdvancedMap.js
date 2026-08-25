@@ -6,7 +6,7 @@
  *   flight_observer_lat, flight_observer_lng
  */
 
-import { defineComponent, ref, onMounted } from "./vendor.js";
+import { defineComponent, ref, onMounted, watch, nextTick } from "./vendor.js";
 import {
   createBaseMap,
   wrapLng,
@@ -156,13 +156,24 @@ export default defineComponent({
         }
       }, "Toggle advanced map lock");
 
-      // Fix tile layout after the container becomes visible
-      setTimeout(() => {
+      // Fix tile layout after the container becomes visible.
+      // The component may mount while hidden (simple mode is the default),
+      // so we also watch the location mode and re-fix when it switches.
+      function fixMapLayout() {
         if (mapContainer.value && mapContainer.value.offsetParent !== null) {
           map.invalidateSize();
           map.fitBounds(rect.getBounds(), { padding: [20, 20] });
         }
-      }, 100);
+      }
+
+      setTimeout(fixMapLayout, 100);
+
+      watch(
+        () => props.store.isAdvancedLocation.value,
+        (isAdvanced) => {
+          if (isAdvanced) nextTick(() => setTimeout(fixMapLayout, 50));
+        },
+      );
     });
 
     return { mapContainer };

@@ -10,6 +10,7 @@ export default defineComponent({
     store: { type: Object, required: true },
   },
   template: `
+    <div>
     <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-hdd-network me-2"></i>Data Source</h2>
 
     <!-- ====== Flight Data ====== -->
@@ -157,6 +158,7 @@ export default defineComponent({
                min="1" max="120" step="1" style="max-width:120px" />
         <div class="form-text text-muted small">How often to fetch new weather data (1-120 minutes). Lower values use more API calls.</div>
       </div>
+    </div>
     </div>
   `,
 });

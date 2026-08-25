@@ -776,7 +776,7 @@ def load_airports_json() -> str:
     if AIRPORTS_JSON is None:
         airports_path = Path(__file__).parent.parent / "assets" / "airports.json"
         try:
-            with open(airports_path) as fh:
+            with open(airports_path, encoding="utf-8") as fh:
                 AIRPORTS_JSON = fh.read()
         except Exception:
             AIRPORTS_JSON = "{}"

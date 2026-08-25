@@ -7,7 +7,7 @@
  * parse them).  Components read and write `store.config.*` directly.
  */
 
-import { reactive, computed } from "./vendor.js";
+import { reactive, computed, ref, watch } from "./vendor.js";
 
 // ---------------------------------------------------------------------------
 // Conversion constants (metric ↔ imperial)
@@ -149,6 +149,9 @@ export function createStore(initialConfig, pageData) {
     inSchedule: pageData.inSchedule || false,
     scheduleWindow: pageData.scheduleWindow || [null, null],
     csrfToken: pageData.csrfToken || "",
+    staticUrls: pageData.staticUrls || {},
+    symbolImages: pageData.symbolImages || {},
+    urls: pageData.urls || {},
   });
 
   // -- Computed helpers --------------------------------------------------
@@ -206,24 +209,47 @@ export function createStore(initialConfig, pageData) {
     },
   });
 
-  const displayMinAltitude = computed({
-    get: () => {
-      const m = config.flight_min_altitude;
-      return isImperial.value ? mToFt(m) : m;
-    },
-    set: (val) => {
-      config.flight_min_altitude = isImperial.value ? ftToM(val) : val;
-    },
+  // -- Altitude display values -----------------------------------------
+  // We keep separate refs for the displayed altitude values so that
+  // typing into the input doesn't fight with a round-trip conversion
+  // (type 5000 ft -> store 1524 m -> re-display 4999 ft).  The refs
+  // are initialised from the stored config, and a watcher converts
+  // them when the unit changes.  The stored config is updated via
+  // a separate watcher so the hidden inputs always have metric values.
+
+  const displayMinAlt = ref(
+    isImperial.value
+      ? Math.round(mToFt(config.flight_min_altitude))
+      : config.flight_min_altitude,
+  );
+  const displayMaxAlt = ref(
+    isImperial.value
+      ? Math.round(mToFt(config.flight_max_altitude))
+      : config.flight_max_altitude,
+  );
+
+  // When the unit changes, convert the displayed values to the new unit.
+  watch(isImperial, (imperial, wasImperial) => {
+    if (imperial === wasImperial) return;
+    if (imperial) {
+      displayMinAlt.value = Math.round(mToFt(config.flight_min_altitude));
+      displayMaxAlt.value = Math.round(mToFt(config.flight_max_altitude));
+    } else {
+      displayMinAlt.value = Math.round(ftToM(displayMinAlt.value));
+      displayMaxAlt.value = Math.round(ftToM(displayMaxAlt.value));
+    }
   });
 
-  const displayMaxAltitude = computed({
-    get: () => {
-      const m = config.flight_max_altitude;
-      return isImperial.value ? mToFt(m) : m;
-    },
-    set: (val) => {
-      config.flight_max_altitude = isImperial.value ? ftToM(val) : val;
-    },
+  // Keep the stored config in sync with the display values (metric).
+  watch([displayMinAlt, isImperial], () => {
+    config.flight_min_altitude = isImperial.value
+      ? Math.round(ftToM(displayMinAlt.value))
+      : displayMinAlt.value;
+  });
+  watch([displayMaxAlt, isImperial], () => {
+    config.flight_max_altitude = isImperial.value
+      ? Math.round(ftToM(displayMaxAlt.value))
+      : displayMaxAlt.value;
   });
 
   // Slider bounds in the *display* unit
@@ -240,9 +266,9 @@ export function createStore(initialConfig, pageData) {
   const minAltBoundsDisplay = computed(() =>
     isImperial.value
       ? {
-          min: MIN_ALT_BOUNDS.min * FT_PER_M,
-          max: MIN_ALT_BOUNDS.max * FT_PER_M,
-          step: MIN_ALT_BOUNDS.step * FT_PER_M,
+          min: Math.round(MIN_ALT_BOUNDS.min * FT_PER_M),
+          max: Math.round(MIN_ALT_BOUNDS.max * FT_PER_M),
+          step: 10,
         }
       : MIN_ALT_BOUNDS,
   );
@@ -250,9 +276,9 @@ export function createStore(initialConfig, pageData) {
   const maxAltBoundsDisplay = computed(() =>
     isImperial.value
       ? {
-          min: MAX_ALT_BOUNDS.min * FT_PER_M,
-          max: MAX_ALT_BOUNDS.max * FT_PER_M,
-          step: MAX_ALT_BOUNDS.step * FT_PER_M,
+          min: Math.round(MAX_ALT_BOUNDS.min * FT_PER_M),
+          max: Math.round(MAX_ALT_BOUNDS.max * FT_PER_M),
+          step: 100,
         }
       : MAX_ALT_BOUNDS,
   );
@@ -273,8 +299,8 @@ export function createStore(initialConfig, pageData) {
     braceBalanced,
     braceMessage,
     displayRadius,
-    displayMinAltitude,
-    displayMaxAltitude,
+    displayMinAlt,
+    displayMaxAlt,
     radiusBoundsDisplay,
     minAltBoundsDisplay,
     maxAltBoundsDisplay,

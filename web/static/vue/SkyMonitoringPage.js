@@ -15,6 +15,7 @@ export default defineComponent({
     store: { type: Object, required: true },
   },
   template: `
+    <div>
     <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-rocket-takeoff-pin me-2"></i>Sky Monitoring</h2>
 
     <!-- ====== Location ====== -->
@@ -89,7 +90,7 @@ export default defineComponent({
                  :min="store.minAltBoundsDisplay.value.min"
                  :max="store.minAltBoundsDisplay.value.max"
                  class="form-control form-control-sm" id="flight_min_altitude"
-                 v-model.number="store.displayMinAltitude.value" />
+                 v-model.number="store.displayMinAlt.value" />
           <input type="hidden" name="flight_min_altitude" :value="store.config.flight_min_altitude" />
         </div>
         <div class="col">
@@ -98,7 +99,7 @@ export default defineComponent({
                  :min="store.maxAltBoundsDisplay.value.min"
                  :max="store.maxAltBoundsDisplay.value.max"
                  class="form-control form-control-sm" id="flight_max_altitude"
-                 v-model.number="store.displayMaxAltitude.value" />
+                 v-model.number="store.displayMaxAlt.value" />
           <input type="hidden" name="flight_max_altitude" :value="store.config.flight_max_altitude" />
         </div>
       </div>
@@ -293,6 +294,7 @@ export default defineComponent({
           </div>
         </div>
       </div>
+    </div>
     </div>
   `,
 });

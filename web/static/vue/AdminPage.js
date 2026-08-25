@@ -16,6 +16,7 @@ export default defineComponent({
     };
   },
   template: `
+    <div>
     <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-shield-lock me-2"></i>Admin</h2>
 
     <!-- ====== Logging ====== -->
@@ -122,6 +123,7 @@ export default defineComponent({
       <a :href="store.ui.urls.debugConfig" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-download me-1"></i>Download debug config
       </a>
+    </div>
     </div>
   `,
 });

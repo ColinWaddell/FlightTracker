@@ -19,6 +19,7 @@ export default defineComponent({
     },
   },
   template: `
+    <div>
     <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-cpu me-2"></i>System</h2>
 
     <!-- ====== Display ====== -->
@@ -299,6 +300,7 @@ export default defineComponent({
           <option :value="2">MM-DD-YYYY</option>
         </select>
       </div>
+    </div>
     </div>
   `,
 });

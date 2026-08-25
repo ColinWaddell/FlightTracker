@@ -32,6 +32,7 @@ export default defineComponent({
     },
   },
   template: `
+    <div>
     <h2 class="fs-4 fw-semibold mb-3"><i class="bi bi-house me-2"></i>Default Screen</h2>
 
     <!-- ====== Theme selector ====== -->
@@ -165,6 +166,7 @@ export default defineComponent({
           <label class="form-check-label" for="theme_conditions_disable_scroll">Disable scrolling weather description</label>
         </div>
       </div>
+    </div>
     </div>
   `,
 });

@@ -6,7 +6,7 @@
  * display unit (km or mi) via the store's computed helpers.
  */
 
-import { defineComponent, ref, onMounted, watch } from "./vendor.js";
+import { defineComponent, ref, onMounted, watch, nextTick } from "./vendor.js";
 import {
   createBaseMap,
   wrapLng,
@@ -98,13 +98,24 @@ export default defineComponent({
         },
       );
 
-      // -- Fix tile layout after the container becomes visible --
-      setTimeout(() => {
+      // Fix tile layout after the container becomes visible.
+      // The component may mount while hidden (advanced mode is selected),
+      // so we also watch the location mode and re-fix when it switches.
+      function fixMapLayout() {
         if (mapContainer.value && mapContainer.value.offsetParent !== null) {
           map.invalidateSize();
           fitToCircle();
         }
-      }, 100);
+      }
+
+      setTimeout(fixMapLayout, 100);
+
+      watch(
+        () => props.store.isAdvancedLocation.value,
+        (isAdvanced) => {
+          if (!isAdvanced) nextTick(() => setTimeout(fixMapLayout, 50));
+        },
+      );
     });
 
     return { mapContainer };
