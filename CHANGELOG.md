@@ -4,6 +4,11 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.8.0] - 2026-08-25
+- Complete rewrite of the settings page to move everything over to Vue.js
+- Trimmed the pipe character in the plane-scroller so it doesn't swipe away he pixels above the scroller
+- Changing the height/distance units also updates how they're displayed in the settings page
+
 ## [v2.7.3] - 2026-08-21
 - Found the bug that was causing blank index number when using a scrolling callsign
 
