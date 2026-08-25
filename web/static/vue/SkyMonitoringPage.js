@@ -40,7 +40,7 @@ export default defineComponent({
           </label>
         </div>
 
-        <div v-if="!store.isAdvancedLocation.value" class="form-text text-muted small">
+        <div v-if="!store.isAdvancedLocation" class="form-text text-muted small">
           Set a centre point and search radius. The bounding box for flight data queries and your
           observer location (used for weather, satellite passes, and distance sorting) are both
           derived from this point.
@@ -61,51 +61,51 @@ export default defineComponent({
       </div>
 
       <!-- Simple tracking -->
-      <div v-show="!store.isAdvancedLocation.value">
+      <div v-show="!store.isAdvancedLocation">
         <simple-map :store="store" />
 
         <div class="mb-3">
           <label class="form-label">
-            Search Radius: {{ store.displayRadius.value.toFixed(1) }} {{ store.radiusUnitLabel.value }}
+            Search Radius: {{ store.displayRadius.toFixed(1) }} {{ store.radiusUnitLabel }}
           </label>
           <input type="range" class="form-range pt-3 px-2" id="flight_radius"
-                 :min="store.radiusBoundsDisplay.value.min"
-                 :max="store.radiusBoundsDisplay.value.max"
-                 :step="store.radiusBoundsDisplay.value.step"
-                 v-model.number="store.displayRadius.value" />
+                 :min="store.radiusBoundsDisplay.min"
+                 :max="store.radiusBoundsDisplay.max"
+                 :step="store.radiusBoundsDisplay.step"
+                 v-model.number="store.displayRadius" />
           <!-- Hidden field submits the stored (km) value -->
           <input type="hidden" name="flight_radius" :value="store.config.flight_radius" />
         </div>
       </div>
 
       <!-- Advanced tracking -->
-      <div v-show="store.isAdvancedLocation.value">
+      <div v-show="store.isAdvancedLocation">
         <advanced-map :store="store" />
       </div>
 
       <div class="row g-3">
         <div class="col">
-          <label class="form-label small">Min Altitude ({{ store.altitudeUnitLabel.value }})</label>
-          <input type="number" :step="store.minAltBoundsDisplay.value.step"
-                 :min="store.minAltBoundsDisplay.value.min"
-                 :max="store.minAltBoundsDisplay.value.max"
+          <label class="form-label small">Min Altitude ({{ store.altitudeUnitLabel }})</label>
+          <input type="number" :step="store.minAltBoundsDisplay.step"
+                 :min="store.minAltBoundsDisplay.min"
+                 :max="store.minAltBoundsDisplay.max"
                  class="form-control form-control-sm" id="flight_min_altitude"
-                 v-model.number="store.displayMinAlt.value" />
+                 v-model.number="store.displayMinAlt" />
           <input type="hidden" name="flight_min_altitude" :value="store.config.flight_min_altitude" />
         </div>
         <div class="col">
-          <label class="form-label small">Max Altitude ({{ store.altitudeUnitLabel.value }})</label>
-          <input type="number" :step="store.maxAltBoundsDisplay.value.step"
-                 :min="store.maxAltBoundsDisplay.value.min"
-                 :max="store.maxAltBoundsDisplay.value.max"
+          <label class="form-label small">Max Altitude ({{ store.altitudeUnitLabel }})</label>
+          <input type="number" :step="store.maxAltBoundsDisplay.step"
+                 :min="store.maxAltBoundsDisplay.min"
+                 :max="store.maxAltBoundsDisplay.max"
                  class="form-control form-control-sm" id="flight_max_altitude"
-                 v-model.number="store.displayMaxAlt.value" />
+                 v-model.number="store.displayMaxAlt" />
           <input type="hidden" name="flight_max_altitude" :value="store.config.flight_max_altitude" />
         </div>
       </div>
       <p class="form-text small text-muted mt-1 mb-0">
         <i class="bi bi-info-circle me-1"></i>Setting a non-zero minimum altitude (say,
-        <code>{{ store.altitudeHelpExample.value }}</code>) prevents the device always listing
+        <code>{{ store.altitudeHelpExample }}</code>) prevents the device always listing
         aircraft on the tarmac.
       </p>
     </div>
@@ -151,7 +151,7 @@ export default defineComponent({
                @input="store.config.home_airport_code = $event.target.value.toUpperCase()"
                placeholder="e.g. GLA"
                style="text-transform:uppercase;max-width:120px" />
-        <div class="form-text text-muted small">{{ store.homeAirportHint.value }}</div>
+        <div class="form-text text-muted small">{{ store.homeAirportHint }}</div>
         <div class="form-text text-muted small mt-1">
           When a flight's origin or destination matches this code, that airport will appear
           <strong>bold</strong> on the display. Leave blank to disable.
@@ -252,7 +252,7 @@ export default defineComponent({
           <label class="form-label small" for="satellite_norad_ids">Satellites to track</label>
           <textarea class="form-control form-control-sm font-monospace" id="satellite_norad_ids"
                     name="satellite_norad_ids" rows="4" placeholder="25544"
-                    v-model="store.noradIdsText.value"></textarea>
+                    v-model="store.noradIdsText"></textarea>
           <div class="form-text text-muted small">
             One NORAD catalog ID per line. ISS&nbsp;=&nbsp;25544. Look up IDs on
             <a href="https://celestrak.org/SATCAT/search.php" target="_blank" rel="noopener noreferrer">CelesTrak</a>.

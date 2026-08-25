@@ -308,7 +308,7 @@ export function createStore(initialConfig, pageData) {
     isImperial.value ? "30ft" : "10m",
   );
 
-  return {
+  return reactive({
     config,
     ui,
     isImperial,
@@ -326,5 +326,5 @@ export function createStore(initialConfig, pageData) {
     altitudeUnitLabel,
     radiusUnitLabel,
     altitudeHelpExample,
-  };
+  });
 }

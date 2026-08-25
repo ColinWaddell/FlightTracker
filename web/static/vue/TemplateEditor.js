@@ -40,8 +40,8 @@ export default defineComponent({
       },
     });
 
-    const braceBalanced = computed(() => props.store.braceBalanced.value);
-    const braceMessage = computed(() => props.store.braceMessage.value);
+    const braceBalanced = computed(() => props.store.braceBalanced);
+    const braceMessage = computed(() => props.store.braceMessage);
     const templateErrors = computed(() => props.store.ui.templateErrors);
 
     // -- Autocomplete logic ------------------------------------------------

@@ -90,7 +90,7 @@ export default defineComponent({
       watch(
         () => props.store.config.flight_radius,
         (newRadius) => {
-          const km = props.store.isImperial.value
+          const km = props.store.isImperial
             ? miToKm(newRadius)
             : newRadius;
           circle.setRadius(km * 1000);
@@ -111,7 +111,7 @@ export default defineComponent({
       setTimeout(fixMapLayout, 100);
 
       watch(
-        () => props.store.isAdvancedLocation.value,
+        () => props.store.isAdvancedLocation,
         (isAdvanced) => {
           if (!isAdvanced) nextTick(() => setTimeout(fixMapLayout, 50));
         },

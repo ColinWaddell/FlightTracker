@@ -169,7 +169,7 @@ export default defineComponent({
       setTimeout(fixMapLayout, 100);
 
       watch(
-        () => props.store.isAdvancedLocation.value,
+        () => props.store.isAdvancedLocation,
         (isAdvanced) => {
           if (isAdvanced) nextTick(() => setTimeout(fixMapLayout, 50));
         },
