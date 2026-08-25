@@ -32,7 +32,6 @@ export default defineComponent({
     const store = createStore(config, pageData);
 
     const currentPage = ref("sky-monitoring");
-    const activeSection = ref(null);
 
     function showPage(pageName) {
       currentPage.value = pageName;
@@ -48,8 +47,6 @@ export default defineComponent({
     function navigate({ route, section }) {
       const pageName = route.replace(/^\//, "");
       const currentPath = currentPage.value;
-
-      activeSection.value = section;
 
       if (currentPath === pageName) {
         scrollToSection(section);
@@ -89,10 +86,10 @@ export default defineComponent({
     return {
       store,
       currentPage,
-      activeSection,
       pages: PAGES,
       navigate,
       onSubmit,
+      scrollToSection,
     };
   },
   template: `
@@ -165,10 +162,4 @@ export default defineComponent({
       </div>
     </div>
   `,
-  methods: {
-    scrollToSection(section) {
-      const target = document.getElementById(section);
-      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-  },
 });

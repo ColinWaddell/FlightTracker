@@ -1,5 +1,5 @@
 /**
- * Sidebar navigation - Vue Router links with scroll-to-section.
+ * Sidebar navigation - links with scroll-to-section.
  */
 
 import { defineComponent, ref } from "./vendor.js";
@@ -8,7 +8,7 @@ import { SIDEBAR_GROUPS } from "./store.js";
 export default defineComponent({
   name: "SettingsSidebar",
   emits: ["navigate"],
-  setup(props, { emit }) {
+  setup(_, { emit }) {
     const groups = SIDEBAR_GROUPS;
     const mobileCollapse = ref(false);
 

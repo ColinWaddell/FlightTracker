@@ -178,35 +178,53 @@ export function createStore(initialConfig, pageData) {
     return ui.airports[code]?.name ?? "Unknown airport";
   });
 
-  const braceBalanced = computed(() => {
+  const braceCounts = computed(() => {
     const val = config.details_custom_template || "";
-    const opens = (val.match(/\{/g) || []).length;
-    const closes = (val.match(/\}/g) || []).length;
-    return opens === closes;
+    return {
+      opens: (val.match(/\{/g) || []).length,
+      closes: (val.match(/\}/g) || []).length,
+    };
   });
 
+  const braceBalanced = computed(() => braceCounts.value.opens === braceCounts.value.closes);
+
   const braceMessage = computed(() => {
-    const val = config.details_custom_template || "";
-    const opens = (val.match(/\{/g) || []).length;
-    const closes = (val.match(/\}/g) || []).length;
+    const { opens, closes } = braceCounts.value;
     if (opens === closes) return "";
     return `Unbalanced braces: ${opens} opening { but ${closes} closing }.`;
   });
 
   // -- Unit conversion helpers ------------------------------------------
   // The backend stores radius in km and altitudes in metres.  When the
-  // display unit is imperial we show miles/feet and convert back on
-  // submit.  These computed getters/setters keep the displayed fields
-  // in sync without touching the stored values.
+  // display unit is imperial we show miles/feet.  Each display field
+  // uses a ref + watcher pattern: the ref holds the display value so
+  // typing doesn't fight a round-trip conversion, and a watcher keeps
+  // the stored config (always metric) in sync.
 
-  const displayRadius = computed({
-    get: () => {
-      const km = config.flight_radius;
-      return isImperial.value ? kmToMi(km) : km;
-    },
-    set: (val) => {
-      config.flight_radius = isImperial.value ? miToKm(val) : val;
-    },
+  // -- Radius display value -------------------------------------------
+  // Same ref+watcher pattern as altitude: the ref holds the display
+  // value so typing doesn't fight a round-trip conversion.  The stored
+  // config (always km) is kept in sync via a watcher.
+
+  const displayRadius = ref(
+    isImperial.value
+      ? kmToMi(config.flight_radius)
+      : config.flight_radius,
+  );
+
+  watch(isImperial, (imperial, wasImperial) => {
+    if (imperial === wasImperial) return;
+    if (imperial) {
+      displayRadius.value = kmToMi(config.flight_radius);
+    } else {
+      displayRadius.value = miToKm(displayRadius.value);
+    }
+  });
+
+  watch([displayRadius, isImperial], () => {
+    config.flight_radius = isImperial.value
+      ? miToKm(displayRadius.value)
+      : displayRadius.value;
   });
 
   // -- Altitude display values -----------------------------------------
@@ -252,13 +270,14 @@ export function createStore(initialConfig, pageData) {
       : displayMaxAlt.value;
   });
 
-  // Slider bounds in the *display* unit
+  // Slider bounds in the *display* unit.  Steps are clean whole/half
+  // numbers in the display unit, not raw conversions of the metric step.
   const radiusBoundsDisplay = computed(() =>
     isImperial.value
       ? {
           min: RADIUS_BOUNDS.min * MI_PER_KM,
           max: RADIUS_BOUNDS.max * MI_PER_KM,
-          step: RADIUS_BOUNDS.step * MI_PER_KM,
+          step: 0.5,
         }
       : RADIUS_BOUNDS,
   );

@@ -150,7 +150,6 @@ export default defineComponent({
       const lat = parseFloat(e.target.value);
       if (Number.isFinite(lat)) {
         this.store.config.flight_lat = lat;
-        // The watch on flight_radius won't fire, so update marker manually
       }
     },
     onLngChange(e) {
