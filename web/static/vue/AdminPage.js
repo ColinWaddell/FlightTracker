@@ -23,7 +23,7 @@ export default defineComponent({
     <div id="group-logging" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-terminal me-2"></i>Logging</p>
       <div class="mb-3">
-        <label class="form-label small">Log level</label>
+        <h5>Log Level</h5>
         <select class="form-select form-select-sm" name="log_level" style="max-width:200px"
                 v-model="store.config.log_level">
           <option value="DEBUG">Debug (verbose)</option>

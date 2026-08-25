@@ -22,8 +22,8 @@ export default defineComponent({
     <div id="group-sky-monitoring" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-geo-alt me-2"></i>Location</p>
 
+      <h5>Tracking Mode</h5>
       <div class="mb-3">
-        <label class="form-label small">Tracking mode</label>
         <div class="btn-group w-100 mb-1" role="group" aria-label="Tracking mode">
           <input type="radio" class="btn-check" name="flight_location_mode" id="location_mode_simple"
                  value="simple" autocomplete="off"
@@ -83,6 +83,8 @@ export default defineComponent({
         <advanced-map :store="store" />
       </div>
 
+      <hr class="my-3" />
+      <h5>Altitude Filter</h5>
       <div class="row g-3">
         <div class="col">
           <label class="form-label small">Min Altitude ({{ store.altitudeUnitLabel }})</label>
@@ -114,8 +116,8 @@ export default defineComponent({
     <div id="group-airport-display" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-building me-2"></i>Airport Display</p>
 
+      <h5>Display Style</h5>
       <div class="mb-3">
-        <label class="form-label small">Airport display style</label>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="airport_display_style" id="airport_short"
                  :value="0" v-model.number="store.config.airport_display_style" />
@@ -146,7 +148,7 @@ export default defineComponent({
       <hr />
 
       <div v-show="store.config.airport_display_style === 0" class="mb-3">
-        <label class="form-label small">Home airport</label>
+        <h5>Home Airport</h5>
         <input type="text" maxlength="3" class="form-control form-control-sm"
                name="home_airport_code" id="home_airport_code"
                :value="store.config.home_airport_code"
@@ -162,8 +164,8 @@ export default defineComponent({
 
       <hr />
 
+      <h5>Unknown Airport Placeholder</h5>
       <div class="mb-2">
-        <label class="form-label small">Unknown airport placeholder</label>
         <input type="text" maxlength="3" class="form-control form-control-sm"
                name="journey_blank_filler"
                v-model="store.config.journey_blank_filler"
@@ -176,6 +178,7 @@ export default defineComponent({
     <div id="group-airline-info" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-ticket-perforated me-2"></i>Airline Info</p>
 
+      <h5>Airline Logo</h5>
       <div class="mb-2 form-check">
         <input type="checkbox" class="form-check-input" name="show_airline_icon" id="show_airline_icon"
                v-model="store.config.show_airline_icon" />
@@ -187,8 +190,8 @@ export default defineComponent({
 
       <hr />
 
+      <h5>Flight ID</h5>
       <div class="mb-3">
-        <label class="form-label small">Flight ID</label>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="info_bar_mode" id="info_bar_mode_callsign"
                  value="callsign" v-model="store.config.info_bar_mode" />
@@ -211,8 +214,8 @@ export default defineComponent({
 
       <hr />
 
+      <h5>Callsign Format</h5>
       <div class="mb-3">
-        <label class="form-label small">Callsign format</label>
         <div class="form-check">
           <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao"
                  value="icao" v-model="store.config.callsign_format" />
@@ -232,6 +235,7 @@ export default defineComponent({
     <!-- ====== Plane Info Row ====== -->
     <div id="group-plane-info" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-info-circle me-2"></i>Plane Info Row</p>
+      <h5>Display Mode</h5>
       <div class="mb-2">
         <div class="form-check">
           <input type="radio" class="form-check-input" name="details" id="details_model"
@@ -273,8 +277,9 @@ export default defineComponent({
       </div>
 
       <div v-show="store.config.satellite_tracking_enabled">
+        <h5>Satellites to Track</h5>
         <div class="mb-3">
-          <label class="form-label small" for="satellite_norad_ids">Satellites to track</label>
+          <label class="form-label small" for="satellite_norad_ids">NORAD IDs</label>
           <textarea class="form-control form-control-sm font-monospace" id="satellite_norad_ids"
                     name="satellite_norad_ids" rows="4" placeholder="25544"
                     v-model="store.noradIdsText"></textarea>
@@ -285,6 +290,8 @@ export default defineComponent({
           </div>
         </div>
 
+        <hr class="my-3" />
+        <h5>Pass Filter</h5>
         <div class="row g-2 mb-2">
           <div class="col-auto">
             <label class="form-label small" for="satellite_min_elevation">Minimum elevation (°)</label>
@@ -301,6 +308,8 @@ export default defineComponent({
           </div>
         </div>
 
+        <hr class="my-3" />
+        <h5>Display Timeout</h5>
         <div class="mb-2 form-check">
           <input type="checkbox" class="form-check-input" id="satellite_timeout_enabled"
                  name="satellite_timeout_enabled" :value="true"

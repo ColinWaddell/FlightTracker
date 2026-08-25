@@ -40,7 +40,7 @@ export default defineComponent({
       <p class="section-heading"><i class="bi bi-palette me-2"></i>Theme</p>
 
       <div class="mb-3">
-        <label class="form-label small">Idle screen theme</label>
+        <h5>Idle Screen Theme</h5>
         <select class="form-select form-select-sm" name="idle_screen_theme" id="idle_screen_theme"
                 style="max-width:200px" v-model="store.config.idle_screen_theme">
           <option value="classic">Classic</option>
@@ -59,7 +59,7 @@ export default defineComponent({
         <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather</p>
 
         <div class="mb-3">
-          <label class="form-label small">Weather display</label>
+          <h5>Weather Display</h5>
           <div class="form-check">
             <input type="radio" class="form-check-input" name="weather_mode" id="weather_off"
                    :value="0" v-model.number="store.config.weather_mode" />
@@ -80,7 +80,7 @@ export default defineComponent({
           </p>
 
           <div v-show="store.config.weather_mode === 2">
-            <label class="form-label small mt-2">Rainfall sensitivity</label>
+            <h5 class="mt-2">Rainfall Sensitivity</h5>
             <select class="form-select form-select-sm" name="rain_sensitivity" style="max-width:260px"
                     v-model.number="store.config.rain_sensitivity">
               <option :value="0">Not very rainy - desert / arid (1 mm)</option>
@@ -128,7 +128,7 @@ export default defineComponent({
       <div class="card mb-3 p-3">
         <p class="section-heading"><i class="bi bi-clock-history me-2"></i>Forecast Duration</p>
         <div class="mb-3">
-          <label class="form-label small">Forecast type</label>
+          <h5>Forecast Type</h5>
           <div class="form-check">
             <input type="radio" class="form-check-input" name="theme_forecast_duration"
                    id="forecast_duration_3hour" value="3hour" v-model="forecastDuration" />

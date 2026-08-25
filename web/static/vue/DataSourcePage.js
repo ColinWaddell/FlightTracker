@@ -17,6 +17,7 @@ export default defineComponent({
     <div id="group-flight-data" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-airplane-engines me-2"></i>Flight Data</p>
 
+      <h5>Source</h5>
       <div class="mb-3">
         <div class="form-check">
           <input type="radio" class="form-check-input" name="data_source" id="data_source_fr24"
@@ -72,7 +73,7 @@ export default defineComponent({
       </div>
 
       <hr />
-
+      <h5>Tracking Limit</h5>
       <div>
         <label class="form-label small" for="max_flight_lookup">Flights to track</label>
         <input type="number" class="form-control form-control-sm" id="max_flight_lookup"
@@ -116,6 +117,7 @@ export default defineComponent({
     <div id="group-weather-data" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-cloud-sun me-2"></i>Weather Data</p>
 
+      <h5>API Key</h5>
       <div class="mb-3">
         <label class="form-label small">WeatherAPI.com API Key</label>
         <input type="text" class="form-control form-control-sm"
@@ -131,6 +133,8 @@ export default defineComponent({
         </div>
       </div>
 
+      <hr class="my-3" />
+      <h5>Refresh Interval</h5>
       <div class="mb-3">
         <label class="form-label small">Refresh interval (minutes)</label>
         <input type="number" class="form-control form-control-sm"

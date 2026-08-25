@@ -27,7 +27,7 @@ export default defineComponent({
       <p class="section-heading"><i class="bi bi-pip me-2"></i>Display</p>
 
       <div class="mb-3">
-        <label class="form-label small">Colour theme</label>
+        <h5>Colour Theme</h5>
         <select class="form-select form-select-sm" name="colour_theme" style="max-width:200px"
                 v-model.number="store.config.colour_theme">
           <option :value="0">Default</option>
@@ -38,7 +38,7 @@ export default defineComponent({
       </div>
 
       <div class="mb-3">
-        <label class="form-label small">Animation speed</label>
+        <h5>Animation Speed</h5>
         <select class="form-select form-select-sm" name="display_speed" style="max-width:220px"
                 v-model="store.config.display_speed">
           <option value="slower">Slower</option>
@@ -49,7 +49,8 @@ export default defineComponent({
       </div>
 
       <div class="mb-3">
-        <label class="form-label small">Brightness: {{ store.config.screen_brightness }}/5</label>
+        <h5>Brightness</h5>
+        <label class="form-label small">Level: {{ store.config.screen_brightness }}/5</label>
         <input type="range" class="form-range pt-3 px-2" name="screen_brightness" id="screen_brightness"
                min="1" max="5" step="1" v-model.number="store.config.screen_brightness"
                style="max-width:240px" />
@@ -69,6 +70,7 @@ export default defineComponent({
       </div>
 
       <hr class="my-3" />
+      <h5>Brightness Schedule</h5>
 
       <div class="mb-2 form-check">
         <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
@@ -128,6 +130,7 @@ export default defineComponent({
     <div id="group-hardware" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-motherboard me-2"></i>Hardware</p>
 
+      <h5>Web Interface</h5>
       <div class="mb-2 form-check">
         <input type="checkbox" class="form-check-input" name="web_interface_enabled"
                id="web_interface_enabled" v-model="store.config.web_interface_enabled" />
@@ -148,7 +151,7 @@ export default defineComponent({
       <hr class="my-3" />
 
       <div class="mb-3">
-        <label class="form-label small">Adafruit HAT mode</label>
+        <h5>Adafruit HAT Mode</h5>
         <div class="btn-group w-100" role="group" aria-label="Adafruit HAT mode">
           <input type="radio" class="btn-check" name="hat_pwm_enabled" id="hat_pwm_quality"
                  value="quality" autocomplete="off"
@@ -172,7 +175,7 @@ export default defineComponent({
       <hr class="my-3" />
 
       <div class="mb-3">
-        <label class="form-label small">Display Scan Rate</label>
+        <h5>Display Scan Rate</h5>
         <div class="btn-group w-100" role="group" aria-label="Display Scan Rate">
           <input type="radio" class="btn-check" name="display_scan_rate" id="display_scan_rate_16"
                  value="16" autocomplete="off"
@@ -201,7 +204,8 @@ export default defineComponent({
       <hr class="my-3" />
 
       <div class="mb-3">
-        <label class="form-label small">GPIO slowdown (1-4)</label>
+        <h5>GPIO Slowdown</h5>
+        <label class="form-label small">Value (1-4)</label>
         <input type="number" min="1" max="4" class="form-control form-control-sm"
                name="gpio_slowdown" v-model.number="store.config.gpio_slowdown" style="max-width:80px" />
         <div class="form-text text-muted small">Increase if you see flickering. Pi 4 usually needs 4.</div>
@@ -210,7 +214,7 @@ export default defineComponent({
       <hr class="my-3" />
 
       <div class="mb-3">
-        <label class="form-label small">Loading indicator</label>
+        <h5>Loading Indicator</h5>
         <select class="form-select form-select-sm" name="loading_indicator" id="loading_indicator"
                 style="max-width:200px" v-model="store.config.loading_indicator">
           <option value="none">None</option>
