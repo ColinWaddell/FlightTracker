@@ -84,25 +84,6 @@ export default defineComponent({
           higher values risk hitting rate limits.
         </div>
       </div>
-
-      <hr />
-
-      <div class="mb-3">
-        <label class="form-label small">Callsign format</label>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_icao"
-                 value="icao" v-model="store.config.callsign_format" />
-          <label class="form-check-label" for="callsign_format_icao">ICAO callsign (e.g. BAW123)</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" name="callsign_format" id="callsign_format_iata"
-                 value="iata" v-model="store.config.callsign_format" />
-          <label class="form-check-label" for="callsign_format_iata">IATA flight number (e.g. BA123)</label>
-        </div>
-        <div class="form-text text-muted small">
-          Choose whether to display the ICAO callsign or IATA flight number. Falls back to ICAO when the IATA number is unavailable.
-        </div>
-      </div>
     </div>
 
     <!-- ====== Routing Data ====== -->
