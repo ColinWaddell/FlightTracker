@@ -143,6 +143,8 @@ export default defineComponent({
         </div>
       </div>
 
+      <hr />
+
       <div v-show="store.config.airport_display_style === 0" class="mb-3">
         <label class="form-label small">Home airport</label>
         <input type="text" maxlength="3" class="form-control form-control-sm"
@@ -157,6 +159,8 @@ export default defineComponent({
           <strong>bold</strong> on the display. Leave blank to disable.
         </div>
       </div>
+
+      <hr />
 
       <div class="mb-2">
         <label class="form-label small">Unknown airport placeholder</label>
@@ -180,6 +184,8 @@ export default defineComponent({
           Displays a 16x16 airline icon in the top-left corner, derived from the flight's callsign prefix.
         </div>
       </div>
+
+      <hr />
 
       <div class="mb-3">
         <label class="form-label small">Flight ID</label>
