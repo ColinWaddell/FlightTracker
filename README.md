@@ -6,10 +6,10 @@ A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead.
 
 FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there's nothing overhead, it shows the time, weather, temperature, rainfall, or satellite passes.
 
-For much more detailed documentation, visit [colinwaddell.github.io/FlightTracker](https://colinwaddell.github.io/FlightTracker).
+For much more detailed documentation, visit [flight-tracker.dev](https://flight-tracker.dev).
 
- - [Hardware: Build your own](https://colinwaddell.github.io/FlightTracker/build/)
- - [Software: Install and configure](https://colinwaddell.github.io/FlightTracker/install/)
+ - [Hardware: Build your own](https://flight-tracker.dev/build/)
+ - [Software: Install and configure](https://flight-tracker.dev/install/)
 
 ---
 
@@ -30,17 +30,13 @@ Recently (June 2026) this codebase has had a major rewrite. There are detailed g
 
 ### Quick install
 
-Choose the script for your hardware and run it over SSH on a fresh Raspberry Pi OS (Lite) install:
+Run this over SSH on a fresh Raspberry Pi OS (Lite) install and the script will detect your Pi model and run the appropriate installer:
 
 ```bash
-# Raspberry Pi 3 / 4 / Zero
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash
-
-# Raspberry Pi 5
-curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash
+curl -sSL https://flight-tracker.dev/install.sh | bash
 ```
 
-Each installer detects your hardware, clones the repo, sets up the Python environment, and configures a systemd service so FlightTracker starts on boot. Each script will redirect you to the correct one if it detects it's running on the wrong platform.
+The installer detects your hardware, clones the repo, sets up the Python environment, and configures a systemd service so FlightTracker starts on boot.
 
 ### Step-by-step install
 
