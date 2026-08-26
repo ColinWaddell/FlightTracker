@@ -22,7 +22,7 @@ permalink: "/install/"
   </div>
 </section>
 
-<section id="rpi-image" class="border-bottom">
+<section id="rpi-image" class="border-bottom" style="display: none">
   <div class="container">
     <h2 class="section-title">Raspberry Pi Image</h2>
     <div class="narrative">
