@@ -31,41 +31,39 @@ permalink: "/install/"
   <div class="card-body p-4">
     <h3 class="h5 mb-3">Install with Raspberry Pi Imager</h3>
 
-    <p class="mb-3">
-      If you have Raspberry Pi Imager 2.x installed, you can open the
-      Flight Tracker image repository directly in Imager:
-    </p>
+    <div class="narrative">
+      <p class="mb-3">
+        If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker image repository directly in Imager:</p>
 
-    <a
-      class="btn btn-primary mb-3"
-      href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
-      Open in Raspberry Pi Imager
-    </a>
+<a class="btn btn-primary mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
+            Open in Raspberry Pi Imager
+        </a>
 
-    <p class="small text-muted mb-2">
-      Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
-    </p>
+        <p class="small text-muted mb-2">
+          Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
+        </p>
 
-    <hr>
+        <hr>
 
-    <p class="mb-2">
-      If the button does not work, open Raspberry Pi Imager and add this URL manually
-      under <strong>App Options → Content Repository → Custom URL</strong>:
-    </p>
+        <p class="mb-2">
+          If the button does not work, open Raspberry Pi Imager and add this URL manually
+          under <strong>App Options → Content Repository → Custom URL</strong>:
+        </p>
 
-    <div class="input-group">
-      <input
-        type="text"
-        class="form-control font-monospace"
-        value="https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json"
-        readonly
-        onclick="this.select();">
-      <button
-        class="btn btn-outline-secondary"
-        type="button"
-        onclick="navigator.clipboard.writeText('https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json')">
-        Copy
-      </button>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control font-monospace"
+            value="https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json"
+            readonly
+            onclick="this.select();">
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            onclick="navigator.clipboard.writeText('https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json')">
+            Copy
+        </button>
+      </div>
     </div>
   </div>
 </div>
