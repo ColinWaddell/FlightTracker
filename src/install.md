@@ -14,17 +14,16 @@ permalink: "/install/"
 </div>
 
 <section>
-  <div class="container">
+  <div class="container border-bottom">
     <h2 class="section-title">Getting started</h2>
 
     <div class="narrative">
       <p>You've put everything together using the build instructions and now you're ready to install the software.</p>
-    <hr />
     </div>
   </div>
 </section>
 
-<section id="rpi-image" style="display:none">
+<section id="rpi-image" class="border-bottom pt-0" style="">
     <div class="container">
         <h2 class="section-title">Raspberry Pi Image</h2>
         <div class="narrative">
@@ -72,7 +71,6 @@ permalink: "/install/"
                 <li>Visit <code>http://flighttracker.local/</code> in your browser (tweak the url based on the hostname you gave this device).</li>
                 <li>The web installer guides you through the rest.</li>
             </ul>
-            <hr />
         </div>
     </div>
 </section>
@@ -200,8 +198,8 @@ permalink: "/install/"
   </div>
 </section>
 
-<section>
-  <div class="container">
+<section class="pt-0">
+  <div class="container border-bottom">
     <h2 class="section-title">SSH in and run the installer</h2>
 
     <div class="narrative">
@@ -400,13 +398,11 @@ pip install -r requirements.txt
 sudo systemctl restart FlightTracker.service</code></pre>
         </div>
       </div>
-
-        <hr />
     </div>
 
   </div>
 </section>
-<section id="simulator">
+<section id="simulator" class="pt-0">
   <div class="container">
     <h2 class="section-title">Running the simulator</h2>
 
