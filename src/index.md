@@ -77,7 +77,7 @@ permalink: "/"
     <div class="narrative">
         <div>
         <p>FlightTracker has a few different ways of showing aircraft information.</p>
-        <p>You can keep it simple and show the aircraft type and route, or switch to more telemetry-type data such as altitude, speed, and heading. Airport names can be shown in full or as three-letter codes.</p>
+        <p>You can keep it simple and show the aircraft type and route, or switch to more telemetry-type data such as altitude, speed, and heading. Airport names can be shown in full or as three-letter codes along with the airline logo.</p>
         </div>
     </div>
 
@@ -163,12 +163,12 @@ permalink: "/"
     <h2 class="section-title">Weather and idle display</h2>
     <div class="narrative">
       <p>Aircraft are not always overhead.</p>
-      <p>When FlightTracker has nothing useful to say about aircraft, it can show the time, date, and temperature. With an OpenWeather API key, it can also show temperature and rainfall information.</p>
+      <p>When FlightTracker has nothing useful to say about aircraft, it can show the time, date, and temperature. With an OpenWeather API key, it can also show temperature, humidity, rainfall and forecast animations.</p>
     </div>
 
     <div class="card">
       <div class="card-body p-2 bg-black">
-        <img src="images/captures/idle-screen.png" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
+        <img src="images/carousel/flight-tracker-02.jpg" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
       </div>
       <div class="card-header">Idle screen - time, temperature, predicted rainfall, day and date</div>
     </div>
