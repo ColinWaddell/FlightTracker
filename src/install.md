@@ -6,9 +6,10 @@ permalink: "/install/"
 ---
 
 <div class="status-bar">
+  <div class="status-item"><a href="#rpi-image" class="text-black">Raspberry Pi Image</a></div>
   <div class="status-item"><a href="#quick-install" class="text-black">Quick install</a></div>
+  <div class="status-item"><a href="#manual-install" class="text-black">Manual Installation</a></div>
   <div class="status-item"><a href="#upgrading" class="text-black">Upgrading</a></div>
-  <div class="status-item"><a href="#manual-install" class="text-black">Manual install</a></div>
   <div class="status-item"><a href="#simulator" class="text-black">Simulator</a></div>
 </div>
 
@@ -18,53 +19,61 @@ permalink: "/install/"
 
     <div class="narrative">
       <p>You've put everything together using the build instructions and now you're ready to install the software.</p>
+    <hr />
     </div>
   </div>
 </section>
 
-<section id="rpi-image">
+<section id="rpi-image" style="display:none">
     <div class="container">
         <h2 class="section-title">Raspberry Pi Image</h2>
-            <div class="narrative">
-                <div class="card mb-3">
-                    <div class="card-body p-2">
-                        <p>If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker image repository directly in Imager:</p>
+        <div class="narrative">
+            <p>If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker OS image to an SD card directly using <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a></p>
 
-                        <a class="btn btn-primary mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
-                        Open in Raspberry Pi Imager</a>
+            <a class="btn btn-primary mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
+            Open in Raspberry Pi Imager</a>
 
-                        <p class="small text-muted mb-2">
-                        Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
-                        </p>
+            <p class="small text-muted mb-2">
+            Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
+            </p>
 
-                        <hr>
+            <p class="mb-2">
+            If the button does not work, open Raspberry Pi Imager and add this URL manually
+            under <strong>App Options → Content Repository → Custom URL</strong>:
+            </p>
 
-                        <p class="mb-2">
-                        If the button does not work, open Raspberry Pi Imager and add this URL manually
-                        under <strong>App Options → Content Repository → Custom URL</strong>:
-                        </p>
-
-                        <div class="input-group">
-                            <input
-                                type="text"
-                                class="form-control font-monospace"
-                                value="https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json"
-                                readonly
-                                onclick="this.select();">
-                            <button
-                                class="btn btn-outline-secondary"
-                                type="button"
-                                onclick="navigator.clipboard.writeText('https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json')">
-                                Copy
-                            </button>
-                        </div>
-                    </div>
-                    <p class="small text-muted mt-2">
-                        Pre-built images are also available to download directly from the
-                        <a href="https://github.com/ColinWaddell/FlightTracker-Image/releases">releases page</a>.
-                    </p>
+            <div class="code-card">
+                <div class="code-card-header">
+                    <span>FlightTracker OS Images</span>
+                    <button class="code-card-copy" onclick="copyCode(this, 'https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json')">Copy</button>
+                </div>
+                <div class="code-card-body">
+                    <pre><code>https://raw.githubusercontent.com/ColinWaddell/FlightTracker-Image/refs/heads/main/os_list.json</code></pre>
                 </div>
             </div>
+            <p class="small text-muted mt-2">
+                Pre-built images are also available to download directly from the
+                <a href="https://github.com/ColinWaddell/FlightTracker-Image/releases">releases page</a>.
+            </p>
+
+            <h5>How it works</h5>
+            <ul>
+                <li>Follow the details above to open up the image in RPI Imager</li>
+                <li>Select your device type and whether you want the 32-bit or 64-bit version installed
+                    <ul>
+                        <li>32-bit is best for Pi Zero and Pi Zero W</li>
+                        <li>64-bit should be good for everything else</li>
+                    </ul>
+                </li>
+                <li>Set your Wi-Fi details</li>
+                <li>Choose a device name (e.g. <code>flighttracker</code>)</li>
+                <li>Insert the card and power on.</li>
+                <li>The Pi connects to your Wi-Fi automatically using the credentials you set.</li>
+                <li>Visit <code>http://flighttracker.local/</code> in your browser (tweak the url based on the hostname you gave this device).</li>
+                <li>The web installer guides you through the rest.</li>
+            </ul>
+            <hr />
+        </div>
     </div>
 </section>
 
@@ -89,6 +98,8 @@ permalink: "/install/"
     </div>
 
     <div class="narrative mt-3">
+      <p>If you don't want to use the pre-baked Raspberry Pi image above you can use the installer script</p>
+
       <p>The installer detects your Pi model and runs the appropriate script for your hardware. It installs the RGB matrix driver, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. You can read the wrapper and platform scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/gh-pages/install.sh">wrapper</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
@@ -240,11 +251,21 @@ permalink: "/install/"
       </div>
 
       <p>If anything goes wrong, the manual install steps are in the platform-specific folders on GitHub: <a href="https://github.com/ColinWaddell/FlightTracker/tree/main/platforms/pi"><code>platforms/pi</code></a> and <a href="https://github.com/ColinWaddell/FlightTracker/tree/main/platforms/pi5"><code>platforms/pi5</code></a>. You can also <a href="https://github.com/ColinWaddell/FlightTracker/issues">raise an issue</a> if you get stuck.</p>
+    <hr />
     </div>
 
+    <div class="narrative">
+      <h2 class="section-title" id="manual-install">Manual Installation</h2>
+      <p>Full instructions to manually install the Flight Tracker software are available here for their respective platforms</p>
+
+      <ul>
+        <li><a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/INSTALL.md" target="_blank">Raspberry Pi 5</a></li>
+        <li><a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/INSTALL.md" target="_blank">Every other Raspberry Pi</a></li>
+      </ul>
+      <hr />
+    </div>
 
     <div class="narrative">
-        <hr />
       <h2 class="section-title" id="upgrading">Upgrading from FlightTracker v1 to v2</h2>
 
       <p>
@@ -380,6 +401,7 @@ sudo systemctl restart FlightTracker.service</code></pre>
         </div>
       </div>
 
+        <hr />
     </div>
 
   </div>
