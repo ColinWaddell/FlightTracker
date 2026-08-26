@@ -255,6 +255,10 @@ a:hover { color: #000; }
 .hero-actions .btn-yellow .btn-subtext {
   color: #000;
 }
+.hero-actions .btn-yellow:hover .btn-label,
+.hero-actions .btn-yellow:hover .btn-subtext {
+  color: var(--accent);
+}
 .hero-actions .btn-dark .btn-label {
   color: var(--accent);
 }
