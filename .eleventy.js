@@ -1,15 +1,10 @@
 // Eleventy configuration for the FlightTracker website.
 // Content lives in src/ as Markdown + JSON data; output goes to _site/.
 
-// The site is served from a subpath on GitHub Pages
-// (https://colinwaddell.github.io/FlightTracker/). Locally it runs at the
-// root, so all URLs in the content are root-absolute ("/css/...", "/images/...").
-// This prefix is injected into the final HTML so the same source works in both
-// environments.
-//
-// The prefix is read from the SITE_PATH_PREFIX environment variable, which the
-// GitHub Actions deploy workflow sets to "/FlightTracker". Locally the variable
-// is unset, so the prefix is "" and root-absolute URLs work as-is.
+// The site is served from a custom domain (https://flight-tracker.dev/)
+// at the root, so all URLs in the content are root-absolute ("/css/...", "/images/...").
+// The path-prefix transform is kept for compatibility but is a no-op when
+// SITE_PATH_PREFIX is unset (which is the default for both local and CI).
 const PATH_PREFIX = process.env.SITE_PATH_PREFIX || "";
 
 module.exports = function (eleventyConfig) {
