@@ -16,7 +16,7 @@ permalink: "/"
           </div>
       </div>
     </div>
-    <div class="row align-items-center g-4">
+    <div class="row align-items-center g-4" style="max-width: 600px; margin: 0 auto;">
       <div class="col-lg-12">
         <div class="hero-carousel" id="hero-carousel">
           <div class="hero-carousel-slides">
