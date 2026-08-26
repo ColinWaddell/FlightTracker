@@ -59,6 +59,10 @@ permalink: "/install/"
                             </button>
                         </div>
                     </div>
+                    <p class="small text-muted mt-2">
+                        Pre-built images are also available to download directly from the
+                        <a href="https://github.com/ColinWaddell/FlightTracker-Image/releases">releases page</a>.
+                    </p>
                 </div>
             </div>
     </div>
