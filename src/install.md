@@ -26,29 +26,28 @@ permalink: "/install/"
     <div class="container">
         <h2 class="section-title">Raspberry Pi Image</h2>
 
-        <div class="narrative">
 
-        <div class="card border-0 shadow-sm my-4">
-            <div class="card-body p-4">
-            <h3 class="h5 mb-3">Install with Raspberry Pi Imager</h3>
+<div class="card border-0 shadow-sm my-4">
+  <div class="card-body p-4">
+    <h3 class="h5 mb-3">Install with Raspberry Pi Imager</h3>
 
-            <p class="mb-3">
-                If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker image repository directly in Imager:
-            </p>
+    <div class="narrative">
+      <div class="card mb-3">
+        <div class="card-body p-2">
+            <p>If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker image repository directly in Imager:</p>
 
             <a class="btn btn-primary mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
-                Open in Raspberry Pi Imager
-            </a>
+            Open in Raspberry Pi Imager</a>
 
             <p class="small text-muted mb-2">
-                Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
+            Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
             </p>
 
             <hr>
 
             <p class="mb-2">
-                If the button does not work, open Raspberry Pi Imager and add this URL manually
-                under <strong>App Options → Content Repository → Custom URL</strong>:
+            If the button does not work, open Raspberry Pi Imager and add this URL manually
+            under <strong>App Options → Content Repository → Custom URL</strong>:
             </p>
 
             <div class="input-group">
@@ -65,6 +64,7 @@ permalink: "/install/"
                     Copy
                 </button>
             </div>
+      </div>
     </div>
   </div>
 </div>
@@ -112,7 +112,7 @@ permalink: "/install/"
       <p>First, download and install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your computer.</p>
 
       <div class="alert alert-info border-info border-2" role="alert">
-        <p class="mb-0">Use a decent quality microSD card with at least <strong>8GB</strong> of space. Cheap cards can cause random crashes and slow installs, and they have a higher chance of randomly dying.</p>
+    <p class="mb-0">Use a decent quality microSD card with at least <strong>8GB</strong> of space. Cheap cards can cause random crashes and slow installs, and they have a higher chance of randomly dying.</p>
       </div>
 
       <p>Stick a microSD card into your computer and open the Imager. The steps are:</p>
