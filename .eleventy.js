@@ -13,6 +13,9 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("images");
   eleventyConfig.addPassthroughCopy("assets");
 
+  // Copy the root-level install.sh into _site/ so it's served at /install.sh
+  eleventyConfig.addPassthroughCopy({ "install.sh": "install.sh" });
+
   // Rewrite root-absolute URLs (href="/...", src="/...") to include the
   // path prefix, so assets resolve correctly under the GitHub Pages subpath.
   // External URLs (//, http://, https://) and hash links (#...) are left alone.

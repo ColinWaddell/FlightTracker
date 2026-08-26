@@ -28,32 +28,22 @@ permalink: "/install/"
 
     <div class="narrative">
         <div class="alert alert-warning border-warning border-2" role="alert">
-            <p class="mb-0"><strong>If you know what you're doing</strong> and you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you can skip the rest of this page. Pick the script for your hardware and run it:</p>
+            <p class="mb-0"><strong>If you know what you're doing</strong> and you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you can skip the rest of this page. The installer auto-detects your Pi model and runs the right script:</p>
         </div>
     </div>
 
     <div class="code-card">
       <div class="code-card-header">
-        <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash')">Copy</button>
+        <span>All Raspberry Pi models</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://flight-tracker.dev/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash</code></pre>
-      </div>
-    </div>
-
-    <div class="code-card mt-2">
-      <div class="code-card-header">
-        <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash')">Copy</button>
-      </div>
-      <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://flight-tracker.dev/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="narrative mt-3">
-      <p>Each script installs the appropriate RGB matrix driver for your hardware, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. Not sure which Pi you have? Run the Pi 3/4/Zero script - it will detect a Pi 5 and redirect you. You can read the scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/install.sh">Pi 5</a>.</p>
+      <p>The installer detects your Pi model and runs the appropriate script for your hardware. It installs the RGB matrix driver, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. You can read the wrapper and platform scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/gh-pages/install.sh">wrapper</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
   </div>
@@ -181,26 +171,16 @@ permalink: "/install/"
 
     <div class="code-card">
       <div class="code-card-header">
-        <span>Raspberry Pi 3 / 4 / Zero</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash')">Copy</button>
+        <span>All Raspberry Pi models</span>
+        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://flight-tracker.dev/install.sh | bash')">Copy</button>
       </div>
       <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi/install.sh | bash</code></pre>
-      </div>
-    </div>
-
-    <div class="code-card mt-2">
-      <div class="code-card-header">
-        <span>Raspberry Pi 5</span>
-        <button class="code-card-copy" onclick="copyCode(this, 'curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash')">Copy</button>
-      </div>
-      <div class="code-card-body">
-        <pre><code>curl -sSL https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/main/platforms/pi5/install.sh | bash</code></pre>
+        <pre><code>curl -sSL https://flight-tracker.dev/install.sh | bash</code></pre>
       </div>
     </div>
 
     <div class="narrative">
-      <p>The script walks through the whole install: the RGB matrix driver appropriate for your hardware, the FlightTracker code, the Python environment, and a systemd service so it starts automatically on boot. This can take anywhere from a few minutes on newer systems to half an hour or so on older Pi models.</p>
+      <p>The installer detects your Pi model and runs the appropriate script. It walks through the whole install: the RGB matrix driver appropriate for your hardware, the FlightTracker code, the Python environment, and a systemd service so it starts automatically on boot. This can take anywhere from a few minutes on newer systems to half an hour or so on older Pi models.</p>
 
       <p>When it's done, the Pi will reboot and FlightTracker will start up. The first boot can take a few minutes before everything is running. If you're concerned something isn't right, SSH in and run <code>sudo systemctl status FlightTracker.service</code> to see what's going on.</p>
 
