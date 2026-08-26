@@ -21,22 +21,16 @@ permalink: "/"
         <div class="hero-carousel" id="hero-carousel">
           <div class="hero-carousel-slides">
             <div class="hero-carousel-slide active" data-type="image">
-              <img src="/images/blog/screen-flight.jpg" alt="FlightTracker showing a live flight on the LED matrix" />
-            </div>
-            <div class="hero-carousel-slide" data-type="video">
-              <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-                <source src="images/captures/pass-preview.mp4" type="video/mp4">
-                <source src="images/captures/pass-preview.webm" type="video/webm">
-              </video>
+              <img src="/images/carousel/flight-tracker-01.jpg" />
             </div>
             <div class="hero-carousel-slide" data-type="image">
-              <img src="/images/blog/internals-in-case.jpg" alt="Inside the FlightTracker case showing the Raspberry Pi" />
+              <img src="/images/carousel/flight-tracker-02.jpg" />
             </div>
-            <div class="hero-carousel-slide" data-type="video">
-              <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-                <source src="images/captures/satellite-pass.mp4" type="video/mp4">
-                <source src="images/captures/satellite-pass.webm" type="video/webm">
-              </video>
+            <div class="hero-carousel-slide" data-type="image">
+              <img src="/images/carousel/flight-tracker-03.jpg" />
+            </div>
+            <div class="hero-carousel-slide" data-type="image">
+              <img src="/images/carousel/flight-tracker-04.jpg" />
             </div>
           </div>
           <button class="hero-carousel-prev" aria-label="Previous slide">&lsaquo;</button>
