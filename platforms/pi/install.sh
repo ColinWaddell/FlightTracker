@@ -426,6 +426,7 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     libcap2-bin \
     libffi-dev \
     libopenjp2-7 \
+    libopenblas0 \
     libjpeg62-turbo \
     libtiff6 \
     libxcb1 \

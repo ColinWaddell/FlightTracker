@@ -296,6 +296,7 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     python3-pip \
     python3-dev \
     libopenjp2-7 \
+    libopenblas0 \
     libjpeg62-turbo \
     libtiff6 \
     libxcb1 || exit 1
