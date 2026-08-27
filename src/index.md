@@ -16,7 +16,7 @@ permalink: "/"
           </div>
       </div>
     </div>
-    <div class="row align-items-center g-4" style="max-width: 600px; margin: 0 auto;">
+    <div class="row align-items-center g-4">
       <div class="col-lg-12">
         <div class="hero-carousel" id="hero-carousel">
           <div class="hero-carousel-slides">
@@ -26,20 +26,12 @@ permalink: "/"
             <div class="hero-carousel-slide" data-type="image">
               <img src="/images/carousel/flight-tracker-02.jpg" />
             </div>
-            <div class="hero-carousel-slide" data-type="image">
-              <img src="/images/carousel/flight-tracker-03.jpg" />
-            </div>
-            <div class="hero-carousel-slide" data-type="image">
-              <img src="/images/carousel/flight-tracker-04.jpg" />
-            </div>
           </div>
           <button class="hero-carousel-prev" aria-label="Previous slide">&lsaquo;</button>
           <button class="hero-carousel-next" aria-label="Next slide">&rsaquo;</button>
           <div class="hero-carousel-dots">
             <button class="hero-carousel-dot active" aria-label="Go to slide 1"></button>
             <button class="hero-carousel-dot" aria-label="Go to slide 2"></button>
-            <button class="hero-carousel-dot" aria-label="Go to slide 3"></button>
-            <button class="hero-carousel-dot" aria-label="Go to slide 4"></button>
           </div>
         </div>
       </div>
@@ -81,7 +73,35 @@ permalink: "/"
         </div>
     </div>
 
-    {% include "display-modes.njk" %}
+    <div class="capture-grid row g-0 border border-2 mt-3">
+        <div class="capture-item col-12 col-md-6">
+            <div class="capture-screen">
+                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
+            </div>
+            <div class="capture-label">LABEL TEXT</div>
+        </div>
+
+        <div class="capture-item col-12 col-md-6">
+            <div class="capture-screen">
+                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
+            </div>
+            <div class="capture-label">LABEL TEXT</div>
+        </div>
+
+        <div class="capture-item col-12 col-md-6">
+            <div class="capture-screen">
+                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
+            </div>
+            <div class="capture-label">LABEL TEXT</div>
+        </div>
+
+        <div class="capture-item col-12 col-md-6">
+            <div class="capture-screen">
+                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
+            </div>
+            <div class="capture-label">LABEL TEXT</div>
+        </div>
+    </div>
   </div>
 </section>
 
