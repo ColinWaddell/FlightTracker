@@ -60,12 +60,26 @@ confirm() {
     [[ "$reply" =~ ^[Yy]$ ]]
 }
 
-# Run a long command quietly, showing dots while it works.
-# If the command fails, dump the last 30 lines of output for debugging.
+# Run a long command, showing progress while it works.
+# If FT_VERBOSE is set, command output streams to stdout/stderr directly.
+# Otherwise, output is captured to a temp file and only shown on failure.
 # Usage: run_quiet "message" command args...
 run_quiet() {
     local msg="$1"
     shift
+    info "${msg}"
+    if [ -n "${FT_VERBOSE:-}" ]; then
+        # Verbose mode: let output stream to stdout/stderr directly
+        "$@"
+        local rc=$?
+        if [ $rc -ne 0 ]; then
+            error "Command failed (exit code ${rc})."
+            return $rc
+        fi
+        success "${msg} done."
+        return 0
+    fi
+    # Quiet mode: capture output, show dots, only reveal on failure
     local log
     log=$(mktemp /tmp/flighttracker-log.XXXXXX)
     echo -ne "${BLUE}[INFO]${NC} ${msg}"
