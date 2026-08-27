@@ -310,6 +310,9 @@ class FlightScene:
             self.journey_label.reset()
             self.last_origin = origin
             self.last_dest = destination
+        else:
+            # No need to redraw journey when the route hasn't changed
+            return
 
         # Journey text starts after the icon (1px gap) when an icon was
         # drawn; otherwise starts at x=1 (the original margin).
