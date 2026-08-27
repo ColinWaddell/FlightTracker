@@ -304,13 +304,14 @@ class FlightScene:
         flight = self.flights[self.flight_index]
         origin = flight.origin
         destination = flight.destination
+        cfg = Config.instance()
 
         route_changed = origin != self.last_origin or destination != self.last_dest
         if route_changed:
             self.journey_label.reset()
             self.last_origin = origin
             self.last_dest = destination
-        else:
+        elif cfg.airport_display_style == 0:
             # No need to redraw journey when the route hasn't changed
             return
 
