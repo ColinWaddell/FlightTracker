@@ -41,7 +41,10 @@ def distance_from_flight_to_home(flight, location_home):
 class Overhead:
     def __init__(self):
         # Lazy import - FlightRadar24API drags in curl_cffi + brotli (~4.7s on Pi)
-        from FlightRadar24.api import FlightRadar24API
+        try:
+            from FlightRadar24.api import FlightRadar24API
+        except ImportError:
+            from FlightRadarAPI import FlightRadar24API
 
         from setup.configuration import Config
 
