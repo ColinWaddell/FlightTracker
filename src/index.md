@@ -66,7 +66,7 @@ permalink: "/"
         </div>
         <div class="rpi-imager-btn-wrap mt-3">
           <a class="btn btn-rpi" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
-            <img src="/images/Raspberry_Pi_Logo.svg" width="40"> Install With Raspberry Pi Imager
+            <img src="/images/Raspberry_Pi_Logo.svg" width="40">Click To Install With Raspberry Pi Imager
           </a>
         </div>
       </div>
