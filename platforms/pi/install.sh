@@ -425,6 +425,10 @@ run_quiet "Installing required packages" sudo DEBIAN_FRONTEND=noninteractive apt
     python3-setuptools \
     libcap2-bin \
     libffi-dev \
+    libopenjp2-7 \
+    libjpeg62-turbo \
+    libtiff6 \
+    libxcb1 \
     unzip || exit 1
 
 success "System update complete."
