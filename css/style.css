@@ -230,6 +230,7 @@ a:hover { color: #000; }
   display: flex;
   gap: 0;
   flex-wrap: wrap;
+  justify-content: center;
 }
 .hero-actions .btn {
   flex-direction: column;
@@ -394,6 +395,21 @@ a:hover { color: #000; }
 }
 .btn-blue:hover { background: #0078d4; }
 .btn + .btn { margin-left: -2px; }
+
+/* Raspberry Pi Imager button */
+.rpi-imager-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+.btn-rpi {
+  background: #c51a4a;
+  color: #fff;
+  width: 100%;
+  justify-content: center;
+  padding: 18px 24px;
+  font-size: .9rem;
+}
+.btn-rpi:hover { background: #a8123a; color: #fff; }
 
 /* ---------------------------------------------------------------------------
    Section structure - airport signage coded labels

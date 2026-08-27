@@ -1,22 +1,22 @@
 [
   {
-    "label": "Full airport names + aircraft type",
-    "src": "images/captures/full-names-and-plane-type.webm",
-    "type": "video"
+    "label": "Flight and airline information",
+    "src": "images/captures/airline-logo.png",
+    "type": "image"
   },
   {
-    "label": "Full airport names + telemetry",
-    "src": "images/captures/full-names-and-telemetry.webm",
-    "type": "video"
+    "label": "Fully customisable plane details scroller",
+    "src": "images/captures/telemetry.png",
+    "type": "image"
   },
   {
-    "label": "Short airport codes + aircraft type",
-    "src": "images/captures/short-names-and-plane-type.webm",
-    "type": "video"
+    "label": "Weather forecasting",
+    "src": "images/captures/conditions.png",
+    "type": "image"
   },
   {
-    "label": "Short airport codes + telemetry",
-    "src": "images/captures/short-names-and-telemetry.webm",
-    "type": "video"
+    "label": "Track overhead satellites",
+    "src": "images/captures/satellite-iss.png",
+    "type": "image"
   }
 ]

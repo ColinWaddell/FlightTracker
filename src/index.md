@@ -41,7 +41,7 @@ permalink: "/"
         <div class="hero-text mt-3">
           <p>A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead.</p>
           <p>FlightTracker takes live aircraft data, works out what is nearby, and displays it on a 64x32 RGB LED matrix. When there is nothing overhead, it can show the time, weather, temperature, rainfall, or satellite passes.</p>
-          <p>This site will show you what you need to build your own and get the software installed. An official 3D-printable case is also available — see the build page for details.</p>
+          <p>This site will show you what you need to build your own and get the software installed. An <a href="https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6" target="_blank">official 3D-printable case</a> is also available - see the build page for details.</p>
           <div class="hero-actions">
             <a href="/build/" class="btn btn-yellow me-sm-4"><span class="btn-label">Hardware</span><span class="btn-subtext">Build your own</span></a>
             <a href="/install/" class="btn btn-dark"><span class="btn-label">Software</span><span class="btn-subtext">Install and configure</span></a>
@@ -51,6 +51,38 @@ permalink: "/"
     </div>
   </div>
 </section>
+
+<section>
+  <div class="container">
+    <h2 class="section-title">FlightTracker OS</h2>
+
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="narrative">
+          <p>FlightTracker OS is a pre-built Raspberry Pi image that has everything installed and configured for you - no command line required.</p>
+          <p>Flash it to an SD card with <a href="https://www.raspberrypi.com/software/" target="_blank">Raspberry Pi Imager</a>, set your Wi-Fi details, flash, and boot.
+          You can then log into the web installer and finish setup from your browser.</p>
+          <p>32-bit and 64-bit images are available for every Raspberry Pi model, from the Pi Zero up to the Pi 5.</p>
+        </div>
+        <div class="rpi-imager-btn-wrap mt-3">
+          <a class="btn btn-rpi" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
+            <img src="/images/Raspberry_Pi_Logo.svg" width="40"> Install With Raspberry Pi Imager
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-body p-2">
+            <img src="/images/installer/web-installer.png" alt="FlightTracker OS web installer" loading="lazy" class="w-100 d-block">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr />
 
 <section>
   <div class="container">
@@ -67,41 +99,10 @@ permalink: "/"
   <div class="container">
     <h2 class="section-title">Display modes</h2>
     <div class="narrative">
-        <div>
         <p>FlightTracker has a few different ways of showing aircraft information.</p>
         <p>You can keep it simple and show the aircraft type and route, or switch to more telemetry-type data such as altitude, speed, and heading. Airport names can be shown in full or as three-letter codes along with the airline logo.</p>
-        </div>
     </div>
-
-    <div class="capture-grid row g-0 border border-2 mt-3">
-        <div class="capture-item col-12 col-md-6">
-            <div class="capture-screen">
-                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
-            </div>
-            <div class="capture-label">LABEL TEXT</div>
-        </div>
-
-        <div class="capture-item col-12 col-md-6">
-            <div class="capture-screen">
-                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
-            </div>
-            <div class="capture-label">LABEL TEXT</div>
-        </div>
-
-        <div class="capture-item col-12 col-md-6">
-            <div class="capture-screen">
-                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
-            </div>
-            <div class="capture-label">LABEL TEXT</div>
-        </div>
-
-        <div class="capture-item col-12 col-md-6">
-            <div class="capture-screen">
-                <img src="{{ item.src }}" alt="{{ item.label }}" loading="lazy" />
-            </div>
-            <div class="capture-label">LABEL TEXT</div>
-        </div>
-    </div>
+    {% include "display-modes.njk" %}
   </div>
 </section>
 
@@ -188,7 +189,7 @@ permalink: "/"
 
     <div class="card">
       <div class="card-body p-2 bg-black">
-        <img src="images/carousel/flight-tracker-02.jpg" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
+        <img src="images/captures/forecast.png" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
       </div>
       <div class="card-header">Idle screen - time, temperature, predicted rainfall, day and date</div>
     </div>

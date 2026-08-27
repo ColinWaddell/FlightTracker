@@ -18,26 +18,43 @@ permalink: "/install/"
     <h2 class="section-title">Getting started</h2>
     <div class="narrative">
       <p>You've put everything together using the build instructions and now you're ready to install the software.</p>
+      <p>There are a few different installation paths here, ordered from least frustrating to most.</p>
+      <ul>
+        <li><a href="#rpi-image">Prebuilt Raspberry Pi Image</a> - FlightTracker OS</li>
+        <li>Use the <a href="#quick-install">Quick Installer</a> script</li>
+        <li><a href="#manual-install">Manually install</a> and setup your Flight Tracker</li>
+        <li><a href="#upgrading">Upgrade</a> from the <code>v1</code> version</li>
+      </ul>
+      <p>There is also a <a href="#simulator">simulator</a> available if you'd like to run Flight Tracker on your computer.</li>
     </div>
   </div>
 </section>
 
-<section id="rpi-image" class="border-bottom" style="display: none">
+<section id="rpi-image" class="border-bottom">
   <div class="container">
     <h2 class="section-title">Raspberry Pi Image</h2>
     <div class="narrative">
       <p>If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker OS image to an SD card directly using <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a></p>
 
-      <a class="btn btn-primary mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
-        Open in Raspberry Pi Imager
-      </a>
+    <div class="card mb-3">
+        <div class="card-header">Web installer in Flight Tracker OS</div>
+        <div class="card-body p-2">
+            <img src="/images/installer/web-installer.png" alt="Install the Flight Tracker software using the web installer in Flight Tracker OS" loading="lazy" class="w-100 d-block">
+        </div>
+    </div>
+
+      <div class="rpi-imager-btn-wrap">
+        <a class="btn btn-rpi mb-3" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">
+          <img src="/images/Raspberry_Pi_Logo.svg" width="40"> Click To Install With RPi Imager
+        </a>
+      </div>
 
       <p class="small text-muted mb-2">
-        Raspberry Pi Imager will ask you to confirm the custom repository before loading it.
+        <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a> will ask you to confirm the custom repository before loading it.
       </p>
 
       <p class="mb-2">
-        If the button does not work, open Raspberry Pi Imager and add this URL manually
+        If the button does not work, open <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a> and add this URL manually
         under <strong>App Options → Content Repository → Custom URL</strong>:
       </p>
     </div>
@@ -53,27 +70,32 @@ permalink: "/install/"
     </div>
 
     <div class="narrative">
-      <p class="small text-muted mt-2">
-        Pre-built images are also available to download directly from the
-        <a href="https://github.com/ColinWaddell/FlightTracker-Image/releases">releases page</a>.
-      </p>
-
-      <h5>How it works</h5>
+      <h4>How it works</h4>
       <ul>
         <li>Follow the details above to open up the image in RPI Imager</li>
         <li>Select your device type and whether you want the 32-bit or 64-bit version installed
           <ul>
-            <li>32-bit is best for Pi Zero and Pi Zero W</li>
+            <li>32-bit is best for Pi Zero,Pi Zero W, etc</li>
             <li>64-bit should be good for everything else</li>
           </ul>
         </li>
         <li>Set your Wi-Fi details</li>
-        <li>Choose a device name (e.g. <code>flighttracker</code>)</li>
-        <li>Insert the card and power on.</li>
-        <li>The Pi connects to your Wi-Fi automatically using the credentials you set.</li>
-        <li>Visit <code>http://flighttracker.local/</code> in your browser (tweak the url based on the hostname you gave this device).</li>
+        <li>Choose a device name (e.g. <code><strong>flighttracker</strong></code>)</li>
+        <li>Let RPi Imager prepare your SD card</li>
+        <li>Once it's finished remove the card from your computer and put it in your Raspberry Pi</li>
+        <li>Power everything up</li>
+        <li>The Pi connects to your Wi-Fi automatically using the credentials you (hopefully) set earlier</li>
+        <li>Visit <code>http://<strong>flighttracker</strong>.local:8584/</code> in your browser (tweak the url based on the hostname you gave this device).</li>
         <li>The web installer guides you through the rest.</li>
+        <li>Jump to Section #3 "Choose your storage" in the <a href="#sd-prepare">"Preparing your SD Card"</a> section below for more in depth instructions of how to use <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a></li>
       </ul>
+
+      <h4>Downloadable Images</h4>
+
+      <p class="small text-muted mt-2">
+        Pre-built images are also available to download directly from the
+        <a href="https://github.com/ColinWaddell/FlightTracker-Image/releases">releases page</a>.
+      </p>
     </div>
   </div>
 </section>
@@ -84,7 +106,7 @@ permalink: "/install/"
 
     <div class="narrative">
       <div class="alert alert-warning border-warning border-2" role="alert">
-        <p class="mb-0"><strong>If you know what you're doing</strong> and you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you can skip the rest of this page. The installer auto-detects your Pi model and runs the right script:</p>
+        <p class="mb-0">If you've got a Raspberry Pi you can SSH into, and you're happy for the installer script to treat the system as a fresh install, then you only need to SSH into your Raspberry Pi and run this line of code.</p>
       </div>
     </div>
 
@@ -99,7 +121,6 @@ permalink: "/install/"
     </div>
 
     <div class="narrative mt-3">
-      <p>If you don't want to use the pre-baked Raspberry Pi image above you can use the installer script</p>
       <p>The installer detects your Pi model and runs the appropriate script for your hardware. It installs the RGB matrix driver, clones FlightTracker, sets up the Python environment, and configures a systemd service so it starts on boot. You can read the wrapper and platform scripts on GitHub before running them: <a href="https://github.com/ColinWaddell/FlightTracker/blob/gh-pages/install.sh">wrapper</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi/install.sh">Pi 3/4/Zero</a> · <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/pi5/install.sh">Pi 5</a>.</p>
       <p>If you'd rather go step by step - or you're starting from scratch and need to prepare an SD card first - read on.</p>
     </div>
@@ -108,7 +129,7 @@ permalink: "/install/"
 
 <section id="full-install" class="border-bottom">
   <div class="container">
-    <h2 class="section-title">Preparing the SD card</h2>
+    <h2 class="section-title" id="sd-prepare">Preparing the SD card</h2>
 
     <div class="narrative">
       <p>The easiest way to get all the FlightTracker software installed is with a freshly prepared Raspberry Pi. The installer script assumes it's running on a fresh install of Raspberry Pi OS Trixie.</p>
@@ -126,24 +147,26 @@ permalink: "/install/"
       </ol>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header">Select your device</div>
-      <div class="card-body p-2">
-        <img src="/images/installer/001_select_your_device.png" alt="Raspberry Pi Imager device selection screen" loading="lazy" class="w-100 d-block">
-      </div>
-    </div>
-
     <div class="narrative">
-      <ol start="2">
-        <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 64-bit unless you're on a Pi Zero, in which case choose 32-bit.</li>
-      </ol>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">Select your device</div>
+            <div class="card-body p-2">
+                <img src="/images/installer/001_select_your_device.png" alt="Raspberry Pi Imager device selection screen" loading="lazy" class="w-100 d-block">
+            </div>
+            </div>
 
-    <div class="card mb-3">
-      <div class="card-header">Choose your OS</div>
-      <div class="card-body p-2">
-        <img src="/images/installer/002_choose_os.png" alt="Raspberry Pi Imager OS selection screen showing Raspberry Pi OS Lite" loading="lazy" class="w-100 d-block">
-      </div>
+            <div class="narrative">
+            <ol start="2">
+                <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 64-bit unless you're on a Pi Zero, in which case choose 32-bit.</li>
+            </ol>
+            </div>
+
+            <div class="card mb-3">
+            <div class="card-header">Choose your OS</div>
+            <div class="card-body p-2">
+                <img src="/images/installer/002_choose_os.png" alt="Raspberry Pi Imager OS selection screen showing Raspberry Pi OS Lite" loading="lazy" class="w-100 d-block">
+            </div>
+        </div>
     </div>
 
     <div class="narrative">
@@ -158,11 +181,13 @@ permalink: "/install/"
       </ol>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header">Set your username and password</div>
-      <div class="card-body p-2">
-        <img src="/images/installer/003_choose_username.png" alt="Raspberry Pi Imager OS customisation screen showing username and password fields" loading="lazy" class="w-100 d-block">
-      </div>
+    <div class="narrative">
+        <div class="card mb-3">
+            <div class="card-header">Set your username and password</div>
+            <div class="card-body p-2">
+                <img src="/images/installer/003_choose_username.png" alt="Raspberry Pi Imager OS customisation screen showing username and password fields" loading="lazy" class="w-100 d-block">
+            </div>
+        </div>
     </div>
 
     <div class="narrative">
@@ -172,18 +197,20 @@ permalink: "/install/"
       </ul>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header">Configure Wi-Fi</div>
-      <div class="card-body p-2">
-        <img src="/images/installer/004_choose_wifi.png" alt="Raspberry Pi Imager OS customisation screen showing Wi-Fi configuration" loading="lazy" class="w-100 d-block">
-      </div>
-    </div>
+    <div class="narrative">
+        <div class="card mb-3">
+            <div class="card-header">Configure Wi-Fi</div>
+            <div class="card-body p-2">
+                <img src="/images/installer/004_choose_wifi.png" alt="Raspberry Pi Imager OS customisation screen showing Wi-Fi configuration" loading="lazy" class="w-100 d-block">
+            </div>
+        </div>
 
-    <div class="card mb-3">
-      <div class="card-header">Enable SSH</div>
-      <div class="card-body p-2">
-        <img src="/images/installer/005_ssh.png" alt="Raspberry Pi Imager Services tab showing SSH enabled with password authentication" loading="lazy" class="w-100 d-block">
-      </div>
+        <div class="card mb-3">
+            <div class="card-header">Enable SSH</div>
+            <div class="card-body p-2">
+                <img src="/images/installer/005_ssh.png" alt="Raspberry Pi Imager Services tab showing SSH enabled with password authentication" loading="lazy" class="w-100 d-block">
+            </div>
+        </div>
     </div>
 
     <div class="narrative">
@@ -249,11 +276,13 @@ permalink: "/install/"
       <p>On boot, FlightTracker shows a QR code on the matrix - scan it with your phone to open the web configuration UI. You can also access the settings directly in a browser at <code>http://flighttracker.local:8584</code> (using the hostname you set in the Imager) or <code>http://&lt;your-pi-ip&gt;:8584</code>.</p>
     </div>
 
-    <div class="card">
-      <div class="card-body p-2 bg-black">
-        <img src="../images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
-      </div>
-      <div class="card-header">First boot - scan to configure</div>
+    <div class="narrative">
+        <div class="card">
+            <div class="card-body p-2 bg-black">
+                <img src="../images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
+            </div>
+            <div class="card-header">First boot - scan to configure</div>
+        </div>
     </div>
 
     <div class="narrative">
@@ -452,10 +481,10 @@ pip install -r platforms/simulator/requirements.txt</code></pre>
       <p>A pygame window opens showing the simulated LED matrix. The app runs exactly as it would on a Pi, including the web configuration interface at <a href="http://localhost:8584"><code>http://localhost:8584</code></a>.</p>
 
       <h3>Capture keys</h3>
-      <p>The simulator supports saving screenshots and video frame sequences — handy for creating the kind of capture clips you see on the home page:</p>
+      <p>The simulator supports saving screenshots and video frame sequences - handy for creating the kind of capture clips you see on the home page:</p>
       <ul>
-        <li><strong>P</strong> — Save a photo to <code>captures/</code></li>
-        <li><strong>R</strong> — Toggle video recording on/off (saves a PNG frame sequence to <code>captures/</code>)</li>
+        <li><strong>P</strong> - Save a photo to <code>captures/</code></li>
+        <li><strong>R</strong> - Toggle video recording on/off (saves a PNG frame sequence to <code>captures/</code>)</li>
       </ul>
       <p>Full setup details are in the <a href="https://github.com/ColinWaddell/FlightTracker/blob/main/platforms/simulator/INSTALL.md">simulator install guide</a> on GitHub.</p>
     </div>

@@ -100,9 +100,9 @@ permalink: "/build/"
     <div class="narrative">
         <p>There's an official 3D-printable case for FlightTracker, designed for the 64×32 HUB75 RGB LED matrix (4mm pitch) from the shopping list above.</p>
         <ul>
-            <li>Works with any Raspberry Pi model — full-size boards (Pi 3, 4, 5) and smaller boards (Pi Zero W, Zero 2)</li>
+            <li>Works with any Raspberry Pi model - full-size boards (Pi 3, 4, 5) and smaller boards (Pi Zero W, Zero 2)</li>
             <li>Two-piece interlocking design, prints on a normal-sized print bed</li>
-            <li>Built-in tabs hold the matrix securely — no extra fixings needed</li>
+            <li>Built-in tabs hold the matrix securely - no extra fixings needed</li>
             <li>OpenSCAD source available, so it's fully customisable</li>
             <li>Licensed CC BY-NC 4.0 (non-commercial)</li>
         </ul>

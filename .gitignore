@@ -7,6 +7,7 @@ _site/
 # Local dev environment
 .dev/
 .vscode/
+__pycache__/
 
 # OS / editor cruft
 .DS_Store
@@ -15,3 +16,4 @@ npm-debug.log*
 
 # Scratch / reference material
 _junk/
+captures/
