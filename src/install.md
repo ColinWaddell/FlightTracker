@@ -1,7 +1,7 @@
 ---
 layout: base.njk
 title: "Get Started"
-description: "Install FlightTracker on your Raspberry Pi — flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide."
+description: "Install FlightTracker on your Raspberry Pi - flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide."
 permalink: "/install/"
 og_type: "article"
 og_title: "Getting Started with FlightTracker"
@@ -11,7 +11,7 @@ structured_data: |
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "Installing FlightTracker on Raspberry Pi",
-    "description": "Install FlightTracker on your Raspberry Pi — flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide.",
+    "description": "Install FlightTracker on your Raspberry Pi - flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide.",
     "url": "https://flight-tracker.dev/install/",
     "image": "https://flight-tracker.dev/images/installer/web-installer.png",
     "author": {

@@ -1,7 +1,7 @@
 ---
 layout: base.njk
 title: "The Build"
-description: "How to build your own FlightTracker — the hardware you need, the electronics, wiring, and an official 3D-printable case."
+description: "How to build your own FlightTracker - the hardware you need, the electronics, wiring, and an official 3D-printable case."
 permalink: "/build/"
 og_type: "article"
 og_title: "Build Your Own FlightTracker"
@@ -16,14 +16,14 @@ structured_data: |
     "image": "https://flight-tracker.dev/images/flight-tracker-case.jpg",
     "supply": [
       { "@type": "HowToSupply", "name": "Raspberry Pi (3B, 4B, Zero 2, Zero W, or 5)" },
-      { "@type": "HowToSupply", "name": "RGB LED Matrix Panel — 32×64, 1:16 scan rate" },
+      { "@type": "HowToSupply", "name": "RGB LED Matrix Panel - 32×64, 1:16 scan rate" },
       { "@type": "HowToSupply", "name": "Adafruit RGB Matrix Bonnet for Raspberry Pi" },
       { "@type": "HowToSupply", "name": "5V 8A power supply" }
     ],
     "step": [
       { "@type": "HowToStep", "name": "Get the hardware", "text": "Acquire a Raspberry Pi, a 32×64 1:16 scan rate RGB LED matrix panel, an Adafruit RGB Matrix Bonnet, and a 5V 8A power supply." },
       { "@type": "HowToStep", "name": "Connect the bonnet", "text": "Plug the RGB Matrix Bonnet onto the Raspberry Pi GPIO header and connect the matrix panel to the bonnet." },
-      { "@type": "HowToStep", "name": "Wire power", "text": "Connect the 5V power supply to the bonnet only. Do not use a separate USB power supply — the bonnet powers the Pi." },
+      { "@type": "HowToStep", "name": "Wire power", "text": "Connect the 5V power supply to the bonnet only. Do not use a separate USB power supply - the bonnet powers the Pi." },
       { "@type": "HowToStep", "name": "Optional: solder bridge for quality", "text": "For best display quality on Pi 3/4/Zero, solder a bridge between pins 4 and 18 on the bonnet." },
       { "@type": "HowToStep", "name": "3D-print a case", "text": "Download the official 3D-printable case from Printables and print it, or design your own enclosure." },
       { "@type": "HowToStep", "name": "Install the software", "text": "Follow the install guide at flight-tracker.dev/install/ to flash FlightTracker OS or run the quick installer." }
@@ -134,8 +134,8 @@ structured_data: |
         </ul>
         <p>Download the ready-to-print files or grab the OpenSCAD source:</p>
         <ul>
-            <li><a href="https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6">Printables - download the STL files</a></li>
-            <li><a href="https://github.com/ColinWaddell/FlightTracker-Case">GitHub - OpenSCAD source and assembly instructions</a></li>
+            <li><a href="https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6">Printables - download the STL files and view the assembly instructions</a></li>
+            <li><a href="https://github.com/ColinWaddell/FlightTracker-Case">GitHub - OpenSCAD source </a></li>
         </ul>
 
         <div class="card">

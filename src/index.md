@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: "FlightTracker — Raspberry Pi Flight Tracker"
-description: "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead. Build your own with FlightTracker OS — no command line required."
+title: "FlightTracker - Raspberry Pi Flight Tracker"
+description: "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead. Build your own with FlightTracker OS - no command line required."
 permalink: "/"
 og_type: "website"
 og_title: "Raspberry Pi Flight Tracker"
@@ -36,7 +36,7 @@ structured_data: |
     <div class="row align-items-center g-4">
       <div class="col-lg-12">
           <div class="hero-headline">
-            <h1>FlightTracker <span class="yellow">— what's that over my house?</span></h1>
+            <h1>FlightTracker <span class="yellow">- what's that over my house?</span></h1>
             <br />
             <img src="/images/logo.png" alt="{{ site.name }}" class="hero-logo pb-3" />
           </div>

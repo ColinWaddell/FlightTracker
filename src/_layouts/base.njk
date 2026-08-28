@@ -11,14 +11,14 @@
   {# Open Graph / Facebook #}
   <meta property="og:type" content="{{ og_type or 'website' }}" />
   <meta property="og:url" content="{{ site.url }}{{ permalink }}" />
-  <meta property="og:title" content="{{ og_title or title }} — {{ site.name }}" />
+  <meta property="og:title" content="{{ og_title or title }} - {{ site.name }}" />
   <meta property="og:description" content="{{ description or site.description }}" />
   <meta property="og:image" content="{{ site.url }}{{ og_image or '/images/carousel/flight-tracker-01.jpg' }}" />
   <meta property="og:site_name" content="{{ site.name }}" />
 
   {# Twitter Card #}
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="{{ og_title or title }} — {{ site.name }}" />
+  <meta name="twitter:title" content="{{ og_title or title }} - {{ site.name }}" />
   <meta name="twitter:description" content="{{ description or site.description }}" />
   <meta name="twitter:image" content="{{ site.url }}{{ og_image or '/images/carousel/flight-tracker-01.jpg' }}" />
   <meta name="twitter:creator" content="@ColinWaddell" />
