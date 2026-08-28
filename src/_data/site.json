@@ -9,5 +9,6 @@
   "authorUrl": "https://colinwaddell.com",
   "status": "System operational",
   "commitCount": "382",
-  "description": "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead."
+  "description": "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead.",
+  "url": "https://flight-tracker.dev"
 }

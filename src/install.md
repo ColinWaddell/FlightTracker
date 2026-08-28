@@ -1,8 +1,30 @@
 ---
 layout: base.njk
 title: "Get Started"
-description: "Install FlightTracker on your Raspberry Pi in one line."
+description: "Install FlightTracker on your Raspberry Pi — flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide."
 permalink: "/install/"
+og_type: "article"
+og_title: "Getting Started with FlightTracker"
+og_image: "/images/installer/web-installer.png"
+structured_data: |
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Installing FlightTracker on Raspberry Pi",
+    "description": "Install FlightTracker on your Raspberry Pi — flash FlightTracker OS, use the one-line quick installer, or follow the manual setup guide.",
+    "url": "https://flight-tracker.dev/install/",
+    "image": "https://flight-tracker.dev/images/installer/web-installer.png",
+    "author": {
+      "@type": "Person",
+      "name": "Colin Waddell",
+      "url": "https://colinwaddell.com"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Colin Waddell",
+      "url": "https://colinwaddell.com"
+    }
+  }
 ---
 
 <div class="status-bar">
@@ -17,7 +39,7 @@ permalink: "/install/"
   <div class="container">
     <h2 class="section-title">Getting started</h2>
     <div class="narrative">
-      <p>You've put everything together using the build instructions and now you're ready to install the software.</p>
+:      <p>You've put everything together using the <a href="/build/">build instructions</a> and now you're ready to install the software.</p>
       <p>There are a few different installation paths here, ordered from least frustrating to most.</p>
       <ul>
         <li><a href="#rpi-image">Prebuilt Raspberry Pi Image</a> - FlightTracker OS</li>

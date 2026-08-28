@@ -1,8 +1,34 @@
 ---
 layout: base.njk
-title: "What's that over my house?"
-description: "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft are overhead."
+title: "FlightTracker — Raspberry Pi Flight Tracker"
+description: "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead. Build your own with FlightTracker OS — no command line required."
 permalink: "/"
+og_type: "website"
+og_title: "Raspberry Pi Flight Tracker"
+og_image: "/images/carousel/flight-tracker-01.jpg"
+structured_data: |
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "FlightTracker",
+    "operatingSystem": "Raspberry Pi OS",
+    "applicationCategory": "MakerApplication",
+    "description": "A Raspberry Pi-powered RGB LED matrix that shows you what aircraft and satellites are overhead.",
+    "url": "https://flight-tracker.dev/",
+    "downloadUrl": "https://github.com/ColinWaddell/FlightTracker",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "GBP"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Colin Waddell",
+      "url": "https://colinwaddell.com"
+    },
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "image": "https://flight-tracker.dev/images/carousel/flight-tracker-01.jpg"
+  }
 ---
 
 <section class="hero">
@@ -10,7 +36,7 @@ permalink: "/"
     <div class="row align-items-center g-4">
       <div class="col-lg-12">
           <div class="hero-headline">
-            <h1>What's that <span class="yellow">over my house?</span></h1>
+            <h1>FlightTracker <span class="yellow">— what's that over my house?</span></h1>
             <br />
             <img src="/images/logo.png" alt="{{ site.name }}" class="hero-logo pb-3" />
           </div>

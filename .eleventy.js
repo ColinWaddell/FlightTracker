@@ -15,6 +15,7 @@ module.exports = function (eleventyConfig) {
 
   // Copy the root-level install.sh into _site/ so it's served at /install.sh
   eleventyConfig.addPassthroughCopy({ "install.sh": "install.sh" });
+  eleventyConfig.addPassthroughCopy({ "robots.txt": "robots.txt" });
 
   // Rewrite root-absolute URLs (href="/...", src="/...") to include the
   // path prefix, so assets resolve correctly under the GitHub Pages subpath.
