@@ -88,7 +88,7 @@ structured_data: |
           <p>FlightTracker OS is a pre-built Raspberry Pi image that has everything installed and configured for you - no command line required.</p>
           <p>Flash it to an SD card with <a href="https://www.raspberrypi.com/software/" target="_blank">Raspberry Pi Imager</a>, set your Wi-Fi details, flash, and boot.
           You can then log into the web installer and finish setup from your browser.</p>
-          <p>32-bit and 64-bit images are available for every Raspberry Pi model, from the Pi Zero up to the Pi 5.</p>
+          <p>32-bit and 64-bit images are available for Raspberry Pi 3, 4, and 5.</p>
         </div>
         <div class="rpi-imager-btn-wrap mt-3">
           <a class="btn btn-rpi" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">

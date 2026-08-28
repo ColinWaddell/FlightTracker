@@ -15,7 +15,7 @@ structured_data: |
     "url": "https://flight-tracker.dev/build/",
     "image": "https://flight-tracker.dev/images/flight-tracker-case.jpg",
     "supply": [
-      { "@type": "HowToSupply", "name": "Raspberry Pi (3B, 4B, Zero 2, Zero W, or 5)" },
+      { "@type": "HowToSupply", "name": "Raspberry Pi (3B, 4B, or 5)" },
       { "@type": "HowToSupply", "name": "RGB LED Matrix Panel - 32×64, 1:16 scan rate" },
       { "@type": "HowToSupply", "name": "Adafruit RGB Matrix Bonnet for Raspberry Pi" },
       { "@type": "HowToSupply", "name": "5V 8A power supply" }
@@ -46,8 +46,6 @@ structured_data: |
         <ul>
             <li>RPi 3B</li>
             <li>RPi 4B</li>
-            <li>RPi Zero 2</li>
-            <li>RPi Zero W</li>
             <li>RPi 5</li>
             <li><i>
                 If your device isn't on this list and you're feeling brave, give it a shot and let me know
@@ -126,7 +124,7 @@ structured_data: |
     <div class="narrative">
         <p>There's an official 3D-printable case for FlightTracker, designed for the 64×32 HUB75 RGB LED matrix (4mm pitch) from the shopping list above.</p>
         <ul>
-            <li>Works with any Raspberry Pi model - full-size boards (Pi 3, 4, 5) and smaller boards (Pi Zero W, Zero 2)</li>
+            <li>Works with any Raspberry Pi model - full-size boards (Pi 3, 4, 5)</li>
             <li>Two-piece interlocking design, prints on a normal-sized print bed</li>
             <li>Built-in tabs hold the matrix securely - no extra fixings needed</li>
             <li>OpenSCAD source available, so it's fully customisable</li>

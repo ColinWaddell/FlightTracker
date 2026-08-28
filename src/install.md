@@ -97,7 +97,7 @@ structured_data: |
         <li>Follow the details above to open up the image in RPI Imager</li>
         <li>Select your device type and whether you want the 32-bit or 64-bit version installed
           <ul>
-            <li>32-bit is best for Pi Zero,Pi Zero W, etc</li>
+            <li>32-bit is best for Pi 3 (32-bit compatibility)</li>
             <li>64-bit should be good for everything else</li>
           </ul>
         </li>
@@ -165,7 +165,7 @@ structured_data: |
       <p>Stick a microSD card into your computer and open the Imager. The steps are:</p>
 
       <ol>
-        <li><strong>Choose your device</strong> - pick the Raspberry Pi model you're using (3B, 4B, Zero 2, Zero W, etc.).</li>
+        <li><strong>Choose your device</strong> - pick the Raspberry Pi model you're using (3B, 4B, 5, etc.).</li>
       </ol>
     </div>
 
@@ -179,7 +179,7 @@ structured_data: |
 
             <div class="narrative">
             <ol start="2">
-                <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 64-bit unless you're on a Pi Zero, in which case choose 32-bit.</li>
+                <li><strong>Choose your OS</strong> - select <em>Raspberry Pi OS (Other)</em> and then <em>Raspberry Pi OS Lite</em>. The Lite version has no desktop environment, which is exactly what we want - FlightTracker runs headless and a desktop would just waste resources. The Imager will show you the correct version for your device. If it offers you a choice between 32-bit and 64-bit, go with 64-bit unless you have a specific reason to choose 32-bit.</li>
             </ol>
             </div>
 
