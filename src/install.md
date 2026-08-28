@@ -57,6 +57,7 @@ structured_data: |
     <h2 class="section-title">Raspberry Pi Image</h2>
     <div class="narrative">
       <p>If you have Raspberry Pi Imager 2.x installed, you can open the Flight Tracker OS image to an SD card directly using <a href="https://www.raspberrypi.com/software/" target="_blank">RPi Imager</a></p>
+      <p>FlightTracker OS supports the Raspberry Pi 3, 4, and 5. If you're using a Pi Zero, Pi Zero W, or Pi Zero 2, use the <a href="#quick-install">quick-install script</a> over SSH instead.</p>
 
     <div class="card mb-3">
         <div class="card-header">Web installer in Flight Tracker OS</div>
