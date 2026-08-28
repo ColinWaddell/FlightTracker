@@ -24,22 +24,10 @@
 .hero-logo {
   width: 175px;
   margin: 0;
-  flex-shrink: 0;
 }
 
 .hero-headline {
-  display: flex;
-  align-items: center;
-  gap: 24px;
   margin-bottom: 20px;
-}
-
-@media (max-width: 575.98px) {
-  .hero-headline {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
 }
 
 .hero-text {

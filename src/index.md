@@ -33,13 +33,12 @@ structured_data: |
 
 <section class="hero">
   <div class="container">
-    <div class="row align-items-center g-4">
-      <div class="col-lg-12">
-          <div class="hero-headline">
-            <h1>FlightTracker<br/><span class="yellow">What's that up there?</span></h1>
-            <br />
-            <img src="/images/logo.png" alt="{{ site.name }}" class="hero-logo pb-3" />
-          </div>
+    <div class="row align-items-center g-4 hero-headline">
+      <div class="col-9">
+        <h1>FlightTracker<br/><span class="yellow">What's that up there?</span></h1>
+      </div>
+      <div class="col-3 text-end">
+        <img src="/images/logo.png" alt="{{ site.name }}" class="hero-logo pb-3" />
       </div>
     </div>
     <div class="row align-items-center g-4">
@@ -82,7 +81,7 @@ structured_data: |
   <div class="container">
     <h2 class="section-title">FlightTracker OS</h2>
 
-    <div class="row align-items-center g-4">
+    <div class="row g-4">
       <div class="col-lg-7">
         <div class="narrative">
           <p>FlightTracker OS is a pre-built Raspberry Pi image that has everything installed and configured for you - no command line required.</p>
