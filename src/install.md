@@ -39,7 +39,7 @@ structured_data: |
   <div class="container">
     <h2 class="section-title">Getting started</h2>
     <div class="narrative">
-:      <p>You've put everything together using the <a href="/build/">build instructions</a> and now you're ready to install the software.</p>
+      <p>You've put everything together using the <a href="/build/">build instructions</a> and now you're ready to install the software.</p>
       <p>There are a few different installation paths here, ordered from least frustrating to most.</p>
       <ul>
         <li><a href="#rpi-image">Prebuilt Raspberry Pi Image</a> - FlightTracker OS</li>
