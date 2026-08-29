@@ -56,6 +56,12 @@ app_ready = threading.Event()
 logger = logging.getLogger("web")
 
 
+@app.context_processor
+def _inject_version():
+    """Make the app version available to every template (footer, etc.)."""
+    return {"app_version": version_string(VERSION)}
+
+
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
@@ -757,7 +763,10 @@ def _status_page_data() -> dict:
     overhead = get_overhead_instance()
     last_fetch = overhead.last_fetch
     if last_fetch is not None:
-        last_fetch = {**last_fetch, "at_fmt": _format_last_updated_value(last_fetch["at"])}
+        last_fetch = {
+            **last_fetch,
+            "at_fmt": _format_last_updated_value(last_fetch["at"]),
+        }
     return {
         "providers": providers,
         "fetch": {
@@ -815,7 +824,10 @@ def _provider_ui_data(cfg) -> dict:
 
     def order(capability):
         entries = getattr(cfg, f"{capability}_providers")
-        return [{"provider": e["provider"], "enabled": bool(e.get("enabled"))} for e in entries]
+        return [
+            {"provider": e["provider"], "enabled": bool(e.get("enabled"))}
+            for e in entries
+        ]
 
     return {
         "cfg": cfg_masked,
@@ -924,9 +936,7 @@ def settings():
             # descriptor validation so no junk is ever persisted.
             providers_partial = new_data.pop("providers", None)
             if providers_partial:
-                new_data["providers"] = _merge_provider_settings(
-                    cfg, providers_partial
-                )
+                new_data["providers"] = _merge_provider_settings(cfg, providers_partial)
 
             new_password = form.get("new_password", "").strip()
 
