@@ -252,55 +252,111 @@ structured_data: |
 <section>
   <div class="container">
     <h2 class="section-title">Data sources</h2>
-    <p class="section-sub">FlightTracker can use a few different sources depending on how you want to run it.</p>
+    <p class="section-sub">FlightTracker mixes and matches data services. Enable any combination you like, put them in priority order, and it cascades down the chain - merging the results, falling back when a service has no answer, and quarantining anything temporarily offline.</p>
 
-    <div class="info-panel">
-      <div class="info-panel-header">FlightRadar24</div>
-      <div class="info-panel-body">
-        <p>The default setup uses FlightRadar24 data to find aircraft near your location.</p>
-      </div>
+    <div class="table-responsive">
+      <table class="table providers-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Flight monitoring</th>
+            <th>Routing and aircraft info</th>
+            <th>Free or paid</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>tar1090 / dump1090</td>
+            <td>&check;</td>
+            <td>&mdash;</td>
+            <td>Free (your own receiver)</td>
+          </tr>
+          <tr>
+            <td><a href="https://opendata.adsb.fi" target="_blank" rel="noopener noreferrer">ADS-B.fi</a></td>
+            <td>&check;</td>
+            <td>&mdash;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://adsb.lol" target="_blank" rel="noopener noreferrer">ADSB.lol</a></td>
+            <td>&check;</td>
+            <td>&mdash;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://airplanes.live" target="_blank" rel="noopener noreferrer">airplanes.live</a></td>
+            <td>&check;</td>
+            <td>&mdash;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://opensky-network.org" target="_blank" rel="noopener noreferrer">OpenSky Network</a></td>
+            <td>&check;</td>
+            <td>&mdash;</td>
+            <td>Free (account)</td>
+          </tr>
+          <tr>
+            <td>Flight Radar 24 (Free)</td>
+            <td>&check;</td>
+            <td>&check;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td>Flight Radar 24 (Paid)</td>
+            <td>&check;</td>
+            <td>&check;</td>
+            <td>Paid (subscription)</td>
+          </tr>
+          <tr>
+            <td><a href="https://hexdb.io" target="_blank" rel="noopener noreferrer">hexdb.io</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://adsbdb.com" target="_blank" rel="noopener noreferrer">adsbdb.com</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://adsb.im" target="_blank" rel="noopener noreferrer">ADSB.im routes</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Free</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.aerodatabox.com" target="_blank" rel="noopener noreferrer">AeroDataBox</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Free tier, then paid</td>
+          </tr>
+          <tr>
+            <td><a href="https://airlabs.co" target="_blank" rel="noopener noreferrer">AirLabs</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Free tier (1,000/month), then paid</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.flightaware.com/aeroapi/portal" target="_blank" rel="noopener noreferrer">FlightAware AeroAPI</a></td>
+            <td>&mdash;</td>
+            <td>&check;</td>
+            <td>Paid (monthly credit)</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <div class="info-panel">
-      <div class="info-panel-header">Open Sky Network + ADSB.DB</div>
-      <div class="info-panel-body">
-        <p>If you register an account and obtain an <a href="https://opensky-network.org" target="_blank">OpenSky Network</a> API key, FlightTracker can use <a href="https://opensky-network.org" target="_blank">OpenSky Network</a> together with <a href="https://adsbdb.com" target="_blank">ADSB.DB</a> for flight, route, and aircraft lookups.</p>
-      </div>
+    <div class="narrative">
+      <p><strong>Flight monitoring</strong> providers answer "what is overhead right now" - the default setup polls them in priority order until enough nearby aircraft are found. <strong>Routing and aircraft info</strong> providers fill in where each flight is going, the airline, and the aircraft type; results are cached, so API usage stays low. Both lists are configured from the web interface - no keys or code required for the free services.</p>
     </div>
 
-    <div class="info-panel">
-      <div class="info-panel-header">tar1090 / dump1090</div>
-      <div class="info-panel-body">
-        <p>If you have your own ADS-B receiver, FlightTracker can use your local <code>tar1090</code> or <code>dump1090</code> instance instead.</p>
-        <p>That means no API keys, no rate limits, and no relying on someone else's service if you already have the aircraft data yourself.</p>
-      </div>
+    <h3 class="section-title">Weather and satellites</h3>
+    <div class="narrative">
+      <p><strong>Weather - <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer">OpenWeather</a> (free tier).</strong> With a free OpenWeather API key, FlightTracker shows temperature, humidity, rainfall and forecast animations on the idle screen. No key, no weather - it simply sticks to the clock and date instead.</p>
+      <p><strong>Satellites - <a href="https://celestrak.org" target="_blank" rel="noopener noreferrer">CelesTrak</a> (free, no key).</strong> FlightTracker fetches <a href="https://en.wikipedia.org/wiki/Two-line_element_set">TLE data</a> from CelesTrak, works out when satellites are overhead, and plots their passes. The ISS and other satellites in your tracking list appear automatically when they are above the horizon.</p>
+      <p>Thanks to the big <code>version 2.0.0</code> rewrite it's going to be simple to add boats, trains, and who knows what else. <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">I'm open to suggestions</a>.</p>
     </div>
-
-    <div class="info-panel">
-      <div class="info-panel-header">hexdb.io</div>
-      <div class="info-panel-body">
-        <p>FlightTracker uses <a href="https://hexdb.io" target="_blank">hexdb.io</a> to look up flight routes (origin and destination airports) and aircraft type information by callsign and Mode-S hex code.</p>
-        <p>Lookups are cached for 24 hours, keeping API usage low during normal operation.</p>
-      </div>
-    </div>
-
-    <div class="info-panel">
-      <div class="info-panel-header">CelesTrak</div>
-      <div class="info-panel-body">
-        <p>FlightTracker can also fetch TLE data from CelesTrak and use it to show satellite passes.</p>
-        <p>The ISS and other satellites in your tracking list appear automatically when they are above your horizon.</p>
-      </div>
-    </div>
-
-    <div class="info-panel">
-      <div class="info-panel-header">What next?</div>
-      <div class="info-panel-body">
-        <p>Thanks to the big <code>version 2.0.0</code> rewrite it's going to be simple to add boats, trains, and who knows what else.</p>
-        <p><a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">I'm open to suggestions</a></p>
-      </div>
-    </div>
-
-    <!-- TODO: Write the "What's new in 2.0" callout summarising the rewrite - scene manager, web config UI, theme system, tar1090/ADS-B support, satellite tracking, config.json migration, logging. -->
   </div>
 </section>
 

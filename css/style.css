@@ -685,6 +685,34 @@ section { padding: 20px 0; }
 .info-panel-body {
   padding: 32px;
 }
+.providers-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ink, #111);
+  border: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.providers-table th {
+  background: var(--accent);
+  color: #000;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 0;
+  padding: 12px 16px;
+}
+.providers-table td {
+  border-color: var(--border);
+  padding: 10px 16px;
+}
+.providers-table th:not(:first-child),
+.providers-table td:not(:first-child) {
+  text-align: center;
+  white-space: nowrap;
+}
+.providers-table td:first-child {
+  font-weight: 600;
+}
 .info-panel-body h3 {
   font-size: 1rem;
   font-weight: 800;
