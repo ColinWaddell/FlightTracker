@@ -58,7 +58,7 @@ DEFAULT_AIRPORT_DISPLAY_STYLE = 0  # 0=short code, 1=name, 2=name abbreviated, 3
 DEFAULT_HOME_AIRPORT_CODE = ""
 DEFAULT_JOURNEY_BLANK_FILLER = "???"
 DEFAULT_SHOW_AIRLINE_ICON = (
-    False  # show 16x16 airline logo (from callsign prefix) at (0,0)
+    True  # show 16x16 airline logo (from callsign prefix) at (0,0)
 )
 
 # Plane info row
