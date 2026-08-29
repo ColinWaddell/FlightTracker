@@ -7,9 +7,9 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
+from lookups.providers.common.aggregator import observation_from_record
 from lookups.results import FlightObservation, FlightQuery, LookupResult
 from utilities.overhead_utilities import (
-    clean_field,
     distance_from_home,
     in_zone,
 )
@@ -94,47 +94,13 @@ class FlightProvider:
 def _to_observation(ac: dict) -> FlightObservation:
     """Build an observation from one tar1090 aircraft record.
 
-    Live telemetry comes straight from the record; ``desc`` (the local
-    tar1090-db aircraft type, when the receiver runs with ``--db-file-lt``)
-    rides along as pre-filled enrichment so it outranks remote lookups.
+    Delegates to the shared readsb-dialect mapper (also used by the
+    community flight aggregators - the record formats are identical), so
+    the local tar1090 extras (``desc`` aircraft type from tar1090-db and
+    ``r`` registration) ride along as pre-filled enrichment.
     """
+    return observation_from_record(ac)
 
-    alt = ac.get("alt_baro")
-    if alt is None:
-        alt = ac.get("altitude")
-    alt_ft = alt if isinstance(alt, (int, float)) else 0
-
-    try:
-        ground_speed = int(ac.get("gs") or ac.get("speed") or 0)
-    except (TypeError, ValueError):
-        ground_speed = 0
-
-    try:
-        heading = int(ac.get("track", 0) or 0)
-    except (TypeError, ValueError):
-        heading = 0
-
-    # baro_rate/vert_rate may be None when the transponder doesn't report
-    # vertical rate; default to 0 to keep vertical_speed_fpm an int.
-    vertical_speed = ac.get("baro_rate") or ac.get("vert_rate") or 0
-    if not isinstance(vertical_speed, (int, float)):
-        vertical_speed = 0
-
-    return FlightObservation(
-        icao=(ac.get("hex") or "").strip().lower(),
-        callsign=clean_field(ac.get("flight")),
-        latitude=ac.get("lat"),
-        longitude=ac.get("lon"),
-        altitude_ft=alt_ft,
-        ground_speed_kt=ground_speed,
-        heading_deg=int(heading),
-        vertical_speed_fpm=int(vertical_speed),
-        # Local receiver's own aircraft-type database (instant, wins over
-        # remote lookups) and, when the receiver supplies it, the
-        # registration.
-        plane=clean_field(ac.get("desc")),
-        registration=clean_field(ac.get("r")),
-    )
 
 
 def startup_check(settings: dict | None = None) -> bool:

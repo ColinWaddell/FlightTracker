@@ -184,6 +184,33 @@ PROVIDERS: dict[str, ProviderSpec] = {
             startup_module="tar1090.flights",
         ),
         _spec(
+            "adsbfi",
+            "ADS-B.fi",
+            "Community-run aggregator (adsb.fi) relaying live aircraft from "
+            "its feeder network. Free, no key required.",
+            ("flights",),
+            {"flights": ("adsbfi.flights", "FlightProvider")},
+            startup_module="adsbfi.flights",
+        ),
+        _spec(
+            "adsblol",
+            "ADSB.lol",
+            "Community-run ADS-B aggregator (donation funded). "
+            "Free, no key required.",
+            ("flights",),
+            {"flights": ("adsblol.flights", "FlightProvider")},
+            startup_module="adsblol.flights",
+        ),
+        _spec(
+            "airplaneslive",
+            "airplanes.live",
+            "Free community feeder network aggregator. Please keep request "
+            "rates low (max 1/second).",
+            ("flights",),
+            {"flights": ("airplaneslive.flights", "FlightProvider")},
+            startup_module="airplaneslive.flights",
+        ),
+        _spec(
             "hexdb",
             "HexDB",
             "Free route and aircraft database at hexdb.io. No API key required.",
@@ -205,6 +232,15 @@ PROVIDERS: dict[str, ProviderSpec] = {
             },
         ),
         _spec(
+            "adsbim",
+            "ADSB.im Routes",
+            "Community-sourced route database (the same standing-data "
+            "service tar1090 uses). Free, no key required. Needs the "
+            "aircraft's live position for the plausibility check.",
+            ("routes",),
+            {"routes": ("adsbim.routes", "RouteProvider")},
+        ),
+        _spec(
             "aerodatabox",
             "AeroDataBox",
             "Don't register with AeroDataBox directly. Instead get a key here: "
@@ -220,6 +256,28 @@ PROVIDERS: dict[str, ProviderSpec] = {
                 "routes": ("aerodatabox.routes", "RouteProvider"),
                 "aircraft": ("aerodatabox.aircraft", "AircraftProvider"),
             },
+        ),
+        _spec(
+            "airlabs",
+            "AirLabs",
+            "Commercial aviation database - the free plan covers 1,000 "
+            "lookups per month. Create an API key at "
+            '<a href="https://airlabs.co" target="_blank" rel="noopener noreferrer">'
+            "airlabs.co</a>.",
+            ("routes",),
+            {"routes": ("airlabs.routes", "RouteProvider")},
+        ),
+        _spec(
+            "flightaware",
+            "FlightAware AeroAPI",
+            "FlightAware's commercial API. The Personal plan includes "
+            "$5/month of free credit and requires a card on file - fine "
+            "for per-callsign route lookups, too costly for position "
+            "polling. Get a key at "
+            '<a href="https://www.flightaware.com/aeroapi/portal" '
+            'target="_blank" rel="noopener noreferrer">the AeroAPI portal</a>.',
+            ("routes",),
+            {"routes": ("flightaware.routes", "RouteProvider")},
         ),
     )
 }

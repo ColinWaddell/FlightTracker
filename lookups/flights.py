@@ -28,8 +28,15 @@ logger = logging.getLogger(__name__)
 # Polling interval (seconds) associated with each flight provider.  Local
 # receivers refresh fastest; free public APIs are polled slowly as they
 # rate-limit.
+# Polling interval (seconds) associated with each flight provider.  Local
+# receivers refresh fastest; free public APIs are polled slowly as they
+# rate-limit (the community aggregators share a 1 request/second cap -
+# our 15s poll is trivially inside it).
 REFRESH_INTERVALS = {
     "tar1090": 10,
+    "adsbfi": 15,
+    "adsblol": 15,
+    "airplaneslive": 15,
     "opensky": 22,
     "fr24": 30,
 }

@@ -153,8 +153,11 @@ DEFAULT_AERODATABOX_API_KEY = (
 DEFAULT_ROUTE_PROVIDERS: list[dict[str, Any]] = [
     {"provider": "aerodatabox", "enabled": False},
     {"provider": "hexdb", "enabled": True},
+    {"provider": "adsbim", "enabled": True},
     {"provider": "adsbdb", "enabled": True},
     {"provider": "fr24", "enabled": True},
+    {"provider": "airlabs", "enabled": False},
+    {"provider": "flightaware", "enabled": False},
 ]
 
 # Satellite tracking
@@ -234,11 +237,17 @@ DEFAULTS: dict[str, Any] = {
     "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
     # Lookup providers - priority lists + per-provider settings subtree
     "flight_providers": [
+        {"provider": "tar1090", "enabled": False},
+        {"provider": "opensky", "enabled": False},
+        {"provider": "adsbfi", "enabled": True},
+        {"provider": "adsblol", "enabled": True},
+        {"provider": "airplaneslive", "enabled": True},
         {"provider": "fr24", "enabled": True},
     ],
     "route_providers": [
         {"provider": "aerodatabox", "enabled": False},
         {"provider": "hexdb", "enabled": True},
+        {"provider": "adsbim", "enabled": True},
         {"provider": "adsbdb", "enabled": True},
         {"provider": "fr24", "enabled": True},
     ],
@@ -246,9 +255,15 @@ DEFAULTS: dict[str, Any] = {
         "fr24": {},
         "opensky": {"client_id": "", "client_secret": ""},
         "tar1090": {"url": ""},
+        "adsbfi": {},
+        "adsblol": {},
+        "airplaneslive": {},
+        "adsbim": {},
         "hexdb": {},
         "adsbdb": {},
         "aerodatabox": {"api_key": ""},
+        "airlabs": {"api_key": ""},
+        "flightaware": {"api_key": ""},
     },
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
@@ -470,6 +485,32 @@ def _normalise_longitudes(data: dict[str, Any]) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _complete_provider_lists(data: dict[str, Any]) -> None:
+    """Add catalogue providers missing from the priority lists.
+
+    Providers added by an upgrade don't exist in a saved priority list,
+    which would hide them from the Lookup Priority UI forever.  Missing
+    entries are appended disabled - the user enables what they want -
+    while existing ordering and choices are untouched.  Fresh installs
+    already seed complete lists via DEFAULTS.
+    """
+    from lookups.registry import PROVIDERS
+
+    # The route list gates both the routes and aircraft chains, so
+    # aircraft-capable providers belong in it too.
+    for capability, key in (
+        ("flights", "flight_providers"),
+        ("routes", "route_providers"),
+    ):
+        entries = data.get(key)
+        if not isinstance(entries, list):
+            continue
+        listed = {e.get("provider") for e in entries if isinstance(e, dict)}
+        for spec in PROVIDERS.values():
+            if spec.id not in listed and capability in spec.capabilities:
+                entries.append({"provider": spec.id, "enabled": False})
+
+
 def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> None:
     """Migrate legacy provider keys and validate the provider config.
 
@@ -492,6 +533,7 @@ def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> Non
         _migrate_legacy_source(data, loaded)
 
     _validate_provider_lists(data)
+    _complete_provider_lists(data)
 
     subtree = data.get("providers")
     if not isinstance(subtree, dict):
