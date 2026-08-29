@@ -77,13 +77,8 @@ export default defineComponent({
     <div id="group-lookup-priority" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-sort-numeric-down me-2"></i>Lookup Priority</p>
 
-      <div class="form-text text-muted small mb-3">
-        Flight providers - where to look and find out what flights are overhead.
-        Route providers - information about the plane and where it's heading.
-      </div>
-
       <!-- Flight providers -->
-      <h5>Flight providers</h5>
+      <h5>Aircraft monitoring <small class="text-muted ms-2">What aircraft are overhead</small></h5>
       <ul class="list-group mb-1" style="max-width:520px">
         <li v-for="(entry, index) in store.flightProvidersOrder" :key="entry.provider"
             class="list-group-item d-flex align-items-center gap-2 py-2">
@@ -110,7 +105,7 @@ export default defineComponent({
              :value="providersJson(store.flightProvidersOrder)" />
 
       <!-- Route providers -->
-      <h5 class="mt-3">Route providers</h5>
+      <h5 class="mt-3">Route and aircraft information <small class="text-muted ms-2">Details of any aircraft seen</small></h5>
       <ul class="list-group mb-2" style="max-width:520px">
         <li v-for="(entry, index) in store.routeProvidersOrder" :key="entry.provider"
             class="list-group-item d-flex align-items-center gap-2 py-2">
@@ -154,11 +149,6 @@ export default defineComponent({
     <!-- ====== Provider Settings (generated from descriptors) ====== -->
     <div id="group-provider-config" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-sliders me-2"></i>Provider Settings</p>
-
-      <div class="form-text text-muted small mb-3">
-        Credentials and endpoints for each provider. Masked values (&#42;&#42;&#42;&#42;) are stored
-        secrets - leave them as-is to keep them, or type over them to replace.
-      </div>
 
       <div v-for="meta in store.ui.providersMeta" :key="meta.id" class="mb-3 pb-3 border-bottom">
         <div class="d-flex align-items-center gap-2">

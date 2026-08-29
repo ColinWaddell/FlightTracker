@@ -137,7 +137,11 @@ def _spec(
             capability: _factory(f"lookups.providers.{module_name}", class_name)
             for capability, (module_name, class_name) in factories.items()
         },
-        startup_check=(_startup_check(f"lookups.providers.{startup_module}") if startup_module else None),
+        startup_check=(
+            _startup_check(f"lookups.providers.{startup_module}")
+            if startup_module
+            else None
+        ),
     )
 
 
@@ -147,9 +151,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "fr24",
             "FlightRadar24",
-            "Live flights from the FlightRadar24 feed. Works without an "
-            "API key, but the feed is the least reliable of the online "
-            "providers.",
+            "Live flights from the FlightRadar24 feed. Works without an API key",
             ("flights", "routes", "aircraft"),
             {
                 "flights": ("fr24.flights", "FlightProvider"),
@@ -179,8 +181,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "hexdb",
             "HexDB",
-            "Free route and aircraft database at hexdb.io. No API key "
-            "required.",
+            "Free route and aircraft database at hexdb.io. No API key required.",
             ("routes", "aircraft"),
             {
                 "routes": ("hexdb.routes", "RouteProvider"),
@@ -234,9 +235,7 @@ def load_config():
     return Config.instance()
 
 
-def normalise_provider_list(
-    entries, capability: str
-) -> tuple[list[dict], list[str]]:
+def normalise_provider_list(entries, capability: str) -> tuple[list[dict], list[str]]:
     """Validate/sanitize one persisted provider priority list.
 
     *entries* is the raw value stored under ``flight_providers`` /

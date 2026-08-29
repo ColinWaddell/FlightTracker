@@ -12,9 +12,6 @@ from lookups.config import ProviderConfig
 PROVIDER = ProviderConfig(
     id="fr24",
     name="FlightRadar24",
-    description=(
-        "Public FlightRadar24 data. Free, no account required. FR24 is "
-        "getting harder to support and may eventually be deprecated."
-    ),
+    description=("Public FlightRadar24 data. Free, no account required"),
     fields=(),
 )
