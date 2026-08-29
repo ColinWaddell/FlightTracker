@@ -85,7 +85,7 @@ export const SIDEBAR_GROUPS = [
     icon: "bi-hdd-network",
     route: "/data-source",
     items: [
-      { section: "group-lookup-priority", icon: "bi-sort-numeric-down", label: "Lookup Priority" },
+      { section: "group-lookup-priority", icon: "bi-sort-numeric-down", label: "Data Manager" },
       { section: "group-provider-config", icon: "bi-sliders", label: "Provider Settings" },
       { section: "group-weather-data", icon: "bi-cloud-sun", label: "Weather Data" },
     ],

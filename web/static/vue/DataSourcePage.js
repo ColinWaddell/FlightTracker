@@ -75,7 +75,7 @@ export default defineComponent({
 
     <!-- ====== Lookup Priority ====== -->
     <div id="group-lookup-priority" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-sort-numeric-down me-2"></i>Lookup Priority</p>
+      <p class="section-heading"><i class="bi bi-sort-numeric-down me-2"></i>Data Manager</p>
 
       <!-- Flight and route providers side by side (stacked on smaller screens) -->
       <div class="row g-3">
