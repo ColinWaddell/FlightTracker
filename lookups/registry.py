@@ -195,8 +195,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "adsblol",
             "ADSB.lol",
-            "Community-run ADS-B aggregator (donation funded). "
-            "Free, no key required.",
+            "Community-run ADS-B aggregator (donation funded). Free, no key required.",
             ("flights",),
             {"flights": ("adsblol.flights", "FlightProvider")},
             startup_module="adsblol.flights",
@@ -204,9 +203,9 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "airplaneslive",
             "airplanes.live",
-            "Free community feeder network aggregator. Please keep request "
-            "rates low (max 1/second).",
-            ("flights",),
+            "Free community feeder network aggregator. Please keep request "(
+                "flights",
+            ),
             {"flights": ("airplaneslive.flights", "FlightProvider")},
             startup_module="airplaneslive.flights",
         ),
