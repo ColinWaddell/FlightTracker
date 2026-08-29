@@ -105,8 +105,6 @@ class TestProviderCapabilityLanguage:
     """Providers incapable of a capability must not read as 'disabled'."""
 
     def test_capability_absence_says_not_provided(self, client):
-        from lookups.registry import PROVIDERS
-
         html = client.get("/status").get_data(as_text=True)
         # hexdb/adsbdb/aerodatabox offer no flights; opensky/tar1090 offer
         # no routes - all must read "not provided", never "off".
