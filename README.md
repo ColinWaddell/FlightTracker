@@ -26,6 +26,12 @@ Recently (June 2026) this codebase has had a major rewrite. There are detailed g
  - `main` is the new home for FlightTracker `v2`
  - `master` is the resting place of FlightTracker `v1`
 
+## FlightTracker OS
+
+Don't want to mess about with the command line? [FlightTracker OS](https://flight-tracker.dev/os/) is a pre-built Raspberry Pi image with everything installed and configured. Flash it to an SD card, boot your Pi, and finish setup from your browser.
+
+[Find out more about FlightTracker OS →](https://flight-tracker.dev/os/)
+
 ## Installation
 
 ### Quick install
