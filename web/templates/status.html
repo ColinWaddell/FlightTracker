@@ -16,73 +16,7 @@
     <h2 class="fs-4 fw-semibold mb-0"><i class="bi bi-heart-pulse me-2"></i>Status</h2>
   </div>
 
-  <!-- ====== Flight fetch state ====== -->
-  <div class="card mb-3">
-    <div class="card-header fw-semibold"><i class="bi bi-broadcast me-1"></i>Flight Fetch</div>
-    <div class="card-body">
-      {% if fetch.last_updated_fmt or fetch.last_fetch %}
-      <div class="table-responsive">
-        <table class="table table-sm mb-0 align-middle">
-          <tbody>
-            {% if fetch.last_updated_fmt %}
-            <tr>
-              <th class="text-muted w-25">Last successful update</th>
-              <td>{{ fetch.last_updated_fmt }}</td>
-            </tr>
-            {% endif %}
-
-            <tr>
-              <th class="text-muted">Last attempt</th>
-              <td>
-                {% set lf = fetch.last_fetch %}
-                {% if lf %}
-                  {% if lf.ok %}
-                    <span class="badge text-bg-success">answered</span>
-                    by <strong>{{ lf.source_name or lf.provider_id }}</strong>
-                  {% else %}
-                    <span class="badge text-bg-danger">failed</span>
-                  {% endif %}
-                  <span class="text-muted small ms-1">at {{ lf.at_fmt }}</span>
-                {% else %}
-                  <span class="text-muted">no attempt recorded yet</span>
-                {% endif %}
-              </td>
-            </tr>
-
-            {% if lf and lf.errors %}
-            <tr>
-              <th class="text-muted">Errors</th>
-              <td>
-                <ul class="mb-0 small text-danger">
-                  {% for err in lf.errors %}
-                  <li>{{ err }}</li>
-                  {% endfor %}
-                </ul>
-              </td>
-            </tr>
-            {% endif %}
-
-            {% if fetch.error %}
-            <tr>
-              <th class="text-muted">Current error state</th>
-              <td class="text-warning small">{{ fetch.error }}</td>
-            </tr>
-            {% endif %}
-
-            <tr>
-              <th class="text-muted">Poll interval</th>
-              <td>{{ fetch.refresh_interval }}s</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-        <p class="text-muted mb-0">No fetch has completed yet since the tracker started.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- ====== System telemetry ====== -->
+<!-- ====== System telemetry ====== -->
   <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
       <span class="fw-semibold"><i class="bi bi-cpu me-1"></i>System</span>
@@ -153,6 +87,74 @@
 
     </div>
   </div>
+
+  <!-- ====== Flight fetch state ====== -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-broadcast me-1"></i>Flight Fetch</div>
+    <div class="card-body">
+      {% if fetch.last_updated_fmt or fetch.last_fetch %}
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+          <tbody>
+            {% if fetch.last_updated_fmt %}
+            <tr>
+              <th class="text-muted w-25">Last successful update</th>
+              <td>{{ fetch.last_updated_fmt }}</td>
+            </tr>
+            {% endif %}
+
+            <tr>
+              <th class="text-muted">Last attempt</th>
+              <td>
+                {% set lf = fetch.last_fetch %}
+                {% if lf %}
+                  {% if lf.ok %}
+                    <span class="badge text-bg-success">answered</span>
+                    by <strong>{{ lf.source_name or lf.provider_id }}</strong>
+                  {% else %}
+                    <span class="badge text-bg-danger">failed</span>
+                  {% endif %}
+                  <span class="text-muted small ms-1">at {{ lf.at_fmt }}</span>
+                {% else %}
+                  <span class="text-muted">no attempt recorded yet</span>
+                {% endif %}
+              </td>
+            </tr>
+
+            {% if lf and lf.errors %}
+            <tr>
+              <th class="text-muted">Errors</th>
+              <td>
+                <ul class="mb-0 small text-danger">
+                  {% for err in lf.errors %}
+                  <li>{{ err }}</li>
+                  {% endfor %}
+                </ul>
+              </td>
+            </tr>
+            {% endif %}
+
+            {% if fetch.error %}
+            <tr>
+              <th class="text-muted">Current error state</th>
+              <td class="text-warning small">{{ fetch.error }}</td>
+            </tr>
+            {% endif %}
+
+            <tr>
+              <th class="text-muted">Poll interval</th>
+              <td>{{ fetch.refresh_interval }}s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="text-muted mb-0">No fetch has completed yet since the tracker started.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  
 
   <!-- ====== Providers ====== -->
   <div class="card mb-3">
