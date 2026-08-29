@@ -123,7 +123,7 @@ DEFAULT_HAT_PWM_ENABLED = True
 DEFAULT_LOADING_INDICATOR = "pixel"  # none / pixel / gpio
 DEFAULT_LOADING_LED_GPIO_PIN = ""
 
-# Data source
+# Data source (legacy single-source keys; migrated to provider lists on load)
 DEFAULT_DATA_SOURCE = (
     "fr24"  # 'fr24' = FlightRadar24, 'tar1090' = local tar1090, 'osn' = OpenSky Network
 )
@@ -133,11 +133,45 @@ DEFAULT_CALLSIGN_FORMAT = (
     "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 )
 DEFAULT_INFO_BAR_MODE = "callsign"  # 'callsign' = show callsign, 'airline' = show airline name, 'callsign_airline' = show both
-DEFAULT_OSN_CLIENT_ID = ""  # OpenSky Network OAuth2 client ID
-DEFAULT_OSN_CLIENT_SECRET = ""  # OpenSky Network OAuth2 client secret
+DEFAULT_OSN_CLIENT_ID = ""  # legacy OpenSky Network OAuth2 client ID
+DEFAULT_OSN_CLIENT_SECRET = ""  # legacy OpenSky Network OAuth2 client secret
 DEFAULT_AERODATABOX_API_KEY = (
-    ""  # AeroDataBox RapidAPI key (optional route lookup provider)
+    ""  # legacy AeroDataBox RapidAPI key (optional route lookup provider)
 )
+
+# Lookup providers
+#
+# Flight providers answer "which aircraft are overhead right now"; route
+# providers resolve origin/destination/aircraft metadata.  Each list entry
+# is {"provider": id, "enabled": bool}; the per-provider settings live in
+# the nested "providers" subtree keyed by provider id.
+DEFAULT_FLIGHT_PROVIDERS: list[dict[str, Any]] = [
+    {"provider": "fr24", "enabled": True},
+]
+
+# Route providers include the FR24 live-feed capability last: it fills
+# whatever the dedicated route databases don't know, using the aircraft's
+# live position.  AeroDataBox is enabled by default once its legacy
+# api-key migrates in.
+DEFAULT_ROUTE_PROVIDERS: list[dict[str, Any]] = [
+    {"provider": "aerodatabox", "enabled": False},
+    {"provider": "hexdb", "enabled": True},
+    {"provider": "adsbdb", "enabled": True},
+    {"provider": "fr24", "enabled": True},
+]
+
+# Nested per-provider settings, keyed by provider id.  Always merged with
+# (and validated against) the provider descriptor defaults on load.
+# Sensitive values are stored here in plain text on disk (config.json is
+# user-private) but are masked for the browser and redacted from exports.
+DEFAULT_PROVIDERS_SUBTREE: dict[str, dict[str, Any]] = {
+    "fr24": {},
+    "opensky": {"client_id": "", "client_secret": ""},
+    "tar1090": {"url": ""},
+    "hexdb": {},
+    "adsbdb": {},
+    "aerodatabox": {"api_key": ""},
+}
 
 # Satellite tracking
 DEFAULT_SATELLITE_TRACKING_ENABLED = True
@@ -214,15 +248,27 @@ DEFAULTS: dict[str, Any] = {
     "hat_pwm_enabled": DEFAULT_HAT_PWM_ENABLED,
     "loading_indicator": DEFAULT_LOADING_INDICATOR,
     "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
-    # Data source
-    "data_source": DEFAULT_DATA_SOURCE,
-    "tar1090_url": DEFAULT_TAR1090_URL,
+    # Lookup providers - priority lists + per-provider settings subtree
+    "flight_providers": [
+        {"provider": "fr24", "enabled": True},
+    ],
+    "route_providers": [
+        {"provider": "aerodatabox", "enabled": False},
+        {"provider": "hexdb", "enabled": True},
+        {"provider": "adsbdb", "enabled": True},
+        {"provider": "fr24", "enabled": True},
+    ],
+    "providers": {
+        "fr24": {},
+        "opensky": {"client_id": "", "client_secret": ""},
+        "tar1090": {"url": ""},
+        "hexdb": {},
+        "adsbdb": {},
+        "aerodatabox": {"api_key": ""},
+    },
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
     "info_bar_mode": DEFAULT_INFO_BAR_MODE,
-    "osn_client_id": DEFAULT_OSN_CLIENT_ID,
-    "osn_client_secret": DEFAULT_OSN_CLIENT_SECRET,
-    "aerodatabox_api_key": DEFAULT_AERODATABOX_API_KEY,
     # Satellite tracking
     "satellite_tracking_enabled": DEFAULT_SATELLITE_TRACKING_ENABLED,
     "satellite_norad_ids": DEFAULT_SATELLITE_NORAD_IDS,
@@ -420,6 +466,160 @@ def _normalise_longitudes(data: dict[str, Any]) -> bool:
     return changed
 
 
+    changed = False
+    for key in lng_keys:
+        if key not in data:
+            continue
+        try:
+            original = float(data[key])
+            wrapped = _normalise_longitude(original)
+            if original != wrapped:
+                data[key] = wrapped
+                changed = True
+        except (TypeError, ValueError):
+            pass
+    return changed
+
+
+# ---------------------------------------------------------------------------
+# Provider-list migration + validation
+# ---------------------------------------------------------------------------
+
+
+def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> None:
+    """Populate/validate the provider priority lists + settings subtree.
+
+    Legacy mapping (applied only when ``flight_providers`` is absent from
+    the loaded config):
+
+    - ``data_source`` decides which flight provider is enabled: tar1090
+      (with its URL), else OpenSky (with credentials), else FR24.
+    - ``tar1090_url`` / ``osn_client_id`` / ``osn_client_secret`` move into
+      ``providers.tar1090`` / ``providers.opensky``.
+    - ``aerodatabox_api_key`` moves into ``providers.aerodatabox`` and the
+      provider is enabled ahead of hexdb/adsbdb.
+
+    Always runs: unknown provider ids are dropped, ``enabled`` values are
+    coerced to bool, duplicates removed, and per-provider settings are
+    validated against the provider descriptors (invalid values revert to
+    defaults with a warning; schema defaults fill gaps).
+    """
+    import logging
+
+    from lookups.config import validate_provider_settings
+    from lookups.registry import normalise_provider_list, PROVIDERS
+
+    logger = logging.getLogger(__name__)
+
+    # --- 1. Legacy flat keys -> provider lists (one-time) ----------------
+    if "flight_providers" not in loaded:
+        data_source = str(loaded.get("data_source", DEFAULT_DATA_SOURCE)).lower()
+        if data_source not in ("fr24", "tar1090", "osn"):
+            data_source = DEFAULT_DATA_SOURCE
+
+        flight_providers: list[dict[str, Any]] = []
+
+        tar1090_url = str(loaded.get("tar1090_url", "") or "").strip()
+        osn_id = str(loaded.get("osn_client_id", "") or "").strip()
+        osn_secret = str(loaded.get("osn_client_secret", "") or "").strip()
+
+        if tar1090_url:
+            flight_providers.append({"provider": "tar1090", "enabled": True})
+        if osn_id and osn_secret:
+            flight_providers.append({"provider": "opensky", "enabled": True})
+
+        # FR24 is always available (no credentials needed).
+        flight_providers.append({"provider": "fr24", "enabled": True})
+
+        if not flight_providers:
+            flight_providers = [
+                dict(e) for e in DEFAULT_FLIGHT_PROVIDERS
+            ]
+
+        data["flight_providers"] = flight_providers
+
+        # Route providers: AeroDataBox joins the front when its key exists.
+        route_providers = [
+            dict(e) for e in DEFAULT_ROUTE_PROVIDERS
+        ]
+        aerodatabox_key = str(loaded.get("aerodatabox_api_key", "") or "").strip()
+        if aerodatabox_key:
+            for entry in route_providers:
+                if entry.get("provider") == "aerodatabox":
+                    entry["enabled"] = True
+        data["route_providers"] = route_providers
+
+        logger.info(
+            "Migrated legacy data_source=%s to provider lists (%s)",
+            data_source,
+            ", ".join(e["provider"] for e in flight_providers),
+        )
+
+        # --- per-provider settings subtree -------------------------------
+        providers_subtree = data.get("providers")
+        if not isinstance(providers_subtree, dict):
+            providers_subtree = {}
+        if tar1090_url and not providers_subtree.get("tar1090", {}).get("url"):
+            providers_subtree.setdefault("tar1090", {})["url"] = tar1090_url
+        if (osn_id or osn_secret) and not providers_subtree.get("opensky", {}).get(
+            "client_id"
+        ):
+            subtree = providers_subtree.setdefault("opensky", {})
+            subtree["client_id"] = osn_id
+            subtree["client_secret"] = osn_secret
+        if aerodatabox_key and not providers_subtree.get("aerodatabox", {}).get(
+            "api_key"
+        ):
+            providers_subtree.setdefault("aerodatabox", {})["api_key"] = (
+                aerodatabox_key
+            )
+        data["providers"] = providers_subtree
+
+        # Drop the obsolete legacy keys.
+        for legacy_key in (
+            "data_source",
+            "tar1090_url",
+            "osn_client_id",
+            "osn_client_secret",
+            "aerodatabox_api_key",
+        ):
+            data.pop(legacy_key, None)
+
+    # --- 2. Validate/normalise the persisted provider lists --------------
+    clean_flights, flight_warnings = normalise_provider_list(
+        data.get("flight_providers"), "flights"
+    )
+    if clean_flights != data.get("flight_providers") or flight_warnings:
+        data["flight_providers"] = clean_flights
+        for w in flight_warnings:
+            logger.warning("[config] %s", w)
+
+    clean_routes, route_warnings = normalise_provider_list(
+        data.get("route_providers"), "routes"
+    )
+    if clean_routes != data.get("route_providers") or route_warnings:
+        data["route_providers"] = clean_routes
+        for w in route_warnings:
+            logger.warning("[config] %s", w)
+
+    # --- 3. Validate per-provider settings against their descriptors ----
+    subtree = data.get("providers")
+    if not isinstance(subtree, dict):
+        subtree = {}
+    validated: dict[str, dict[str, Any]] = {}
+    for pid, spec in PROVIDERS.items():
+        raw = subtree.get(pid)
+        if not isinstance(raw, dict):
+            raw = {}
+        clean_settings, settings_warnings = validate_provider_settings(
+            spec.config, raw
+        )
+        for w in settings_warnings:
+            logger.warning("[config] %s", w)
+        validated[pid] = clean_settings
+    data["providers"] = validated
+
+
 class Config:
     """Singleton configuration object backed by config.json."""
 
@@ -457,6 +657,10 @@ class Config:
                     loaded = json.load(fh)
                 # Merge over defaults so new keys always have a value
                 self.data_store = {**DEFAULTS, **loaded}
+
+                # Migrate legacy single-source data-source keys onto the
+                # provider lists/schema, then validate provider settings.
+                _migrate_provider_lists(self.data_store, loaded)
 
                 # Migrate legacy flat "theme" (int 0-3 display colour) to
                 # "colour_theme", and reset "theme" to the new nested dict.
@@ -503,11 +707,13 @@ class Config:
             mod = import_legacy(LEGACY_PATH)
             self.data_store = migrate_config(mod)
             _normalise_longitudes(self.data_store)
+            _migrate_provider_lists(self.data_store, self.data_store)
             self.save()
             return
 
         # Fresh install - write defaults
         self.data_store = dict(DEFAULTS)
+        _migrate_provider_lists(self.data_store, {})
         self.save()
 
     def save(self):
@@ -952,40 +1158,70 @@ class Config:
             self.data_store.get("loading_led_gpio_pin", DEFAULT_LOADING_LED_GPIO_PIN)
         )
 
-    @property
-    def tar1090_url(self) -> str:
-        return str(self.data_store.get("tar1090_url", DEFAULT_TAR1090_URL))
+    # ------------------------------------------------------------------
+    # Lookup providers
+    # ------------------------------------------------------------------
 
     @property
-    def data_source(self) -> str:
-        val = str(self.data_store.get("data_source", DEFAULT_DATA_SOURCE)).lower()
-        return val if val in ("fr24", "tar1090", "osn") else DEFAULT_DATA_SOURCE
+    def flight_providers(self) -> list[dict[str, Any]]:
+        """Enabled-first-ordered flight provider priority list.
+
+        Entries are ``{"provider": id, "enabled": bool}`` in user-chosen
+        priority order.  Already normalised at load time.
+        """
+        return list(self.data_store.get("flight_providers", []))
 
     @property
-    def use_tar1090(self) -> bool:
-        return self.data_source == "tar1090" and bool(self.tar1090_url)
+    def route_providers(self) -> list[dict[str, Any]]:
+        """Route/aircraft provider priority list (same shape as flight_providers)."""
+        return list(self.data_store.get("route_providers", []))
 
     @property
-    def osn_client_id(self) -> str:
-        return str(self.data_store.get("osn_client_id", DEFAULT_OSN_CLIENT_ID))
+    def providers_subtree(self) -> dict[str, dict[str, Any]]:
+        return dict(self.data_store.get("providers", {}))
 
-    @property
-    def osn_client_secret(self) -> str:
-        return str(self.data_store.get("osn_client_secret", DEFAULT_OSN_CLIENT_SECRET))
+    def provider_settings(self, provider_id: str) -> dict[str, Any]:
+        """Validated settings for *provider_id* (already merged with defaults)."""
+        return dict(self.providers_subtree.get(provider_id, {}))
 
-    @property
-    def aerodatabox_api_key(self) -> str:
-        return str(
-            self.data_store.get("aerodatabox_api_key", DEFAULT_AERODATABOX_API_KEY)
-        )
+    def set_provider_settings(self, provider_id: str, settings: dict[str, Any]) -> None:
+        """Persist *settings* for *provider_id* after descriptor validation."""
+        from lookups.config import validate_provider_settings
+        from lookups.registry import provider_spec
 
-    @property
-    def use_osn(self) -> bool:
-        return (
-            self.data_source == "osn"
-            and bool(self.osn_client_id)
-            and bool(self.osn_client_secret)
-        )
+        spec = provider_spec(provider_id)
+        if spec is None:
+            raise KeyError(f"unknown provider {provider_id!r}")
+        clean, warnings = validate_provider_settings(spec.config, settings)
+        for w in warnings:
+            logging.getLogger(__name__).warning("[config] %s", w)
+        subtree = self.providers_subtree
+        subtree[provider_id] = clean
+        self.data_store["providers"] = subtree
+
+    def set_provider_order(self, capability: str, order: list[dict[str, Any]]) -> None:
+        """Persist a new priority list for *capability* ("flights" or "routes")."""
+        from lookups.registry import normalise_provider_list
+
+        key = f"{capability}_providers"
+        clean, warnings = normalise_provider_list(order, capability)
+        if warnings:
+            import logging
+
+            for w in warnings:
+                logging.getLogger(__name__).warning("[config] %s", w)
+        self.data_store[key] = clean
+
+    def provider_settings_view(self) -> dict[str, Any]:
+        """Masked view of all provider settings (safe for the browser)."""
+        from lookups.config import provider_settings_view
+        from lookups.registry import PROVIDERS
+
+        masked: dict[str, dict[str, Any]] = {}
+        for pid, spec in PROVIDERS.items():
+            settings = self.provider_settings(pid)
+            masked[pid] = provider_settings_view(spec.config, settings)
+        return masked
 
     @property
     def max_flight_lookup(self) -> int:

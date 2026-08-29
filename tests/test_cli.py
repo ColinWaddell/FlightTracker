@@ -196,10 +196,10 @@ class TestConfigSet:
         config_path, MockConfig = mock_config
         config_path.write_text('{"existing": true}')
         dispatch_cli_command(
-            ["flight-tracker.py", "config", "set", "data_source", "tar1090"]
+            ["flight-tracker.py", "config", "set", "max_flight_lookup", "3"]
         )
         cfg = MockConfig.instance.return_value
-        cfg.set.assert_called_with("data_source", "tar1090")
+        cfg.set.assert_called_with("max_flight_lookup", 3)
 
     def test_config_set_unknown_key_rejected(self, mock_config, capsys):
         config_path, _ = mock_config
