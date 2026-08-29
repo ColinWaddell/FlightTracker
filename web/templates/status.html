@@ -120,17 +120,21 @@
             </td>
             <td class="small">{{ p.capabilities | join(', ') }}</td>
             <td>
-              {% if p.flight_enabled %}
+              {% if not p.flight_capable %}
+                <span class="text-muted small fst-italic" title="this provider does not serve live flight positions">not provided</span>
+              {% elif p.flight_enabled %}
                 <span class="badge text-bg-success">enabled</span>
               {% else %}
-                <span class="badge text-bg-light text-secondary">off</span>
+                <span class="badge text-bg-light text-secondary">disabled</span>
               {% endif %}
             </td>
             <td>
-              {% if p.route_enabled %}
+              {% if not p.route_capable %}
+                <span class="text-muted" title="this provider does not serve routes or aircraft">not provided</span>
+              {% elif p.route_enabled %}
                 <span class="badge text-bg-success">enabled</span>
               {% else %}
-                <span class="badge text-bg-light text-secondary">off</span>
+                <span class="badge text-bg-light text-secondary">disabled</span>
               {% endif %}
             </td>
             <td>

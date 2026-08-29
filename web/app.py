@@ -695,6 +695,8 @@ def _status_page_data() -> dict:
                 "id": spec.id,
                 "name": spec.name,
                 "capabilities": sorted(spec.capabilities),
+                "flight_capable": "flights" in spec.capabilities,
+                "route_capable": bool(spec.capabilities & {"routes", "aircraft"}),
                 "flight_enabled": spec.id in flight_ids
                 and "flights" in spec.capabilities,
                 "route_enabled": spec.id in route_ids

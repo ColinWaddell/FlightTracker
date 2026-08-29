@@ -99,3 +99,20 @@ class TestStatusPage:
     def test_navbar_link_present(self, client):
         html = client.get("/status").get_data(as_text=True)
         assert 'href="/status"' in html
+
+
+class TestProviderCapabilityLanguage:
+    """Providers incapable of a capability must not read as 'disabled'."""
+
+    def test_capability_absence_says_not_provided(self, client):
+        from lookups.registry import PROVIDERS
+
+        html = client.get("/status").get_data(as_text=True)
+        # hexdb/adsbdb/aerodatabox offer no flights; opensky/tar1090 offer
+        # no routes - all must read "not provided", never "off".
+        assert "not provided" in html
+
+    def test_disabled_is_called_disabled(self, client, monkeypatch):
+        """A provider with the capability switched off reads 'disabled'."""
+        html = client.get("/status").get_data(as_text=True)
+        assert "disabled" in html
