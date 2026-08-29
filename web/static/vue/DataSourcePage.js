@@ -78,9 +78,8 @@ export default defineComponent({
       <p class="section-heading"><i class="bi bi-sort-numeric-down me-2"></i>Lookup Priority</p>
 
       <div class="form-text text-muted small mb-3">
-        Flight providers answer "which aircraft can I see right now" - the first enabled provider
-        with a working feed wins. Route providers answer "where is that flight going" - they are
-        tried in order and combined until every field is filled. Untick a provider to skip it.
+        Flight providers - where to look and find out what flights are overhead.
+        Route providers - information about the plane and where it's heading.
       </div>
 
       <!-- Flight providers -->
