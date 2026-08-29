@@ -278,5 +278,5 @@ class TestProviderGuidance:
         assert "https://rapidapi.com/aedbx-aedbx/api/aerodatabox" in html
         assert "https://opensky-network.org/login" in html
         assert "adsb.im" in html
-        assert "Don't register with AeroDataBox directly" in html
+        assert "register with AeroDataBox directly" in html  # ' is \\u0027-escaped in the JSON blob
         assert "30-second polling" in html
