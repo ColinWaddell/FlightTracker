@@ -172,7 +172,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for p in providers %}
+          {% for p in providers | sort(attribute='name', case_sensitive=False) %}
           <tr class="{{ 'table-warning' if p.hold_off_s }}">
             <td>
               <strong>{{ p.name }}</strong>
