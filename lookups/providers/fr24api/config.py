@@ -8,7 +8,7 @@ from lookups.config import ConfigField, ProviderConfig
 
 PROVIDER = ProviderConfig(
     id="fr24api",
-    name="FlightRadar24 API",
+    name="Flight Radar 24 (Paid)",
     description=(
         "FlightRadar24's official commercial API - the paid, supported "
         "service, separate from the free public feed. Billed per returned "

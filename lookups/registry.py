@@ -150,7 +150,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
     for spec in (
         _spec(
             "fr24",
-            "FlightRadar24",
+            "Flight Radar 24 (Free)",
             "Live flights from the FlightRadar24 feed. Works without an API key",
             ("flights", "routes", "aircraft"),
             {
@@ -259,7 +259,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
         ),
         _spec(
             "fr24api",
-            "FlightRadar24 API",
+            "Flight Radar 24 (Paid)",
             "FlightRadar24's official commercial API - the paid, supported "
             "service with a Bearer token from your FR24 account. Billed per "
             "returned record from a credit balance, so live polling over a "
