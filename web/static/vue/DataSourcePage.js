@@ -2,10 +2,11 @@
  * Data Source page - lookup priority, per-provider configuration, and
  * weather data.
  *
- * The two priority lists are reordered with up/down buttons (kept simple
- * and keyboard-accessible); the final order and enabled flags are
- * serialised into hidden <input> elements as JSON so the form submits
- * like any other page.
+ * The two priority lists are reordered by dragging the grip handle on
+ * each row (native HTML5 drag & drop; the handle is also a button, so
+ * ArrowUp/ArrowDown reorder via keyboard).  The final order and enabled
+ * flags are serialised into hidden <input> elements as JSON so the form
+ * submits like any other page.
  *
  * The per-provider config cards are generated from the backend's field
  * descriptors (FT_PAGE_DATA.providersMeta), so adding a field to a
@@ -15,7 +16,7 @@
  * field clears the secret.
  */
 
-import { defineComponent } from "./vendor.js";
+import { defineComponent, reactive, ref } from "./vendor.js";
 
 export default defineComponent({
   name: "DataSourcePage",
@@ -23,19 +24,73 @@ export default defineComponent({
     store: { type: Object, required: true },
   },
   setup(props) {
-    function move(list, index, delta) {
+    // --- Drag & drop reordering -------------------------------------------
+    // Rows are only draggable while their grip handle is held down, so the
+    // rest of the row (checkbox, label) keeps normal click/select behaviour.
+    const armedKey = ref(null);
+    const dragState = reactive({ listId: null, from: -1, over: -1 });
+
+    function armDrag(key) {
+      armedKey.value = key;
+    }
+
+    function disarmDrag() {
+      armedKey.value = null;
+    }
+
+    function listById(listId) {
+      return listId === "flight"
+        ? props.store.flightProvidersOrder
+        : props.store.routeProvidersOrder;
+    }
+
+    function onDragStart(listId, index, event) {
+      dragState.listId = listId;
+      dragState.from = index;
+      dragState.over = index;
+      event.dataTransfer.effectAllowed = "move";
+      // Required for Firefox to initiate the drag.
+      event.dataTransfer.setData("text/plain", String(index));
+    }
+
+    function onDragOver(listId, index, event) {
+      if (dragState.listId !== listId) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      dragState.over = index;
+    }
+
+    function onDrop(listId, index, event) {
+      event.preventDefault();
+      if (dragState.listId === listId && dragState.from >= 0 && dragState.from !== index) {
+        const list = listById(listId);
+        const entry = list.splice(dragState.from, 1)[0];
+        list.splice(index, 0, entry);
+      }
+      onDragEnd();
+    }
+
+    function onDragEnd() {
+      dragState.listId = null;
+      dragState.from = -1;
+      dragState.over = -1;
+      disarmDrag();
+    }
+
+    function isDragging(listId, index) {
+      return dragState.listId === listId && dragState.from === index;
+    }
+
+    function isDragOver(listId, index) {
+      return dragState.listId === listId && dragState.over === index && dragState.from !== index;
+    }
+
+    // Keyboard fallback on the grip handle (it is a real <button>).
+    function moveList(list, index, delta) {
       const target = index + delta;
       if (target < 0 || target >= list.length) return;
       const entry = list.splice(index, 1)[0];
       list.splice(target, 0, entry);
-    }
-
-    function moveUp(list, index) {
-      move(list, index, -1);
-    }
-
-    function moveDown(list, index) {
-      move(list, index, 1);
     }
 
     function providerName(list, pid) {
@@ -58,11 +113,16 @@ export default defineComponent({
     }
 
     return {
-      flightProvidersOrder: props.store.flightProvidersOrder,
-      routeProvidersOrder: props.store.routeProvidersOrder,
-      providersMeta: props.store.ui.providersMeta,
-      moveUp,
-      moveDown,
+      armedKey,
+      armDrag,
+      disarmDrag,
+      onDragStart,
+      onDragOver,
+      onDrop,
+      onDragEnd,
+      isDragging,
+      isDragOver,
+      moveList,
       providerName,
       settingsFor,
       providersJson,
@@ -83,22 +143,26 @@ export default defineComponent({
           <h5>Aircraft monitoring<i class="bi bi-radar text-black-50 ms-2"></i></h5>
           <ul class="list-group mb-1">
             <li v-for="(entry, index) in store.flightProvidersOrder" :key="entry.provider"
-                class="list-group-item d-flex align-items-center gap-2 py-2">
+                class="list-group-item d-flex align-items-center gap-2 py-2"
+                :class="{ 'ft-dragging': isDragging('flight', index), 'ft-drag-over': isDragOver('flight', index) }"
+                :draggable="armedKey === 'flight-' + entry.provider"
+                @dragstart="onDragStart('flight', index, $event)"
+                @dragover="onDragOver('flight', index, $event)"
+                @drop="onDrop('flight', index, $event)"
+                @dragend="onDragEnd">
               <input type="checkbox" class="form-check-input mt-0" :id="'fp-enabled-' + entry.provider"
                      v-model="entry.enabled" />
               <label class="form-check-label flex-grow-1" :for="'fp-enabled-' + entry.provider">
                 {{ providerName(store.flightProvidersOrder, entry.provider) }}
               </label>
-              <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
-                      @click="moveUp(store.flightProvidersOrder, index)"
-                      :aria-label="'Move ' + entry.provider + ' up'">
-                <i class="bi bi-arrow-up"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary"
-                      :disabled="index === store.flightProvidersOrder.length - 1"
-                      @click="moveDown(store.flightProvidersOrder, index)"
-                      :aria-label="'Move ' + entry.provider + ' down'">
-                <i class="bi bi-arrow-down"></i>
+              <button type="button" class="btn btn-sm btn-outline-secondary ft-drag-handle"
+                      :aria-label="'Reorder ' + entry.provider"
+                      @mousedown="armDrag('flight-' + entry.provider)"
+                      @keydown="armDrag('flight-' + entry.provider)"
+                      @keydown.up.prevent="moveList(store.flightProvidersOrder, index, -1)"
+                      @keydown.down.prevent="moveList(store.flightProvidersOrder, index, 1)"
+                      @blur="disarmDrag">
+                <i class="bi bi-grip-vertical"></i>
               </button>
             </li>
           </ul>
@@ -110,22 +174,26 @@ export default defineComponent({
           <h5>Routing and aircraft information<i class="bi bi-map text-black-50 ms-2"></i></h5>
           <ul class="list-group mb-2">
             <li v-for="(entry, index) in store.routeProvidersOrder" :key="entry.provider"
-                class="list-group-item d-flex align-items-center gap-2 py-2">
+                class="list-group-item d-flex align-items-center gap-2 py-2"
+                :class="{ 'ft-dragging': isDragging('route', index), 'ft-drag-over': isDragOver('route', index) }"
+                :draggable="armedKey === 'route-' + entry.provider"
+                @dragstart="onDragStart('route', index, $event)"
+                @dragover="onDragOver('route', index, $event)"
+                @drop="onDrop('route', index, $event)"
+                @dragend="onDragEnd">
               <input type="checkbox" class="form-check-input mt-0" :id="'rp-enabled-' + entry.provider"
                      v-model="entry.enabled" />
               <label class="form-check-label flex-grow-1" :for="'rp-enabled-' + entry.provider">
                 {{ providerName(store.routeProvidersOrder, entry.provider) }}
               </label>
-              <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
-                      @click="moveUp(store.routeProvidersOrder, index)"
-                      :aria-label="'Move ' + entry.provider + ' up'">
-                <i class="bi bi-arrow-up"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary"
-                      :disabled="index === store.routeProvidersOrder.length - 1"
-                      @click="moveDown(store.routeProvidersOrder, index)"
-                      :aria-label="'Move ' + entry.provider + ' down'">
-                <i class="bi bi-arrow-down"></i>
+              <button type="button" class="btn btn-sm btn-outline-secondary ft-drag-handle"
+                      :aria-label="'Reorder ' + entry.provider"
+                      @mousedown="armDrag('route-' + entry.provider)"
+                      @keydown="armDrag('route-' + entry.provider)"
+                      @keydown.up.prevent="moveList(store.routeProvidersOrder, index, -1)"
+                      @keydown.down.prevent="moveList(store.routeProvidersOrder, index, 1)"
+                      @blur="disarmDrag">
+                <i class="bi bi-grip-vertical"></i>
               </button>
             </li>
           </ul>

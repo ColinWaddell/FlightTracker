@@ -47,6 +47,29 @@ body { background: #f8f9fa; }
   margin-bottom: .5rem;
 }
 
+/* ===== Drag & drop reordering (Data Source page) ===== */
+
+.ft-drag-handle {
+  cursor: grab;
+  color: #6c757d;
+  border-color: transparent;
+  padding-inline: .25rem;
+}
+.ft-drag-handle:hover,
+.ft-drag-handle:focus-visible {
+  color: #495057;
+  border-color: #dee2e6;
+  background: #f8f9fa;
+}
+.ft-drag-handle:active { cursor: grabbing; }
+
+.ft-dragging { opacity: .45; }
+
+.ft-drag-over {
+  box-shadow: inset 0 2px 0 0 #0d6efd;
+  border-top-color: #0d6efd;
+}
+
 /* Leaflet map lock controls */
 .leaflet-control.map-lock-control {
   background: #fff;
