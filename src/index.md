@@ -34,10 +34,10 @@ structured_data: |
 <section class="hero">
   <div class="container">
     <div class="row align-items-center g-4 hero-headline">
-      <div class="col-9">
+      <div class="col-12 col-lg-9">
         <h1>FlightTracker<br/><span class="yellow">What's that up there?</span></h1>
       </div>
-      <div class="col-3 text-end">
+      <div class="col-12 col-lg-3 text-lg-end">
         <img src="/images/logo.png" alt="{{ site.name }}" class="hero-logo pb-3" />
       </div>
     </div>
