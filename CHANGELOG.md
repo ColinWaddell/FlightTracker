@@ -6,46 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2.9.0] - 2026-08-29
 
-- New pluggable lookup-provider architecture (`lookups/` package): providers are thin
-  adapters; the app owns the policy - priority ordering, caching, fallback, quarantine -
-  and providers only translate their service's API
-- **13 lookup providers** in the catalogue: Flight Radar 24 (Free), Flight Radar 24
-  (Paid), OpenSky Network, tar1090/dump1090, ADS-B.fi, ADSB.lol, airplanes.live, HexDB,
-  adsbdb.com, ADSB.im Routes, AeroDataBox, AirLabs and FlightAware AeroAPI
-- **Flight Radar 24 (Paid)** - FlightRadar24's official commercial API
-  (fr24api.flightradar24.com) as an opt-in provider for flights, routes and aircraft.
-  Bearer-token auth, altitude filtering sent server-side to minimise billed records,
-  credit exhaustion surfaced clearly. The free feed client stays untouched and shares
-  no code with it (renamed "Flight Radar 24 (Free)" for clarity)
-- Keyless community aggregators **ADS-B.fi**, **ADSB.lol** and **airplanes.live** for
-  flight positions; route providers **ADSB.im routeset**, **AirLabs** and
-  **FlightAware AeroAPI** opt in with API keys where needed
-- Flight monitoring and routing/aircraft info are independent priority chains - enable
-  any mix, reorder freely, and the app cascades down each chain, *merging* results:
-  lower-priority providers fill blanks instead of the lookup stopping at the first
-  partial answer, and FR24 now also contributes routes (not just when it is the data
-  source)
-- tar1090, ADS-B.fi, ADSB.lol and airplanes.live share one readsb-format record parser,
-  which also accepts dump1090-style field names (fixes missing flights on forks that
-  report `altitude` instead of `alt_baro`)
-- New **/status** page: per-provider hold-offs and last-fetch details, plus Pi telemetry
-  (temperature, load, memory, storage, uptime, network)
-- Provider configuration migrated automatically: the old `data_source`, `tar1090_url`,
-  `osn_client_id/secret` and `aerodatabox_api_key` keys become the new provider lists
-  and per-provider settings; existing setups keep working without changes, and
-  providers that ship later appear in the priority lists (disabled) so nothing is
-  switched on behind your back
-- Web settings: reorderable per-capability priority lists and per-provider
-  configuration generated from provider descriptors (folded into the Data Source
-  page); secrets are masked in the UI, redacted from debug-config exports, and never
-  sent to the browser
-- `python flight-tracker.py test flights [--provider ID]` replaces the three per-source
-  test commands (old targets still work as aliases)
-- Installer and runtime fixes: Pillow/OpenBLAS system libraries resolved by the
-  installer, service install uses the invoking user's home directory, `FT_VERBOSE=1`
-  streams command output live
-- Internal: provider metadata de-duplicated - each provider's config descriptor is the
-  single source of truth and the registry catalogue derives its wiring from it
+- All-new provider system: pick your data sources from 13 options - flights from tar1090, the free Flight Radar 24 feed, or keyless community networks like ADS-B.fi, ADSB.lol and airplanes.live
+- Routes and plane info come from their own lookup chain (HexDB, adsbdb, ADSB.im, AeroDataBox, AirLabs, FlightAware) - mix and match, reorder, and results merge automatically
+- Optional official **Flight Radar 24 (Paid)** API alongside the free one, for supported, guaranteed data
+- Nothing to reconfigure: existing settings migrate on first run, and new providers appear switched off in the settings
+- New Status page: provider health and fetch details, plus Pi temperature, memory, storage and uptime
+- API keys are masked in the settings and never shown again
+- `python flight-tracker.py test flights` checks your provider setup from the command line
 
 ## [v2.8.0] - 2026-08-25
 - Complete rewrite of the settings page to move everything over to Vue.js
