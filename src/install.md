@@ -229,10 +229,10 @@ structured_data: |
 
     <div class="narrative">
         <div class="card">
-            <div class="card-body p-2 bg-black">
-                <img src="../images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
-            </div>
             <div class="card-header">First boot - scan to configure</div>
+            <div class="card-body p-2 bg-black">
+                <img src="/images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
+            </div>
         </div>
     </div>
 

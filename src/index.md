@@ -31,7 +31,7 @@ structured_data: |
   }
 ---
 
-<section class="hero">
+<section class="hero border-bottom">
   <div class="container">
     <div class="row align-items-center g-4 hero-headline">
       <div class="col-12 col-lg-9">
@@ -77,7 +77,7 @@ structured_data: |
   </div>
 </section>
 
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">FlightTracker OS</h2>
 
@@ -98,6 +98,7 @@ structured_data: |
       </div>
       <div class="col-lg-5">
         <div class="card">
+          <div class="card-header">The FlightTracker OS web installer</div>
           <div class="card-body p-2">
             <img src="/images/installer/web-installer.png" alt="FlightTracker OS web installer" loading="lazy" class="w-100 d-block">
           </div>
@@ -108,9 +109,7 @@ structured_data: |
 
 </section>
 
-<hr />
-
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">What it does</h2>
 
@@ -119,9 +118,7 @@ structured_data: |
 
 </section>
 
-<hr />
-
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">Display modes</h2>
     <div class="narrative">
@@ -132,7 +129,7 @@ structured_data: |
   </div>
 </section>
 
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">Web configuration</h2>
     <div class="narrative">
@@ -158,10 +155,15 @@ structured_data: |
         </div>
       </div>
       <div class="col-lg-8">
-        <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-            <source src="images/captures/web-config-ui.mp4" type="video/mp4">
-            <source src="images/captures/web-config-ui.webm" type="video/webm">
-        </video>
+        <div class="card">
+          <div class="card-header">The web configuration interface</div>
+          <div class="card-body p-2 bg-black">
+            <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
+                <source src="/images/captures/web-config-ui.mp4" type="video/mp4">
+                <source src="/images/captures/web-config-ui.webm" type="video/webm">
+            </video>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -170,16 +172,16 @@ structured_data: |
     </div>
 
     <div class="card">
-      <div class="card-body p-2 bg-black">
-        <img src="images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
-      </div>
       <div class="card-header">First boot - scan to configure</div>
+      <div class="card-body p-2 bg-black">
+        <img src="/images/captures/qr_code.png" alt="FlightTracker first boot QR code splash screen" loading="lazy" class="w-100 d-block">
+      </div>
     </div>
 
   </div>
 </section>
 
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">Themes</h2>
 
@@ -188,13 +190,13 @@ structured_data: |
     </div>
 
     <div class="card mb-4">
+      <div class="card-header">Cycling through Default, Monochrome, and Pastel themes</div>
       <div class="card-body p-2 bg-black">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-          <source src="images/captures/themes.mp4" type="video/mp4">
-          <source src="images/captures/themes.webm" type="video/webm">
+          <source src="/images/captures/themes.mp4" type="video/mp4">
+          <source src="/images/captures/themes.webm" type="video/webm">
         </video>
       </div>
-      <div class="card-header">Cycling through Default, Monochrome, and Pastel themes</div>
     </div>
 
     {% include "theme-swatches.njk" %}
@@ -205,7 +207,7 @@ structured_data: |
   </div>
 </section>
 
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">Weather and idle display</h2>
     <div class="narrative">
@@ -214,10 +216,10 @@ structured_data: |
     </div>
 
     <div class="card">
-      <div class="card-body p-2 bg-black">
-        <img src="images/captures/forecast.png" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
-      </div>
       <div class="card-header">Idle screen - time, temperature, predicted rainfall, day and date</div>
+      <div class="card-body p-2 bg-black">
+        <img src="/images/captures/forecast.png" alt="Idle screen - time, temperature, day and date" loading="lazy" class="w-100 d-block">
+      </div>
     </div>
 
     <div class="narrative">
@@ -226,7 +228,7 @@ structured_data: |
   </div>
 </section>
 
-<section>
+<section class="border-bottom">
   <div class="container">
     <h2 class="section-title">Satellite tracking</h2>
     <div class="narrative">
@@ -235,13 +237,13 @@ structured_data: |
     </div>
 
     <div class="card">
+      <div class="card-header">ISS pass - azimuth/elevation plot with speed and altitude</div>
       <div class="card-body p-2 bg-black">
         <video autoplay loop muted playsinline preload="metadata" class="w-100 d-block">
-          <source src="images/captures/satellite-pass.mp4" type="video/mp4">
-          <source src="images/captures/satellite-pass.webm" type="video/webm">
+          <source src="/images/captures/satellite-pass.mp4" type="video/mp4">
+          <source src="/images/captures/satellite-pass.webm" type="video/webm">
         </video>
       </div>
-      <div class="card-header">ISS pass - azimuth/elevation plot with speed and altitude</div>
     </div>
   </div>
 </section>

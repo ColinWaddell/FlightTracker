@@ -47,9 +47,9 @@ structured_data: |
       <p>If you're considering building one of these, there are some must-haves and some optional extras. How you put it in a case I'll leave up to you.</p>
     </div>
     
-    <h3>Minimum shopping list</h3>
+    <h3 class="section-title">Minimum shopping list</h3>
     <div class="narrative">
-      <p class="lead">A Raspberry Pi.<a href="https://www.raspberrypi.com/" target="_blank"><img src="/images/Raspberry_Pi_Logo.svg" alt="Raspberry Pi logo" width="20" class="mx-2"></img></a></p>
+      <p class="lead">A Raspberry Pi.<a href="https://www.raspberrypi.com/" target="_blank"><img src="/images/Raspberry_Pi_Logo.svg" alt="Raspberry Pi logo" width="20" class="mx-2"></a></p>
       <p>FlightTracker has been tested on:</p>
         <ul>
             <li>RPi Zero W 2</li>
@@ -169,16 +169,13 @@ structured_data: |
 <section id="optional-extras" class="border-bottom">
   <div class="container">
     <h2 class="section-title">Optional extras</h2>
-    <div class="info-panel narrative">
-      <div class="info-panel-header">Optional extras</div>
-      <div class="info-panel-body">
-        <p>Everything after this point is <b>not needed</b> if you just want to build your own FlightTracker.</p>
-        <p>A couple of people I know bought all the parts above, then got stuck because they wanted to make the "perfect" version of it.</p>
-        <p>What follows is how I built mine. Don't treat it as a blueprint; it's just here for inspiration.</p>
-      </div>
+    <div class="narrative">
+      <p>Everything after this point is <strong>not needed</strong> if you just want to build your own FlightTracker.</p>
+      <p>A couple of people I know bought all the parts above, then got stuck because they wanted to make the "perfect" version of it.</p>
+      <p>What follows is how I built mine. Don't treat it as a blueprint; it's just here for inspiration.</p>
     </div>
 
-    <h3>Toggle switch and power LED</h3>
+    <h3 class="section-title">Toggle switch and power LED</h3>
     
     <div class="narrative">
         <p>
@@ -193,6 +190,7 @@ structured_data: |
         </ul>
 
         <div class="card mb-3">
+          <div class="card-header">Toggle switch with built-in power LED</div>
           <div class="card-body p-2 bg-black">
             <img src="/images/blog/switch-light.jpg" alt="Toggle switch with LED light" loading="lazy" class="w-100 d-block">
           </div>
@@ -224,7 +222,7 @@ structured_data: |
         <p>If you want that LED to blink when the device is searching for flights I recommend driving the LED indirectly via a transistor to avoid asking too much of the GPIO output.</p>
 
         <div class="card mb-3">
-        <div class="card-header">Wiring pin <code>25</code> of the Pi to the LED driver</div>
+          <div class="card-header">Wiring pin <code>25</code> of the Pi to the LED driver</div>
           <div class="card-body p-2 bg-black">
             <a href="/images/blog/blinky_wiring.jpeg">
               <img src="/images/blog/blinky_wiring.jpeg" alt="Blinky LED wiring" loading="lazy" class="w-100 d-block">
@@ -247,7 +245,7 @@ structured_data: |
   </div>
 </section>
 
-<section id="circuits">
+<section id="circuits" class="border-bottom">
   <div class="container">
     <h2 class="section-title">Detailed circuits and illustrations</h2>
     <div class="narrative">
@@ -262,8 +260,9 @@ structured_data: |
   </div>
 </section>
 
-<section class="border-top">
+<section>
   <div class="container">
+    <h2 class="section-title">Next steps</h2>
     <div class="narrative">
       <p>Once you've got the hardware sorted, flash <a href="/os/">FlightTracker OS</a> - the pre-built image, no command line required - or follow the <a href="/install/">installation guide</a> to use the quick installer.</p>
     </div>
