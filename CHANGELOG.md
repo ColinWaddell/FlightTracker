@@ -6,12 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2.9.0] - 2026-08-29
 
-- All-new provider system: pick your data sources from 13 options - flights from tar1090, the free Flight Radar 24 feed, or keyless community networks like ADS-B.fi, ADSB.lol and airplanes.live
-- Routes and plane info come from their own lookup chain (HexDB, adsbdb, ADSB.im, AeroDataBox, AirLabs, FlightAware) - mix and match, reorder, and results merge automatically
-- Optional official **Flight Radar 24 (Paid)** API alongside the free one, for supported, guaranteed data
-- Nothing to reconfigure: existing settings migrate on first run, and new providers appear switched off in the settings
+- All-new provider system: pick your data sources from a list and set their priority
+- Optional official **Flight Radar 24 (Paid)** API alongside the free one
 - New Status page: provider health and fetch details, plus Pi temperature, memory, storage and uptime
-- API keys are masked in the settings and never shown again
 - `python flight-tracker.py test flights` checks your provider setup from the command line
 
 ## [v2.8.0] - 2026-08-25
