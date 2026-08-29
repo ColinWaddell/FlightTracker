@@ -150,58 +150,67 @@ export default defineComponent({
     </div>
 
     <!-- ====== Provider Settings (generated from descriptors) ====== -->
-    <div id="group-provider-config" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-sliders me-2"></i>Provider Settings</p>
+    <div id="group-provider-config" class="mb-3">
 
-      <div v-for="meta in store.ui.providersMeta" :key="meta.id" class="mb-3 pb-3 border-bottom">
-        <div class="d-flex align-items-center gap-2">
-          <h5 class="mb-0">{{ meta.name }}</h5>
-          <span v-if="meta.configured" class="badge text-bg-success">configured</span>
-          <span v-else-if="meta.missing_required.length" class="badge text-bg-warning">
-            missing {{ meta.missing_required.join(', ') }}
-          </span>
-          <span class="badge text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
-        </div>
-        <div class="form-text text-muted small" v-if="meta.description" v-html="meta.description"></div>
+      <h3 class="fs-4 fw-semibold my-3"><i class="bi bi-sliders me-2"></i>Provider Settings</h3>
 
-        <div class="row mt-2" v-if="meta.fields.length">
-          <div v-for="field in meta.fields" :key="field.key" class="col-md-8 mb-2">
-            <label class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
-              {{ field.label }}
-              <span v-if="field.required" class="text-danger">*</span>
-            </label>
-
-            <input v-if="field.type === 'password'"
-                   type="password" class="form-control form-control-sm"
-                   :id="'providers-' + meta.id + '-' + field.key"
-                   :name="'providers.' + meta.id + '.' + field.key"
-                   v-model="settingsFor(meta.id)[field.key]"
-                   :placeholder="field.description" autocomplete="new-password" />
-            <input v-else-if="field.type === 'int'"
-                   type="number" class="form-control form-control-sm"
-                   :id="'providers-' + meta.id + '-' + field.key"
-                   :name="'providers.' + meta.id + '.' + field.key"
-                   v-model="settingsFor(meta.id)[field.key]" />
-            <div v-else-if="field.type === 'bool'" class="form-check">
-              <input type="checkbox" class="form-check-input"
-                     :id="'providers-' + meta.id + '-' + field.key"
-                     :name="'providers.' + meta.id + '.' + field.key"
-                     v-model="settingsFor(meta.id)[field.key]" />
+      <div class="row g-3">
+        <div v-for="meta in store.ui.providersMeta" :key="meta.id" class="col-12 col-lg-6">
+          <div class="card h-100 d-flex flex-column">
+            <div class="card-header">
+              <h5 class="mb-0">{{ meta.name }}</h5>
             </div>
-            <input v-else
-                   type="text" class="form-control form-control-sm"
-                   :id="'providers-' + meta.id + '-' + field.key"
-                   :name="'providers.' + meta.id + '.' + field.key"
-                   v-model="settingsFor(meta.id)[field.key]"
-                   :placeholder="field.description" autocomplete="off" />
+            <ul class="list-group list-group-flush">
+              <li v-if="meta.description" class="list-group-item small text-muted" v-html="meta.description"></li>
 
-            <div class="form-text text-muted small" v-if="field.description && field.type !== 'password'">
-              {{ field.description }}
+              <template v-if="meta.fields.length">
+                <li v-for="field in meta.fields" :key="field.key" class="list-group-item">
+                  <label class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
+                    {{ field.label }}
+                    <span v-if="field.required" class="text-danger">*</span>
+                  </label>
+
+                  <input v-if="field.type === 'password'"
+                         type="password" class="form-control form-control-sm"
+                         :id="'providers-' + meta.id + '-' + field.key"
+                         :name="'providers.' + meta.id + '.' + field.key"
+                         v-model="settingsFor(meta.id)[field.key]"
+                         :placeholder="field.description" autocomplete="new-password" />
+                  <input v-else-if="field.type === 'int'"
+                         type="number" class="form-control form-control-sm"
+                         :id="'providers-' + meta.id + '-' + field.key"
+                         :name="'providers.' + meta.id + '.' + field.key"
+                         v-model="settingsFor(meta.id)[field.key]" />
+                  <div v-else-if="field.type === 'bool'" class="form-check">
+                    <input type="checkbox" class="form-check-input"
+                           :id="'providers-' + meta.id + '-' + field.key"
+                           :name="'providers.' + meta.id + '.' + field.key"
+                           v-model="settingsFor(meta.id)[field.key]" />
+                  </div>
+                  <input v-else
+                         type="text" class="form-control form-control-sm"
+                         :id="'providers-' + meta.id + '-' + field.key"
+                         :name="'providers.' + meta.id + '.' + field.key"
+                         v-model="settingsFor(meta.id)[field.key]"
+                         :placeholder="field.description" autocomplete="off" />
+
+                  <div class="form-text text-muted small" v-if="field.description && field.type !== 'password'">
+                    {{ field.description }}
+                  </div>
+                </li>
+              </template>
+              <li v-else class="list-group-item small fst-italic text-muted">
+                This provider takes no configuration.
+              </li>
+            </ul>
+            <div class="card-footer mt-auto">
+              <span v-if="meta.configured" class="badge text-bg-success">configured</span>
+              <span v-else-if="meta.missing_required.length" class="badge text-bg-warning">
+                missing {{ meta.missing_required.join(', ') }}
+              </span>
+              <span class="badge text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
             </div>
           </div>
-        </div>
-        <div v-else class="form-text text-muted small fst-italic">
-          This provider takes no configuration.
         </div>
       </div>
     </div>
