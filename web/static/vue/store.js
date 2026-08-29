@@ -85,18 +85,9 @@ export const SIDEBAR_GROUPS = [
     icon: "bi-hdd-network",
     route: "/data-source",
     items: [
-      { section: "group-flight-data", icon: "bi-airplane-engines", label: "Flight Data" },
-      { section: "group-routings-data", icon: "bi-geo-alt", label: "Routing Data" },
-      { section: "group-weather-data", icon: "bi-cloud-sun", label: "Weather Data" },
-    ],
-  },
-  {
-    title: "Providers",
-    icon: "bi-diagram-3",
-    route: "/providers",
-    items: [
       { section: "group-lookup-priority", icon: "bi-sort-numeric-down", label: "Lookup Priority" },
       { section: "group-provider-config", icon: "bi-sliders", label: "Provider Settings" },
+      { section: "group-weather-data", icon: "bi-cloud-sun", label: "Weather Data" },
     ],
   },
   {

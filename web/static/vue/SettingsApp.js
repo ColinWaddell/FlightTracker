@@ -10,7 +10,6 @@ import { createStore } from "./store.js";
 import SettingsSidebar from "./SettingsSidebar.js";
 import SkyMonitoringPage from "./SkyMonitoringPage.js";
 import DataSourcePage from "./DataSourcePage.js";
-import ProvidersPage from "./ProvidersPage.js";
 import DefaultScreenPage from "./DefaultScreenPage.js";
 import HardwarePage from "./HardwarePage.js";
 import AdminPage from "./AdminPage.js";
@@ -18,7 +17,6 @@ import AdminPage from "./AdminPage.js";
 const PAGES = [
   { name: "sky-monitoring", component: SkyMonitoringPage },
   { name: "data-source", component: DataSourcePage },
-  { name: "providers", component: ProvidersPage },
   { name: "default-screen", component: DefaultScreenPage },
   { name: "hardware", component: HardwarePage },
   { name: "admin", component: AdminPage },
@@ -26,7 +24,7 @@ const PAGES = [
 
 export default defineComponent({
   name: "SettingsApp",
-  components: { SettingsSidebar, SkyMonitoringPage, DataSourcePage, ProvidersPage, DefaultScreenPage, HardwarePage, AdminPage },
+  components: { SettingsSidebar, SkyMonitoringPage, DataSourcePage, DefaultScreenPage, HardwarePage, AdminPage },
   setup() {
     const config = window.FT_CONFIG || {};
     const pageData = window.FT_PAGE_DATA || {};
