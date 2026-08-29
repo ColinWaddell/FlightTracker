@@ -91,6 +91,15 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
+    title: "Providers",
+    icon: "bi-diagram-3",
+    route: "/providers",
+    items: [
+      { section: "group-lookup-priority", icon: "bi-sort-numeric-down", label: "Lookup Priority" },
+      { section: "group-provider-config", icon: "bi-sliders", label: "Provider Settings" },
+    ],
+  },
+  {
     title: "Default Screen",
     icon: "bi-house",
     route: "/default-screen",
@@ -152,7 +161,19 @@ export function createStore(initialConfig, pageData) {
     staticUrls: pageData.staticUrls || {},
     symbolImages: pageData.symbolImages || {},
     urls: pageData.urls || {},
+    providersMeta: pageData.providersMeta || [],
+    maskToken: pageData.maskToken || "**********",
   });
+
+  // Provider priority lists - reactive copies of the configured order.
+  // The Providers page reorders/toggles these and serialises them into
+  // hidden JSON inputs at submit time.
+  const flightProvidersOrder = reactive(
+    (pageData.flightProvidersOrder || []).map((e) => ({ ...e }))
+  );
+  const routeProvidersOrder = reactive(
+    (pageData.routeProvidersOrder || []).map((e) => ({ ...e }))
+  );
 
   // -- Computed helpers --------------------------------------------------
 
@@ -326,5 +347,7 @@ export function createStore(initialConfig, pageData) {
     altitudeUnitLabel,
     radiusUnitLabel,
     altitudeHelpExample,
+    flightProvidersOrder,
+    routeProvidersOrder,
   });
 }

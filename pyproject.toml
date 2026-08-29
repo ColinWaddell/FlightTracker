@@ -55,7 +55,7 @@ Issues = "https://github.com/ColinWaddell/FlightTracker/issues"
 Changelog = "https://github.com/ColinWaddell/FlightTracker/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
-include = ["setup*", "display*", "utilities*", "scenes*", "web*", "platforms*"]
+include = ["setup*", "display*", "utilities*", "scenes*", "web*", "platforms*", "lookups*"]
 
 # -- Black --------------------------------------------------------------
 [tool.black]

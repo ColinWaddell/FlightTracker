@@ -330,6 +330,74 @@ def _consume_import_failed_marker() -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _parse_provider_form(form, cfg) -> dict:
+    """Parse the Lookup Priority page's two reorderable lists.
+
+    The Vue app submits the ordered, enable-toggled provider lists as JSON
+    strings under ``flight_providers_json`` / ``route_providers_json``.
+    Missing keys leave the configured order untouched.
+    """
+    import json as _json
+
+    out: dict = {}
+    for key, capability, config_key in (
+        ("flight_providers_json", "flights", "flight_providers"),
+        ("route_providers_json", "routes", "route_providers"),
+    ):
+        raw = form.get(key)
+        if not raw:
+            continue
+        try:
+            order = _json.loads(raw)
+        except ValueError:
+            logger.warning("Ignoring malformed %s payload", key)
+            continue
+        if not isinstance(order, list):
+            continue
+        from lookups.registry import normalise_provider_list
+
+        clean, warnings = normalise_provider_list(order, capability)
+        if clean:
+            out[config_key] = clean
+        for w in warnings:
+            logger.warning("[providers] %s", w)
+    return out
+
+
+def _parse_provider_settings(form, cfg) -> dict[str, dict]:
+    """Collect ``providers.<pid>.<field>`` form keys into a settings subtree.
+
+    Sensitive fields use mask-token semantics (via
+    :func:`lookups.config.apply_submitted_settings`): the masked sentinel
+    keeps the stored value, "" clears it, anything else replaces it.  Only
+    providers actually present in the form are returned, so unrelated
+    providers' settings are never touched by this form submission.
+    """
+    from lookups.config import apply_submitted_settings
+    from lookups.registry import PROVIDERS
+
+    collected: dict[str, dict[str, str]] = {}
+    prefix = "providers."
+    for key in form:
+        if not key.startswith(prefix):
+            continue
+        parts = key[len(prefix) :].split(".")
+        if len(parts) != 2:
+            continue
+        pid, field_key = parts
+        if pid not in PROVIDERS:
+            continue
+        collected.setdefault(pid, {})[field_key] = str(form.get(key, ""))
+
+    subtree: dict[str, dict] = {}
+    for pid, fields in collected.items():
+        spec = PROVIDERS[pid]
+        stored = cfg.provider_settings(pid)
+        clean, _changed = apply_submitted_settings(spec.config, stored, fields)
+        subtree[pid] = clean
+    return subtree
+
+
 def parse_settings_form(form, cfg) -> dict:
     """Coerce the submitted HTML form into a config dict, applying clamps."""
     return {
@@ -488,11 +556,11 @@ def parse_settings_form(form, cfg) -> dict:
             lambda v: v if v in ("none", "pixel", "gpio") else "pixel"
         )(str_val(form.get("loading_indicator"), "pixel").lower()),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
-        # Data source
-        "data_source": (lambda v: v if v in ("fr24", "tar1090", "osn") else "fr24")(
-            str_val(form.get("data_source"), "fr24").lower()
-        ),
-        "tar1090_url": str_val(form.get("tar1090_url"), ""),
+        # Lookup provider priority lists (reorderable, submitted as JSON)
+        **_parse_provider_form(form, cfg),
+        # Per-provider settings (providers.<pid>.<field> form keys, with
+        # mask-token semantics for sensitive fields)
+        "providers": _parse_provider_settings(form, cfg),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
         "callsign_format": (
             "iata"
@@ -505,9 +573,6 @@ def parse_settings_form(form, cfg) -> dict:
             in {"airline", "callsign", "callsign_airline"}
             else "callsign"
         ),
-        "osn_client_id": str_val(form.get("osn_client_id"), ""),
-        "osn_client_secret": str_val(form.get("osn_client_secret"), ""),
-        "aerodatabox_api_key": str_val(form.get("aerodatabox_api_key"), ""),
         # Satellite tracking
         "satellite_tracking_enabled": bool_val(form.get("satellite_tracking_enabled")),
         "satellite_norad_ids": [
@@ -611,8 +676,46 @@ def _settings_page_data(
             {"hour": t.hour, "minute": t.minute} if t else None for t in schedule_window
         ]
 
+    from lookups.config import MASK, provider_settings_view
+    from lookups.registry import PROVIDERS
+
+    cfg_dict = cfg.as_dict()
+
+    # The browser never sees a sensitive value: mask secrets in the config
+    # snapshot (the web password hash is excluded entirely) and build the
+    # per-provider descriptor metadata for the Providers UI.
+    cfg_masked = {k: v for k, v in cfg_dict.items() if k != "web_password_hash"}
+    providers_meta = []
+    masked_provider_settings: dict[str, dict] = {}
+    for pid, spec in PROVIDERS.items():
+        settings = cfg.provider_settings(pid)
+        masked_provider_settings[pid] = provider_settings_view(spec.config, settings)
+        providers_meta.append(
+            {
+                "id": spec.id,
+                "name": spec.name,
+                "description": spec.description,
+                "capabilities": sorted(spec.capabilities),
+                "configured": spec.config.is_configured(settings),
+                "missing_required": spec.config.missing_required(settings),
+                "fields": [
+                    f.as_dict_view() for f in spec.config.fields
+                ],
+            }
+        )
+    cfg_masked["providers"] = masked_provider_settings
+
+    flight_order = [
+        {"provider": e["provider"], "enabled": bool(e.get("enabled"))}
+        for e in cfg.flight_providers
+    ]
+    route_order = [
+        {"provider": e["provider"], "enabled": bool(e.get("enabled"))}
+        for e in cfg.route_providers
+    ]
+
     return {
-        "cfg": cfg.as_dict(),
+        "cfg": cfg_masked,
         "airports_json": airports_json(),
         "template_errors": template_errors or [],
         "error": error,
@@ -623,6 +726,10 @@ def _settings_page_data(
         "schedule_window_json": sw_json,
         "current_version": version_string(VERSION),
         "active_page": "settings",
+        "providers_meta": providers_meta,
+        "flight_providers_order": flight_order,
+        "route_providers_order": route_order,
+        "mask_token": MASK,
         "static_urls": {
             "weatherExplained": _url_for(
                 "static", filename="images/weather_explained.png"
@@ -674,6 +781,30 @@ def settings():
                 raise ValueError("Invalid CSRF token.")
 
             new_data = parse_settings_form(form, cfg)
+
+            # Provider settings arrive as a partial subtree (only the
+            # providers whose cards were shown) - merge it through
+            # descriptor validation so no junk is ever persisted.
+            providers_partial = new_data.pop("providers", None)
+            if providers_partial:
+                from lookups.config import validate_provider_settings
+                from lookups.registry import PROVIDERS
+
+                merged = cfg.providers_subtree
+                touched = {}
+                for pid, settings in providers_partial.items():
+                    spec = PROVIDERS.get(pid)
+                    if spec is None:
+                        continue
+                    clean, warnings = validate_provider_settings(
+                        spec.config, settings
+                    )
+                    for w in warnings:
+                        logger.warning("[providers] %s", w)
+                    touched[pid] = clean
+                merged.update(touched)
+                new_data["providers"] = merged
+
             new_password = form.get("new_password", "").strip()
 
             # Validate custom plane-info template when custom mode is selected.
@@ -778,14 +909,50 @@ def airports_json() -> str:
     return load_airports_json()
 
 
-# Keys that may contain sensitive information and should be stripped from
-# the debug config export.
+# Top-level config keys that may contain sensitive information (provider
+# settings are redacted schema-driven via their descriptors).
 SENSITIVE_KEYS = {
     "weatherapi_key",
     "web_password_hash",
-    "osn_client_secret",
-    "aerodatabox_api_key",
 }
+
+
+def _redact_for_debug(data: dict) -> dict:
+    """Return *data* with every sensitive value redacted.
+
+    Top-level sensitive keys use :data:`SENSITIVE_KEYS`; the nested
+    ``providers`` subtree is redacted from the provider descriptors so new
+    sensitive fields are covered automatically.
+    """
+    from lookups.registry import PROVIDERS
+
+    safe: dict = {}
+    for k, v in data.items():
+        if k in SENSITIVE_KEYS:
+            safe[k] = "***REDACTED***" if v else ""
+        else:
+            safe[k] = v
+
+    providers = data.get("providers")
+    if isinstance(providers, dict):
+        # Schema-driven: a provider descriptor field marked sensitive=True
+        # is redacted here automatically.
+        sensitive_by_pid = {
+            pid: {f.key for f in spec.config.sensitive_fields()}
+            for pid, spec in PROVIDERS.items()
+        }
+        redacted_providers: dict = {}
+        for pid, settings in providers.items():
+            if not isinstance(settings, dict):
+                redacted_providers[pid] = settings
+                continue
+            sensitive = sensitive_by_pid.get(pid, frozenset())
+            redacted_providers[pid] = {
+                fk: ("***REDACTED***" if fv and fk in sensitive else fv)
+                for fk, fv in settings.items()
+            }
+        safe["providers"] = redacted_providers
+    return safe
 
 
 @app.route("/debug-config")
@@ -799,10 +966,7 @@ def debug_config():
     import json
 
     cfg = Config.instance()
-    safe = {
-        k: ("***REDACTED***" if k in SENSITIVE_KEYS and v else v)
-        for k, v in cfg.as_dict().items()
-    }
+    safe = _redact_for_debug(cfg.as_dict())
     payload = json.dumps(safe, indent=2, sort_keys=True)
     return Response(
         payload,
