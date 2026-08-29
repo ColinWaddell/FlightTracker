@@ -20,7 +20,7 @@ provider is actually used.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 
 from lookups.config import ProviderConfig
@@ -63,7 +63,6 @@ class ProviderSpec:
     # provider's validated settings and must be status-agnostic (a 4xx
     # response still counts as "reachable").
     startup_check: Callable[[dict], bool] | None = None
-    notes: tuple = field(default=())
 
     def implements(self, capability: str) -> bool:
         return capability in self.capabilities
@@ -105,7 +104,39 @@ def _startup_check(module: str) -> Callable[[dict], bool]:
 
 # ---------------------------------------------------------------------------
 # The catalogue
+#
+# Everything static about a provider - identity, description, capabilities
+# and settings fields - lives in the provider's own module at
+# lookups/providers/<id>/config.py.  This catalogue fixes the display order
+# and derives the rest (adapter wiring, startup probes) from those
+# descriptors, so adding a provider means writing its package and adding
+# one line here - there is nothing to keep in sync.
 # ---------------------------------------------------------------------------
+
+# Catalogue order also drives the order newly-shipped providers are appended
+# to saved priority lists by setup.configuration._complete_provider_lists.
+_CATALOGUE_ORDER = (
+    "fr24",
+    "opensky",
+    "tar1090",
+    "adsbfi",
+    "adsblol",
+    "airplaneslive",
+    "hexdb",
+    "adsbdb",
+    "adsbim",
+    "aerodatabox",
+    "fr24api",
+    "airlabs",
+    "flightaware",
+)
+
+# Standard adapter class name for each capability inside a provider package.
+_FACTORY_CLASS = {
+    FLIGHTS: "FlightProvider",
+    ROUTES: "RouteProvider",
+    AIRCRAFT: "AircraftProvider",
+}
 
 
 def _descriptor(pid: str) -> ProviderConfig:
@@ -114,189 +145,44 @@ def _descriptor(pid: str) -> ProviderConfig:
     return importlib.import_module(f"lookups.providers.{pid}.config").PROVIDER
 
 
-def _spec(
-    pid: str,
-    name: str,
-    description: str,
-    capabilities: tuple[str, ...],
-    factories: dict[str, tuple[str, str]],
-    startup_module: str | None = None,
-) -> ProviderSpec:
-    """Build a ProviderSpec, mapping factory tuples to lazy factories.
+def _spec(pid: str) -> ProviderSpec:
+    """Build a catalogue entry from *pid*'s config descriptor.
 
-    Each *factories* entry maps a capability id to
-    ``(module_name, ClassName)``; the module is imported on first use.
+    Adapter factories and the startup probe are derived from the
+    descriptor's capabilities rather than hand-wired here.
     """
+    descriptor = _descriptor(pid)
+    if descriptor.id != pid:
+        raise ValueError(
+            f"catalogue id {pid!r} does not match descriptor id {descriptor.id!r}"
+        )
+    unknown = set(descriptor.capabilities) - set(_FACTORY_CLASS)
+    if unknown:
+        raise ValueError(
+            f"provider {pid!r} declares unknown capabilities {sorted(unknown)}"
+        )
     return ProviderSpec(
-        id=pid,
-        name=name,
-        description=description,
-        capabilities=frozenset(capabilities),
-        config=_descriptor(pid),
+        id=descriptor.id,
+        name=descriptor.name,
+        description=descriptor.description,
+        capabilities=frozenset(descriptor.capabilities),
+        config=descriptor,
         factories={
-            capability: _factory(f"lookups.providers.{module_name}", class_name)
-            for capability, (module_name, class_name) in factories.items()
+            capability: _factory(
+                f"lookups.providers.{pid}.{capability}", _FACTORY_CLASS[capability]
+            )
+            for capability in descriptor.capabilities
         },
+        # Every flights-capable provider module exposes startup_check(settings).
         startup_check=(
-            _startup_check(f"lookups.providers.{startup_module}")
-            if startup_module
+            _startup_check(f"lookups.providers.{pid}.flights")
+            if FLIGHTS in descriptor.capabilities
             else None
         ),
     )
 
 
-PROVIDERS: dict[str, ProviderSpec] = {
-    spec.id: spec
-    for spec in (
-        _spec(
-            "fr24",
-            "Flight Radar 24 (Free)",
-            "Live flights from the FlightRadar24 feed. Works without an API key",
-            ("flights", "routes", "aircraft"),
-            {
-                "flights": ("fr24.flights", "FlightProvider"),
-                "routes": ("fr24.routes", "RouteProvider"),
-                "aircraft": ("fr24.aircraft", "AircraftProvider"),
-            },
-            startup_module="fr24.flights",
-        ),
-        _spec(
-            "opensky",
-            "OpenSky Network",
-            "Create an API client at "
-            '<a href="https://opensky-network.org/login" target="_blank" '
-            'rel="noopener noreferrer">opensky-network.org</a> '
-            "(Account &rarr; API Clients) to get your credentials. A free "
-            "registered account is sufficient for 30-second polling.",
-            ("flights",),
-            {"flights": ("opensky.flights", "FlightProvider")},
-            startup_module="opensky.flights",
-        ),
-        _spec(
-            "tar1090",
-            "tar1090",
-            "Point this at your local tar1090 instance's <code>aircraft.json</code> "
-            "endpoint. Currently tested against the latest RPi image from "
-            '<a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">'
-            "ADSB.im</a>.",
-            ("flights",),
-            {"flights": ("tar1090.flights", "FlightProvider")},
-            startup_module="tar1090.flights",
-        ),
-        _spec(
-            "adsbfi",
-            "ADS-B.fi",
-            "Community-run aggregator (adsb.fi) relaying live aircraft from "
-            "its feeder network. Free, no key required.",
-            ("flights",),
-            {"flights": ("adsbfi.flights", "FlightProvider")},
-            startup_module="adsbfi.flights",
-        ),
-        _spec(
-            "adsblol",
-            "ADSB.lol",
-            "Community-run ADS-B aggregator (donation funded). "
-            "Free, no key required.",
-            ("flights",),
-            {"flights": ("adsblol.flights", "FlightProvider")},
-            startup_module="adsblol.flights",
-        ),
-        _spec(
-            "airplaneslive",
-            "airplanes.live",
-            "Free community feeder network aggregator. Please keep request "
-            "rates low (max 1/second).",
-            ("flights",),
-            {"flights": ("airplaneslive.flights", "FlightProvider")},
-            startup_module="airplaneslive.flights",
-        ),
-        _spec(
-            "hexdb",
-            "HexDB",
-            "Free route and aircraft database at hexdb.io. No API key required.",
-            ("routes", "aircraft"),
-            {
-                "routes": ("hexdb.routes", "RouteProvider"),
-                "aircraft": ("hexdb.aircraft", "AircraftProvider"),
-            },
-        ),
-        _spec(
-            "adsbdb",
-            "adsbdb.com",
-            "Free callsign-route and aircraft database at adsbdb.com. No "
-            "API key required.",
-            ("routes", "aircraft"),
-            {
-                "routes": ("adsbdb.routes", "RouteProvider"),
-                "aircraft": ("adsbdb.aircraft", "AircraftProvider"),
-            },
-        ),
-        _spec(
-            "adsbim",
-            "ADSB.im Routes",
-            "Community-sourced route database (the same standing-data "
-            "service tar1090 uses). Free, no key required. Needs the "
-            "aircraft's live position for the plausibility check.",
-            ("routes",),
-            {"routes": ("adsbim.routes", "RouteProvider")},
-        ),
-        _spec(
-            "aerodatabox",
-            "AeroDataBox",
-            "Don't register with AeroDataBox directly. Instead get a key here: "
-            '<a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" '
-            'target="_blank" rel="noopener noreferrer">RapidAPI</a>. '
-            "You'll need to sign up for an account, search for AeroDataBox, "
-            "hit the Test button up the top right and then subscribe to the "
-            "free plan. After that it'll show you your key. Once you stop "
-            "getting data from this API the above fall-back scheme will "
-            "kick in.",
-            ("routes", "aircraft"),
-            {
-                "routes": ("aerodatabox.routes", "RouteProvider"),
-                "aircraft": ("aerodatabox.aircraft", "AircraftProvider"),
-            },
-        ),
-        _spec(
-            "fr24api",
-            "Flight Radar 24 (Paid)",
-            "FlightRadar24's official commercial API - the paid, supported "
-            "service with a Bearer token from your FR24 account. Billed per "
-            "returned record from a credit balance, so live polling over a "
-            'busy zone burns credits fastest. <a href="https://www.flightradar24.com/" '
-            'target="_blank" rel="noopener noreferrer">flightradar24.com</a>.',
-            ("flights", "routes", "aircraft"),
-            {
-                "flights": ("fr24api.flights", "FlightProvider"),
-                "routes": ("fr24api.routes", "RouteProvider"),
-                "aircraft": ("fr24api.aircraft", "AircraftProvider"),
-            },
-            startup_module="fr24api.flights",
-        ),
-        _spec(
-            "airlabs",
-            "AirLabs",
-            "Commercial aviation database - the free plan covers 1,000 "
-            "lookups per month. Create an API key at "
-            '<a href="https://airlabs.co" target="_blank" rel="noopener noreferrer">'
-            "airlabs.co</a>.",
-            ("routes",),
-            {"routes": ("airlabs.routes", "RouteProvider")},
-        ),
-        _spec(
-            "flightaware",
-            "FlightAware AeroAPI",
-            "FlightAware's commercial API. The Personal plan includes "
-            "$5/month of free credit and requires a card on file - fine "
-            "for per-callsign route lookups, too costly for position "
-            "polling. Get a key at "
-            '<a href="https://www.flightaware.com/aeroapi/portal" '
-            'target="_blank" rel="noopener noreferrer">the AeroAPI portal</a>.',
-            ("routes",),
-            {"routes": ("flightaware.routes", "RouteProvider")},
-        ),
-    )
-}
+PROVIDERS: dict[str, ProviderSpec] = {pid: _spec(pid) for pid in _CATALOGUE_ORDER}
 
 
 def provider_spec(pid: str) -> ProviderSpec | None:

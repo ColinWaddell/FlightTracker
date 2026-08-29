@@ -1,5 +1,9 @@
 """
-FlightRadar24 API (official, commercial) configuration descriptor.
+fr24api provider configuration descriptor.
+
+The single source of truth for this provider: name, description,
+capabilities and settings fields. lookups/registry.py derives the
+adapter wiring and startup probe from these.
 """
 
 from __future__ import annotations
@@ -10,13 +14,13 @@ PROVIDER = ProviderConfig(
     id="fr24api",
     name="Flight Radar 24 (Paid)",
     description=(
-        "FlightRadar24's official commercial API - the paid, supported "
-        "service, separate from the free public feed. Billed per returned "
-        "record from a credit balance, so live polling over a busy zone "
-        "consumes credits fastest. Create a token under Key Management on "
-        'your account at <a href="https://www.flightradar24.com/" '
-        'target="_blank" rel="noopener noreferrer">flightradar24.com</a>.'
-    ),
+            "FlightRadar24's official commercial API - the paid, supported service",
+            "with a Bearer token from your FR24 account. Billed per returned record",
+            "from a credit balance, so live polling over a busy zone burns credits",
+            "fastest. <a href=\"https://www.flightradar24.com/\" target=\"_blank\"",
+            "rel=\"noopener noreferrer\">flightradar24.com</a>."
+        ),
+    capabilities=("flights", "routes", "aircraft"),
     fields=(
         ConfigField(
             key="api_key",

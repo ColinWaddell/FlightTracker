@@ -1,5 +1,9 @@
 """
-adsb.fi provider configuration descriptor.
+adsbfi provider configuration descriptor.
+
+The single source of truth for this provider: name, description,
+capabilities and settings fields. lookups/registry.py derives the
+adapter wiring and startup probe from these.
 """
 
 from __future__ import annotations
@@ -10,8 +14,9 @@ PROVIDER = ProviderConfig(
     id="adsbfi",
     name="ADS-B.fi",
     description=(
-        "Live aircraft from the adsb.fi community feeder network. Free, "
-        "no account or API key required."
-    ),
+            "Community-run aggregator (adsb.fi) relaying live aircraft from its",
+            "feeder network. Free, no key required."
+        ),
+    capabilities=("flights",),
     fields=(),
 )

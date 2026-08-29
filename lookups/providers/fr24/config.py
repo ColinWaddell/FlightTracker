@@ -1,8 +1,9 @@
 """
-FlightRadar24 provider configuration descriptor.
+fr24 provider configuration descriptor.
 
-FR24 needs no user credentials - the descriptor exists to give the provider
-a home in the Providers category of the configuration UI.
+The single source of truth for this provider: name, description,
+capabilities and settings fields. lookups/registry.py derives the
+adapter wiring and startup probe from these.
 """
 
 from __future__ import annotations
@@ -12,6 +13,9 @@ from lookups.config import ProviderConfig
 PROVIDER = ProviderConfig(
     id="fr24",
     name="Flight Radar 24 (Free)",
-    description=("Public FlightRadar24 data. Free, no account required"),
+    description=(
+            "Live flights from the FlightRadar24 feed. Works without an API key"
+        ),
+    capabilities=("flights", "routes", "aircraft"),
     fields=(),
 )
