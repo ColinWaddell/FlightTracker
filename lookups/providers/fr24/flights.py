@@ -9,7 +9,6 @@ from lookups.results import (
     FlightObservation,
     FlightQuery,
     LookupResult,
-    LookupStatus,
 )
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 """Tests for the shared overhead helpers and the tar1090 flight adapter."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -9,7 +9,6 @@ import pytest
 # ---------------------------------------------------------------------------
 from lookups.providers.tar1090.flights import FlightProvider as Tar1090FlightProvider
 from lookups.providers.tar1090.flights import _to_observation
-from utilities.flight import RouteInfo
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,

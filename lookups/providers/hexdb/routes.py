@@ -150,7 +150,7 @@ def _fill_airport_details(route: RouteInfo, which: str, iata: str) -> None:
     """
     if not iata:
         return
-    details = bundled_airport_info(icao) or {}
+    details = bundled_airport_info(iata) or {}
     if which == "origin":
         route.origin_name = details.get("name", "")
         route.origin_municipality = details.get("municipality", "")

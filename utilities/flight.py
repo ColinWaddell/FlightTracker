@@ -15,7 +15,6 @@ from dataclasses import dataclass, fields
 # ---------------------------------------------------------------------------
 # AircraftInfo / RouteInfo - single source of truth in lookups.results
 # ---------------------------------------------------------------------------
-
 # The lookup result types moved into the lookups package when the provider
 # layer was decoupled; they are re-exported here so scenes and the web app
 # keep importing from utilities.flight.

@@ -8,7 +8,7 @@ adapters, and the FR24 bubble client.
 import sys
 import time
 import types
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -435,7 +435,6 @@ class TestLookupRouteService:
         import lookups.cache as rc
         import lookups.routes as rs
 
-        adapter = MagicMock()  # never called
         ctx = LookupContext(callsign="EMPTYY")
         rs._run_pipeline_with_cache(ctx, "EMPTYY", [])
 
@@ -505,8 +504,8 @@ class TestAircraftPipeline:
         assert info.owner == "Flying Club"
 
     def test_blank_result_cached_24h_when_all_answered(self, install_providers):
-        import lookups.cache as rc
         import lookups.aircraft as ac
+        import lookups.cache as rc
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.not_found("404")
@@ -521,8 +520,8 @@ class TestAircraftPipeline:
         assert entry["plane"] == ""
 
     def test_unavailable_not_cached(self, install_providers):
-        import lookups.cache as rc
         import lookups.aircraft as ac
+        import lookups.cache as rc
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.unavailable("dead")
@@ -534,8 +533,8 @@ class TestAircraftPipeline:
         assert rc.get("111111") is None
 
     def test_cached_positive_short_circuits(self, install_providers):
-        import lookups.cache as rc
         import lookups.aircraft as ac
+        import lookups.cache as rc
 
         rc.put("400f5a", {"plane": "A320", "registration": "G-EUXM"})
         adapter = MagicMock()
@@ -548,8 +547,8 @@ class TestAircraftPipeline:
         assert info.plane == "A320"
 
     def test_stale_reused_with_fresh_identity(self, install_providers, monkeypatch):
-        import lookups.cache as rc
         import lookups.aircraft as ac
+        import lookups.cache as rc
 
         stale_ts = time.time() - 2 * ac.cache.CACHE_TTL
         rc._cache["400f5a"] = {
@@ -786,7 +785,6 @@ class TestFlightsService:
         """Patch provider resolution so [(pid, adapter)] stubs are used."""
         import lookups.flights as fs
 
-        adapters = dict(providers)
         monkeypatch.setattr(
             fs, "_flight_providers", lambda: [(pid, {}) for pid, _a in providers]
         )
@@ -847,9 +845,8 @@ class TestFlightsService:
         assert outcome.observations == []
 
     def test_quarantined_provider_skipped(self, monkeypatch):
-        from lookups.quarantine import QUARANTINE
-
         import lookups.flights as fs
+        from lookups.quarantine import QUARANTINE
 
         QUARANTINE.record_failure("skipped")
         skipped = MagicMock()
@@ -1017,3 +1014,93 @@ class TestEnrichment:
         obs = FlightObservation(callsign="", icao="400f5a")
         route = enrich(obs)
         assert route.plane == "C172"
+
+
+# ---------------------------------------------------------------------------
+# ICAO->IATA conversion + hexdb airport enrichment (real bundled table)
+# ---------------------------------------------------------------------------
+
+
+class TestIcaoToIata:
+    def test_known_code(self):
+        from lookups.providers.common.airports import icao_to_iata_code
+
+        assert icao_to_iata_code("EGPF") == "GLA"
+
+    def test_unknown_code_returns_empty(self):
+        from lookups.providers.common.airports import icao_to_iata_code
+
+        assert icao_to_iata_code("ZZZZ") == ""
+
+    def test_blank_and_none(self):
+        from lookups.providers.common.airports import icao_to_iata_code
+
+        assert icao_to_iata_code("") == ""
+        assert icao_to_iata_code(None) == ""
+
+    def test_lowercase_normalised(self):
+        from lookups.providers.common.airports import icao_to_iata_code
+
+        assert icao_to_iata_code("egpf") == "GLA"
+
+
+class TestHexdbRouteLookup:
+    """End-to-end route adapter test with a stubbed HTTP layer."""
+
+    @pytest.fixture
+    def adapter(self):
+        from lookups.providers.hexdb.routes import RouteProvider
+
+        return RouteProvider({})
+
+    def test_route_found_and_enriched(self, adapter, monkeypatch):
+        from lookups.providers.hexdb import routes as hex_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"route": "EGPF-EGAA"}
+        monkeypatch.setattr(hex_routes, "_get", lambda url, timeout=10: response)
+
+        result = adapter.lookup_route(LookupContext(callsign="BAW123"))
+
+        assert result.is_found
+        # ICAO codes converted via the bundled table (EGPF->GLA, EGAA->BFS)
+        assert result.value.origin == "GLA"
+        assert result.value.destination == "BFS"
+        # Airport names enriched from the bundled airports.json
+        assert result.value.origin_name != ""
+        assert result.value.destination_name != ""
+
+    def test_404_is_not_found(self, adapter, monkeypatch):
+        from lookups.providers.hexdb import routes as hex_routes
+
+        response = MagicMock()
+        response.status_code = 404
+        monkeypatch.setattr(hex_routes, "_get", lambda url, timeout=10: response)
+
+        result = adapter.lookup_route(LookupContext(callsign="ZZZ999"))
+        assert result.is_not_found
+
+    def test_unconvertible_codes_are_not_found(self, adapter, monkeypatch):
+        from lookups.providers.hexdb import routes as hex_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"route": "ZZZZ-QQQQ"}
+        monkeypatch.setattr(hex_routes, "_get", lambda url, timeout=10: response)
+
+        result = adapter.lookup_route(LookupContext(callsign="BAW123"))
+        assert result.is_not_found
+
+    def test_connection_error_is_unavailable(self, adapter, monkeypatch):
+        from requests.exceptions import ConnectionError as ReqConnError
+
+        from lookups.providers.hexdb import routes as hex_routes
+
+        def boom(url, timeout=10):
+            raise ReqConnError("nope")
+
+        monkeypatch.setattr(hex_routes, "_get", boom)
+
+        result = adapter.lookup_route(LookupContext(callsign="BAW123"))
+        assert result.is_unavailable

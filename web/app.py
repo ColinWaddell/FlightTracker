@@ -33,9 +33,9 @@ from pathlib import Path
 
 from flask import Flask, Response, redirect, render_template, request, session, url_for
 
+from lookups import cache as routes_cache
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
-from lookups import cache as routes_cache
 from utilities.flight import Flight
 from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
 from utilities.updater import (
@@ -137,9 +137,8 @@ def wrap_lng(lng: float) -> float:
 
 def _select_overhead_class():
     """Return the Overhead facade and the top flight provider's display name."""
-    from utilities.overhead import Overhead
-
     from lookups.flights import top_flight_provider
+    from utilities.overhead import Overhead
 
     _pid, source_name = top_flight_provider()
     return Overhead, source_name or "No provider configured"

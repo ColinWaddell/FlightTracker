@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
@@ -41,7 +40,7 @@ def icao_to_iata_code(icao: str) -> str:
     icao = (icao or "").strip().upper()
     if not icao:
         return ""
-    _load_icao_table()
+    _load_icao_to_iata()
     return _icao_to_iata.get(icao, "")
 
 

@@ -507,7 +507,7 @@ def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> Non
     import logging
 
     from lookups.config import validate_provider_settings
-    from lookups.registry import normalise_provider_list, PROVIDERS
+    from lookups.registry import PROVIDERS, normalise_provider_list
 
     logger = logging.getLogger(__name__)
 
@@ -1194,7 +1194,7 @@ class Config:
             raise KeyError(f"unknown provider {provider_id!r}")
         clean, warnings = validate_provider_settings(spec.config, settings)
         for w in warnings:
-            logging.getLogger(__name__).warning("[config] %s", w)
+            print(f"[config] {w}", file=sys.stderr)
         subtree = self.providers_subtree
         subtree[provider_id] = clean
         self.data_store["providers"] = subtree
@@ -1206,10 +1206,8 @@ class Config:
         key = f"{capability}_providers"
         clean, warnings = normalise_provider_list(order, capability)
         if warnings:
-            import logging
-
             for w in warnings:
-                logging.getLogger(__name__).warning("[config] %s", w)
+                print(f"[config] {w}", file=sys.stderr)
         self.data_store[key] = clean
 
     def provider_settings_view(self) -> dict[str, Any]:

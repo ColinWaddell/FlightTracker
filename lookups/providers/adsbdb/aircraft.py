@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import logging
 
+from requests.exceptions import RequestException
+
 from lookups.providers.adsbdb.routes import BASE, _get
 from lookups.providers.common.operators import clean_operator_code
 from lookups.results import AircraftInfo, LookupResult
-from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 

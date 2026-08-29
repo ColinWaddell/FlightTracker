@@ -73,7 +73,7 @@ If you have a WeatherAPI key configured, you can display a 24-hour rainfall char
 
 ### Using a local ADS-B receiver (tar1090)
 
-By default the tracker pulls flight data from FlightRadar24. If you run your own ADS-B receiver with [tar1090](https://github.com/wiedehopf/tar1090) or a compatible [PiAware](https://www.flightaware.com/adsb/piaware/) / [dump1090-fa](https://github.com/flightaware/dump1090) setup, you can use that as your data source instead - no FlightRadar24 account or API access required.
+By default the tracker pulls flight data from FlightRadar24. If you run your own ADS-B receiver with [tar1090](https://github.com/wiedehopf/tar1090) or a compatible [PiAware](https://www.flightaware.com/adsb/piaware/) / [dump1090-fa](https://github.com/flightaware/dump1090) setup, you can use that as your primary data source instead - no FlightRadar24 account or API access required.
 
 #### What you need
 
@@ -96,7 +96,7 @@ The response should be a JSON object with an `"aircraft"` array.
 
 #### Enabling tar1090 as your data source
 
-Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings. The tracker will automatically use your local receiver when a URL is configured, and fall back to FlightRadar24 if it is not.
+Once you have the URL, open the web UI and go to **Providers** → **Provider Settings** → **tar1090**, enter the URL, then enable tar1090 (and order it ahead of FlightRadar24 if you want the local receiver to win) under **Providers** → **Lookup Priority**.
 
 #### Differences from FlightRadar24 mode
 
@@ -107,7 +107,7 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 
 ### Using OpenSky Network as your data source
 
-[OpenSky Network](https://opensky-network.org) is a free, community-driven ADS-B network that can replace FlightRadar24 as the flight data source. No subscription is required - a free registered account gives you enough API credits for 30-second polling.
+[OpenSky Network](https://opensky-network.org) is a free, community-driven ADS-B network that can be used instead of (or ahead of) FlightRadar24 as the flight data source. No subscription is required - a free registered account gives you enough API credits for 30-second polling.
 
 #### What you need
 
@@ -117,15 +117,15 @@ Once you have the URL, enter it in the web UI under the ADS-B / tar1090 settings
 #### Enabling OpenSky Network
 
 1. Log in to the FlightTracker web interface
-2. Under **Data Source**, select **OpenSky Network**
-3. Enter your **Client ID** and **Client Secret**
+2. Go to **Providers** → **Provider Settings** → **OpenSky Network** and enter your **Client ID** and **Client Secret**
+3. Enable OpenSky (and order it ahead of FlightRadar24) under **Providers** → **Lookup Priority**
 4. Save - the tracker will restart and begin fetching from OpenSky
 
 #### Differences from FlightRadar24 mode
 
 - Uses OAuth2 credentials (Client ID + Client Secret) rather than a third-party library
 - Aircraft type and route origin/destination are both looked up via [adsbdb.com](https://api.adsbdb.com), the same service used in tar1090 mode
-- If your credentials are invalid the display will show `KEY ERROR` as the callsign rather than going blank
+- If your credentials are invalid the provider is quarantined for an hour and the tracker falls back to any other enabled flight provider
 - Data refreshes every 30 seconds
 
 ---
@@ -155,9 +155,9 @@ Commands:
   cache clear            Wipe all on-disk cache files (routes and TLE)
   interface enable       Enable the web interface in the config
   interface disable      Disable the web interface in the config
-  test overhead_fr24     Test FlightRadar24 data source
-  test overhead_tar1090  Test tar1090 data source
-  test overhead_osn      Test OpenSky Network data source
+  test flights           Test the flight provider chain (JSON output)
+  test flights --provider tar1090
+                         Test a single provider
   test tle               Test TLE satellite lookup
   help                   Show this help message
   --version              Print the program version
@@ -283,8 +283,9 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `hat_pwm_enabled` | Enable PWM via Pi audio hardware (requires a solder bridge) | `true` |
 | `loading_indicator` | Loading indicator mode: `"none"`, `"pixel"` (on-screen blink), or `"gpio"` (external LED) | `"pixel"` |
 | `loading_led_gpio_pin` | GPIO pin number for the loading LED (only used when `loading_indicator` is `"gpio"`) | `""` |
-| `data_source` | `"fr24"` for FlightRadar24, `"tar1090"` for a local receiver | `"fr24"` |
-| `tar1090_url` | URL of a local ADS-B receiver's `aircraft.json` | `""` |
+| `flight_providers` | Ordered flight-provider list: `[{"provider": "fr24", "enabled": true}, ...]` | `[{"provider": "fr24", "enabled": true}]` |
+| `route_providers` | Ordered route-provider list (aerodatabox, hexdb, adsbdb, fr24) | see defaults |
+| `providers` | Per-provider settings keyed by provider id (e.g. `providers.tar1090.url`) | `{}` |
 | `max_flight_lookup` | Number of nearby flights to track at once | `5` |
 | `callsign_format` | `"icao"` for ICAO callsign (e.g. BAW123), `"iata"` for IATA flight number (e.g. BA123) | `"icao"` |
 | `satellite_tracking_enabled` | Enable satellite pass tracking | `true` |

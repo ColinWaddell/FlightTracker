@@ -21,7 +21,7 @@ provider is actually used.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable
 
 from lookups.config import ProviderConfig
 
@@ -43,11 +43,11 @@ class ProviderSpec:
     # Optional factories: capability id -> callable(settings) -> adapter.
     # Absent factories mean "capability implemented but not provided here"
     # and are never consulted.
-    flight_factory: Optional[Callable[[dict], object]] = None
-    route_factory: Optional[Callable[[dict], object]] = None
-    aircraft_factory: Optional[Callable[[dict], object]] = None
+    flight_factory: Callable[[dict], object] | None = None
+    route_factory: Callable[[dict], object] | None = None
+    aircraft_factory: Callable[[dict], object] | None = None
     # Optional per-provider startup probes (status-agnostic reachability).
-    startup_check: Optional[Callable[[], bool]] = None
+    startup_check: Callable[[], bool] | None = None
     # Human-readable notes surfaced in the web UI (e.g. "no API key
     # required"), separate from the long description.
     notes: tuple = field(default=())
@@ -115,7 +115,6 @@ def _tar1090_flights(settings):
 
 def _tar1090_startup_check():
     from lookups.providers.tar1090.flights import startup_check
-
     from setup.configuration import Config
 
     return startup_check(Config.instance().provider_settings("tar1090").get("url", ""))
@@ -305,7 +304,7 @@ def specs_for_capability(capability: str) -> list[ProviderSpec]:
     return [s for s in PROVIDERS.values() if capability in s.capabilities]
 
 
-def provider_spec(pid: str) -> Optional[ProviderSpec]:
+def provider_spec(pid: str) -> ProviderSpec | None:
     return PROVIDERS.get(pid)
 
 

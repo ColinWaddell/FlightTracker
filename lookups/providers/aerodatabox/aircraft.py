@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import logging
 
+from requests.exceptions import RequestException
+
 from lookups.providers.aerodatabox.client import (
-    BASE,
     RATE_LIMIT_CODES,
     aerodatabox_get,
     is_error_response,
 )
 from lookups.providers.common.operators import clean_operator_code
 from lookups.results import AircraftInfo, LookupResult
-from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 

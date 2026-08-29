@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import logging
 
-from requests.exceptions import RequestException
-
 from lookups.providers.aerodatabox.client import (
     RATE_LIMIT_CODES,
     aerodatabox_get,

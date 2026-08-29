@@ -29,7 +29,7 @@ Provider interfaces (duck-typed, implemented by ``lookups.providers.*``):
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from enum import Enum, auto
 from typing import Generic, TypeVar
 
@@ -82,15 +82,15 @@ class LookupResult(Generic[T]):
     reason: str = ""
 
     @classmethod
-    def found(cls, value: T) -> "LookupResult[T]":
+    def found(cls, value: T) -> LookupResult[T]:
         return cls(status=LookupStatus.FOUND, value=value)
 
     @classmethod
-    def not_found(cls, reason: str = "") -> "LookupResult[T]":
+    def not_found(cls, reason: str = "") -> LookupResult[T]:
         return cls(status=LookupStatus.NOT_FOUND, reason=reason)
 
     @classmethod
-    def unavailable(cls, reason: str = "") -> "LookupResult[T]":
+    def unavailable(cls, reason: str = "") -> LookupResult[T]:
         return cls(status=LookupStatus.UNAVAILABLE, reason=reason)
 
     @property
@@ -145,7 +145,7 @@ class AircraftInfo:
         """True when every enrichable field has been filled."""
         return bool(self.plane and self.registration and self.operator_icao)
 
-    def merge_missing(self, update: "AircraftInfo") -> None:
+    def merge_missing(self, update: AircraftInfo) -> None:
         """Fill blank fields from *update* without overwriting existing values."""
         for f in fields(self):
             if not getattr(self, f.name):
@@ -159,7 +159,7 @@ class AircraftInfo:
         return {f.name: getattr(self, f.name) for f in fields(self)}
 
     @classmethod
-    def from_dict(cls, d: dict) -> "AircraftInfo":
+    def from_dict(cls, d: dict) -> AircraftInfo:
         known = {f.name for f in fields(cls)}
         return cls(**{k: v for k, v in d.items() if k in known})
 
@@ -204,7 +204,7 @@ class RouteInfo:
             and self.registration
         )
 
-    def merge_missing(self, update: "RouteInfo") -> None:
+    def merge_missing(self, update: RouteInfo) -> None:
         """Fill blank fields from *update* without overwriting existing values."""
         for f in fields(self):
             if not getattr(self, f.name):
@@ -218,7 +218,7 @@ class RouteInfo:
         return {f.name: getattr(self, f.name) for f in fields(self)}
 
     @classmethod
-    def from_dict(cls, d: dict) -> "RouteInfo":
+    def from_dict(cls, d: dict) -> RouteInfo:
         known = {f.name for f in fields(cls)}
         return cls(**{k: v for k, v in d.items() if k in known})
 

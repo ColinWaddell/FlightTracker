@@ -4,6 +4,32 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New pluggable lookup-provider architecture (`lookups/` package): providers are thin
+  adapters (FlightRadar24, OpenSky Network, tar1090, hexdb.io, adsbdb.com, AeroDataBox);
+  the app owns lookup policy - priority ordering, caching, fallback, quarantine - and
+  providers only translate their service's API
+- **FR24 is now also a route provider**: when the live feed can see the aircraft it fills
+  in whatever the route databases didn't know (previously FR24 routing only worked when
+  FR24 was the data source)
+- Route and aircraft enrichment now *merges* across providers: lower-priority providers
+  fill blanks until everything is known, instead of stopping at the first partial answer
+- Web settings: new **Providers** page with reorderable, per-capability priority lists
+  and per-provider configuration generated from provider descriptors
+- Secrets (API keys, client secrets) are masked in the UI, redacted from debug-config
+  exports automatically, and never sent to the browser
+- `python flight-tracker.py test flights [--provider ID]` replaces the three per-source
+  test commands (old targets still work as aliases)
+
+### Changed
+- Provider config migrated automatically: the old `data_source`, `tar1090_url`,
+  `osn_client_id/secret` and `aerodatabox_api_key` keys become the new provider lists
+  and per-provider settings; existing setups keep working without changes
+- Multiple flight providers can be enabled at once with automatic fallback and a 1-hour
+  quarantine for temporarily-unavailable services
+
 ## [v2.8.0] - 2026-08-25
 - Complete rewrite of the settings page to move everything over to Vue.js
 - Trimmed the pipe character in the plane-scroller so it doesn't swipe away he pixels above the scroller

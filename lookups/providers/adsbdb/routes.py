@@ -7,9 +7,7 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
-from lookups.providers.common.operators import clean_operator_code
 from lookups.results import LookupResult, RouteInfo
-from utilities.overhead_utilities import airport_info as bundled_airport_info
 
 logger = logging.getLogger(__name__)
 
