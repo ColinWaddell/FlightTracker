@@ -14,10 +14,10 @@ PROVIDER = ProviderConfig(
     id="airlabs",
     name="AirLabs",
     description=(
-            "Commercial aviation database - the free plan covers 1,000 lookups per",
-            "month. Create an API key at <a href=\"https://airlabs.co\"",
-            "target=\"_blank\" rel=\"noopener noreferrer\">airlabs.co</a>."
-        ),
+        "Commercial aviation database - the free plan covers 1,000 lookups per",
+        'month. Create an API key at <a href="https://airlabs.co"',
+        'target="_blank" rel="noopener noreferrer">airlabs.co</a>.',
+    ),
     capabilities=("routes",),
     fields=(
         ConfigField(
@@ -27,9 +27,7 @@ PROVIDER = ProviderConfig(
             default="",
             required=True,
             sensitive=True,
-            description=(
-                "Your AirLabs API key. Stored securely and never displayed."
-            ),
+            description=("Your AirLabs API key. Stored securely and never displayed."),
         ),
     ),
 )

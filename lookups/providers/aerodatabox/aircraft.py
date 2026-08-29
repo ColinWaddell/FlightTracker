@@ -97,7 +97,9 @@ def parse_aircraft(ac: dict) -> AircraftInfo:
     airline = ac.get("airline") or {}
     is_airline_dict = isinstance(airline, dict)
 
-    operator_icao = clean_operator_code(airline.get("icao") if is_airline_dict else None)
+    operator_icao = clean_operator_code(
+        airline.get("icao") if is_airline_dict else None
+    )
     owner = (
         (airline.get("name") if is_airline_dict else None)
         or ac.get("airlineName")

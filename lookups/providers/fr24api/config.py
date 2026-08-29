@@ -14,12 +14,12 @@ PROVIDER = ProviderConfig(
     id="fr24api",
     name="Flight Radar 24 (Paid)",
     description=(
-            "FlightRadar24's official commercial API - the paid, supported service",
-            "with a Bearer token from your FR24 account. Billed per returned record",
-            "from a credit balance, so live polling over a busy zone burns credits",
-            "fastest. <a href=\"https://www.flightradar24.com/\" target=\"_blank\"",
-            "rel=\"noopener noreferrer\">flightradar24.com</a>."
-        ),
+        "FlightRadar24's official commercial API - the paid, supported service",
+        "with a Bearer token from your FR24 account. Billed per returned record",
+        "from a credit balance, so live polling over a busy zone burns credits",
+        'fastest. <a href="https://www.flightradar24.com/" target="_blank"',
+        'rel="noopener noreferrer">flightradar24.com</a>.',
+    ),
     capabilities=("flights", "routes", "aircraft"),
     fields=(
         ConfigField(
@@ -29,9 +29,7 @@ PROVIDER = ProviderConfig(
             default="",
             required=True,
             sensitive=True,
-            description=(
-                "Bearer token from your FR24 account's Key Management page."
-            ),
+            description=("Bearer token from your FR24 account's Key Management page."),
         ),
     ),
 )

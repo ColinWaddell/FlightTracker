@@ -98,7 +98,9 @@ def parse_route(data: dict) -> RouteInfo | None:
         ).strip()
         fill_airport_details(route, "origin")
     if dest:
-        route.destination = (dest.get("iata_code") or dest.get("icao_code") or "").strip()
+        route.destination = (
+            dest.get("iata_code") or dest.get("icao_code") or ""
+        ).strip()
         fill_airport_details(route, "destination")
 
     # Airline ICAO from the airline block
@@ -106,5 +108,3 @@ def parse_route(data: dict) -> RouteInfo | None:
     route.airline_icao = (airline.get("icao") or "").strip()
 
     return route
-
-

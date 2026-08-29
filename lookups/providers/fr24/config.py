@@ -13,9 +13,7 @@ from lookups.config import ProviderConfig
 PROVIDER = ProviderConfig(
     id="fr24",
     name="Flight Radar 24 (Free)",
-    description=(
-            "Live flights from the FlightRadar24 feed. Works without an API key"
-        ),
+    description=("Live flights from the FlightRadar24 feed. Works without an API key"),
     capabilities=("flights", "routes", "aircraft"),
     fields=(),
 )

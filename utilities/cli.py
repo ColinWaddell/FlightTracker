@@ -234,7 +234,9 @@ def _parse_test_args(argv: Sequence[str], target: str) -> argparse.Namespace:
             choices=["icao", "iata"],
             help="Callsign format (default: from config)",
         )
-        p.add_argument("--url", help="tar1090 aircraft.json URL (when --provider tar1090)")
+        p.add_argument(
+            "--url", help="tar1090 aircraft.json URL (when --provider tar1090)"
+        )
         p.add_argument(
             "--client_id", help="OpenSky client ID (when --provider opensky)"
         )
@@ -460,7 +462,13 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
 
     if command == "test" and len(argv) >= 3:
         target = argv[2].lower()
-        valid_targets = {"flights", "overhead_fr24", "overhead_tar1090", "overhead_osn", "tle"}
+        valid_targets = {
+            "flights",
+            "overhead_fr24",
+            "overhead_tar1090",
+            "overhead_osn",
+            "tle",
+        }
         if target not in valid_targets:
             print(f"Unknown test target: {target}", file=sys.stderr)
             print(f"Valid targets: {', '.join(sorted(valid_targets))}", file=sys.stderr)
@@ -475,9 +483,7 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
             "overhead_tar1090": "tar1090",
             "overhead_osn": "opensky",
         }.get(target)
-        if legacy_provider and not any(
-            a == "--provider" for a in test_argv
-        ):
+        if legacy_provider and not any(a == "--provider" for a in test_argv):
             test_argv = ["--provider", legacy_provider] + list(test_argv)
         return _run_overhead_test(target, test_argv)
 

@@ -44,12 +44,7 @@ class AircraftProvider:
         if info is None:
             return LookupResult.not_found("adsbdb has no aircraft data")
 
-        if not (
-            info.plane
-            or info.registration
-            or info.operator_icao
-            or info.owner
-        ):
+        if not (info.plane or info.registration or info.operator_icao or info.owner):
             return LookupResult.not_found("adsbdb aircraft record empty")
 
         return LookupResult.found(info)

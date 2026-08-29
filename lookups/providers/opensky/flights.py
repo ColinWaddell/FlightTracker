@@ -173,9 +173,7 @@ class FlightProvider:
         for sv in candidates[: query.max_results]:
             observations.append(_sv_to_observation(sv))
 
-        logger.debug(
-            "OSN fetch complete - %d flight(s) tracked", len(observations)
-        )
+        logger.debug("OSN fetch complete - %d flight(s) tracked", len(observations))
         return LookupResult.found(observations)
 
 

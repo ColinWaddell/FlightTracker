@@ -14,9 +14,9 @@ PROVIDER = ProviderConfig(
     id="adsblol",
     name="ADSB.lol",
     description=(
-            "Community-run ADS-B aggregator (donation funded). Free, no key",
-            "required."
-        ),
+        "Community-run ADS-B aggregator (donation funded). Free, no key",
+        "required.",
+    ),
     capabilities=("flights",),
     fields=(),
 )

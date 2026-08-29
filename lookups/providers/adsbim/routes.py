@@ -54,7 +54,9 @@ class RouteProvider:
         try:
             resp = requests.post(
                 ROUTESET_URL,
-                json={"planes": [{"callsign": callsign, "lat": ctx.lat, "lng": ctx.lng}]},
+                json={
+                    "planes": [{"callsign": callsign, "lat": ctx.lat, "lng": ctx.lng}]
+                },
                 timeout=PROVIDER_TIMEOUT,
             )
         except (RequestException, OSError) as e:

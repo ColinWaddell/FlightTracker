@@ -49,9 +49,7 @@ class RouteProvider:
             return LookupResult.unavailable("aerodatabox API key not configured")
 
         try:
-            resp, data = aerodatabox_get(
-                f"/flights/callsign/{callsign}", self.api_key
-            )
+            resp, data = aerodatabox_get(f"/flights/callsign/{callsign}", self.api_key)
         except Exception as e:
             logger.debug("aerodatabox route lookup failed for %r: %s", callsign, e)
             return LookupResult.unavailable(f"aerodatabox unreachable: {e}")
@@ -71,9 +69,7 @@ class RouteProvider:
             )
 
         if resp.status_code >= 400:
-            return LookupResult.unavailable(
-                f"aerodatabox HTTP {resp.status_code}"
-            )
+            return LookupResult.unavailable(f"aerodatabox HTTP {resp.status_code}")
 
         # Some gateways return HTTP 200 with an error body when
         # rate-limited (e.g. {"message": "You exceeded your monthly quota"}).
@@ -133,5 +129,3 @@ def parse_route(flight: dict) -> RouteInfo | None:
     route.airline_icao = (airline.get("icao") or "").strip()
 
     return route
-
-

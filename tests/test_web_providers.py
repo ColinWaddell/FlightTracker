@@ -53,14 +53,18 @@ class TestParseProviderForm:
     def test_route_payload_maps_to_route_providers_key(self):
         from web.app import _parse_provider_form
 
-        form = {"route_providers_json": json.dumps([{"provider": "hexdb", "enabled": True}])}
+        form = {
+            "route_providers_json": json.dumps([{"provider": "hexdb", "enabled": True}])
+        }
         out = _parse_provider_form(form, MagicMock())
         assert out["route_providers"] == [{"provider": "hexdb", "enabled": True}]
 
     def test_unknown_provider_dropped_with_no_crash(self):
         from web.app import _parse_provider_form
 
-        form = {"flight_providers_json": json.dumps([{"provider": "nope", "enabled": 1}])}
+        form = {
+            "flight_providers_json": json.dumps([{"provider": "nope", "enabled": 1}])
+        }
         out = _parse_provider_form(form, MagicMock())
         assert out == {}
 
@@ -86,7 +90,10 @@ class TestParseProviderSettings:
         from web.app import _parse_provider_settings
 
         cfg = MagicMock()
-        cfg.provider_settings.return_value = {"client_id": "my-id", "client_secret": "S3CR3T"}
+        cfg.provider_settings.return_value = {
+            "client_id": "my-id",
+            "client_secret": "S3CR3T",
+        }
 
         form = {
             "providers.opensky.client_id": "my-id",
@@ -239,7 +246,9 @@ class TestSettingsPageDataMasking:
         from lookups.config import MASK, provider_settings_view
         from lookups.providers.opensky.config import PROVIDER as OPENSKY
 
-        view = provider_settings_view(OPENSKY, {"client_id": "cid", "client_secret": "S3CR3T"})
+        view = provider_settings_view(
+            OPENSKY, {"client_id": "cid", "client_secret": "S3CR3T"}
+        )
         assert view["client_id"] == "cid"
         assert view["client_secret"] == MASK
         assert "S3CR3T" not in str(view)
@@ -255,7 +264,9 @@ class TestSettingsPageDataMasking:
         assert clean["client_secret"] == "KEEPME"
         assert changed is False
 
-        clean, changed = apply_submitted_settings(OPENSKY, stored, {"client_secret": ""})
+        clean, changed = apply_submitted_settings(
+            OPENSKY, stored, {"client_secret": ""}
+        )
         assert clean["client_secret"] == ""
         assert changed is True
 
@@ -278,5 +289,7 @@ class TestProviderGuidance:
         assert "https://rapidapi.com/aedbx-aedbx/api/aerodatabox" in html
         assert "https://opensky-network.org/login" in html
         assert "adsb.im" in html
-        assert "register with AeroDataBox directly" in html  # ' is \\u0027-escaped in the JSON blob
+        assert (
+            "register with AeroDataBox directly" in html
+        )  # ' is \\u0027-escaped in the JSON blob
         assert "30-second polling" in html

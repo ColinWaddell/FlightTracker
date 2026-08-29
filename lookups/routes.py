@@ -218,7 +218,11 @@ def lookup_route(
     if cached is None:
         # 2a. No cached entry - run the pipeline with full cache
         #     bookkeeping (positive write / stale fallback / miss write).
-        result.merge_missing(_run_pipeline_with_cache(ctx, callsign, resolve_route_providers(cfg or load_config())))
+        result.merge_missing(
+            _run_pipeline_with_cache(
+                ctx, callsign, resolve_route_providers(cfg or load_config())
+            )
+        )
         return result
 
     # 2b. Cached entry - seed from the cache, then fill any remaining gaps

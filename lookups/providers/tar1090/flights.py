@@ -85,9 +85,7 @@ class FlightProvider:
         for ac in candidates[: query.max_results]:
             observations.append(_to_observation(ac))
 
-        logger.debug(
-            "tar1090 fetch complete - %d flight(s) in zone", len(observations)
-        )
+        logger.debug("tar1090 fetch complete - %d flight(s) in zone", len(observations))
         return LookupResult.found(observations)
 
 
@@ -100,7 +98,6 @@ def _to_observation(ac: dict) -> FlightObservation:
     ``r`` registration) ride along as pre-filled enrichment.
     """
     return observation_from_record(ac)
-
 
 
 def startup_check(settings: dict | None = None) -> bool:

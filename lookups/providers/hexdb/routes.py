@@ -111,4 +111,3 @@ def parse_route(route_str: str) -> tuple[str, str]:
     if len(parts) < 2:
         return "", ""
     return parts[0], parts[-1]
-

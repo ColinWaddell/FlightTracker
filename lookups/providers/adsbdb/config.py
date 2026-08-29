@@ -14,9 +14,9 @@ PROVIDER = ProviderConfig(
     id="adsbdb",
     name="adsbdb.com",
     description=(
-            "Free callsign-route and aircraft database at adsbdb.com. No API key",
-            "required."
-        ),
+        "Free callsign-route and aircraft database at adsbdb.com. No API key",
+        "required.",
+    ),
     capabilities=("routes", "aircraft"),
     fields=(),
 )

@@ -108,12 +108,17 @@ class TestParseAircraftType:
     def test_type_only(self):
         from lookups.providers.hexdb.aircraft import parse_aircraft_type
 
-        assert parse_aircraft_type({"Manufacturer": "", "ICAOTypeCode": "B738"}) == "B738"
+        assert (
+            parse_aircraft_type({"Manufacturer": "", "ICAOTypeCode": "B738"}) == "B738"
+        )
 
     def test_manufacturer_only(self):
         from lookups.providers.hexdb.aircraft import parse_aircraft_type
 
-        assert parse_aircraft_type({"Manufacturer": "Boeing", "ICAOTypeCode": ""}) == "Boeing"
+        assert (
+            parse_aircraft_type({"Manufacturer": "Boeing", "ICAOTypeCode": ""})
+            == "Boeing"
+        )
 
     def test_missing_fields(self):
         from lookups.providers.hexdb.aircraft import parse_aircraft_type
@@ -429,7 +434,11 @@ class TestLookupRouteService:
 
         assert result.origin == ""
         # A miss was cached instead.
-        assert rc.get("BAW123", ) and rc.get("BAW123").get("miss")
+        assert rc.get(
+            "BAW123",
+        ) and rc.get(
+            "BAW123"
+        ).get("miss")
 
     def test_no_providers_dont_cache_miss(self):
         import lookups.cache as rc
@@ -621,9 +630,7 @@ class TestFr24RouteProvider:
     def test_recent_miss_short_circuits(self, provider, client):
         client.recently_missed.return_value = True
 
-        result = provider.lookup_route(
-            LookupContext(callsign="BAW123", lat=55, lng=-4)
-        )
+        result = provider.lookup_route(LookupContext(callsign="BAW123", lat=55, lng=-4))
 
         assert result.is_not_found
         client.match_in_bubble.assert_not_called()
@@ -631,9 +638,7 @@ class TestFr24RouteProvider:
     def test_no_bubble_match_records_feed_miss(self, provider, client):
         client.match_in_bubble.return_value = None
 
-        ctx = LookupContext(
-            callsign="ZZZ999", lat=55.0, lng=-4.0, ground_speed_mps=100
-        )
+        ctx = LookupContext(callsign="ZZZ999", lat=55.0, lng=-4.0, ground_speed_mps=100)
         result = provider.lookup_route(ctx)
 
         assert result.is_not_found
@@ -999,7 +1004,9 @@ class TestEnrichment:
             AircraftInfo(plane="C172", registration="G-BSFE")
         )
         monkeypatch.setattr(
-            ac, "resolve_aircraft_providers", lambda cfg=None: [("hexdb", aircraft_adapter)]
+            ac,
+            "resolve_aircraft_providers",
+            lambda cfg=None: [("hexdb", aircraft_adapter)],
         )
 
         obs = FlightObservation(callsign="", icao="400f5a")

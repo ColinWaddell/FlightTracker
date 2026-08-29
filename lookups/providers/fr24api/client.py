@@ -47,10 +47,7 @@ def get(path: str, token: str, params: dict | None = None):
 def api_unavailable(resp) -> str:
     """A human reason for a non-200 answer (credits get a specific hint)."""
     if resp.status_code in CREDIT_CODES:
-        return (
-            "FR24 API credit balance exhausted "
-            f"(HTTP {resp.status_code})"
-        )
+        return f"FR24 API credit balance exhausted (HTTP {resp.status_code})"
     if resp.status_code in (401, 403):
         return f"FR24 API rejected the token (HTTP {resp.status_code})"
     if resp.status_code == 429:

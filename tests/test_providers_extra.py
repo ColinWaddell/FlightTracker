@@ -119,6 +119,7 @@ class TestFlightAggregators:
 
         assert result.is_unavailable
 
+
 # ---------------------------------------------------------------------------
 # ADSB.im routeset route provider
 # ---------------------------------------------------------------------------
@@ -135,9 +136,7 @@ class TestAdsbImRoutes:
             "airline_code": "BAW",
             "plausible": True,
         }
-        monkeypatch.setattr(
-            adsbim.requests, "post", lambda *a, **k: _response([entry])
-        )
+        monkeypatch.setattr(adsbim.requests, "post", lambda *a, **k: _response([entry]))
 
         result = adsbim.RouteProvider({}).lookup_route(_context("BAW123"))
 
@@ -199,7 +198,11 @@ class TestAirLabs:
 
         provider = airlabs.RouteProvider({"api_key": "k"})
         response = _response(
-            {"response": [{"airline_icao": "BAW", "dep_iata": "LHR", "arr_iata": "JFK"}]}
+            {
+                "response": [
+                    {"airline_icao": "BAW", "dep_iata": "LHR", "arr_iata": "JFK"}
+                ]
+            }
         )
         with mock.patch.object(airlabs.requests, "get", return_value=response):
             result = provider.lookup_route(_context("BAW123"))
@@ -227,9 +230,9 @@ class TestAirLabs:
         import lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
-        response = _response({
-            "flights": [{"origin": {"code": "EGLL"}, "destination": {"code": "KJFK"}}]
-        })
+        response = _response(
+            {"flights": [{"origin": {"code": "EGLL"}, "destination": {"code": "KJFK"}}]}
+        )
         with mock.patch.object(flightaware.requests, "get", return_value=response):
             result = provider.lookup_route(_context("BAW123"))
 
@@ -251,7 +254,9 @@ class TestAirLabs:
         import lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
-        with mock.patch.object(flightaware.requests, "get", return_value=_response({}, status=401)):
+        with mock.patch.object(
+            flightaware.requests, "get", return_value=_response({}, status=401)
+        ):
             result = provider.lookup_route(_context("BAW123"))
         assert result.is_unavailable
 
@@ -496,12 +501,8 @@ class TestFr24ApiCatalogue:
         from setup.configuration import DEFAULTS
 
         assert DEFAULTS["providers"]["fr24api"] == {"api_key": ""}
-        assert any(
-            e["provider"] == "fr24api" for e in DEFAULTS["flight_providers"]
-        )
-        assert any(
-            e["provider"] == "fr24api" for e in DEFAULTS["route_providers"]
-        )
+        assert any(e["provider"] == "fr24api" for e in DEFAULTS["flight_providers"])
+        assert any(e["provider"] == "fr24api" for e in DEFAULTS["route_providers"])
 
     def test_completeness_pass_appends_fr24api_disabled(self):
         from setup.configuration import _complete_provider_lists

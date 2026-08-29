@@ -14,9 +14,9 @@ PROVIDER = ProviderConfig(
     id="adsbfi",
     name="ADS-B.fi",
     description=(
-            "Community-run aggregator (adsb.fi) relaying live aircraft from its",
-            "feeder network. Free, no key required."
-        ),
+        "Community-run aggregator (adsb.fi) relaying live aircraft from its",
+        "feeder network. Free, no key required.",
+    ),
     capabilities=("flights",),
     fields=(),
 )

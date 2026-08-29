@@ -46,9 +46,7 @@ def aerodatabox_get(path: str, api_key: str, timeout: int = PROVIDER_TIMEOUT_S):
     - other non-2xx = error (body not parsed)
     - 2xx with unparseable body raises ``ValueError``
     """
-    resp = requests.get(
-        f"{BASE}{path}", headers=headers_for(api_key), timeout=timeout
-    )
+    resp = requests.get(f"{BASE}{path}", headers=headers_for(api_key), timeout=timeout)
     if resp.status_code == 404 or resp.status_code in RATE_LIMIT_CODES:
         return resp, None
     # Any other non-2xx: surface as HTTPError for callers that treat all

@@ -170,9 +170,7 @@ def validate_provider_settings(
             clean[f.key] = f.coerce(raw)
         except (TypeError, ValueError):
             clean[f.key] = f.default
-            warnings.append(
-                f"Invalid value for {provider.id}.{f.key} - using default"
-            )
+            warnings.append(f"Invalid value for {provider.id}.{f.key} - using default")
 
     for key in stored:
         if key not in defaults:

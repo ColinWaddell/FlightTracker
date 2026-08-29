@@ -46,9 +46,7 @@ class AircraftProvider:
             )
         except Exception as e:
             if is_transport_error(e):
-                logger.debug(
-                    "FR24 API aircraft lookup failed for %r: %s", callsign, e
-                )
+                logger.debug("FR24 API aircraft lookup failed for %r: %s", callsign, e)
                 return LookupResult.unavailable(f"FR24 API unreachable: {e}")
             raise
 

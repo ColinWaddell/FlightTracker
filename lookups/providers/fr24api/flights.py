@@ -102,7 +102,11 @@ class FlightProvider:
             if obs is None:
                 continue
             alt_ft = obs.altitude_ft or 0
-            if not query.min_altitude_m / 0.3048 < alt_ft < query.max_altitude_m / 0.3048:
+            if (
+                not query.min_altitude_m / 0.3048
+                < alt_ft
+                < query.max_altitude_m / 0.3048
+            ):
                 continue
             if not in_zone(obs.latitude, obs.longitude, query.zone):
                 continue

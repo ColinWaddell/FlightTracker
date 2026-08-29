@@ -87,9 +87,7 @@ class FlightProvider:
             if obs is not None:
                 observations.append(obs)
 
-        logger.debug(
-            "FR24 fetch complete - %d flight(s) in zone", len(observations)
-        )
+        logger.debug("FR24 fetch complete - %d flight(s) in zone", len(observations))
         return LookupResult.found(observations)
 
 
@@ -103,9 +101,7 @@ def _to_observation(flight) -> FlightObservation | None:
     callsign = clean_field(flight.callsign)
 
     latitude = flight.latitude if isinstance(flight.latitude, (int, float)) else None
-    longitude = (
-        flight.longitude if isinstance(flight.longitude, (int, float)) else None
-    )
+    longitude = flight.longitude if isinstance(flight.longitude, (int, float)) else None
 
     try:
         ground_speed = int(flight.ground_speed)
