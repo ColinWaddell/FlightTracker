@@ -266,7 +266,7 @@ structured_data: |
         </thead>
         <tbody>
           <tr>
-            <td>tar1090 / dump1090</td>
+            <td><a href="https://github.com/wiedehopf/tar1090" target="_blank">tar1090</a> / <a href="https://github.com/antirez/dump1090" target="_blank">dump1090</a></td>
             <td>&check;</td>
             <td>&mdash;</td>
             <td>Free (your own receiver)</td>
@@ -293,16 +293,16 @@ structured_data: |
             <td><a href="https://opensky-network.org" target="_blank" rel="noopener noreferrer">OpenSky Network</a></td>
             <td>&check;</td>
             <td>&mdash;</td>
-            <td>Free (account)</td>
+            <td>Free (account required)</td>
           </tr>
           <tr>
-            <td>Flight Radar 24 (Free)</td>
+            <td><a href="https://pypi.org/project/FlightRadarAPI/" target="_blank">Flight Radar 24 (Free)</a></td>
             <td>&check;</td>
             <td>&check;</td>
-            <td>Free</td>
+            <td>Free (but limited)</td>
           </tr>
           <tr>
-            <td>Flight Radar 24 (Paid)</td>
+            <td><a href="https://fr24api.flightradar24.com/subscriptions-and-credits" target="_blank">Flight Radar 24 (Paid)</a></td>
             <td>&check;</td>
             <td>&check;</td>
             <td>Paid (subscription)</td>
@@ -347,16 +347,10 @@ structured_data: |
       </table>
     </div>
 
-    <div class="narrative">
-      <p><strong>Flight monitoring</strong> providers answer "what is overhead right now" - the default setup polls them in priority order until enough nearby aircraft are found. <strong>Routing and aircraft info</strong> providers fill in where each flight is going, the airline, and the aircraft type; results are cached, so API usage stays low. Both lists are configured from the web interface - no keys or code required for the free services.</p>
-    </div>
-
     <h3 class="section-title">Weather and satellites</h3>
     <div class="narrative">
-      <p><strong>Weather - <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer">OpenWeather</a> (free tier).</strong> With a free OpenWeather API key, FlightTracker shows temperature, humidity, rainfall and forecast animations on the idle screen. No key, no weather - it simply sticks to the clock and date instead.</p>
-      <p><strong>Satellites - <a href="https://celestrak.org" target="_blank" rel="noopener noreferrer">CelesTrak</a> (free, no key).</strong> FlightTracker fetches <a href="https://en.wikipedia.org/wiki/Two-line_element_set">TLE data</a> from CelesTrak, works out when satellites are overhead, and plots their passes. The ISS and other satellites in your tracking list appear automatically when they are above the horizon.</p>
-      <p>Thanks to the big <code>version 2.0.0</code> rewrite it's going to be simple to add boats, trains, and who knows what else. <a href="https://github.com/ColinWaddell/FlightTracker/issues" target="_blank">I'm open to suggestions</a>.</p>
-    </div>
+      <p><strong>Weather - <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer">OpenWeather</a> (free tier).</strong> With a free OpenWeather API key, FlightTracker shows temperature, humidity, rainfall and forecast animations on the idle screen.</p>
+      <p><strong>Satellites - <a href="https://celestrak.org" target="_blank" rel="noopener noreferrer">CelesTrak</a> (free, no key).</strong> FlightTracker fetches <a href="https://en.wikipedia.org/wiki/Two-line_element_set">TLE data</a> from CelesTrak, works out when satellites are overhead, and plots their passes.</p>
   </div>
 </section>
 
