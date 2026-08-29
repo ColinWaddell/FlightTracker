@@ -257,7 +257,7 @@ a:hover { color: #000; }
   color: var(--accent);
 }
 .hero-actions .btn-dark .btn-label {
-  color: var(--accent);
+  color: white;
 }
 .hero-actions .btn-dark .btn-subtext {
   color: #fff;
@@ -382,9 +382,13 @@ a:hover { color: #000; }
 .btn-dark {
   background: #000;
   color: #fff;
-  border: 2px solid var(--border-strong);
 }
-.btn-dark:hover { border-color: var(--accent); color: var(--accent); }
+.btn-dark:hover { background: #ffd200; color: #000; }
+.btn-orange {
+  background: #e8890c;
+  color: #000;
+}
+.btn-orange:hover { background: #000; color: #e8890c; }
 .btn-blue {
   background: var(--blue);
   color: #fff;
