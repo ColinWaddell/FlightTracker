@@ -92,11 +92,19 @@ class ConfigField:
 
 @dataclass(frozen=True)
 class ProviderConfig:
-    """A provider's configuration descriptor."""
+    """A provider's configuration descriptor.
+
+    This is the single source of truth for a provider: identity (id, name,
+    description), the capabilities it implements, and its settings fields.
+    The registry catalogue in ``lookups/registry.py`` derives everything
+    else (adapter wiring, startup probes) from here.
+    """
 
     id: str
     name: str
     description: str = ""
+    # Capability ids served by this provider ("flights", "routes", "aircraft").
+    capabilities: tuple[str, ...] = ()
     fields: tuple[ConfigField, ...] = ()
 
     def field(self, key: str) -> ConfigField | None:

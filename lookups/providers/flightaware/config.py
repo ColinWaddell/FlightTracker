@@ -1,5 +1,9 @@
 """
-FlightAware AeroAPI provider configuration descriptor.
+flightaware provider configuration descriptor.
+
+The single source of truth for this provider: name, description,
+capabilities and settings fields. lookups/registry.py derives the
+adapter wiring and startup probe from these.
 """
 
 from __future__ import annotations
@@ -10,11 +14,13 @@ PROVIDER = ProviderConfig(
     id="flightaware",
     name="FlightAware AeroAPI",
     description=(
-        "Commercial FlightAware API. The Personal plan requires a card on "
-        "file and includes $5/month of free credit ($10 for ADS-B feeders). "
-        "Used for route lookups per new callsign - position polling would "
-        "burn the credit quickly."
-    ),
+            "FlightAware's commercial API. The Personal plan includes $5/month of",
+            "free credit and requires a card on file - fine for per-callsign route",
+            "lookups, too costly for position polling. Get a key at <a",
+            "href=\"https://www.flightaware.com/aeroapi/portal\" target=\"_blank\"",
+            "rel=\"noopener noreferrer\">the AeroAPI portal</a>."
+        ),
+    capabilities=("routes",),
     fields=(
         ConfigField(
             key="api_key",
