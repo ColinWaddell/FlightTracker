@@ -210,7 +210,7 @@ export default defineComponent({
       <h5>API Key</h5>
       <div class="mb-3">
         <label class="form-label small">WeatherAPI.com API Key</label>
-        <input type="text" class="form-control form-control-sm"
+        <input type="password" class="form-control form-control-sm"
                name="weatherapi_key" id="weatherapi_key"
                v-model="store.config.weatherapi_key"
                placeholder="Get a free key at weatherapi.com" />

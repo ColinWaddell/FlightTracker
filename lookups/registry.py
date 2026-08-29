@@ -203,9 +203,8 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "airplaneslive",
             "airplanes.live",
-            "Free community feeder network aggregator. Please keep request "(
-                "flights",
-            ),
+            "Free community feeder network aggregator. Please keep request rates low.",
+            ("flights",),
             {"flights": ("airplaneslive.flights", "FlightProvider")},
             startup_module="airplaneslive.flights",
         ),
