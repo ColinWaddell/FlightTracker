@@ -762,7 +762,6 @@ def _status_page_data() -> dict:
         "providers": providers,
         "fetch": {
             "last_updated_fmt": _format_last_updated_value(overhead.last_updated),
-            "processing": overhead.processing,
             "error": overhead.error,
             "empty": overhead.data_is_empty,
             "refresh_interval": refresh_interval(),

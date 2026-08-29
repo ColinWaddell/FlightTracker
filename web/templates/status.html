@@ -73,18 +73,6 @@
               <th class="text-muted">Poll interval</th>
               <td>{{ fetch.refresh_interval }}s</td>
             </tr>
-            <tr>
-              <th class="text-muted">Right now</th>
-              <td>
-                {% if fetch.processing %}
-                  <span class="spinner-border spinner-border-sm me-1"></span>fetching…
-                {% elif fetch.empty %}
-                  no flights tracked
-                {% else %}
-                  tracking flights
-                {% endif %}
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
