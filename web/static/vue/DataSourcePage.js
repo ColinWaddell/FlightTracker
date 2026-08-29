@@ -77,59 +77,62 @@ export default defineComponent({
     <div id="group-lookup-priority" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-sort-numeric-down me-2"></i>Lookup Priority</p>
 
-      <!-- Flight providers -->
-      <h5>Aircraft monitoring <small class="text-muted ms-2">What aircraft are overhead</small></h5>
-      <ul class="list-group mb-1" style="max-width:520px">
-        <li v-for="(entry, index) in store.flightProvidersOrder" :key="entry.provider"
-            class="list-group-item d-flex align-items-center gap-2 py-2">
-          <input type="checkbox" class="form-check-input mt-0" :id="'fp-enabled-' + entry.provider"
-                 v-model="entry.enabled" />
-          <label class="form-check-label flex-grow-1" :for="'fp-enabled-' + entry.provider">
-            {{ providerName(store.flightProvidersOrder, entry.provider) }}
-          </label>
-          <span v-if="!entry.enabled" class="badge text-bg-secondary">off</span>
-          <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
-                  @click="moveUp(store.flightProvidersOrder, index)"
-                  :aria-label="'Move ' + entry.provider + ' up'">
-            <i class="bi bi-arrow-up"></i>
-          </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary"
-                  :disabled="index === store.flightProvidersOrder.length - 1"
-                  @click="moveDown(store.flightProvidersOrder, index)"
-                  :aria-label="'Move ' + entry.provider + ' down'">
-            <i class="bi bi-arrow-down"></i>
-          </button>
-        </li>
-      </ul>
-      <input type="hidden" name="flight_providers_json"
-             :value="providersJson(store.flightProvidersOrder)" />
+      <!-- Flight and route providers side by side (stacked on smaller screens) -->
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <h5>Aircraft monitoring<i class="bi bi-radar text-black-50 ms-2"></i></h5>
+          <ul class="list-group mb-1">
+            <li v-for="(entry, index) in store.flightProvidersOrder" :key="entry.provider"
+                class="list-group-item d-flex align-items-center gap-2 py-2">
+              <input type="checkbox" class="form-check-input mt-0" :id="'fp-enabled-' + entry.provider"
+                     v-model="entry.enabled" />
+              <label class="form-check-label flex-grow-1" :for="'fp-enabled-' + entry.provider">
+                {{ providerName(store.flightProvidersOrder, entry.provider) }}
+              </label>
+              <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
+                      @click="moveUp(store.flightProvidersOrder, index)"
+                      :aria-label="'Move ' + entry.provider + ' up'">
+                <i class="bi bi-arrow-up"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                      :disabled="index === store.flightProvidersOrder.length - 1"
+                      @click="moveDown(store.flightProvidersOrder, index)"
+                      :aria-label="'Move ' + entry.provider + ' down'">
+                <i class="bi bi-arrow-down"></i>
+              </button>
+            </li>
+          </ul>
+          <input type="hidden" name="flight_providers_json"
+                 :value="providersJson(store.flightProvidersOrder)" />
+        </div>
 
-      <!-- Route providers -->
-      <h5 class="mt-3">Route and aircraft information <small class="text-muted ms-2">Details of any aircraft seen</small></h5>
-      <ul class="list-group mb-2" style="max-width:520px">
-        <li v-for="(entry, index) in store.routeProvidersOrder" :key="entry.provider"
-            class="list-group-item d-flex align-items-center gap-2 py-2">
-          <input type="checkbox" class="form-check-input mt-0" :id="'rp-enabled-' + entry.provider"
-                 v-model="entry.enabled" />
-          <label class="form-check-label flex-grow-1" :for="'rp-enabled-' + entry.provider">
-            {{ providerName(store.routeProvidersOrder, entry.provider) }}
-          </label>
-          <span v-if="!entry.enabled" class="badge text-bg-secondary">off</span>
-          <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
-                  @click="moveUp(store.routeProvidersOrder, index)"
-                  :aria-label="'Move ' + entry.provider + ' up'">
-            <i class="bi bi-arrow-up"></i>
-          </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary"
-                  :disabled="index === store.routeProvidersOrder.length - 1"
-                  @click="moveDown(store.routeProvidersOrder, index)"
-                  :aria-label="'Move ' + entry.provider + ' down'">
-            <i class="bi bi-arrow-down"></i>
-          </button>
-        </li>
-      </ul>
-      <input type="hidden" name="route_providers_json"
-             :value="providersJson(store.routeProvidersOrder)" />
+        <div class="col-12 col-lg-6">
+          <h5>Routing and aircraft information<i class="bi bi-map text-black-50 ms-2"></i></h5>
+          <ul class="list-group mb-2">
+            <li v-for="(entry, index) in store.routeProvidersOrder" :key="entry.provider"
+                class="list-group-item d-flex align-items-center gap-2 py-2">
+              <input type="checkbox" class="form-check-input mt-0" :id="'rp-enabled-' + entry.provider"
+                     v-model="entry.enabled" />
+              <label class="form-check-label flex-grow-1" :for="'rp-enabled-' + entry.provider">
+                {{ providerName(store.routeProvidersOrder, entry.provider) }}
+              </label>
+              <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="index === 0"
+                      @click="moveUp(store.routeProvidersOrder, index)"
+                      :aria-label="'Move ' + entry.provider + ' up'">
+                <i class="bi bi-arrow-up"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                      :disabled="index === store.routeProvidersOrder.length - 1"
+                      @click="moveDown(store.routeProvidersOrder, index)"
+                      :aria-label="'Move ' + entry.provider + ' down'">
+                <i class="bi bi-arrow-down"></i>
+              </button>
+            </li>
+          </ul>
+          <input type="hidden" name="route_providers_json"
+                 :value="providersJson(store.routeProvidersOrder)" />
+        </div>
+      </div>
 
       <hr class="my-3" />
       <h5>Tracking Limit</h5>
