@@ -11,19 +11,8 @@ _overhead_instance = None
 
 
 def _get_overhead_class():
-    from setup.configuration import Config
-
-    cfg = Config.instance()
-    if cfg.use_tar1090:
-        from utilities.overhead_tar1090 import Overhead
-
-        return Overhead
-    if cfg.use_osn:
-        from utilities.overhead_osn import Overhead
-
-        return Overhead
-
-    from utilities.overhead_fr24 import Overhead
+    """The single Overhead facade over all configured lookup providers."""
+    from utilities.overhead import Overhead
 
     return Overhead
 
@@ -59,19 +48,15 @@ def build_display_class():
     theme_set(cfg.colour_theme)
     logger = logging.getLogger("display")
 
-    if cfg.use_tar1090:
-        REFRESH_INTERVAL = 10
-        logger.info(
-            "Data source: tar1090 (%s), refresh every %ds",
-            cfg.tar1090_url or "<unset>",
-            REFRESH_INTERVAL,
-        )
-    elif cfg.use_osn:
-        REFRESH_INTERVAL = 22
-        logger.info("Data source: OpenSky Network, refresh every %ds", REFRESH_INTERVAL)
-    else:
-        REFRESH_INTERVAL = 30
-        logger.info("Data source: FlightRadar24, refresh every %ds", REFRESH_INTERVAL)
+    from lookups.flights import refresh_interval, top_flight_provider
+
+    REFRESH_INTERVAL = refresh_interval()
+    _pid, source_name = top_flight_provider()
+    logger.info(
+        "Flight provider: %s, refresh every %ds",
+        source_name or "<none configured>",
+        REFRESH_INTERVAL,
+    )
 
     if cfg.loading_indicator == "gpio":
         from scenes.loadingled import LoadingLEDIndicator as IndicatorClass

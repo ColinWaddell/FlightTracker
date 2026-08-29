@@ -169,7 +169,11 @@ def lookup_aircraft(
                 operator_icao=info.operator_icao or stale.get("operator_icao", ""),
                 owner=info.owner or stale.get("owner", ""),
             )
-            _cache_put(mode_s, stale_info)
+            cache.put(
+                mode_s,
+                _aircraft_cache_entry(stale_info),
+                ts=stale["_ts"] + cache.STALE_RECACHE_ADVANCE,
+            )
             logger.debug(
                 "Aircraft providers found nothing for mode_s %r - reusing "
                 "stale cached info (age %.1fh)",

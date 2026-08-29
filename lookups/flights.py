@@ -137,9 +137,12 @@ def fetch_flights(query) -> FlightFetchOutcome:
         adapter = get_flight_adapter(pid, settings)
         if adapter is None:
             continue
+        if QUARANTINE.is_quarantined(pid):
+            # Skip providers inside their quarantine window - they stay
+            # skipped until it expires without being re-probed.
+            continue
 
         attempted_any = True
-        from lookups.quarantine import QUARANTINE as _q
 
         try:
             result = adapter.fetch(query)

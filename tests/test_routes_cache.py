@@ -1,4 +1,4 @@
-"""Tests for utilities/routes_cache.py - TTL, get/put/clear, thread safety."""
+"""Tests for lookups/cache.py - TTL, get/put/clear, thread safety."""
 
 import json
 import time
@@ -11,7 +11,7 @@ def isolated_cache(tmp_path, monkeypatch):
     """Redirect routes_cache to use a temp file and reset internal state."""
     cache_file = tmp_path / "routes_cache.json"
 
-    import utilities.routes_cache as rc
+    import lookups.cache as rc
 
     monkeypatch.setattr(rc, "CACHE_PATH", cache_file)
     monkeypatch.setattr(rc, "_cache", {})

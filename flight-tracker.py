@@ -44,30 +44,13 @@ def local_ip() -> str:
 
 
 def _check_data_source(cfg: Config) -> bool:
-    """Return True if the configured data source endpoint is reachable."""
-    import requests
+    """Return True if the top enabled flight provider's endpoint is reachable."""
+    from lookups.flights import startup_check as flights_startup_check
 
     try:
-        if cfg.data_source == "fr24":
-            requests.get(
-                "https://data-cloud.flightradar24.com/zones/fcgi/feed.js",
-                timeout=5,
-            )
-            return True
-        elif cfg.data_source == "osn":
-            requests.get(
-                "https://opensky-network.org/api/states/all",
-                timeout=5,
-            )
-            return True
-        elif cfg.data_source == "tar1090":
-            if not cfg.tar1090_url:
-                return False
-            requests.get(cfg.tar1090_url, timeout=5)
-            return True
+        return flights_startup_check()
     except Exception:
         return False
-    return False
 
 
 def _check_celestrack() -> bool:
@@ -82,15 +65,10 @@ def _check_celestrack() -> bool:
 
 
 def _check_routing_reachable(cfg: Config) -> bool:
-    """Return True if at least one route lookup provider is reachable.
+    """Return True if at least one enabled route provider is reachable."""
+    from lookups.routes import check_routing
 
-    Skipped when FR24 is the data source (FR24 provides its own routing).
-    """
-    from utilities import route_providers
-
-    # Feed the aerodatabox key into the provider chain if configured.
-    route_providers.set_aerodatabox_key(cfg.aerodatabox_api_key)
-    return route_providers.check_routing()
+    return check_routing()
 
 
 def _render_ip_address(panel, canvas, y):
@@ -122,14 +100,15 @@ def _render_celestrack_test(panel, canvas, cfg: Config, y):
 
 
 def _render_data_source_test(panel, canvas, cfg: Config, y):
+    from lookups.flights import top_flight_provider
     from setup.colours import GREEN, GREY, RED
 
-    labels = {
+    pid, _name = top_flight_provider()
+    label = {
         "fr24": "FR24: ",
-        "osn": "OSN: ",
+        "opensky": "OSN: ",
         "tar1090": "TAR: ",
-    }
-    label = labels.get(cfg.data_source, "?: ")
+    }.get(pid, "FLY: ")
     panel.draw_text(canvas, test_font, 1, y, GREY, label)
     panel.swap(canvas)
 
@@ -144,11 +123,6 @@ def _render_data_source_test(panel, canvas, cfg: Config, y):
 
 def _render_routing_test(panel, canvas, cfg: Config, y):
     from setup.colours import GREEN, GREY, RED
-
-    if cfg.data_source == "fr24":
-        # when the source is FR24 we don't need to check routing
-        # because FR24 provides its own routing data
-        return
 
     panel.draw_text(canvas, test_font, 1, y, GREY, "ROUTE: ")
     panel.swap(canvas)

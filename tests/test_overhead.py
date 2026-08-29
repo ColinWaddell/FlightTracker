@@ -1,18 +1,15 @@
-"""Tests for utilities/overhead_tar1090.py and overhead_fr24.py - data handling."""
+"""Tests for the shared overhead helpers and the tar1090 flight adapter."""
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 # ---------------------------------------------------------------------------
-# Shared helpers (now in overhead_utilities)
+# Shared helpers (in overhead_utilities)
 # ---------------------------------------------------------------------------
+from lookups.providers.tar1090.flights import FlightProvider as Tar1090FlightProvider
+from lookups.providers.tar1090.flights import _to_observation
 from utilities.flight import RouteInfo
-
-# ---------------------------------------------------------------------------
-# FR24-specific adapter
-# ---------------------------------------------------------------------------
-from utilities.overhead_fr24 import distance_from_flight_to_home
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,
@@ -93,217 +90,6 @@ class TestAirportName:
         assert airport_name("ZZZ") == ""
 
 
-# ---------------------------------------------------------------------------
-# tar1090 Overhead - data unavailability
-# ---------------------------------------------------------------------------
-
-
-class TestTar1090DataUnavailability:
-    @pytest.fixture
-    def overhead_instance(self):
-        """Create an Overhead instance with mocked Config."""
-        with patch("setup.configuration.Config") as MockConfig:
-            cfg = MockConfig.instance.return_value
-            cfg.tar1090_url = "http://localhost/tar1090/data/aircraft.json"
-            cfg.zone_home = {"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0}
-            cfg.flight_min_altitude = 300.0  # metres
-            cfg.flight_max_altitude = 15000.0  # metres
-            cfg.location_home = [55.5, -4.0, 6371.0]
-            cfg.max_flight_lookup = 10
-
-            from utilities.overhead_tar1090 import Overhead
-
-            return Overhead()
-
-    def test_initial_state(self, overhead_instance):
-        assert overhead_instance.data_is_empty is True
-        assert overhead_instance.processing is False
-        assert overhead_instance.new_data is False
-        assert overhead_instance.error is None
-
-    def test_empty_aircraft_list(self, overhead_instance):
-        """API returns no aircraft - should be empty data, no error."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"aircraft": []}
-        mock_response.raise_for_status = MagicMock()
-
-        overhead_instance._session.get = MagicMock(return_value=mock_response)
-        overhead_instance.refresh()
-
-        assert overhead_instance.data_is_empty is True
-        assert overhead_instance.error is None
-        assert overhead_instance.data == []
-
-    def test_connection_error(self, overhead_instance):
-        """API unreachable - should show URL-error placeholder, no error set."""
-        from requests.exceptions import ConnectionError as ReqConnError
-
-        overhead_instance._session.get = MagicMock(
-            side_effect=ReqConnError("Connection refused")
-        )
-        overhead_instance.refresh()
-
-        # tar1090 Overhead surfaces a placeholder flight on connection errors
-        # rather than setting error_store (unlike the FR24 backend).
-        assert overhead_instance.error is None
-        assert overhead_instance.data_is_empty is False
-        assert overhead_instance.data[0].callsign == "URL ERROR"
-
-    def test_invalid_json(self, overhead_instance):
-        """API returns invalid JSON - should show URL-error placeholder."""
-        mock_response = MagicMock()
-        mock_response.json.side_effect = ValueError("Invalid JSON")
-        mock_response.raise_for_status = MagicMock()
-
-        overhead_instance._session.get = MagicMock(return_value=mock_response)
-        overhead_instance.refresh()
-
-        # ValueError is caught - placeholder flight is shown, error stays None
-        assert overhead_instance.error is None
-        assert overhead_instance.data_is_empty is False
-        assert overhead_instance.data[0].callsign == "URL ERROR"
-
-    def test_successful_data(self, overhead_instance):
-        """API returns valid aircraft - should populate data."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "aircraft": [
-                {
-                    "lat": 55.5,
-                    "lon": -4.0,
-                    "alt_baro": 35000,
-                    "flight": "BAW123",
-                    "desc": "A320",
-                    "gs": 450,
-                    "track": 90,
-                    "baro_rate": 0,
-                }
-            ]
-        }
-        mock_response.raise_for_status = MagicMock()
-
-        mock_route = RouteInfo(
-            origin="LHR",
-            destination="GLA",
-            plane="",
-            origin_name="London Heathrow",
-            origin_municipality="London",
-            origin_country="United Kingdom",
-            destination_name="Glasgow Airport",
-            destination_municipality="Glasgow",
-            destination_country="United Kingdom",
-        )
-
-        overhead_instance._session.get = MagicMock(return_value=mock_response)
-
-        with patch(
-            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
-        ):
-            overhead_instance.refresh()
-
-        assert overhead_instance.error is None
-        assert overhead_instance.data_is_empty is False
-        assert len(overhead_instance.data) == 1
-        assert overhead_instance.data[0].callsign == "BAW123"
-        assert overhead_instance.data[0].altitude == 35000
-
-    def test_dump1090_field_names(self, overhead_instance):
-        """tar1090/dump1090 forks may use altitude/speed/vert_rate instead of
-        alt_baro/gs/baro_rate.  Ensure the parser handles both field names."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "aircraft": [
-                {
-                    "hex": "485779",
-                    "flight": "KLM1127 ",
-                    "lat": 55.5,
-                    "lon": -4.0,
-                    "altitude": 34000,  # dump1090 name (no alt_baro)
-                    "speed": 415,  # dump1090 name (no gs)
-                    "vert_rate": 64,  # dump1090 name (no baro_rate)
-                    "track": 277,
-                    # no "desc" field - common when --db-file-lt isn't set
-                }
-            ]
-        }
-        mock_response.raise_for_status = MagicMock()
-
-        mock_route = RouteInfo(
-            origin="AMS",
-            destination="GLA",
-            plane="Boeing 737",
-            origin_name="Amsterdam Schiphol",
-            origin_municipality="Amsterdam",
-            origin_country="Netherlands",
-            destination_name="Glasgow Airport",
-            destination_municipality="Glasgow",
-            destination_country="United Kingdom",
-        )
-
-        overhead_instance._session.get = MagicMock(return_value=mock_response)
-
-        with patch(
-            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
-        ):
-            overhead_instance.refresh()
-
-        assert overhead_instance.error is None
-        assert overhead_instance.data_is_empty is False
-        assert len(overhead_instance.data) == 1
-        flight = overhead_instance.data[0]
-        assert flight.callsign == "KLM1127"
-        assert flight.altitude == 34000
-        assert flight.ground_speed == 415
-        assert flight.vertical_speed == 64
-
-    def test_mixed_field_names(self, overhead_instance):
-        """A mix of readsb and dump1090 field names in the same feed should work."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "aircraft": [
-                {
-                    "hex": "408134",
-                    "flight": "BAW506 ",
-                    "lat": 55.5,
-                    "lon": -4.0,
-                    "alt_baro": 14025,  # readsb name
-                    "gs": 388,  # readsb name
-                    "baro_rate": 2624,  # readsb name
-                    "track": 221,
-                    "desc": "A320",
-                },
-                {
-                    "hex": "a3728a",
-                    "flight": "N321FF ",
-                    "lat": 55.6,
-                    "lon": -3.9,
-                    "altitude": 4050,  # dump1090 name
-                    "speed": 143,  # dump1090 name
-                    "vert_rate": 0,  # dump1090 name
-                    "track": 217,
-                },
-            ]
-        }
-        mock_response.raise_for_status = MagicMock()
-
-        mock_route = RouteInfo()
-
-        overhead_instance._session.get = MagicMock(return_value=mock_response)
-
-        with patch(
-            "utilities.overhead_tar1090.route_lookup.get_route", return_value=mock_route
-        ):
-            overhead_instance.refresh()
-
-        assert overhead_instance.error is None
-        assert len(overhead_instance.data) == 2
-
-
-# ---------------------------------------------------------------------------
-# FR24 helpers
-# ---------------------------------------------------------------------------
-
-
 class TestCleanField:
     def test_strips_whitespace(self):
         assert clean_field("  BAW123  ") == "BAW123"
@@ -319,23 +105,171 @@ class TestCleanField:
         assert clean_field(123) == "123" or clean_field(123) == ""
 
 
-class TestDistanceFromFlightToHome:
-    def test_overhead_flight(self):
-        """Flight directly above home location."""
-        flight = MagicMock()
-        flight.latitude = 55.0
-        flight.longitude = -4.0
-        flight.altitude = 35000  # feet
-        home = [55.0, -4.0, 6371.0]
-        dist = distance_from_flight_to_home(flight, home)
-        # Should be roughly the altitude in km (35000ft ≈ 10.7km)
-        assert 8.0 < dist < 15.0
+# ---------------------------------------------------------------------------
+# tar1090 flight adapter - observation parsing
+# ---------------------------------------------------------------------------
 
-    def test_distant_flight(self):
-        flight = MagicMock()
-        flight.latitude = 60.0
-        flight.longitude = 10.0
-        flight.altitude = 35000
-        home = [55.0, -4.0, 6371.0]
-        dist = distance_from_flight_to_home(flight, home)
-        assert dist > 500.0
+
+class TestTar1090ObservationParsing:
+    def test_readsb_field_names(self):
+        """tar1090/readsb-style alt_baro/gs/baro_rate parse correctly."""
+        obs = _to_observation(
+            {
+                "hex": "400f5a",
+                "flight": "BAW506 ",
+                "lat": 55.5,
+                "lon": -4.0,
+                "alt_baro": 35000,
+                "gs": 450,
+                "track": 90,
+                "baro_rate": 0,
+                "desc": "A320",
+                "r": "G-EUUA",
+            }
+        )
+        assert obs.icao == "400f5a"
+        assert obs.callsign == "BAW506"
+        assert obs.altitude_ft == 35000
+        assert obs.ground_speed_kt == 450
+        assert obs.heading_deg == 90
+        assert obs.vertical_speed_fpm == 0
+        assert obs.plane == "A320"
+        assert obs.registration == "G-EUUA"
+
+    def test_dump1090_field_names(self):
+        """dump1090-style altitude/speed/vert_rate parse correctly (issue #90)."""
+        obs = _to_observation(
+            {
+                "hex": "485779",
+                "flight": "KLM1127 ",
+                "lat": 55.5,
+                "lon": -4.0,
+                "altitude": 34000,  # dump1090 name (no alt_baro)
+                "speed": 415,  # dump1090 name (no gs)
+                "vert_rate": 64,  # dump1090 name (no baro_rate)
+                "track": 277,
+            }
+        )
+        assert obs.icao == "485779"
+        assert obs.callsign == "KLM1127"
+        assert obs.altitude_ft == 34000
+        assert obs.ground_speed_kt == 415
+        assert obs.heading_deg == 277
+        assert obs.vertical_speed_fpm == 64
+
+    def test_mixed_field_names_prefer_readsb(self):
+        """When both forks' fields are present the readsb value wins."""
+        obs = _to_observation(
+            {"hex": "a", "alt_baro": 10000, "latitude_dummy": 0, "altitude": 9999}
+        )
+        assert obs.altitude_ft == 10000
+
+    def test_none_alt_baro_string(self):
+        """tar1090 reports 'ground' as alt_baro - not a usable altitude."""
+        obs = _to_observation({"hex": "b", "alt_baro": "ground", "altitude": None})
+        assert obs.altitude_ft == 0
+
+
+class TestTar1090Fetch:
+    @pytest.fixture
+    def provider(self):
+        return Tar1090FlightProvider(
+            {"url": "http://localhost/tar1090/data/aircraft.json"}
+        )
+
+    @pytest.fixture
+    def query(self):
+        from lookups.results import FlightQuery
+
+        return FlightQuery(
+            zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+            home=[55.5, -4.0, 6371.0],
+            min_altitude_m=100.0,
+            max_altitude_m=15000.0,
+            max_results=5,
+        )
+
+    def _mock_response(self, aircraft):
+        response = MagicMock()
+        response.json.return_value = {"aircraft": aircraft}
+        response.raise_for_status = MagicMock()
+        return response
+
+    def test_empty_sky_is_found_with_empty_list(self, provider, query):
+        provider._session.get = MagicMock(return_value=self._mock_response([]))
+        result = provider.fetch(query)
+        assert result.is_found
+        assert result.value == []
+
+    def test_connection_error_is_unavailable(self, provider, query):
+        from requests.exceptions import ConnectionError as ReqConnError
+
+        provider._session.get = MagicMock(
+            side_effect=ReqConnError("Connection refused")
+        )
+        result = provider.fetch(query)
+        assert result.is_unavailable
+
+    def test_altitude_and_zone_filtering(self, provider, query):
+        aircraft = [
+            {  # inside zone, inside altitudes
+                "hex": "400f5a",
+                "lat": 55.5,
+                "lon": -4.0,
+                "alt_baro": 35000,
+                "gs": 450,
+            },
+            {  # below min altitude
+                "hex": "111111",
+                "lat": 55.5,
+                "lon": -4.0,
+                "alt_baro": 100,  # ~30m - below 100m min
+                "gs": 100,
+            },
+            {  # outside zone (north)
+                "hex": "222222",
+                "lat": 57.0,
+                "lon": -4.0,
+                "alt_baro": 20000,
+                "gs": 300,
+            },
+            {  # no position
+                "hex": "333333",
+                "alt_baro": 20000,
+            },
+        ]
+        provider._session.get = MagicMock(return_value=self._mock_response(aircraft))
+        result = provider.fetch(query)
+        assert result.is_found
+        assert len(result.value) == 1
+        assert result.value[0].icao == "400f5a"
+
+    def test_sorted_by_distance_from_home(self, provider, query):
+        aircraft = [
+            {"hex": "near", "lat": 55.6, "lon": -4.1, "alt_baro": 20000, "gs": 300},
+            {"hex": "far", "lat": 55.1, "lon": -3.1, "alt_baro": 20000, "gs": 300},
+        ]
+        provider._session.get = MagicMock(return_value=self._mock_response(aircraft))
+        result = provider.fetch(query)
+        assert result.value[0].icao == "near"
+
+    def test_unconfigured_url_is_unavailable(self, query):
+        provider = Tar1090FlightProvider({})
+        result = provider.fetch(query)
+        assert result.is_unavailable
+
+    def test_max_results_respected(self, provider, query):
+        query.max_results = 2
+        aircraft = [
+            {
+                "hex": str(i % 10) * 6,
+                "lat": 55.5 + i * 0.01,
+                "lon": -4.0,
+                "alt_baro": 20000,
+                "gs": 400,
+            }
+            for i in range(5)
+        ]
+        provider._session.get = MagicMock(return_value=self._mock_response(aircraft))
+        result = provider.fetch(query)
+        assert len(result.value) == 2

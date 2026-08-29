@@ -1,11 +1,11 @@
 """
-Flight and RouteInfo data classes for FlightTracker.
+Flight data class for FlightTracker.
 
-``Flight`` replaces the ad-hoc flight dictionaries that were passed between
-the overhead data-source modules (fr24, tar1090, osn) and the flight scene.
+``Flight`` is the display-facing aircraft object passed between the
+overhead data source (``utilities.overhead``) and the flight scene.
 
-``RouteInfo`` replaces the route-dict returned by ``route_lookup.get_route()``
-and stored in the route cache.
+``RouteInfo``/``AircraftInfo`` (the lookup result types) live in
+``lookups.results`` and are re-exported here for convenience.
 """
 
 from __future__ import annotations
@@ -13,80 +13,13 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 
 # ---------------------------------------------------------------------------
-# AircraftInfo - per-airframe lookup result (keyed by Mode S hex)
+# AircraftInfo / RouteInfo - single source of truth in lookups.results
 # ---------------------------------------------------------------------------
 
-
-@dataclass
-class AircraftInfo:
-    """Result of a Mode S hex (``icao24``) aircraft lookup.
-
-    Returned by :func:`utilities.route_providers.lookup_aircraft` and
-    :func:`utilities.route_lookup._lookup_aircraft`.
-
-    ``operator_icao`` is the *registered operator* of the airframe, taken
-    from the provider's operator-flag field (hexdb ``OperatorFlagCode``,
-    adsbdb ``registered_owner_operator_flag_code``).  Unlike a callsign
-    prefix it is unique per airframe, so it disambiguates ICAO designator
-    collisions - two operators sharing a 3-letter code still have distinct
-    hex addresses.  It is a weaker signal than a flight-level
-    ``airline_icao`` from a route provider, because a wet-leased airframe
-    reports its owner rather than the brand it is flying for.
-
-    ``owner`` is the registered owner's *name* (hexdb ``RegisteredOwners``,
-    adsbdb ``registered_owner``) - free text, not a code.  Most general
-    aviation aircraft have an owner but no ICAO designator and no logo,
-    so this is the only identity available for them.
-    """
-
-    plane: str = ""
-    registration: str = ""
-    operator_icao: str = ""
-    owner: str = ""
-
-    def __bool__(self) -> bool:
-        """True when any field was resolved."""
-        return bool(self.plane or self.registration or self.operator_icao or self.owner)
-
-
-# ---------------------------------------------------------------------------
-# RouteInfo - origin/destination/aircraft lookup result
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class RouteInfo:
-    """Result of a route + aircraft lookup via hexdb.io or airports.json.
-
-    Returned by :func:`utilities.route_lookup.get_route`.
-    """
-
-    plane: str = ""
-    registration: str = ""
-    airline_icao: str = ""  # operating carrier ICAO code for logo lookup
-    operator_icao: str = ""  # registered operator of the airframe (from Mode S hex)
-    owner: str = ""  # registered owner's name (GA aircraft have no airline)
-    origin: str = ""
-    destination: str = ""
-    origin_name: str = ""
-    destination_name: str = ""
-    origin_municipality: str = ""
-    destination_municipality: str = ""
-    origin_country: str = ""
-    destination_country: str = ""
-
-    # -- Cache serialisation ------------------------------------------------
-
-    def to_dict(self) -> dict:
-        """Serialise to a plain dict for routes_cache."""
-        return {f.name: getattr(self, f.name) for f in fields(self)}
-
-    @classmethod
-    def from_dict(cls, d: dict) -> RouteInfo:
-        """Construct from a cache dict, ignoring unknown keys."""
-        known = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in d.items() if k in known})
-
+# The lookup result types moved into the lookups package when the provider
+# layer was decoupled; they are re-exported here so scenes and the web app
+# keep importing from utilities.flight.
+from lookups.results import AircraftInfo, RouteInfo  # noqa: E402,F401
 
 # ---------------------------------------------------------------------------
 # Flight - a single tracked aircraft

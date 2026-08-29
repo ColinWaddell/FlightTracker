@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from dataclasses import asdict
 
 from setup.configuration import CONFIG_PATH, DEFAULTS, Config
-from utilities import routes_cache
+from lookups import cache as routes_cache
 from utilities.tle_manager import TLE_CACHE_PATH, fetch_tle
 from version import VERSION
 
@@ -210,7 +210,11 @@ def _parse_test_args(argv: Sequence[str], target: str) -> argparse.Namespace:
         description=f"Run a {target} lookup and print JSON output.",
     )
 
-    if target == "overhead_fr24":
+    if target == "flights":
+        p.add_argument(
+            "--provider",
+            help="Force a specific flight provider id (default: config order)",
+        )
         p.add_argument(
             "--lat", type=float, help="Centre latitude (default: from config)"
         )
@@ -230,45 +234,13 @@ def _parse_test_args(argv: Sequence[str], target: str) -> argparse.Namespace:
             choices=["icao", "iata"],
             help="Callsign format (default: from config)",
         )
-
-    elif target == "overhead_tar1090":
-        p.add_argument("--url", help="tar1090 aircraft.json URL (default: from config)")
+        p.add_argument("--url", help="tar1090 aircraft.json URL (when --provider tar1090)")
         p.add_argument(
-            "--lat", type=float, help="Centre latitude (default: from config)"
-        )
-        p.add_argument(
-            "--lng", type=float, help="Centre longitude (default: from config)"
-        )
-        p.add_argument(
-            "--radius", type=float, help="Search radius in km (default: from config)"
-        )
-        p.add_argument(
-            "--max_flights",
-            type=int,
-            help="Max flights to return (default: from config)",
-        )
-
-    elif target == "overhead_osn":
-        p.add_argument(
-            "--client_id", help="OpenSky Network client ID (default: from config)"
+            "--client_id", help="OpenSky client ID (when --provider opensky)"
         )
         p.add_argument(
             "--client_secret",
-            help="OpenSky Network client secret (default: from config)",
-        )
-        p.add_argument(
-            "--lat", type=float, help="Centre latitude (default: from config)"
-        )
-        p.add_argument(
-            "--lng", type=float, help="Centre longitude (default: from config)"
-        )
-        p.add_argument(
-            "--radius", type=float, help="Search radius in km (default: from config)"
-        )
-        p.add_argument(
-            "--max_flights",
-            type=int,
-            help="Max flights to return (default: from config)",
+            help="OpenSky client secret (when --provider opensky)",
         )
 
     elif target == "tle":
@@ -297,7 +269,7 @@ def _parse_test_args(argv: Sequence[str], target: str) -> argparse.Namespace:
 
 
 def _apply_overhead_overrides(cfg: Config, args: argparse.Namespace) -> None:
-    """Override config fields from CLI args before constructing an Overhead."""
+    """Override config fields from CLI args before running the flight test."""
     if getattr(args, "lat", None) is not None:
         cfg.set("flight_lat", args.lat)
     if getattr(args, "lng", None) is not None:
@@ -308,16 +280,36 @@ def _apply_overhead_overrides(cfg: Config, args: argparse.Namespace) -> None:
         cfg.set("max_flight_lookup", args.max_flights)
     if getattr(args, "callsign_format", None) is not None:
         cfg.set("callsign_format", args.callsign_format)
+
+    # Per-provider overrides (tar1090 URL, OpenSky credentials) go through
+    # the provider settings subtree; when a provider is forced, it is moved
+    # to the front of the flight-provider priority list.
+    provider = getattr(args, "provider", None)
+    if provider:
+        enabled = [
+            {"provider": provider, "enabled": True},
+        ]
+        for entry in cfg.flight_providers:
+            if entry.get("provider") != provider:
+                enabled.append({"provider": entry["provider"], "enabled": False})
+        cfg.set_provider_order("flights", enabled)
     if getattr(args, "url", None) is not None:
-        cfg.set("tar1090_url", args.url)
-    if getattr(args, "client_id", None) is not None:
-        cfg.set("osn_client_id", args.client_id)
-    if getattr(args, "client_secret", None) is not None:
-        cfg.set("osn_client_secret", args.client_secret)
+        settings = cfg.provider_settings("tar1090")
+        settings["url"] = args.url
+        cfg.set_provider_settings("tar1090", settings)
+    if getattr(args, "client_id", None) is not None or (
+        getattr(args, "client_secret", None) is not None
+    ):
+        settings = cfg.provider_settings("opensky")
+        if getattr(args, "client_id", None) is not None:
+            settings["client_id"] = args.client_id
+        if getattr(args, "client_secret", None) is not None:
+            settings["client_secret"] = args.client_secret
+        cfg.set_provider_settings("opensky", settings)
 
 
 def _run_overhead_test(target: str, argv: Sequence[str]) -> int:
-    """Instantiate an Overhead module, fetch data, and print JSON."""
+    """Run one flight-provider fetch via the facade and print JSON."""
     args = _parse_test_args(argv, target)
 
     # Force config to load fresh (it creates defaults if no file exists)
@@ -325,16 +317,9 @@ def _run_overhead_test(target: str, argv: Sequence[str]) -> int:
     cfg = Config.instance()
     _apply_overhead_overrides(cfg, args)
 
-    module_map = {
-        "overhead_fr24": "utilities.overhead_fr24",
-        "overhead_tar1090": "utilities.overhead_tar1090",
-        "overhead_osn": "utilities.overhead_osn",
-    }
+    from utilities.overhead import Overhead
 
-    import importlib
-
-    mod = importlib.import_module(module_map[target])
-    overhead = mod.Overhead()
+    overhead = Overhead()
 
     def do_one() -> None:
         overhead.refresh()
@@ -411,9 +396,7 @@ def _print_usage() -> None:
     print("  cache clear            Wipe all on-disk cache files")
     print("  interface enable       Enable the web interface in the config")
     print("  interface disable      Disable the web interface in the config")
-    print("  test overhead_fr24     Test FlightRadar24 data source")
-    print("  test overhead_tar1090  Test tar1090 data source")
-    print("  test overhead_osn      Test OpenSky Network data source")
+    print("  test flights [--provider ID]  Test the flight provider chain")
     print("  test tle               Test TLE satellite lookup")
     print("  help                   Show this help message")
     print("  --version              Print the program version")
@@ -477,7 +460,7 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
 
     if command == "test" and len(argv) >= 3:
         target = argv[2].lower()
-        valid_targets = {"overhead_fr24", "overhead_tar1090", "overhead_osn", "tle"}
+        valid_targets = {"flights", "overhead_fr24", "overhead_tar1090", "overhead_osn", "tle"}
         if target not in valid_targets:
             print(f"Unknown test target: {target}", file=sys.stderr)
             print(f"Valid targets: {', '.join(sorted(valid_targets))}", file=sys.stderr)
@@ -485,6 +468,17 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
         test_argv = argv[3:]
         if target == "tle":
             return _run_tle_test(test_argv)
+        # Legacy per-source targets map onto the unified flight test with a
+        # forced provider; 'flights' uses the configured priority order.
+        legacy_provider = {
+            "overhead_fr24": "fr24",
+            "overhead_tar1090": "tar1090",
+            "overhead_osn": "opensky",
+        }.get(target)
+        if legacy_provider and not any(
+            a == "--provider" for a in test_argv
+        ):
+            test_argv = ["--provider", legacy_provider] + list(test_argv)
         return _run_overhead_test(target, test_argv)
 
     _print_usage()

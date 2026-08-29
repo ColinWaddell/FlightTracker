@@ -35,7 +35,7 @@ from flask import Flask, Response, redirect, render_template, request, session, 
 
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
-from utilities import routes_cache
+from lookups import cache as routes_cache
 from utilities.flight import Flight
 from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
 from utilities.updater import (
@@ -136,22 +136,13 @@ def wrap_lng(lng: float) -> float:
 
 
 def _select_overhead_class():
-    """Return the Overhead implementation selected by the current config."""
-    from setup.configuration import Config
+    """Return the Overhead facade and the top flight provider's display name."""
+    from utilities.overhead import Overhead
 
-    cfg = Config.instance()
-    if cfg.use_tar1090:
-        from utilities.overhead_tar1090 import Overhead
+    from lookups.flights import top_flight_provider
 
-        return Overhead, "tar1090"
-    if cfg.use_osn:
-        from utilities.overhead_osn import Overhead
-
-        return Overhead, "OpenSky Network"
-
-    from utilities.overhead_fr24 import Overhead
-
-    return Overhead, "FlightRadar24"
+    _pid, source_name = top_flight_provider()
+    return Overhead, source_name or "No provider configured"
 
 
 def _flatten_debug_rows(value, prefix="") -> list[dict[str, str]]:

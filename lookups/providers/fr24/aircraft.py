@@ -29,6 +29,10 @@ class AircraftProvider:
 
     def lookup_aircraft(self, ctx) -> LookupResult:
         callsign = (ctx.callsign or "").strip()
+        if not ctx.want_plane:
+            # The expensive details call is only worth making while the
+            # aircraft type is still unknown.
+            return LookupResult.not_found("aircraft type already known")
         if not callsign or ctx.lat is None or ctx.lng is None:
             return LookupResult.not_found("no callsign/position for FR24 aircraft")
 

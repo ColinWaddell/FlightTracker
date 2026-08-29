@@ -8,25 +8,33 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(flight_tracker_module)
 
 
+def test_check_data_source(monkeypatch):
+    import lookups.flights as flights_service
+
+    monkeypatch.setattr(flights_service, "startup_check", lambda: True)
+    assert flight_tracker_module._check_data_source(None) is True
+
+
+def test_check_data_source_handles_failure(monkeypatch):
+    import lookups.flights as flights_service
+
+    def boom():
+        raise RuntimeError("nope")
+
+    monkeypatch.setattr(flights_service, "startup_check", boom)
+    assert flight_tracker_module._check_data_source(None) is False
+
+
 def test_check_routing_reachable(monkeypatch):
-    from types import SimpleNamespace
+    import lookups.routes as routes_service
 
-    from utilities import route_providers
+    monkeypatch.setattr(routes_service, "check_routing", lambda: True)
 
-    monkeypatch.setattr(route_providers, "check_routing", lambda: True)
-    monkeypatch.setattr(route_providers, "set_aerodatabox_key", lambda key: None)
-
-    cfg = SimpleNamespace(aerodatabox_api_key=None)
-    assert flight_tracker_module._check_routing_reachable(cfg) is True
+    assert flight_tracker_module._check_routing_reachable(None) is True
 
 
 def test_check_routing_reachable_handles_failure(monkeypatch):
-    from types import SimpleNamespace
+    import lookups.routes as routes_service
 
-    from utilities import route_providers
-
-    monkeypatch.setattr(route_providers, "check_routing", lambda: False)
-    monkeypatch.setattr(route_providers, "set_aerodatabox_key", lambda key: None)
-
-    cfg = SimpleNamespace(aerodatabox_api_key=None)
-    assert flight_tracker_module._check_routing_reachable(cfg) is False
+    monkeypatch.setattr(routes_service, "check_routing", lambda: False)
+    assert flight_tracker_module._check_routing_reachable(None) is False
