@@ -39,39 +39,6 @@ export default defineComponent({
       </div>
     </div>
 
-    <!-- ====== Change Password ====== -->
-    <div id="group-password" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-key me-2"></i>Change Password</p>
-      <div class="row g-3">
-        <div class="col-sm-6">
-          <label class="form-label small">New password</label>
-          <input type="password" class="form-control form-control-sm"
-                 name="new_password" id="new_password" autocomplete="new-password"
-                 v-model="newPassword" placeholder="Leave blank to keep current" />
-        </div>
-        <div class="col-sm-6">
-          <label class="form-label small">Confirm new password</label>
-          <input type="password" class="form-control form-control-sm"
-                 name="confirm_password" id="confirm_password" autocomplete="new-password"
-                 v-model="confirmPassword" placeholder="Repeat new password" />
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== Version ====== -->
-    <div id="group-version" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-info-circle me-2"></i>Version</p>
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-          <div class="text-muted small">Current version</div>
-          <div class="fs-5 fw-semibold">{{ store.ui.currentVersion }}</div>
-          <a :href="store.ui.urls.update" class="btn btn-outline-warning btn-sm mt-2">
-            <i class="bi bi-arrow-repeat me-1"></i>Check for Updates
-          </a>
-        </div>
-      </div>
-    </div>
-
     <!-- ====== Clear Cache ====== -->
     <div id="group-clear-cache" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-trash3 me-2"></i>Clear Cache</p>
@@ -102,6 +69,39 @@ export default defineComponent({
           </a>
           <a :href="store.ui.urls.backupRestore" class="btn btn-outline-warning btn-sm">
             <i class="bi bi-upload me-1"></i>Restore
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== Change Password ====== -->
+    <div id="group-password" class="card mb-3 p-3">
+      <p class="section-heading"><i class="bi bi-key me-2"></i>Change Password</p>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <label class="form-label small">New password</label>
+          <input type="password" class="form-control form-control-sm"
+                 name="new_password" id="new_password" autocomplete="new-password"
+                 v-model="newPassword" placeholder="Leave blank to keep current" />
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label small">Confirm new password</label>
+          <input type="password" class="form-control form-control-sm"
+                 name="confirm_password" id="confirm_password" autocomplete="new-password"
+                 v-model="confirmPassword" placeholder="Repeat new password" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== Version ====== -->
+    <div id="group-version" class="card mb-3 p-3">
+      <p class="section-heading"><i class="bi bi-info-circle me-2"></i>Version</p>
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <div class="text-muted small">Current version</div>
+          <div class="fs-5 fw-semibold">{{ store.ui.currentVersion }}</div>
+          <a :href="store.ui.urls.update" class="btn btn-outline-warning btn-sm mt-2">
+            <i class="bi bi-arrow-repeat me-1"></i>Check for Updates
           </a>
         </div>
       </div>

@@ -114,11 +114,11 @@ export const SIDEBAR_GROUPS = [
     route: "/admin",
     items: [
       { section: "group-logging", icon: "bi-terminal", label: "Logging" },
-      { section: "group-password", icon: "bi-key", label: "Change Password" },
       { section: "group-clear-cache", icon: "bi-trash3", label: "Clear Cache" },
       { section: "group-backup", icon: "bi-file-earmark-arrow-down", label: "Backup" },
-      { section: "group-help", icon: "bi-question-circle", label: "Help & Support" },
+      { section: "group-password", icon: "bi-key", label: "Change Password" },
       { section: "group-version", icon: "bi-info-circle", label: "Version" },
+      { section: "group-help", icon: "bi-question-circle", label: "Help & Support" },
     ],
   },
 ];

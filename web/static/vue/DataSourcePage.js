@@ -16,7 +16,7 @@
  * field clears the secret.
  */
 
-import { defineComponent, reactive, ref } from "./vendor.js";
+import { defineComponent, computed, reactive, ref } from "./vendor.js";
 
 export default defineComponent({
   name: "DataSourcePage",
@@ -29,6 +29,14 @@ export default defineComponent({
     // rest of the row (checkbox, label) keeps normal click/select behaviour.
     const armedKey = ref(null);
     const dragState = reactive({ listId: null, from: -1, over: -1 });
+
+    // Provider settings cards, alphabetically by display name
+    // (the backend sends them in catalogue order).
+    const sortedProvidersMeta = computed(() =>
+      [...props.store.ui.providersMeta].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      )
+    );
 
     function armDrag(key) {
       armedKey.value = key;
@@ -113,6 +121,7 @@ export default defineComponent({
     }
 
     return {
+      sortedProvidersMeta,
       armedKey,
       armDrag,
       disarmDrag,
@@ -223,7 +232,7 @@ export default defineComponent({
       <h3 class="fs-4 fw-semibold my-3"><i class="bi bi-sliders me-2"></i>Provider Settings</h3>
 
       <div class="row g-3">
-        <div v-for="meta in store.ui.providersMeta" :key="meta.id" class="col-12 col-lg-6">
+        <div v-for="meta in sortedProvidersMeta" :key="meta.id" class="col-12 col-lg-6">
           <div class="card h-100 d-flex flex-column">
             <div class="card-header">
               <h5 class="mb-0">{{ meta.name }}</h5>
