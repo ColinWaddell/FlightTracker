@@ -20,6 +20,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link{{ ' active' if active_page == 'status' }}" href="{{ url_for('status') }}">
+            <i class="bi bi-heart-pulse me-1"></i>Status
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link{{ ' active' if active_page == 'logs' }}" href="{{ url_for('logs') }}">
             <i class="bi bi-terminal me-1"></i>Log Viewer
           </a>

@@ -60,6 +60,8 @@ class Overhead:
         self.processing_store = False
         self.error_store = None
         self.last_updated = None
+        # Outcome of the last fetch attempt - dict or None (status page).
+        self.last_fetch = None
 
     # ------------------------------------------------------------------
     # Scene contract (threaded fetch)
@@ -122,6 +124,10 @@ class Overhead:
 
             outcome = flights.fetch_flights(query)
 
+            # Remember this attempt for the status page regardless of how
+            # the poll turns out below.
+            self._record_fetch(outcome)
+
             if not outcome.ok:
                 # Every enabled flight provider is unavailable - surface the
                 # error state (scene logs it, falls back to the idle screen).
@@ -137,6 +143,7 @@ class Overhead:
         except Exception as e:
             # Broad catch - providers raise a zoo of transport exceptions.
             logger.warning("Flight fetch failed: %s: %s", type(e).__name__, e)
+            self._record_failure(e)
             self._set_error(e)
         else:
             with self.lock:
@@ -169,6 +176,28 @@ class Overhead:
             heading=int(observation.heading_deg or 0),
             vertical_speed=int(observation.vertical_speed_fpm or 0),
         )
+
+    def _record_fetch(self, outcome):
+        """Keep the last fetch attempt's outcome for the status page."""
+        with self.lock:
+            self.last_fetch = {
+                "at": time.time(),
+                "ok": outcome.ok,
+                "provider_id": outcome.provider_id,
+                "source_name": outcome.source_name,
+                "errors": list(outcome.errors),
+            }
+
+    def _record_failure(self, error):
+        """Record an out-of-band failure (crash between fetch and render)."""
+        with self.lock:
+            self.last_fetch = {
+                "at": time.time(),
+                "ok": False,
+                "provider_id": "",
+                "source_name": "",
+                "errors": [str(error)],
+            }
 
     def _set_error(self, error):
         with self.lock:

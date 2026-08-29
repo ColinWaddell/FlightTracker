@@ -669,6 +669,71 @@ def logout():
     return redirect(url_for("login"))
 
 
+def _status_page_data() -> dict:
+    """Assemble the runtime status view for the status page.
+
+    The web app shares its process with the tracker, so everything here is
+    a direct read of live state: the provider registry, the quarantine
+    (provider hold-offs), and the display facade's last-fetch record.
+    """
+
+    from display import get_overhead_instance
+    from lookups.flights import refresh_interval
+    from lookups.quarantine import QUARANTINE
+    from lookups.registry import PROVIDERS, load_config
+
+    cfg = load_config()
+    hold_offs = QUARANTINE.snapshot()
+    flight_ids = {e["provider"] for e in cfg.flight_providers if e.get("enabled")}
+    route_ids = {e["provider"] for e in cfg.route_providers if e.get("enabled")}
+
+    providers = []
+    for spec in PROVIDERS.values():
+        settings = cfg.provider_settings(spec.id)
+        providers.append(
+            {
+                "id": spec.id,
+                "name": spec.name,
+                "capabilities": sorted(spec.capabilities),
+                "flight_enabled": spec.id in flight_ids
+                and "flights" in spec.capabilities,
+                "route_enabled": spec.id in route_ids
+                and bool(spec.capabilities & {"routes", "aircraft"}),
+                "configured": spec.config.is_configured(settings),
+                "missing_required": spec.config.missing_required(settings),
+                "hold_off_s": hold_offs.get(spec.id),
+            }
+        )
+
+    # The shared Overhead instance belongs to the display loop; reading it
+    # is safe (facade reads are lock-guarded).  Only non-clearing state is
+    # touched here - the data property would steal the scene's new_data
+    # flag, so the flight count comes from the last-fetch record instead.
+    overhead = get_overhead_instance()
+    last_fetch = overhead.last_fetch
+    if last_fetch is not None:
+        last_fetch = {**last_fetch, "at_fmt": _format_last_updated_value(last_fetch["at"])}
+    return {
+        "providers": providers,
+        "fetch": {
+            "last_updated_fmt": _format_last_updated_value(overhead.last_updated),
+            "processing": overhead.processing,
+            "error": overhead.error,
+            "empty": overhead.data_is_empty,
+            "refresh_interval": refresh_interval(),
+            "last_fetch": last_fetch,
+        },
+        "active_page": "status",
+    }
+
+
+@app.route("/status")
+@login_required
+def status():
+    """Runtime status: providers, hold-offs and the last fetch attempt."""
+    return render_template("status.html", **_status_page_data())
+
+
 def _provider_ui_data(cfg) -> dict:
     """Build the provider-facing data for the settings page.
 
