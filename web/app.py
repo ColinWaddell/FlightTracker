@@ -669,6 +669,49 @@ def logout():
     return redirect(url_for("login"))
 
 
+def _humanise_uptime(seconds: int) -> str:
+    """Compact uptime for the status card: "6d 3h", "6h 12m", "4m"."""
+    minutes = int(seconds) // 60
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
+def _system_telemetry() -> dict:
+    """Host telemetry for the status page (all values optional).
+
+    Everything is stdlib - /proc + /sys + shutil - so the card simply
+    omits whatever the host can't report (temperature on a laptop, memory
+    on macOS, and so on).
+    """
+    from utilities import system_info
+
+    throughput = system_info.network_throughput()
+    if throughput is not None:
+        # Report in megabits per second - friendlier than bytes for the
+        # kind of connection a Pi sits behind.
+        throughput["down_mbps"] = round(throughput["down_bps"] / 125_000, 2)
+        throughput["up_mbps"] = round(throughput["up_bps"] / 125_000, 2)
+
+    uptime = system_info.uptime_seconds()
+    return {
+        "hostname": system_info.hostname(),
+        "model": system_info.hardware_model(),
+        "cpu_temp_c": system_info.cpu_temperature(),
+        "uptime_seconds": system_info.uptime_seconds(),
+        "uptime_human": _humanise_uptime(uptime) if uptime is not None else None,
+        "load": system_info.load_average(),
+        "memory": system_info.memory_usage(),
+        "storage": system_info.storage_usage("/"),
+        "ip": system_info.ip_address(),
+        "throughput": throughput,
+    }
+
+
 def _status_page_data() -> dict:
     """Assemble the runtime status view for the status page.
 
@@ -725,6 +768,7 @@ def _status_page_data() -> dict:
             "refresh_interval": refresh_interval(),
             "last_fetch": last_fetch,
         },
+        "system": _system_telemetry(),
         "active_page": "status",
     }
 
