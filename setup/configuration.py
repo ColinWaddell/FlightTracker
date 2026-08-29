@@ -151,11 +151,11 @@ DEFAULT_AERODATABOX_API_KEY = (
 # live position.  AeroDataBox is enabled by default once its legacy
 # api-key migrates in.
 DEFAULT_ROUTE_PROVIDERS: list[dict[str, Any]] = [
-    {"provider": "aerodatabox", "enabled": False},
     {"provider": "hexdb", "enabled": True},
-    {"provider": "adsbim", "enabled": True},
     {"provider": "adsbdb", "enabled": True},
+    {"provider": "adsbim", "enabled": True},
     {"provider": "fr24", "enabled": True},
+    {"provider": "aerodatabox", "enabled": False},
     {"provider": "airlabs", "enabled": False},
     {"provider": "flightaware", "enabled": False},
     {"provider": "fr24api", "enabled": False},
@@ -468,7 +468,6 @@ def _normalise_longitudes(data: dict[str, Any]) -> bool:
             pass
     return changed
 
-
     changed = False
     for key in lng_keys:
         if key not in data:
@@ -591,7 +590,9 @@ def _migrate_legacy_source(data: dict[str, Any], loaded: dict[str, Any]) -> None
         providers_subtree = {}
     if tar1090_url and not providers_subtree.get("tar1090", {}).get("url"):
         providers_subtree.setdefault("tar1090", {})["url"] = tar1090_url
-    if (osn_id or osn_secret) and not providers_subtree.get("opensky", {}).get("client_id"):
+    if (osn_id or osn_secret) and not providers_subtree.get("opensky", {}).get(
+        "client_id"
+    ):
         subtree = providers_subtree.setdefault("opensky", {})
         subtree["client_id"] = osn_id
         subtree["client_secret"] = osn_secret
@@ -637,6 +638,8 @@ def _validated_provider_settings(spec, raw: dict[str, Any]) -> dict[str, Any]:
     for warning in warnings:
         print(f"[config] {warning}", file=sys.stderr)
     return clean
+
+
 class Config:
     """Singleton configuration object backed by config.json."""
 
