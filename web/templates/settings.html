@@ -35,6 +35,10 @@
     inSchedule: {{ in_schedule | tojson }},
     scheduleWindow: {{ schedule_window_json | tojson }},
     currentVersion: {{ current_version | tojson }},
+    providersMeta: {{ providers_meta | tojson }},
+    flightProvidersOrder: {{ flight_providers_order | tojson }},
+    routeProvidersOrder: {{ route_providers_order | tojson }},
+    maskToken: {{ mask_token | tojson }},
     staticUrls: {
       weatherExplained: "{{ url_for('static', filename='images/weather_explained.png') }}",
       scaleExplained: "{{ url_for('static', filename='images/scale_explained.png') }}",
