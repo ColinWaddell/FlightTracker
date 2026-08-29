@@ -28,7 +28,7 @@ Recently (June 2026) this codebase has had a major rewrite. There are detailed g
 
 ## FlightTracker OS
 
-Don't want to mess about with the command line? [FlightTracker OS](https://flight-tracker.dev/os/) is a pre-built Raspberry Pi image with everything installed and configured. Flash it to an SD card, boot your Pi, and finish setup from your browser.
+FlightTracker OS is available as a 32 bit or 64 bit Raspberry Pi image with a browser-based installer for setting up your Flight Tracker. See the website for more details.
 
 [Find out more about FlightTracker OS →](https://flight-tracker.dev/os/)
 
