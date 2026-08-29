@@ -138,8 +138,9 @@ export default defineComponent({
              :value="providersJson(store.routeProvidersOrder)" />
 
       <div class="form-text text-muted small">
-        FR24 doubles as a route provider: when the live feed can see the aircraft it fills in
-        whatever the route databases didn't know. Keep it last so the free databases are tried first.
+        FlightRadar24 is also a route provider: for aircraft the route databases can't answer for,
+        it looks up the flight in its live feed. That costs an API call per unknown aircraft, so keep it
+        at the bottom of the list - the free databases get asked first, FR24 only fills the gaps.
       </div>
 
       <hr class="my-3" />
