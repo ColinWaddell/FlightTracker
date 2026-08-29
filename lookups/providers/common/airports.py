@@ -49,3 +49,37 @@ def reset_icao_table_cache() -> None:
     global _icao_to_iata, _icao_to_iata_loaded
     _icao_to_iata = {}
     _icao_to_iata_loaded = False
+
+
+def fill_airport_details(route, side: str) -> bool:
+    """Fill blank location fields for one end of *route* from airports.json.
+
+    *side* is ``"origin"`` or ``"destination"``; the airport's name,
+    municipality and country are looked up by the code stored on the
+    route.  Only blank fields are filled, so callers can layer this over
+    partial answers without losing data.  Returns True when anything
+    changed.
+    """
+    from utilities.overhead_utilities import airport_info
+
+    code = getattr(route, side, "") or ""
+    if not code:
+        return False
+
+    details = airport_info(code) or {}
+    name = details.get("name", "")
+    municipality = details.get("municipality", "")
+    country = details.get("country_name", "")
+    if not (name or municipality or country):
+        return False
+
+    changed = False
+    for field, value in (
+        (f"{side}_name", name),
+        (f"{side}_municipality", municipality),
+        (f"{side}_country", country),
+    ):
+        if not getattr(route, field):
+            setattr(route, field, value)
+            changed = True
+    return changed

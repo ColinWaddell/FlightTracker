@@ -204,7 +204,7 @@ def _sv_to_observation(sv: list) -> FlightObservation:
     )
 
 
-def startup_check() -> bool:
+def startup_check(settings: dict | None = None) -> bool:
     """Reachability probe for the startup screen (status-agnostic)."""
     try:
         requests.get(OSN_STATES_URL, timeout=5)

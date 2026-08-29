@@ -16,6 +16,7 @@ from lookups.providers.aerodatabox.client import (
     aerodatabox_get,
     is_error_response,
 )
+from lookups.providers.common.airports import fill_airport_details
 from lookups.results import LookupResult, RouteInfo
 
 logger = logging.getLogger(__name__)
@@ -119,14 +120,14 @@ def parse_route(flight: dict) -> RouteInfo | None:
         iata = (airport.get("iata") or "").strip()
         icao = (airport.get("icao") or "").strip()
         route.origin = iata or icao
-        _fill_airport_details(route, "origin")
+        fill_airport_details(route, "origin")
 
     if arr:
         airport = arr.get("airport", {}) or {}
         iata = (airport.get("iata") or "").strip()
         icao = (airport.get("icao") or "").strip()
         route.destination = iata or icao
-        _fill_airport_details(route, "destination")
+        fill_airport_details(route, "destination")
 
     airline = flight.get("airline", {}) or {}
     route.airline_icao = (airline.get("icao") or "").strip()
@@ -134,23 +135,3 @@ def parse_route(flight: dict) -> RouteInfo | None:
     return route
 
 
-def _fill_airport_details(route: RouteInfo, which: str) -> None:
-    """Populate name/municipality/country from the bundled airports.json.
-
-    The bundled airports database is the single source of truth for
-    airport location fields; provider-supplied names are ignored.
-    """
-    code = getattr(route, which, "")
-    if not code:
-        return
-    from utilities.overhead_utilities import airport_info as bundled
-
-    details = bundled(code) or {}
-    if which == "origin":
-        route.origin_name = details.get("name", "")
-        route.origin_municipality = details.get("municipality", "")
-        route.origin_country = details.get("country_name", "")
-    else:
-        route.destination_name = details.get("name", "")
-        route.destination_municipality = details.get("municipality", "")
-        route.destination_country = details.get("country_name", "")

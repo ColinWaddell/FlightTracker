@@ -137,8 +137,9 @@ def _to_observation(ac: dict) -> FlightObservation:
     )
 
 
-def startup_check(url: str) -> bool:
+def startup_check(settings: dict | None = None) -> bool:
     """Reachability probe for the startup screen (status-agnostic)."""
+    url = str((settings or {}).get("url", "")).strip()
     if not url:
         return False
     try:

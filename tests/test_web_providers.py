@@ -94,7 +94,7 @@ class TestParseProviderSettings:
         }
         subtree = _parse_provider_settings(form, cfg)
 
-        assert subtree["opensky"] == {"client_id": "my-id", "client_secret": "S3CR3T".replace("3", "3")}
+        assert subtree["opensky"] == {"client_id": "my-id", "client_secret": "S3CR3T"}
 
     def test_sensitive_empty_string_clears_value(self):
         from web.app import _parse_provider_settings

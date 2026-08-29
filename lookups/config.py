@@ -73,7 +73,7 @@ class ConfigField:
         return str(value)
 
     @classmethod
-    def password(cls, key: str, label: str, **kwargs) -> "ConfigField":
+    def password(cls, key: str, label: str, **kwargs) -> ConfigField:
         kwargs.setdefault("type", "password")
         kwargs.setdefault("sensitive", True)
         return cls(key=key, label=label, **kwargs)
@@ -240,61 +240,3 @@ def apply_submitted_settings(
 # ---------------------------------------------------------------------------
 # Schema-driven redaction
 # ---------------------------------------------------------------------------
-
-
-def redact_sensitive(
-    data: dict,
-    sensitive_field_lists: dict,
-    mask: str = REDACTED,
-) -> dict:
-    """Return a deep-ish copy of *data* with sensitive values masked.
-
-    ``sensitive_field_lists`` maps a subtree key ("providers", or "" for
-    top-level keys) to an iterable of :class:`ConfigField`.  Values are
-    replaced by *mask* only when non-empty.
-    """
-    import copy
-
-    out = copy.deepcopy(data)
-
-    top_fields = sensitive_field_lists.get("", ())
-    for f in top_fields:
-        if f.sensitive and out.get(f.key):
-            out[f.key] = mask
-
-    providers = out.get("providers")
-    if isinstance(providers, dict):
-        prov_fields = sensitive_field_lists.get("providers", {})
-        for pid, block in providers.items():
-            if not isinstance(block, dict):
-                continue
-            fields = prov_fields.get(pid)
-            if fields is None:
-                # Unknown provider subtree - no descriptor, nothing we can
-                # do heuristically.  The validation layer has already
-                # dropped unknown providers from persisted config.
-                continue
-            for f in fields:
-                if f.sensitive and block.get(f.key):
-                    block[f.key] = mask
-    return out
-
-
-def sensitive_field_index(
-    top_level_fields, providers: dict
-) -> dict:
-    """Build the mapping consumed by :func:`redact_sensitive`.
-
-    ``top_level_fields`` - iterable of :class:`ConfigField` for ordinary
-    top-level settings (e.g. the weather API key).
-
-    ``providers`` - ``{provider_id: ProviderConfig}`` for every registered
-    provider.  Adding ``sensitive=True`` to a provider's config descriptor
-    is sufficient to have that value redacted everywhere.
-    """
-    return {
-        "": tuple(top_level_fields),
-        "providers": {
-            pid: tuple(cfg.sensitive_fields()) for pid, cfg in providers.items()
-        },
-    }

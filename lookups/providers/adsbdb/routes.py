@@ -7,6 +7,7 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
+from lookups.providers.common.airports import fill_airport_details
 from lookups.results import LookupResult, RouteInfo
 
 logger = logging.getLogger(__name__)
@@ -95,10 +96,10 @@ def parse_route(data: dict) -> RouteInfo | None:
         route.origin = (
             origin.get("iata_code") or origin.get("icao_code") or ""
         ).strip()
-        _fill_airport_details(route, "origin")
+        fill_airport_details(route, "origin")
     if dest:
         route.destination = (dest.get("iata_code") or dest.get("icao_code") or "").strip()
-        _fill_airport_details(route, "destination")
+        fill_airport_details(route, "destination")
 
     # Airline ICAO from the airline block
     airline = fr.get("airline", {}) or {}
@@ -107,24 +108,3 @@ def parse_route(data: dict) -> RouteInfo | None:
     return route
 
 
-def _fill_airport_details(route: RouteInfo, which: str) -> None:
-    """Populate name/municipality/country for one end of *route*.
-
-    The bundled airports.json is the single source of truth for airport
-    location fields (the provider API's own names are ignored, matching
-    the historical behaviour).
-    """
-    code = getattr(route, which, "") or ""
-    if not code:
-        return
-    from utilities.overhead_utilities import airport_info as bundled
-
-    details = bundled(code) or {}
-    if which == "origin":
-        route.origin_name = details.get("name", "")
-        route.origin_municipality = details.get("municipality", "")
-        route.origin_country = details.get("country_name", "")
-    else:
-        route.destination_name = details.get("name", "")
-        route.destination_municipality = details.get("municipality", "")
-        route.destination_country = details.get("country_name", "")

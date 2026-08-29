@@ -15,26 +15,11 @@ from __future__ import annotations
 
 import logging
 
+from lookups.providers.common.airports import fill_airport_details
 from lookups.providers.fr24.client import get_client
 from lookups.results import LookupResult, RouteInfo
 
 logger = logging.getLogger(__name__)
-
-
-def _enrich_names(route: RouteInfo) -> None:
-    """Fill blank airport name/municipality/country from bundled airports.json."""
-    from utilities.overhead_utilities import airport_info as bundled
-
-    if route.origin and not route.origin_name:
-        d = bundled(route.origin) or {}
-        route.origin_name = d.get("name", "")
-        route.origin_municipality = d.get("municipality", "")
-        route.origin_country = d.get("country_name", "")
-    if route.destination and not route.destination_name:
-        d = bundled(route.destination) or {}
-        route.destination_name = d.get("name", "")
-        route.destination_municipality = d.get("municipality", "")
-        route.destination_country = d.get("country_name", "")
 
 
 class RouteProvider:
@@ -76,7 +61,8 @@ class RouteProvider:
         route = RouteInfo()
         route.origin = origin
         route.destination = destination
-        _enrich_names(route)
+        fill_airport_details(route, "origin")
+        fill_airport_details(route, "destination")
         route.airline_icao = (getattr(flight, "airline_icao", "") or "").strip()
 
         client.clear_feed_miss(callsign)

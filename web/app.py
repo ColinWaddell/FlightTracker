@@ -397,6 +397,23 @@ def _parse_provider_settings(form, cfg) -> dict[str, dict]:
     return subtree
 
 
+def _merge_provider_settings(cfg, partial: dict) -> dict:
+    """Validate *partial* provider settings and merge them into the stored subtree."""
+    from lookups.config import validate_provider_settings
+    from lookups.registry import PROVIDERS
+
+    merged = cfg.providers_subtree
+    for pid, settings in partial.items():
+        spec = PROVIDERS.get(pid)
+        if spec is None:
+            continue
+        clean, warnings = validate_provider_settings(spec.config, settings)
+        for warning in warnings:
+            logger.warning("[providers] %s", warning)
+        merged[pid] = clean
+    return merged
+
+
 def parse_settings_form(form, cfg) -> dict:
     """Coerce the submitted HTML form into a config dict, applying clamps."""
     return {
@@ -652,6 +669,53 @@ def logout():
     return redirect(url_for("login"))
 
 
+def _provider_ui_data(cfg) -> dict:
+    """Build the provider-facing data for the settings page.
+
+    The browser never sees a sensitive value: secrets are masked in the
+    config snapshot (the web password hash is excluded entirely), and the
+    per-provider descriptor metadata drives the Data Source page's
+    provider settings cards.
+    """
+    from lookups.config import MASK, provider_settings_view
+    from lookups.registry import PROVIDERS
+
+    cfg_masked = {
+        key: value for key, value in cfg.as_dict().items() if key != "web_password_hash"
+    }
+
+    providers_meta = []
+    for pid, spec in PROVIDERS.items():
+        settings = cfg.provider_settings(pid)
+        providers_meta.append(
+            {
+                "id": spec.id,
+                "name": spec.name,
+                "description": spec.description,
+                "capabilities": sorted(spec.capabilities),
+                "configured": spec.config.is_configured(settings),
+                "missing_required": spec.config.missing_required(settings),
+                "fields": [field.as_dict_view() for field in spec.config.fields],
+            }
+        )
+    cfg_masked["providers"] = {
+        pid: provider_settings_view(spec.config, cfg.provider_settings(pid))
+        for pid, spec in PROVIDERS.items()
+    }
+
+    def order(capability):
+        entries = getattr(cfg, f"{capability}_providers")
+        return [{"provider": e["provider"], "enabled": bool(e.get("enabled"))} for e in entries]
+
+    return {
+        "cfg": cfg_masked,
+        "providers_meta": providers_meta,
+        "flight_order": order("flight"),
+        "route_order": order("route"),
+        "mask_token": MASK,
+    }
+
+
 def _settings_page_data(
     cfg,
     template_errors=None,
@@ -675,46 +739,10 @@ def _settings_page_data(
             {"hour": t.hour, "minute": t.minute} if t else None for t in schedule_window
         ]
 
-    from lookups.config import MASK, provider_settings_view
-    from lookups.registry import PROVIDERS
-
-    cfg_dict = cfg.as_dict()
-
-    # The browser never sees a sensitive value: mask secrets in the config
-    # snapshot (the web password hash is excluded entirely) and build the
-    # per-provider descriptor metadata for the Providers UI.
-    cfg_masked = {k: v for k, v in cfg_dict.items() if k != "web_password_hash"}
-    providers_meta = []
-    masked_provider_settings: dict[str, dict] = {}
-    for pid, spec in PROVIDERS.items():
-        settings = cfg.provider_settings(pid)
-        masked_provider_settings[pid] = provider_settings_view(spec.config, settings)
-        providers_meta.append(
-            {
-                "id": spec.id,
-                "name": spec.name,
-                "description": spec.description,
-                "capabilities": sorted(spec.capabilities),
-                "configured": spec.config.is_configured(settings),
-                "missing_required": spec.config.missing_required(settings),
-                "fields": [
-                    f.as_dict_view() for f in spec.config.fields
-                ],
-            }
-        )
-    cfg_masked["providers"] = masked_provider_settings
-
-    flight_order = [
-        {"provider": e["provider"], "enabled": bool(e.get("enabled"))}
-        for e in cfg.flight_providers
-    ]
-    route_order = [
-        {"provider": e["provider"], "enabled": bool(e.get("enabled"))}
-        for e in cfg.route_providers
-    ]
+    provider_ui = _provider_ui_data(cfg)
 
     return {
-        "cfg": cfg_masked,
+        "cfg": provider_ui["cfg"],
         "airports_json": airports_json(),
         "template_errors": template_errors or [],
         "error": error,
@@ -725,10 +753,10 @@ def _settings_page_data(
         "schedule_window_json": sw_json,
         "current_version": version_string(VERSION),
         "active_page": "settings",
-        "providers_meta": providers_meta,
-        "flight_providers_order": flight_order,
-        "route_providers_order": route_order,
-        "mask_token": MASK,
+        "providers_meta": provider_ui["providers_meta"],
+        "flight_providers_order": provider_ui["flight_order"],
+        "route_providers_order": provider_ui["route_order"],
+        "mask_token": provider_ui["mask_token"],
         "static_urls": {
             "weatherExplained": _url_for(
                 "static", filename="images/weather_explained.png"
@@ -786,23 +814,9 @@ def settings():
             # descriptor validation so no junk is ever persisted.
             providers_partial = new_data.pop("providers", None)
             if providers_partial:
-                from lookups.config import validate_provider_settings
-                from lookups.registry import PROVIDERS
-
-                merged = cfg.providers_subtree
-                touched = {}
-                for pid, settings in providers_partial.items():
-                    spec = PROVIDERS.get(pid)
-                    if spec is None:
-                        continue
-                    clean, warnings = validate_provider_settings(
-                        spec.config, settings
-                    )
-                    for w in warnings:
-                        logger.warning("[providers] %s", w)
-                    touched[pid] = clean
-                merged.update(touched)
-                new_data["providers"] = merged
+                new_data["providers"] = _merge_provider_settings(
+                    cfg, providers_partial
+                )
 
             new_password = form.get("new_password", "").strip()
 
@@ -923,14 +937,15 @@ def _redact_for_debug(data: dict) -> dict:
     ``providers`` subtree is redacted from the provider descriptors so new
     sensitive fields are covered automatically.
     """
+    from lookups.config import REDACTED
     from lookups.registry import PROVIDERS
 
     safe: dict = {}
-    for k, v in data.items():
-        if k in SENSITIVE_KEYS:
-            safe[k] = "***REDACTED***" if v else ""
+    for key, value in data.items():
+        if key in SENSITIVE_KEYS:
+            safe[key] = REDACTED if value else ""
         else:
-            safe[k] = v
+            safe[key] = value
 
     providers = data.get("providers")
     if isinstance(providers, dict):
@@ -947,8 +962,8 @@ def _redact_for_debug(data: dict) -> dict:
                 continue
             sensitive = sensitive_by_pid.get(pid, frozenset())
             redacted_providers[pid] = {
-                fk: ("***REDACTED***" if fv and fk in sensitive else fv)
-                for fk, fv in settings.items()
+                key: (REDACTED if value and key in sensitive else value)
+                for key, value in settings.items()
             }
         safe["providers"] = redacted_providers
     return safe

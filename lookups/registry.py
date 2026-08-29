@@ -6,24 +6,41 @@ it is called, which capabilities it implements, how to describe and
 validate its settings, and how to construct its capability adapters.
 
 The registry is deliberately *manual* - adding a provider means adding an
-entry here plus its subpackage under :mod:`lookups.providers`.  Unknown
+entry here plus a subpackage under :mod:`lookups.providers`.  Unknown
 provider ids in configuration are rejected (with a warning) rather than
 silently kept, so typos can't create providers that silently never run.
 
 Import graph note: this module is imported by ``setup.configuration`` at
-boot.  It must only import provider *config descriptors* and lazy
-constructors - never the heavy API clients - so startup stays cheap.
-Capability modules import their own heavy dependencies (FlightRadarAPI,
-requests sessions) inside their factories below, which run only when a
+boot.  Provider descriptors are imported eagerly here (they are small and
+the config store needs their schemas anyway), but the heavy API clients
+are imported lazily inside the factories below, which only run when a
 provider is actually used.
 """
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Callable
 
 from lookups.config import ProviderConfig
+
+logger = logging.getLogger(__name__)
+
+# Capability ids shared by this registry and the provider descriptors.
+FLIGHTS = "flights"
+ROUTES = "routes"
+AIRCRAFT = "aircraft"
+
+# Config attribute that stores the priority list for each capability.
+# Route and aircraft providers share one list: both capabilities resolve
+# the same "where is it going / what is it" chain, ordered by the user.
+_PRIORITY_LIST_ATTR = {
+    "flights": "flight_providers",
+    "routes": "route_providers",
+    "aircraft": "route_providers",
+}
+
 
 # ---------------------------------------------------------------------------
 # Provider specification
@@ -38,122 +55,52 @@ class ProviderSpec:
     name: str
     description: str
     # Capability ids implemented by this provider.
-    capabilities: frozenset
+    capabilities: frozenset[str]
     config: ProviderConfig
-    # Optional factories: capability id -> callable(settings) -> adapter.
-    # Absent factories mean "capability implemented but not provided here"
-    # and are never consulted.
-    flight_factory: Callable[[dict], object] | None = None
-    route_factory: Callable[[dict], object] | None = None
-    aircraft_factory: Callable[[dict], object] | None = None
-    # Optional per-provider startup probes (status-agnostic reachability).
-    startup_check: Callable[[], bool] | None = None
-    # Human-readable notes surfaced in the web UI (e.g. "no API key
-    # required"), separate from the long description.
+    # Capability factories: capability id -> callable(settings) -> adapter.
+    factories: dict[str, Callable[[dict], object]]
+    # Optional reachability probe for the startup screen.  Takes the
+    # provider's validated settings and must be status-agnostic (a 4xx
+    # response still counts as "reachable").
+    startup_check: Callable[[dict], bool] | None = None
     notes: tuple = field(default=())
 
     def implements(self, capability: str) -> bool:
         return capability in self.capabilities
 
-    def factory_for(self, capability: str):
-        return {
-            "flights": self.flight_factory,
-            "routes": self.route_factory,
-            "aircraft": self.aircraft_factory,
-        }.get(capability)
+    def factory(self, capability: str) -> Callable[[dict], object] | None:
+        return self.factories.get(capability)
 
 
 # ---------------------------------------------------------------------------
-# Lazy capability factories
+# Lazy factories
 #
-# Each factory imports its module on first call so the registry itself
-# stays import-light.  Settings dicts come from the configuration store.
+# Provider modules import their heavy API clients at module level, so the
+# factory imports the module on first use.  The registry itself only ever
+# touches the lightweight config descriptors.
 # ---------------------------------------------------------------------------
 
 
-def _fr24_flights(settings):
-    from lookups.providers.fr24.flights import FlightProvider
+def _factory(module: str, class_name: str) -> Callable[[dict], object]:
+    """Build a capability factory that imports its module on first use."""
 
-    return FlightProvider(settings)
+    def factory(settings: dict):
+        import importlib
 
+        return getattr(importlib.import_module(module), class_name)(settings)
 
-def _fr24_routes(settings):
-    from lookups.providers.fr24.routes import RouteProvider
-
-    return RouteProvider(settings)
-
-
-def _fr24_aircraft(settings):
-    from lookups.providers.fr24.aircraft import AircraftProvider
-
-    return AircraftProvider(settings)
+    return factory
 
 
-def _fr24_startup_check():
-    from lookups.providers.fr24.flights import startup_check
+def _startup_check(module: str) -> Callable[[dict], bool]:
+    """Adapt a provider module's ``startup_check(settings)`` probe."""
 
-    return startup_check()
+    def check(settings: dict) -> bool:
+        import importlib
 
+        return bool(importlib.import_module(module).startup_check(settings))
 
-def _opensky_flights(settings):
-    from lookups.providers.opensky.flights import FlightProvider
-
-    return FlightProvider(settings)
-
-
-def _opensky_startup_check():
-    from lookups.providers.opensky.flights import startup_check
-
-    return startup_check()
-
-
-def _tar1090_flights(settings):
-    from lookups.providers.tar1090.flights import FlightProvider
-
-    return FlightProvider(settings)
-
-
-def _tar1090_startup_check():
-    from lookups.providers.tar1090.flights import startup_check
-    from setup.configuration import Config
-
-    return startup_check(Config.instance().provider_settings("tar1090").get("url", ""))
-
-
-def _hexdb_routes(settings):
-    from lookups.providers.hexdb.routes import RouteProvider
-
-    return RouteProvider(settings)
-
-
-def _hexdb_aircraft(settings):
-    from lookups.providers.hexdb.aircraft import AircraftProvider
-
-    return AircraftProvider(settings)
-
-
-def _adsbdb_routes(settings):
-    from lookups.providers.adsbdb.routes import RouteProvider
-
-    return RouteProvider(settings)
-
-
-def _adsbdb_aircraft(settings):
-    from lookups.providers.adsbdb.aircraft import AircraftProvider
-
-    return AircraftProvider(settings)
-
-
-def _aerodatabox_routes(settings):
-    from lookups.providers.aerodatabox.routes import RouteProvider
-
-    return RouteProvider(settings)
-
-
-def _aerodatabox_aircraft(settings):
-    from lookups.providers.aerodatabox.aircraft import AircraftProvider
-
-    return AircraftProvider(settings)
+    return check
 
 
 # ---------------------------------------------------------------------------
@@ -161,25 +108,36 @@ def _aerodatabox_aircraft(settings):
 # ---------------------------------------------------------------------------
 
 
-def _spec(pid, config_module, capabilities, **kwargs) -> ProviderSpec:
-    """Build a ProviderSpec, importing its descriptor module lazily.
-
-    Importing each config module at catalog-build time would drag every
-    provider package into boot; the descriptors are tiny, though, and the
-    config store needs the full schemas at validation time anyway - so
-    they *are* imported eagerly, just kept dependency-free.
-    """
+def _descriptor(pid: str) -> ProviderConfig:
     import importlib
 
-    mod = importlib.import_module(config_module)
-    descriptor: ProviderConfig = mod.PROVIDER
+    return importlib.import_module(f"lookups.providers.{pid}.config").PROVIDER
+
+
+def _spec(
+    pid: str,
+    name: str,
+    description: str,
+    capabilities: tuple[str, ...],
+    factories: dict[str, tuple[str, str]],
+    startup_module: str | None = None,
+) -> ProviderSpec:
+    """Build a ProviderSpec, mapping factory tuples to lazy factories.
+
+    Each *factories* entry maps a capability id to
+    ``(module_name, ClassName)``; the module is imported on first use.
+    """
     return ProviderSpec(
         id=pid,
-        name=descriptor.name,
-        description=descriptor.description,
+        name=name,
+        description=description,
         capabilities=frozenset(capabilities),
-        config=descriptor,
-        **kwargs,
+        config=_descriptor(pid),
+        factories={
+            capability: _factory(f"lookups.providers.{module_name}", class_name)
+            for capability, (module_name, class_name) in factories.items()
+        },
+        startup_check=(_startup_check(f"lookups.providers.{startup_module}") if startup_module else None),
     )
 
 
@@ -188,66 +146,98 @@ PROVIDERS: dict[str, ProviderSpec] = {
     for spec in (
         _spec(
             "fr24",
-            "lookups.providers.fr24.config",
+            "FlightRadar24",
+            "Live flights from the FlightRadar24 feed. Works without an "
+            "API key, but the feed is the least reliable of the online "
+            "providers.",
             ("flights", "routes", "aircraft"),
-            flight_factory=_fr24_flights,
-            route_factory=_fr24_routes,
-            aircraft_factory=_fr24_aircraft,
-            startup_check=_fr24_startup_check,
+            {
+                "flights": ("fr24.flights", "FlightProvider"),
+                "routes": ("fr24.routes", "RouteProvider"),
+                "aircraft": ("fr24.aircraft", "AircraftProvider"),
+            },
+            startup_module="fr24.flights",
         ),
         _spec(
             "opensky",
-            "lookups.providers.opensky.config",
+            "OpenSky Network",
+            "Live aircraft state vectors via the OpenSky Network REST API "
+            "(OAuth2 client credentials).",
             ("flights",),
-            flight_factory=_opensky_flights,
-            startup_check=_opensky_startup_check,
+            {"flights": ("opensky.flights", "FlightProvider")},
+            startup_module="opensky.flights",
         ),
         _spec(
             "tar1090",
-            "lookups.providers.tar1090.config",
+            "tar1090",
+            "A local / self-hosted tar1090 (or dump1090) receiver fed by "
+            "your own ADS-B antenna.",
             ("flights",),
-            flight_factory=_tar1090_flights,
-            startup_check=_tar1090_startup_check,
+            {"flights": ("tar1090.flights", "FlightProvider")},
+            startup_module="tar1090.flights",
         ),
         _spec(
             "hexdb",
-            "lookups.providers.hexdb.config",
+            "HexDB",
+            "Free route and aircraft database at hexdb.io. No API key "
+            "required.",
             ("routes", "aircraft"),
-            route_factory=_hexdb_routes,
-            aircraft_factory=_hexdb_aircraft,
+            {
+                "routes": ("hexdb.routes", "RouteProvider"),
+                "aircraft": ("hexdb.aircraft", "AircraftProvider"),
+            },
         ),
         _spec(
             "adsbdb",
-            "lookups.providers.adsbdb.config",
+            "adsbdb.com",
+            "Free callsign-route and aircraft database at adsbdb.com. No "
+            "API key required.",
             ("routes", "aircraft"),
-            route_factory=_adsbdb_routes,
-            aircraft_factory=_adsbdb_aircraft,
+            {
+                "routes": ("adsbdb.routes", "RouteProvider"),
+                "aircraft": ("adsbdb.aircraft", "AircraftProvider"),
+            },
         ),
         _spec(
             "aerodatabox",
-            "lookups.providers.aerodatabox.config",
+            "AeroDataBox",
+            "Commercial flight and aircraft data via RapidAPI.",
             ("routes", "aircraft"),
-            route_factory=_aerodatabox_routes,
-            aircraft_factory=_aerodatabox_aircraft,
+            {
+                "routes": ("aerodatabox.routes", "RouteProvider"),
+                "aircraft": ("aerodatabox.aircraft", "AircraftProvider"),
+            },
         ),
     )
 }
 
-# Legacy capability labels used by the configuration schema.
-CAPABILITY_FLIGHTS = "flights"
-CAPABILITY_ROUTES = "routes"
-CAPABILITY_AIRCRAFT = "aircraft"
+
+def provider_spec(pid: str) -> ProviderSpec | None:
+    """The catalogue entry for *pid*, or None if unknown."""
+    return PROVIDERS.get(pid)
+
+
+def specs_for_capability(capability: str) -> list[ProviderSpec]:
+    """All known providers that implement *capability*, in catalogue order."""
+    return [spec for spec in PROVIDERS.values() if capability in spec.capabilities]
 
 
 # ---------------------------------------------------------------------------
-# Provider list helpers
+# Configuration plumbing (imports Config lazily to avoid cycles)
 # ---------------------------------------------------------------------------
+
+
+def load_config():
+    """The process-wide Config instance (read lazily)."""
+    from setup.configuration import Config
+
+    return Config.instance()
 
 
 def normalise_provider_list(
     entries, capability: str
 ) -> tuple[list[dict], list[str]]:
-    """Validate/sanitize one persisted provider list.
+    """Validate/sanitize one persisted provider priority list.
 
     *entries* is the raw value stored under ``flight_providers`` /
     ``route_providers``: a list of ``{"provider": id, "enabled": bool}``.
@@ -280,10 +270,8 @@ def normalise_provider_list(
         if spec is None:
             warnings.append(f"unknown provider {pid!r} dropped from {capability} list")
             continue
-        if capability not in spec.capabilities:
-            warnings.append(
-                f"provider {pid!r} does not support {capability}; dropped"
-            )
+        if not spec.implements(capability):
+            warnings.append(f"provider {pid!r} does not support {capability}; dropped")
             continue
         if pid in seen:
             continue
@@ -299,15 +287,67 @@ def normalise_provider_list(
     return clean, warnings
 
 
-def specs_for_capability(capability: str) -> list[ProviderSpec]:
-    """All known provider specs that implement *capability*, catalogue order."""
-    return [s for s in PROVIDERS.values() if capability in s.capabilities]
+def resolve_chain(cfg, capability: str) -> list[tuple[str, object]]:
+    """Construct the provider chain for *capability*.
+
+    Walks the user's priority list for *capability* (``route_providers``
+    for both the routes and aircraft chains) and builds an adapter for
+    each entry that is enabled and fully configured.  Returns
+    ``[(provider_id, adapter), ...]`` in priority order; adapters are
+    memoised (see :func:`get_adapter`).
+    """
+    chain: list[tuple[str, object]] = []
+    for entry in getattr(cfg, _PRIORITY_LIST_ATTR[capability]):
+        if not entry.get("enabled"):
+            continue
+        spec = PROVIDERS.get(entry["provider"])
+        if spec is None or not spec.implements(capability):
+            continue
+        settings = cfg.provider_settings(spec.id)
+        if not spec.config.is_configured(settings):
+            continue
+        adapter = get_adapter(capability, spec.id, settings)
+        if adapter is not None:
+            chain.append((spec.id, adapter))
+    return chain
 
 
-def provider_spec(pid: str) -> ProviderSpec | None:
-    return PROVIDERS.get(pid)
+def top_provider(cfg, capability: str) -> ProviderSpec | None:
+    """The highest-priority enabled, configured provider for *capability*."""
+    chain = resolve_chain(cfg, capability)
+    return PROVIDERS[chain[0][0]] if chain else None
 
 
-def provider_settings_key(pid: str) -> str:
-    """Config key holding *pid*'s settings subtree."""
-    return f"providers.{pid}"
+# ---------------------------------------------------------------------------
+# Adapter construction (memoised - sessions/tokens survive across polls)
+# ---------------------------------------------------------------------------
+
+_adapter_cache: dict[tuple, object] = {}
+
+
+def _settings_fingerprint(settings: dict) -> tuple:
+    """Hashable snapshot of *settings* so config edits rebuild adapters."""
+    return tuple(sorted((key, str(value)) for key, value in settings.items()))
+
+
+def get_adapter(capability: str, pid: str, settings: dict) -> object | None:
+    """Return the (cached) capability adapter for *pid*.
+
+    Adapters are rebuilt automatically when their settings change, so
+    configuration edits take effect without a restart.
+    """
+    key = (capability, pid, _settings_fingerprint(settings))
+    adapter = _adapter_cache.get(key)
+    if adapter is None:
+        spec = PROVIDERS.get(pid)
+        factory = spec.factory(capability) if spec else None
+        if factory is None:
+            return None
+        adapter = factory(settings)
+        _adapter_cache[key] = adapter
+    return adapter
+
+
+def reset_adapters() -> None:
+    """Drop all memoised adapters (tests and config reloads)."""
+    _adapter_cache.clear()

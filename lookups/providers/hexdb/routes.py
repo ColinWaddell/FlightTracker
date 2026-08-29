@@ -15,10 +15,8 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
-from lookups.providers.common.airports import icao_to_iata_code
-from lookups.providers.common.operators import clean_operator_code
+from lookups.providers.common.airports import fill_airport_details, icao_to_iata_code
 from lookups.results import LookupResult, RouteInfo
-from utilities.overhead_utilities import airport_info as bundled_airport_info
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +88,10 @@ class RouteProvider:
         route = RouteInfo()
         if origin_iata:
             route.origin = origin_iata
-            _fill_airport_details(route, "origin", origin_iata)
+            fill_airport_details(route, "origin")
         if dest_iata:
             route.destination = dest_iata
-            _fill_airport_details(route, "destination", dest_iata)
+            fill_airport_details(route, "destination")
 
         return LookupResult.found(route)
 
@@ -114,48 +112,3 @@ def parse_route(route_str: str) -> tuple[str, str]:
         return "", ""
     return parts[0], parts[-1]
 
-
-def parse_aircraft_type(data: dict) -> str:
-    """Build a 'Manufacturer Type' string from a hexdb aircraft response."""
-    manufacturer = (data.get("Manufacturer") or "").strip()
-    type_code = (data.get("ICAOTypeCode") or "").strip()
-    if manufacturer and type_code:
-        return f"{manufacturer} {type_code}"
-    return type_code or manufacturer
-
-
-def parse_registration(data: dict) -> str:
-    return (data.get("Registration") or "").strip()
-
-
-def parse_operator_icao(data: dict) -> str:
-    """Return the registered operator's ICAO code from a hexdb response.
-
-    hexdb exposes this as ``OperatorFlagCode`` - for airline aircraft this
-    is the 3-letter ICAO airline designator (e.g. ``EIN``, ``BAW``).
-    """
-    return clean_operator_code(data.get("OperatorFlagCode"))
-
-
-def parse_owner(data: dict) -> str:
-    return (data.get("RegisteredOwners") or "").strip()
-
-
-def _fill_airport_details(route: RouteInfo, which: str, iata: str) -> None:
-    """Populate name/municipality/country for one end of *route*.
-
-    *which* is ``"origin"`` or ``"destination"``; the airport's location
-    fields are enriched from the bundled airports database, keyed by the
-    IATA code stored on the route.
-    """
-    if not iata:
-        return
-    details = bundled_airport_info(iata) or {}
-    if which == "origin":
-        route.origin_name = details.get("name", "")
-        route.origin_municipality = details.get("municipality", "")
-        route.origin_country = details.get("country_name", "")
-    else:
-        route.destination_name = details.get("name", "")
-        route.destination_municipality = details.get("municipality", "")
-        route.destination_country = details.get("country_name", "")

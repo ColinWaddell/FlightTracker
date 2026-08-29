@@ -785,14 +785,7 @@ class TestFlightsService:
         """Patch provider resolution so [(pid, adapter)] stubs are used."""
         import lookups.flights as fs
 
-        monkeypatch.setattr(
-            fs, "_flight_providers", lambda: [(pid, {}) for pid, _a in providers]
-        )
-        monkeypatch.setattr(
-            fs,
-            "get_flight_adapter",
-            lambda pid, settings: {pid: a for pid, a in providers}.get(pid),
-        )
+        monkeypatch.setattr(fs, "_chain", lambda: providers)
 
     def test_first_provider_answers(self, monkeypatch):
         import lookups.flights as fs
@@ -952,7 +945,6 @@ class TestEnrichment:
             return [("hexdb", adapter)]
 
         monkeypatch.setattr(rs, "resolve_route_providers", fake_resolver)
-        monkeypatch.setattr(rs, "_config", lambda: StubConfig())
 
         obs = FlightObservation(
             callsign="BAW123",
@@ -981,7 +973,6 @@ class TestEnrichment:
             "resolve_route_providers",
             lambda cfg=None: [("routeprov", route_adapter)],
         )
-        monkeypatch.setattr(rs, "_config", lambda: StubConfig())
 
         aircraft_adapter = MagicMock()
         aircraft_adapter.lookup_aircraft.return_value = LookupResult.found(

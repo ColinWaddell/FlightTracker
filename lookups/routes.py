@@ -26,71 +26,35 @@ import logging
 import time
 
 from lookups import cache
+from lookups.providers.common.airports import fill_airport_details
 from lookups.quarantine import QUARANTINE
-from lookups.registry import provider_spec
+from lookups.registry import ROUTES, load_config, resolve_chain
 from lookups.results import LookupContext, RouteInfo
 
 logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Adapter construction (memoised - sessions survive across polls)
+# Provider chain
 # ---------------------------------------------------------------------------
-
-_adapter_cache: dict[tuple, object] = {}
-
-
-def get_route_adapter(pid: str, settings: dict):
-    """Return a (cached) route-capable adapter for *pid*."""
-    key = ("routes", pid, tuple(sorted((k, str(v)) for k, v in settings.items())))
-    adapter = _adapter_cache.get(key)
-    if adapter is None:
-        spec = provider_spec(pid)
-        if spec is None or spec.route_factory is None:
-            return None
-        adapter = spec.route_factory(settings)
-        _adapter_cache[key] = adapter
-    return adapter
-
-
-def reset_adapters() -> None:
-    """Drop memoised adapters (tests / config reload)."""
-    _adapter_cache.clear()
-
-
-# ---------------------------------------------------------------------------
-# Provider resolution (Config read lazily to avoid import cycles)
-# ---------------------------------------------------------------------------
-
-
-def _config():
-    from setup.configuration import Config
-
-    return Config.instance()
 
 
 def resolve_route_providers(cfg) -> list[tuple[str, object]]:
     """``[(provider_id, adapter)]`` for enabled, configured route providers."""
-    providers = []
-    for entry in cfg.route_providers:
-        pid = entry["provider"]
-        if not entry.get("enabled"):
-            continue
-        spec = provider_spec(pid)
-        if spec is None or "routes" not in spec.capabilities:
-            continue
-        settings = cfg.provider_settings(pid)
-        if not spec.config.is_configured(settings):
-            continue
-        adapter = get_route_adapter(pid, settings)
-        if adapter is not None:
-            providers.append((pid, adapter))
-    return providers
+    return resolve_chain(cfg, ROUTES)
+
+
+def reset_adapters() -> None:
+    """Drop memoised adapters (tests / config reload)."""
+    from lookups.registry import reset_adapters as _reset
+
+    _reset()
 
 
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
+
 
 def run_route_pipeline(
     ctx: LookupContext, providers: list[tuple[str, object]]
@@ -142,22 +106,24 @@ def enrich_route_names(route: RouteInfo) -> bool:
     Modifies *route* in-place; returns True when anything changed (callers
     use that to decide whether to re-write the cache).
     """
-    from utilities.overhead_utilities import airport_info as bundled
-
     changed = False
     for side in ("origin", "destination"):
-        if not getattr(route, side) or getattr(route, f"{side}_name"):
-            continue
-        details = bundled(getattr(route, side)) or {}
-        name = details.get("name", "")
-        municipality = details.get("municipality", "")
-        country = details.get("country_name", "")
-        if name or municipality or country:
-            setattr(route, f"{side}_name", name)
-            setattr(route, f"{side}_municipality", municipality)
-            setattr(route, f"{side}_country", country)
+        if fill_airport_details(route, side):
             changed = True
     return changed
+
+
+def _cacheable(route: RouteInfo) -> dict:
+    """Serialise *route* for the callsign cache key.
+
+    ``operator_icao`` and ``owner`` are stripped: they describe the
+    airframe (mode-s key), not the flight; caching them per-callsign would
+    let one day's airframe decide tomorrow's logo.
+    """
+    entry = route.to_dict()
+    entry.pop("operator_icao", None)
+    entry.pop("owner", None)
+    return entry
 
 
 def _run_pipeline_with_cache(
@@ -168,14 +134,8 @@ def _run_pipeline_with_cache(
 
     if result.origin or result.destination:
         # Positive result - enrich names and cache under the callsign.
-        # operator_icao/owner are stripped: they describe the airframe
-        # (mode_s key), not the flight; caching them per-callsign would let
-        # one day's airframe decide tomorrow's logo.
         enrich_route_names(result)
-        entry = result.to_dict()
-        entry.pop("operator_icao", None)
-        entry.pop("owner", None)
-        cache.put(callsign, entry)
+        cache.put(callsign, _cacheable(result))
         return result
 
     # Providers found nothing.  Stale fallback: a recently-expired positive
@@ -187,7 +147,7 @@ def _run_pipeline_with_cache(
         enrich_route_names(stale_route)
         cache.put(
             callsign,
-            stale_route.to_dict(),
+            _cacheable(stale_route),
             ts=stale["_ts"] + cache.STALE_RECACHE_ADVANCE,
         )
         logger.debug(
@@ -201,6 +161,24 @@ def _run_pipeline_with_cache(
     # Cache the miss only when the pipeline answered truthfully.
     if all_answered and providers:
         cache.put(callsign, {"miss": True}, ttl=cache.CACHE_TTL_MISS)
+    return result
+
+
+def _fill_cached_gaps(
+    ctx: LookupContext, callsign: str, result: RouteInfo
+) -> RouteInfo:
+    """Run the provider pipeline against a cached-but-incomplete route.
+
+    The result is only re-cached when the merge actually improved the
+    entry, so a poll that fills nothing costs no cache write.
+    """
+    before = result.to_dict()
+    pipeline_result, _answered, _hit = run_route_pipeline(
+        ctx, resolve_chain(load_config(), ROUTES)
+    )
+    result.merge_missing(pipeline_result)
+    if result.to_dict() != before:
+        cache.put(callsign, _cacheable(result))
     return result
 
 
@@ -237,40 +215,21 @@ def lookup_route(
         # recently - skip everything for this poll.
         return result
 
-    if cached is not None and (cached.get("origin") or cached.get("destination")):
-        cached_route = RouteInfo.from_dict(cached)
-        if enrich_route_names(cached_route):
-            entry = cached_route.to_dict()
-            entry.pop("operator_icao", None)
-            entry.pop("owner", None)
-            cache.put(callsign, entry)
-        result.merge_missing(cached_route)
-        if result.is_complete():
-            return result
+    if cached is None:
+        # 2a. No cached entry - run the pipeline with full cache
+        #     bookkeeping (positive write / stale fallback / miss write).
+        result.merge_missing(_run_pipeline_with_cache(ctx, callsign, resolve_route_providers(cfg or load_config())))
+        return result
 
-    # 2. Provider pipeline - run when there is no cached route, or when the
-    #    cached route is incomplete (providers may fill airline_icao etc.).
-    providers = resolve_route_providers(cfg or _config())
+    # 2b. Cached entry - seed from the cache, then fill any remaining gaps
+    #     from live providers (e.g. a cached route missing its airline).
+    cached_route = RouteInfo.from_dict(cached)
+    if enrich_route_names(cached_route):
+        cache.put(callsign, _cacheable(cached_route))
+    result.merge_missing(cached_route)
 
-    if cached is None or not (
-        cached.get("origin") or cached.get("destination")
-    ):
-        pipeline_result = _run_pipeline_with_cache(ctx, callsign, providers)
-    else:
-        # Cached (incomplete) route: run the pipeline for gap-filling but
-        # only re-cache when the merge actually improved the entry.
-        before = result.to_dict()
-        pipeline_result, _answered, _hit = run_route_pipeline(ctx, providers)
-        result.merge_missing(pipeline_result)
-        if result.to_dict() != before:
-            entry = result.to_dict()
-            entry.pop("operator_icao", None)
-            entry.pop("owner", None)
-            cache.put(callsign, entry)
-        pipeline_result = None
-
-    if pipeline_result is not None:
-        result.merge_missing(pipeline_result)
+    if not result.is_complete():
+        result = _fill_cached_gaps(ctx, callsign, result)
 
     return result
 
@@ -288,7 +247,7 @@ def check_routing() -> bool:
     adapters) count as reachable by construction.
     """
     try:
-        providers = resolve_route_providers(_config())
+        providers = resolve_route_providers(load_config())
     except Exception:
         return False
     for pid, adapter in providers:

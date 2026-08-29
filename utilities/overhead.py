@@ -107,7 +107,6 @@ class Overhead:
         from lookups import cache, enrichment, flights
         from lookups.results import FlightQuery
         from setup.configuration import Config
-        from utilities.flight import Flight
 
         cfg = Config.instance()
         data = []
@@ -124,69 +123,70 @@ class Overhead:
             outcome = flights.fetch_flights(query)
 
             if not outcome.ok:
-                raise LookupUnavailableError(outcome.errors)
+                # Every enabled flight provider is unavailable - surface the
+                # error state (scene logs it, falls back to the idle screen).
+                self._set_error(LookupUnavailableError(outcome.errors))
+                return
 
             for observation in outcome.observations:
                 try:
-                    route = enrichment.enrich(observation)
-
-                    # A local receiver's own aircraft-type database (or the
-                    # feed's free model text) outranks the lookup pipelines.
-                    plane = observation.plane or route.plane
-
-                    icao_callsign = observation.callsign
-                    display_callsign = _iata_callsign(observation)
-
-                    data.append(
-                        Flight.from_route(
-                            route,
-                            plane=plane,
-                            callsign=display_callsign,
-                            icao_callsign=icao_callsign,
-                            altitude=observation.altitude_ft or 0,
-                            ground_speed=int(observation.ground_speed_kt or 0),
-                            heading=int(observation.heading_deg or 0),
-                            vertical_speed=int(observation.vertical_speed_fpm or 0),
-                        )
-                    )
+                    data.append(self._to_flight(observation, enrichment))
                 except (KeyError, AttributeError, TypeError):
                     continue
 
+        except Exception as e:
+            # Broad catch - providers raise a zoo of transport exceptions.
+            logger.warning("Flight fetch failed: %s: %s", type(e).__name__, e)
+            self._set_error(e)
+        else:
             with self.lock:
                 self.data_store = data
                 self.new_data_store = True
                 self.error_store = None
                 self.last_updated = time.time()
-            logger.debug(
-                "Fetch complete via %s - %d flight(s) tracked",
-                outcome.provider_id,
-                len(data),
-            )
-
-        except LookupUnavailableError as e:
-            # All enabled flight providers unavailable - surface the error
-            # state (scene logs it, falls back to the idle screen).
-            logger.warning("Flight fetch failed: %s", e)
-            with self.lock:
-                self.data_store = []
-                self.new_data_store = False
-                self.error_store = e
-
-        except Exception as e:
-            # Broad catch - providers raise a zoo of transport exceptions.
-            logger.warning("Flight fetch failed: %s: %s", type(e).__name__, e)
-            with self.lock:
-                self.data_store = []
-                self.new_data_store = False
-                self.error_store = e
+            logger.debug("Fetch complete - %d flight(s) tracked", len(data))
 
         finally:
-            with self.lock:
-                self.processing_store = False
-            self.done.set()
-            # Flush the lookup cache once per poll cycle rather than on
-            # every individual put() to reduce SD-card writes on a Pi.
-            cache.flush()
+            self._finish_cycle(cache)
+
+    def _to_flight(self, observation, enrichment):
+        """Enrich one live observation into a display Flight."""
+        from utilities.flight import Flight
+
+        route = enrichment.enrich(observation)
+
+        # A local receiver's own aircraft-type database (or the feed's free
+        # model text) outranks the lookup pipelines.
+        plane = observation.plane or route.plane
+
+        return Flight.from_route(
+            route,
+            plane=plane,
+            callsign=_iata_callsign(observation),
+            icao_callsign=observation.callsign,
+            altitude=observation.altitude_ft or 0,
+            ground_speed=int(observation.ground_speed_kt or 0),
+            heading=int(observation.heading_deg or 0),
+            vertical_speed=int(observation.vertical_speed_fpm or 0),
+        )
+
+    def _set_error(self, error):
+        with self.lock:
+            self.data_store = []
+            self.new_data_store = False
+            self.error_store = error
+        logger.warning("Flight fetch failed: %s", error)
+
+    def _finish_cycle(self, cache):
+        """Release the processing flag and flush the lookup cache.
+
+        The cache is flushed once per poll cycle rather than on every
+        individual put() to reduce SD-card writes on a Raspberry Pi.
+        """
+        with self.lock:
+            self.processing_store = False
+        self.done.set()
+        cache.flush()
 
     # ------------------------------------------------------------------
     # Properties (scene contract)

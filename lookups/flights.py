@@ -15,9 +15,15 @@ import logging
 from dataclasses import dataclass, field
 
 from lookups.quarantine import QUARANTINE
-from lookups.registry import provider_spec, specs_for_capability
+from lookups.registry import (
+    FLIGHTS,
+    load_config,
+    provider_spec,
+    resolve_chain,
+)
 
 logger = logging.getLogger(__name__)
+
 
 # Polling interval (seconds) associated with each flight provider.  Local
 # receivers refresh fastest; free public APIs are polled slowly as they
@@ -48,74 +54,9 @@ class FlightFetchOutcome:
     errors: list[str] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# Adapter construction (memoised so sessions/tokens persist across polls)
-# ---------------------------------------------------------------------------
-
-_adapter_cache: dict[tuple, object] = {}
-
-
-def _settings_fingerprint(settings: dict) -> tuple:
-    return tuple(sorted((k, str(v)) for k, v in settings.items()))
-
-
-def get_flight_adapter(pid: str, settings: dict):
-    """Return a (cached) flight-capable adapter for *pid*.
-
-    Adapters are rebuilt automatically when their settings change so
-    config edits take effect without a restart.
-    """
-    key = ("flights", pid, _settings_fingerprint(settings))
-    cached = _adapter_cache.get(key)
-    if cached is None:
-        spec = provider_spec(pid)
-        if spec is None or spec.flight_factory is None:
-            return None
-        cached = spec.flight_factory(settings)
-        _adapter_cache[key] = cached
-    return cached
-
-
-def reset_adapters() -> None:
-    """Drop memoised adapters (used by tests and after config reloads)."""
-    _adapter_cache.clear()
-
-
-# ---------------------------------------------------------------------------
-# Provider resolution
-# ---------------------------------------------------------------------------
-
-
-def _flight_providers() -> list[tuple[str, dict]]:
-    """Resolve enabled, configured flight providers in priority order.
-
-    Returns ``[(provider_id, settings), ...]``.  Reads Config lazily.
-    """
-    from setup.configuration import Config
-
-    cfg = Config.instance()
-    return _resolve_flight_providers(cfg)
-
-
-def _resolve_flight_providers(cfg) -> list[tuple[str, dict]]:
-    providers = []
-    for entry in cfg.flight_providers:
-        pid = entry["provider"]
-        if not entry.get("enabled"):
-            continue
-        spec = provider_spec(pid)
-        if spec is None or "flights" not in spec.capabilities:
-            continue
-        settings = cfg.provider_settings(pid)
-        if not spec.config.is_configured(settings):
-            continue
-        providers.append((pid, settings))
-    return providers
-
-
-# ---------------------------------------------------------------------------
-# Public interface
-# ---------------------------------------------------------------------------
+def _chain():
+    """Enabled, configured flight adapters in priority order."""
+    return resolve_chain(load_config(), FLIGHTS)
 
 
 def fetch_flights(query) -> FlightFetchOutcome:
@@ -132,14 +73,9 @@ def fetch_flights(query) -> FlightFetchOutcome:
     outcome = FlightFetchOutcome(ok=False)
     attempted_any = False
 
-    for pid, settings in _flight_providers():
+    for pid, adapter in _chain():
         spec = provider_spec(pid)
-        adapter = get_flight_adapter(pid, settings)
-        if adapter is None:
-            continue
         if QUARANTINE.is_quarantined(pid):
-            # Skip providers inside their quarantine window - they stay
-            # skipped until it expires without being re-probed.
             continue
 
         attempted_any = True
@@ -181,22 +117,21 @@ def fetch_flights(query) -> FlightFetchOutcome:
     return outcome
 
 
-def top_flight_provider() -> tuple[str, str] | tuple[None, None]:
+def top_flight_provider() -> tuple[str | None, str | None]:
     """``(provider_id, display_name)`` of the top enabled flight provider."""
-    providers = _flight_providers()
-    if not providers:
+    chain = _chain()
+    if not chain:
         return None, None
-    pid = providers[0][0]
-    spec = provider_spec(pid)
-    return pid, (spec.name if spec else pid)
+    pid = chain[0][0]
+    return pid, provider_spec(pid).name
 
 
 def refresh_interval() -> int:
     """Poll interval for the top enabled flight provider (seconds)."""
-    providers = _flight_providers()
-    if not providers:
+    chain = _chain()
+    if not chain:
         return DEFAULT_REFRESH_INTERVAL
-    return REFRESH_INTERVALS.get(providers[0][0], DEFAULT_REFRESH_INTERVAL)
+    return REFRESH_INTERVALS.get(chain[0][0], DEFAULT_REFRESH_INTERVAL)
 
 
 def startup_check() -> bool:
@@ -205,41 +140,14 @@ def startup_check() -> bool:
     Status-agnostic (a 4xx is still "reachable").  True when the endpoint
     responds, False on connection errors or when nothing is configured.
     """
-    providers = _flight_providers()
-    if not providers:
+    chain = _chain()
+    if not chain:
         return False
-    pid, settings = providers[0]
-    spec = provider_spec(pid)
-    if spec is None or spec.startup_check is None:
-        return False
-    if pid == "tar1090":
-        # tar1090's probe needs the configured URL passed explicitly.
-        return bool(spec.startup_check(settings.get("url", "")))
+    pid, adapter_or_spec = chain[0][0], provider_spec(chain[0][0])
     try:
-        return bool(spec.startup_check())
+        from setup.configuration import Config
+
+        settings = Config.instance().provider_settings(pid)
+        return bool(adapter_or_spec.startup_check(settings))
     except Exception:
         return False
-
-
-def provider_status() -> dict[str, str]:
-    """``{provider_id: "ok"|"fail"|"skip"|"quarantined"}`` for flight providers.
-
-    Used by the startup screen and web UI.  "skip" = not enabled/configured.
-    """
-    from setup.configuration import Config
-
-    cfg = Config.instance()
-    status: dict[str, str] = {}
-    for spec in specs_for_capability("flights"):
-        settings = cfg.provider_settings(spec.id)
-        enabled = any(
-            e["provider"] == spec.id and e.get("enabled")
-            for e in cfg.flight_providers
-        )
-        if not enabled or not spec.config.is_configured(settings):
-            status[spec.id] = "skip"
-        elif QUARANTINE.is_quarantined(spec.id):
-            status[spec.id] = "quarantined"
-        else:
-            status[spec.id] = "ok"
-    return status

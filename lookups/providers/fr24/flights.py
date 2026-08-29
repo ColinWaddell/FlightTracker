@@ -140,7 +140,7 @@ def _to_observation(flight) -> FlightObservation | None:
     )
 
 
-def startup_check() -> bool:
+def startup_check(settings: dict | None = None) -> bool:
     """Cheap reachability probe for the startup screen (status-agnostic)."""
     import requests
 
