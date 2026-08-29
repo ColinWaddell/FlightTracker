@@ -158,6 +158,7 @@ DEFAULT_ROUTE_PROVIDERS: list[dict[str, Any]] = [
     {"provider": "fr24", "enabled": True},
     {"provider": "airlabs", "enabled": False},
     {"provider": "flightaware", "enabled": False},
+    {"provider": "fr24api", "enabled": False},
 ]
 
 # Satellite tracking
@@ -243,6 +244,7 @@ DEFAULTS: dict[str, Any] = {
         {"provider": "adsblol", "enabled": True},
         {"provider": "airplaneslive", "enabled": True},
         {"provider": "fr24", "enabled": True},
+        {"provider": "fr24api", "enabled": False},
     ],
     "route_providers": [
         {"provider": "aerodatabox", "enabled": False},
@@ -250,6 +252,7 @@ DEFAULTS: dict[str, Any] = {
         {"provider": "adsbim", "enabled": True},
         {"provider": "adsbdb", "enabled": True},
         {"provider": "fr24", "enabled": True},
+        {"provider": "fr24api", "enabled": False},
     ],
     "providers": {
         "fr24": {},
@@ -264,6 +267,7 @@ DEFAULTS: dict[str, Any] = {
         "aerodatabox": {"api_key": ""},
         "airlabs": {"api_key": ""},
         "flightaware": {"api_key": ""},
+        "fr24api": {"api_key": ""},
     },
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,

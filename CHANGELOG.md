@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exports automatically, and never sent to the browser
 - `python flight-tracker.py test flights [--provider ID]` replaces the three per-source
   test commands (old targets still work as aliases)
+- Six new lookup providers: keyless flight aggregators **ADS-B.fi**, **ADSB.lol** and
+  **airplanes.live** (one shared readsb-format adapter; tar1090 now reuses it), plus
+  route providers **ADSB.im routeset** (free, no key), **AirLabs** (free 1,000/month
+  with a key) and **FlightAware AeroAPI** (paid, per-callsign)
+- **FlightRadar24 API** provider: the official commercial FR24 service
+  (fr24api.flightradar24.com) as a separate, opt-in provider for flights, routes and
+  aircraft, alongside the existing free feed client. Bearer-token auth, altitude-band
+  filtering sent server-side to minimise billed records; existing free provider is
+  untouched (the two share no code)
 
 ### Changed
 - Provider config migrated automatically: the old `data_source`, `tar1090_url`,

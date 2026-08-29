@@ -254,3 +254,265 @@ class TestAirLabs:
         with mock.patch.object(flightaware.requests, "get", return_value=_response({}, status=401)):
             result = provider.lookup_route(_context("BAW123"))
         assert result.is_unavailable
+
+
+# ---------------------------------------------------------------------------
+# FlightRadar24 API (official, commercial)
+# ---------------------------------------------------------------------------
+
+
+def _fr24_record(**fields):
+    record = {
+        "fr24_id": "abc123",
+        "hex": "406DF5",
+        "callsign": "BAW1AB",
+        "flight": "BA1AB",
+        "lat": 55.5,
+        "lon": -4.0,
+        "alt": 12000,
+        "gspeed": 400,
+        "track": 90,
+        "vspeed": -64,
+        "orig_iata": "LHR",
+        "orig_icao": "EGLL",
+        "dest_iata": "DOH",
+        "dest_icao": "OTHH",
+        "painted_as": "BAW",
+        "type": "A35K",
+        "reg": "G-XWBA",
+    }
+    record.update(fields)
+    return record
+
+
+def _fr24_response(data, status=200):
+    response = mock.Mock()
+    response.status_code = status
+    response.json.return_value = {"data": data}
+    return response
+
+
+class TestFr24ApiFlights:
+    def _fetch(self, monkeypatch, data=None, status=200):
+        import lookups.providers.fr24api.flights as fr24api
+        from lookups.results import FlightQuery
+
+        captured = {}
+
+        def fake_get(path, token, params=None):
+            captured["path"] = path
+            captured["token"] = token
+            captured["params"] = params
+            return _fr24_response(data or [], status)
+
+        monkeypatch.setattr(fr24api, "_get_explicit", fake_get, raising=False)
+        # The provider imports get() inside fetch(); patch the client module.
+        import lookups.providers.fr24api.client as client
+
+        monkeypatch.setattr(client, "get", fake_get)
+
+        query = FlightQuery(
+            zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+            home=[55.5, -4.0, 100],
+        )
+        result = fr24api.FlightProvider({"api_key": "TOK"}).fetch(query)
+        return result, captured
+
+    def test_found_and_mapped(self, monkeypatch):
+        result, captured = self._fetch(
+            monkeypatch,
+            data=[_fr24_record(), _fr24_record(hex="222222", lat=54.0)],
+        )
+        assert result.is_found
+        assert [o.icao for o in result.value] == ["406df5"]
+        obs = result.value[0]
+        assert obs.callsign == "BAW1AB"
+        assert obs.flight_number == "BA1AB"
+        assert obs.altitude_ft == 12000
+        assert obs.ground_speed_kt == 400
+        assert obs.heading_deg == 90
+        assert obs.vertical_speed_fpm == -64
+        assert obs.origin == "LHR"
+        assert obs.destination == "DOH"
+        assert obs.airline_icao == "BAW"
+        # Bounds use the zone corners, north-south-west-east order.
+        assert captured["path"] == "/api/live/flight-positions/full"
+        assert captured["params"]["bounds"] == "56.0,55.0,-5.0,-3.0"
+        assert captured["token"] == "TOK"
+
+    def test_no_token_is_unavailable(self):
+        import lookups.providers.fr24api.flights as fr24api
+
+        result = fr24api.FlightProvider({}).fetch(_query())
+        assert result.is_unavailable
+
+    def test_auth_and_credit_errors_are_unavailable(self, monkeypatch):
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.flights as fr24api
+
+        monkeypatch.setattr(
+            client, "get", lambda *a, **k: _fr24_response([], status=402)
+        )
+        from lookups.results import FlightQuery
+
+        result = fr24api.FlightProvider({"api_key": "TOK"}).fetch(
+            FlightQuery(
+                zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+                home=[55.5, -4.0, 100],
+            )
+        )
+        assert result.is_unavailable
+        assert "credit" in result.reason
+
+    def test_transport_error_is_unavailable(self, monkeypatch):
+        import requests
+
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.flights as fr24api
+
+        def boom(*args, **kwargs):
+            raise requests.ConnectionError("down")
+
+        monkeypatch.setattr(client, "get", boom)
+        from lookups.results import FlightQuery
+
+        result = fr24api.FlightProvider({"api_key": "TOK"}).fetch(
+            FlightQuery(
+                zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+                home=[55.5, -4.0, 100],
+            )
+        )
+        assert result.is_unavailable
+
+
+class TestFr24ApiRoutes:
+    def _lookup(self, monkeypatch, data=None, status=200, callsign="BAW1AB"):
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.routes as fr24api
+
+        monkeypatch.setattr(
+            client, "get", lambda *a, **k: _fr24_response(data or [], status)
+        )
+        return fr24api.RouteProvider({"api_key": "TOK"}).lookup_route(
+            _context(callsign)
+        )
+
+    def test_found(self, monkeypatch):
+        result = self._lookup(monkeypatch, data=[_fr24_record()])
+        assert result.is_found
+        assert result.value.origin == "LHR"
+        assert result.value.destination == "DOH"
+        assert result.value.airline_icao == "BAW"
+
+    def test_icao_only_codes_converted(self, monkeypatch):
+        record = {
+            "orig_iata": "",
+            "orig_icao": "EGLL",
+            "dest_iata": "",
+            "dest_icao": "KJFK",
+        }
+        result = self._lookup(monkeypatch, data=[record])
+        assert result.is_found
+        assert result.value.origin == "LHR"
+        assert result.value.destination == "JFK"
+
+    def test_unroutable_flight_is_not_found(self, monkeypatch):
+        record = {"orig_iata": "", "dest_iata": "", "orig_icao": "", "dest_icao": ""}
+        result = self._lookup(monkeypatch, data=[record])
+        assert result.is_not_found
+
+    def test_unknown_callsign_is_not_found(self, monkeypatch):
+        result = self._lookup(monkeypatch, data=[])
+        assert result.is_not_found
+
+    def test_no_callsign_is_not_found(self):
+        from lookups.providers.fr24api.routes import RouteProvider
+
+        assert RouteProvider({"api_key": "TOK"}).lookup_route(_context("")).is_not_found
+
+    def test_missing_token_is_unavailable(self):
+        from lookups.providers.fr24api.routes import RouteProvider
+
+        result = RouteProvider({}).lookup_route(_context("BAW1AB"))
+        assert result.is_unavailable
+
+    def test_credit_error_is_unavailable(self, monkeypatch):
+        result = self._lookup(monkeypatch, data=[], status=402)
+        assert result.is_unavailable
+        assert "credit" in result.reason
+
+
+class TestFr24ApiAircraft:
+    def test_found(self, monkeypatch):
+        import lookups.providers.fr24api.aircraft as fr24api
+        import lookups.providers.fr24api.client as client
+
+        monkeypatch.setattr(
+            client, "get", lambda *a, **k: _fr24_response([_fr24_record()])
+        )
+        result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("BAW1AB")
+        )
+        assert result.is_found
+        assert result.value.registration == "G-XWBA"
+        assert result.value.plane == "A35K"
+        assert result.value.operator_icao == "BAW"
+
+    def test_unknown_callsign_is_not_found(self, monkeypatch):
+        import lookups.providers.fr24api.aircraft as fr24api
+        import lookups.providers.fr24api.client as client
+
+        monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([]))
+        result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("BAW1AB")
+        )
+        assert result.is_not_found
+
+    def test_no_callsign_is_not_found(self):
+        import lookups.providers.fr24api.aircraft as fr24api
+
+        result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("")
+        )
+        assert result.is_not_found
+
+    def test_missing_token_is_unavailable(self):
+        import lookups.providers.fr24api.aircraft as fr24api
+
+        result = fr24api.AircraftProvider({}).lookup_aircraft(_context("BAW1AB"))
+        assert result.is_unavailable
+
+
+class TestFr24ApiCatalogue:
+    def test_registered(self):
+        from lookups.registry import PROVIDERS
+
+        spec = PROVIDERS["fr24api"]
+        assert spec.implements("flights")
+        assert spec.implements("routes")
+        assert spec.implements("aircraft")
+
+    def test_config_defaults(self):
+        from setup.configuration import DEFAULTS
+
+        assert DEFAULTS["providers"]["fr24api"] == {"api_key": ""}
+        assert any(
+            e["provider"] == "fr24api" for e in DEFAULTS["flight_providers"]
+        )
+        assert any(
+            e["provider"] == "fr24api" for e in DEFAULTS["route_providers"]
+        )
+
+    def test_completeness_pass_appends_fr24api_disabled(self):
+        from setup.configuration import _complete_provider_lists
+
+        data = {
+            "flight_providers": [{"provider": "fr24", "enabled": True}],
+            "route_providers": [{"provider": "hexdb", "enabled": True}],
+            "providers": {},
+        }
+        _complete_provider_lists(data)
+        flight = {e["provider"]: e["enabled"] for e in data["flight_providers"]}
+        route = {e["provider"] for e in data["route_providers"]}
+        assert flight["fr24api"] is False
+        assert "fr24api" in route

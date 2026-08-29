@@ -39,6 +39,7 @@ REFRESH_INTERVALS = {
     "airplaneslive": 15,
     "opensky": 22,
     "fr24": 30,
+    "fr24api": 30,
 }
 
 DEFAULT_REFRESH_INTERVAL = 30

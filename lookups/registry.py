@@ -258,6 +258,22 @@ PROVIDERS: dict[str, ProviderSpec] = {
             },
         ),
         _spec(
+            "fr24api",
+            "FlightRadar24 API",
+            "FlightRadar24's official commercial API - the paid, supported "
+            "service with a Bearer token from your FR24 account. Billed per "
+            "returned record from a credit balance, so live polling over a "
+            'busy zone burns credits fastest. <a href="https://www.flightradar24.com/" '
+            'target="_blank" rel="noopener noreferrer">flightradar24.com</a>.',
+            ("flights", "routes", "aircraft"),
+            {
+                "flights": ("fr24api.flights", "FlightProvider"),
+                "routes": ("fr24api.routes", "RouteProvider"),
+                "aircraft": ("fr24api.aircraft", "AircraftProvider"),
+            },
+            startup_module="fr24api.flights",
+        ),
+        _spec(
             "airlabs",
             "AirLabs",
             "Commercial aviation database - the free plan covers 1,000 "
