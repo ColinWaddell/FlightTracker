@@ -163,8 +163,11 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "opensky",
             "OpenSky Network",
-            "Live aircraft state vectors via the OpenSky Network REST API "
-            "(OAuth2 client credentials).",
+            "Create an API client at "
+            '<a href="https://opensky-network.org/login" target="_blank" '
+            'rel="noopener noreferrer">opensky-network.org</a> '
+            "(Account &rarr; API Clients) to get your credentials. A free "
+            "registered account is sufficient for 30-second polling.",
             ("flights",),
             {"flights": ("opensky.flights", "FlightProvider")},
             startup_module="opensky.flights",
@@ -172,8 +175,10 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "tar1090",
             "tar1090",
-            "A local / self-hosted tar1090 (or dump1090) receiver fed by "
-            "your own ADS-B antenna.",
+            "Point this at your local tar1090 instance's <code>aircraft.json</code> "
+            "endpoint. Currently tested against the latest RPi image from "
+            '<a href="https://adsb.im/home" target="_blank" rel="noopener noreferrer">'
+            "ADSB.im</a>.",
             ("flights",),
             {"flights": ("tar1090.flights", "FlightProvider")},
             startup_module="tar1090.flights",
@@ -202,7 +207,14 @@ PROVIDERS: dict[str, ProviderSpec] = {
         _spec(
             "aerodatabox",
             "AeroDataBox",
-            "Commercial flight and aircraft data via RapidAPI.",
+            "Don't register with AeroDataBox directly. Instead get a key here: "
+            '<a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" '
+            'target="_blank" rel="noopener noreferrer">RapidAPI</a>. '
+            "You'll need to sign up for an account, search for AeroDataBox, "
+            "hit the Test button up the top right and then subscribe to the "
+            "free plan. After that it'll show you your key. Once you stop "
+            "getting data from this API the above fall-back scheme will "
+            "kick in.",
             ("routes", "aircraft"),
             {
                 "routes": ("aerodatabox.routes", "RouteProvider"),

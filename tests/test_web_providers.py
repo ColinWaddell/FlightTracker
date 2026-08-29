@@ -258,3 +258,25 @@ class TestSettingsPageDataMasking:
         clean, changed = apply_submitted_settings(OPENSKY, stored, {"client_secret": ""})
         assert clean["client_secret"] == ""
         assert changed is True
+
+
+# ---------------------------------------------------------------------------
+# Per-provider guidance (registration links) on the settings page
+# ---------------------------------------------------------------------------
+
+
+class TestProviderGuidance:
+    def test_settings_page_carries_registration_links(self):
+        """The lost-on-refactor signup guidance renders with its links."""
+        from web.app import app
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["authenticated"] = True
+
+        html = client.get("/settings").get_data(as_text=True)
+        assert "https://rapidapi.com/aedbx-aedbx/api/aerodatabox" in html
+        assert "https://opensky-network.org/login" in html
+        assert "adsb.im" in html
+        assert "Don't register with AeroDataBox directly" in html
+        assert "30-second polling" in html

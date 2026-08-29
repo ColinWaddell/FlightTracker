@@ -159,7 +159,7 @@ export default defineComponent({
           </span>
           <span class="badge text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
         </div>
-        <div class="form-text text-muted small" v-if="meta.description">{{ meta.description }}</div>
+        <div class="form-text text-muted small" v-if="meta.description" v-html="meta.description"></div>
 
         <div class="row mt-2" v-if="meta.fields.length">
           <div v-for="field in meta.fields" :key="field.key" class="col-md-8 mb-2">

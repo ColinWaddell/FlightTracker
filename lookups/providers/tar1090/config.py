@@ -21,8 +21,7 @@ PROVIDER = ProviderConfig(
             default="",
             required=True,
             description=(
-                "Point this at your local tar1090 instance's aircraft.json "
-                "endpoint, e.g. http://192.168.1.x/tar1090/data/aircraft.json"
+                "e.g. http://192.168.1.x/tar1090/data/aircraft.json"
             ),
         ),
     ),
