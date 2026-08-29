@@ -145,9 +145,10 @@ export default defineComponent({
         </div>
       </div>
 
-      <hr />
 
       <div v-show="store.config.airport_display_style === 0" class="mb-3">
+        <hr />
+        
         <h5>Home Airport</h5>
         <input type="text" maxlength="3" class="form-control form-control-sm"
                name="home_airport_code" id="home_airport_code"

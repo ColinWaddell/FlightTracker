@@ -140,24 +140,13 @@ export default defineComponent({
             />
 
             <!-- Save button -->
-            <div class="d-grid mb-5">
+            <div class="d-grid mb-3">
               <button type="submit" id="save-btn" class="btn btn-primary btn-lg" :disabled="store.ui.saving">
                 <span v-if="store.ui.saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
                 {{ store.ui.saving ? 'Saving…' : 'Save & Restart' }}
               </button>
             </div>
           </form>
-
-          <footer class="mt-4 pt-3 border-top text-muted small">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <p class="mb-0">
-                <a href="https://flight-tracker.dev/" target="_blank">Flight Tracker</a>
-                by <a href="https://www.colinwaddell.com" target="_blank">Colin Waddell</a>
-                &middot;
-                Released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU GPL v3</a>
-              </p>
-            </div>
-          </footer>
         </div>
       </div>
     </div>
