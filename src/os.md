@@ -34,6 +34,7 @@ structured_data: |
 <div class="status-bar">
   <div class="status-item"><a href="#what-is-it" class="text-black">What is it?</a></div>
   <div class="status-item"><a href="#flash" class="text-black">Set up the card</a></div>
+  <div class="status-item"><a href="#step-by-step" class="text-black">Step by step</a></div>
   <div class="status-item"><a href="#first-boot" class="text-black">Run on device</a></div>
   <div class="status-item"><a href="#web-installer" class="text-black">Web installer</a></div>
   <div class="status-item"><a href="#downloads" class="text-black">Downloads</a></div>
@@ -41,7 +42,7 @@ structured_data: |
 
 <section id="what-is-it" class="border-bottom">
   <div class="container">
-    <h2 class="section-title">What is FlightTracker OS?</h2>
+    <h1 class="section-title">What is FlightTracker OS?</h1>
 
     <div class="row g-4 align-items-center">
       <div class="col-lg-7">
@@ -118,9 +119,14 @@ structured_data: |
         <li>When it's done the Pi reboots and the FlightTracker app starts up on the matrix</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<section id="step-by-step" class="border-bottom">
+  <div class="container">
+    <h2 class="section-title">Step by step</h2>
 
     <div class="narrative">
-      <h4>Step by step</h4>
       <p>First, download and install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your computer.</p>
 
       <div class="alert alert-info border-info border-2" role="alert">
@@ -203,7 +209,7 @@ structured_data: |
 
 <section id="web-installer" class="border-bottom">
   <div class="container">
-    <h2 class="section-title">Run the web installer</h2>
+    <h2 class="section-title">Load the web installer</h2>
 
     <div class="narrative">
       <p>When you open the web interface you're greeted by the built-in web installer. It guides you through the remaining setup steps from your browser.</p>

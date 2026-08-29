@@ -46,10 +46,10 @@ structured_data: |
         <div class="hero-carousel" id="hero-carousel">
           <div class="hero-carousel-slides">
             <div class="hero-carousel-slide active" data-type="image">
-              <img src="/images/carousel/flight-tracker-01.jpg" />
+              <img src="/images/carousel/flight-tracker-01.jpg" alt="FlightTracker displaying live aircraft data on an RGB LED matrix" />
             </div>
             <div class="hero-carousel-slide" data-type="image">
-              <img src="/images/carousel/flight-tracker-02.jpg" />
+              <img src="/images/carousel/flight-tracker-02.jpg" alt="FlightTracker showing the idle weather screen on an RGB LED matrix" />
             </div>
           </div>
           <button class="hero-carousel-prev" aria-label="Previous slide">&lsaquo;</button>

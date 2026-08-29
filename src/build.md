@@ -41,13 +41,13 @@ structured_data: |
 
 <section id="shopping-list" class="border-bottom">
   <div class="container">
-    <h2 class="section-title">What to buy</h2>
+    <h1 class="section-title">What to buy</h1>
 
     <div class="narrative">
       <p>If you're considering building one of these, there are some must-haves and some optional extras. How you put it in a case I'll leave up to you.</p>
     </div>
     
-    <h3 class="section-title">Minimum shopping list</h3>
+    <h3 class="section-title">Shopping list</h3>
     <div class="narrative">
       <p class="lead">A Raspberry Pi.<a href="https://www.raspberrypi.com/" target="_blank"><img src="/images/Raspberry_Pi_Logo.svg" alt="Raspberry Pi logo" width="20" class="mx-2"></a></p>
       <p>FlightTracker has been tested on:</p>

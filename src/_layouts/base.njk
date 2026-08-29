@@ -7,6 +7,8 @@
   <meta name="description" content="{{ description or site.description }}" />
   <link rel="canonical" href="{{ site.url }}{{ permalink }}" />
   <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link rel="apple-touch-icon" href="/images/favicon.png" />
+  <meta name="theme-color" content="#ffd200" />
 
   {# Open Graph / Facebook #}
   <meta property="og:type" content="{{ og_type or 'website' }}" />
@@ -14,6 +16,9 @@
   <meta property="og:title" content="{{ og_title or title }} - {{ site.name }}" />
   <meta property="og:description" content="{{ description or site.description }}" />
   <meta property="og:image" content="{{ site.url }}{{ og_image or '/images/carousel/flight-tracker-01.jpg' }}" />
+  <meta property="og:image:width" content="{{ og_image_width or 800 }}" />
+  <meta property="og:image:height" content="{{ og_image_height or 600 }}" />
+  <meta property="og:image:alt" content="{{ og_image_alt or title }}" />
   <meta property="og:site_name" content="{{ site.name }}" />
 
   {# Twitter Card #}
@@ -21,12 +26,25 @@
   <meta name="twitter:title" content="{{ og_title or title }} - {{ site.name }}" />
   <meta name="twitter:description" content="{{ description or site.description }}" />
   <meta name="twitter:image" content="{{ site.url }}{{ og_image or '/images/carousel/flight-tracker-01.jpg' }}" />
+  <meta name="twitter:image:alt" content="{{ og_image_alt or title }}" />
   <meta name="twitter:creator" content="@ColinWaddell" />
 
   {# Structured data #}
   {% if structured_data %}
   <script type="application/ld+json">
   {{ structured_data | safe }}
+  </script>
+  {% endif %}
+  {% if permalink and permalink != '/' %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site.url }}/" },
+      { "@type": "ListItem", "position": 2, "name": "{{ title }}", "item": "{{ site.url }}{{ permalink }}" }
+    ]
+  }
   </script>
   {% endif %}
 

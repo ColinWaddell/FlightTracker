@@ -36,7 +36,7 @@ structured_data: |
 
 <section class="border-bottom">
   <div class="container">
-    <h2 class="section-title">Getting started</h2>
+    <h1 class="section-title">Getting started</h1>
     <div class="narrative">
       <p>You've put everything together using the <a href="/build/">build instructions</a> and now you're ready to install the software.</p>
       <p>There are a few different installation paths here, ordered from least frustrating to most.</p>
