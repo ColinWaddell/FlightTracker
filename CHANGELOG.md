@@ -4,40 +4,48 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.9.0] - 2026-08-29
 
-### Added
 - New pluggable lookup-provider architecture (`lookups/` package): providers are thin
-  adapters (FlightRadar24, OpenSky Network, tar1090, hexdb.io, adsbdb.com, AeroDataBox);
-  the app owns lookup policy - priority ordering, caching, fallback, quarantine - and
-  providers only translate their service's API
-- **FR24 is now also a route provider**: when the live feed can see the aircraft it fills
-  in whatever the route databases didn't know (previously FR24 routing only worked when
-  FR24 was the data source)
-- Route and aircraft enrichment now *merges* across providers: lower-priority providers
-  fill blanks until everything is known, instead of stopping at the first partial answer
-- Web settings: new **Providers** page with reorderable, per-capability priority lists
-  and per-provider configuration generated from provider descriptors
-- Secrets (API keys, client secrets) are masked in the UI, redacted from debug-config
-  exports automatically, and never sent to the browser
+  adapters; the app owns the policy - priority ordering, caching, fallback, quarantine -
+  and providers only translate their service's API
+- **13 lookup providers** in the catalogue: Flight Radar 24 (Free), Flight Radar 24
+  (Paid), OpenSky Network, tar1090/dump1090, ADS-B.fi, ADSB.lol, airplanes.live, HexDB,
+  adsbdb.com, ADSB.im Routes, AeroDataBox, AirLabs and FlightAware AeroAPI
+- **Flight Radar 24 (Paid)** - FlightRadar24's official commercial API
+  (fr24api.flightradar24.com) as an opt-in provider for flights, routes and aircraft.
+  Bearer-token auth, altitude filtering sent server-side to minimise billed records,
+  credit exhaustion surfaced clearly. The free feed client stays untouched and shares
+  no code with it (renamed "Flight Radar 24 (Free)" for clarity)
+- Keyless community aggregators **ADS-B.fi**, **ADSB.lol** and **airplanes.live** for
+  flight positions; route providers **ADSB.im routeset**, **AirLabs** and
+  **FlightAware AeroAPI** opt in with API keys where needed
+- Flight monitoring and routing/aircraft info are independent priority chains - enable
+  any mix, reorder freely, and the app cascades down each chain, *merging* results:
+  lower-priority providers fill blanks instead of the lookup stopping at the first
+  partial answer, and FR24 now also contributes routes (not just when it is the data
+  source)
+- tar1090, ADS-B.fi, ADSB.lol and airplanes.live share one readsb-format record parser,
+  which also accepts dump1090-style field names (fixes missing flights on forks that
+  report `altitude` instead of `alt_baro`)
+- New **/status** page: per-provider hold-offs and last-fetch details, plus Pi telemetry
+  (temperature, load, memory, storage, uptime, network)
+- Provider configuration migrated automatically: the old `data_source`, `tar1090_url`,
+  `osn_client_id/secret` and `aerodatabox_api_key` keys become the new provider lists
+  and per-provider settings; existing setups keep working without changes, and
+  providers that ship later appear in the priority lists (disabled) so nothing is
+  switched on behind your back
+- Web settings: reorderable per-capability priority lists and per-provider
+  configuration generated from provider descriptors (folded into the Data Source
+  page); secrets are masked in the UI, redacted from debug-config exports, and never
+  sent to the browser
 - `python flight-tracker.py test flights [--provider ID]` replaces the three per-source
   test commands (old targets still work as aliases)
-- Six new lookup providers: keyless flight aggregators **ADS-B.fi**, **ADSB.lol** and
-  **airplanes.live** (one shared readsb-format adapter; tar1090 now reuses it), plus
-  route providers **ADSB.im routeset** (free, no key), **AirLabs** (free 1,000/month
-  with a key) and **FlightAware AeroAPI** (paid, per-callsign)
-- **FlightRadar24 API** provider: the official commercial FR24 service
-  (fr24api.flightradar24.com) as a separate, opt-in provider for flights, routes and
-  aircraft, alongside the existing free feed client. Bearer-token auth, altitude-band
-  filtering sent server-side to minimise billed records; existing free provider is
-  untouched (the two share no code)
-
-### Changed
-- Provider config migrated automatically: the old `data_source`, `tar1090_url`,
-  `osn_client_id/secret` and `aerodatabox_api_key` keys become the new provider lists
-  and per-provider settings; existing setups keep working without changes
-- Multiple flight providers can be enabled at once with automatic fallback and a 1-hour
-  quarantine for temporarily-unavailable services
+- Installer and runtime fixes: Pillow/OpenBLAS system libraries resolved by the
+  installer, service install uses the invoking user's home directory, `FT_VERBOSE=1`
+  streams command output live
+- Internal: provider metadata de-duplicated - each provider's config descriptor is the
+  single source of truth and the registry catalogue derives its wiring from it
 
 ## [v2.8.0] - 2026-08-25
 - Complete rewrite of the settings page to move everything over to Vue.js
