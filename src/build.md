@@ -26,12 +26,20 @@ structured_data: |
       { "@type": "HowToStep", "name": "Wire power", "text": "Connect the 5V power supply to the bonnet only. Do not use a separate USB power supply - the bonnet powers the Pi." },
       { "@type": "HowToStep", "name": "Optional: solder bridge for quality", "text": "For best display quality on Pi 3/4/Zero, solder a bridge between pins 4 and 18 on the bonnet." },
       { "@type": "HowToStep", "name": "3D-print a case", "text": "Download the official 3D-printable case from Printables and print it, or design your own enclosure." },
-      { "@type": "HowToStep", "name": "Install the software", "text": "Follow the install guide at flight-tracker.dev/install/ to flash FlightTracker OS or run the quick installer." }
+      { "@type": "HowToStep", "name": "Install the software", "text": "Flash FlightTracker OS from flight-tracker.dev/os/ or follow the install guide at flight-tracker.dev/install/." }
     ]
   }
 ---
 
-<section>
+<div class="status-bar">
+  <div class="status-item"><a href="#shopping-list" class="text-black">What to buy</a></div>
+  <div class="status-item"><a href="#screen-quality" class="text-black">Screen quality</a></div>
+  <div class="status-item"><a href="#case" class="text-black">3D printed case</a></div>
+  <div class="status-item"><a href="#optional-extras" class="text-black">Optional extras</a></div>
+  <div class="status-item"><a href="#circuits" class="text-black">Circuits</a></div>
+</div>
+
+<section id="shopping-list" class="border-bottom">
   <div class="container">
     <h2 class="section-title">What to buy</h2>
 
@@ -44,14 +52,18 @@ structured_data: |
       <p class="lead">A Raspberry Pi.<a href="https://www.raspberrypi.com/" target="_blank"><img src="/images/Raspberry_Pi_Logo.svg" alt="Raspberry Pi logo" width="20" class="mx-2"></img></a></p>
       <p>FlightTracker has been tested on:</p>
         <ul>
+            <li>RPi Zero W 2</li>
             <li>RPi 3B</li>
             <li>RPi 4B</li>
             <li>RPi 5</li>
-            <li><i>
-                If your device isn't on this list and you're feeling brave, give it a shot and let me know
-                if FlightTracker works.
-            </i></li>
+            <li><strong>
+                The Pi Zero is a little too under powered to run all this without flickering, so I'd always recommend a more powerful model.
+            </strong></li>
         </ul>
+
+      <div class="alert alert-warning border-warning border-2" role="alert">
+        <p class="mb-0">If your device isn't on this list and you're feeling brave, give it a shot and let me know if FlightTracker works</p>
+      </div>
 
       <p>And the following bits for the display:</p>
       
@@ -98,8 +110,12 @@ structured_data: |
           <div class="card-footer text-muted small">Image courtesy of <a href="https://shop.pimoroni.com/">Pimoroni</a></div>
         </div>
     </div>
+  </div>
+</section>
 
-    <h3>Getting the best performance from the screen</h3>
+<section id="screen-quality" class="border-bottom">
+  <div class="container">
+    <h2 class="section-title">Getting the best performance from the screen</h2>
     <div class="narrative">
         <p>
             If you're running the code on a Raspberry Pi 5 you can ignore this. For everyone else I recommend soldering a small bridge between the <code>4 (OE)</code> and <code>18</code> pin on the bonnet, <a href="https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/matrix-setup#configure-for-quality-slash-convenience-3201054" target="_blank">as per the guide.</a> It increases the quality by using the sound card to perform some
@@ -117,10 +133,14 @@ structured_data: |
           </div>
           <div class="card-footer text-muted small">Image courtesy of <a href="https://adafruit.com/">Adafruit</a></div>
         </div>
-        
-    </div>
 
-   <h3>3D Printed Case</h3>
+    </div>
+  </div>
+</section>
+
+<section id="case" class="border-bottom">
+  <div class="container">
+    <h2 class="section-title">3D printed case</h2>
     <div class="narrative">
         <p>There's an official 3D-printable case for FlightTracker, designed for the 64×32 HUB75 RGB LED matrix (4mm pitch) from the shopping list above.</p>
         <ul>
@@ -143,8 +163,12 @@ structured_data: |
           <div class="card-header">FlightTracker in the 3D printed case</div>
         </div>
     </div>
+  </div>
+</section>
 
-   <h2>Optional extras</h2>
+<section id="optional-extras" class="border-bottom">
+  <div class="container">
+    <h2 class="section-title">Optional extras</h2>
     <div class="info-panel narrative">
       <div class="info-panel-header">Optional extras</div>
       <div class="info-panel-body">
@@ -220,18 +244,28 @@ structured_data: |
         <div class="narrative mb-4">
             <p><em>Looking for a way to contribute? I'd love some better instructions and illustrations of the various ways to wire up a FlightTracker box.</em></p>
         </div>
-    
-        <h2 class="section-title">Detailed circuits and illustrations</h2>
+  </div>
+</section>
+
+<section id="circuits">
+  <div class="container">
+    <h2 class="section-title">Detailed circuits and illustrations</h2>
+    <div class="narrative">
         <p>There aren't any. At the moment anything beyond the basic wiring is up to the person putting this together. Honestly, I find it difficult to know the amount of detail someone needs to wire something up if this is their first foray into a little bit of wiring. Do I need to explain how to use prototyping board?</p>
 
         <p>I could maybe have my arm twisted to release a dev board with everything pre-wired and you just
         plug in a Pi and a screen.</p>
 
-        <p>If you've got strong feelings about this then raise an issue at GitHub and we can figure out what the 
+        <p>If you've got strong feelings about this then raise an issue at GitHub and we can figure out what the
         minimum viable level of documentation here should be.</p>
-
     </div>
   </div>
 </section>
 
-<p>Once you've got the hardware sorted, head to the <a href="/install/">installation guide</a> to flash FlightTracker OS or run the quick installer.</p>
+<section class="border-top">
+  <div class="container">
+    <div class="narrative">
+      <p>Once you've got the hardware sorted, flash <a href="/os/">FlightTracker OS</a> - the pre-built image, no command line required - or follow the <a href="/install/">installation guide</a> to use the quick installer.</p>
+    </div>
+  </div>
+</section>

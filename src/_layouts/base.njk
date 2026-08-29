@@ -48,7 +48,7 @@
 </main>
 
 <div class="container py-4">
-  <p class="text-center">{% if permalink == '/' %}Ready to get started? <a href="/build/">Build the hardware</a> · <a href="/install/">Install the software</a> · <a href="{{ site.repo }}">View on GitHub</a>{% elif permalink == '/build/' %}<a href="/">← Back to FlightTracker home</a> · <a href="/install/">Installation guide</a>{% elif permalink == '/install/' %}<a href="/">← Back to FlightTracker home</a> · <a href="/build/">Hardware build guide</a>{% endif %}</p>
+  <p class="text-center">{% if permalink == '/' %}Ready to get started? <a href="/build/">Build the hardware</a> · <a href="/os/">FlightTracker OS</a> · <a href="/install/">Install the software</a> · <a href="{{ site.repo }}">View on GitHub</a>{% elif permalink == '/build/' %}<a href="/">← Back to FlightTracker home</a> · <a href="/os/">FlightTracker OS</a> · <a href="/install/">Installation guide</a>{% elif permalink == '/os/' %}<a href="/">← Back to FlightTracker home</a> · <a href="/build/">Hardware build guide</a> · <a href="/install/">Installation guide</a>{% elif permalink == '/install/' %}<a href="/">← Back to FlightTracker home</a> · <a href="/build/">Hardware build guide</a>{% endif %}</p>
 </div>
 
 {% include "footer.njk" %}

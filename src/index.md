@@ -69,7 +69,7 @@ structured_data: |
           <p>This site will show you what you need to build your own and get the software installed. An <a href="https://www.printables.com/model/1820229-flight-tracker-screen-for-raspberry-pi-any-model-6" target="_blank">official 3D-printable case</a> is also available - see the build page for details.</p>
           <div class="hero-actions">
             <a href="/build/" class="btn btn-yellow me-sm-4"><span class="btn-label">Hardware</span><span class="btn-subtext">Build your own</span></a>
-            <a href="/install/" class="btn btn-dark"><span class="btn-label">Software</span><span class="btn-subtext">Install and configure</span></a>
+            <a href="/os/" class="btn btn-dark"><span class="btn-label">FlightTracker OS</span><span class="btn-subtext">No command line required</span></a>
           </div>
         </div>
       </div>
@@ -88,6 +88,7 @@ structured_data: |
           <p>Flash it to an SD card with <a href="https://www.raspberrypi.com/software/" target="_blank">Raspberry Pi Imager</a>, set your Wi-Fi details, flash, and boot.
           You can then log into the web installer and finish setup from your browser.</p>
           <p>32-bit and 64-bit images are available for Raspberry Pi 3, 4, and 5.</p>
+          <p><a href="/os/">Find out more about FlightTracker OS →</a></p>
         </div>
         <div class="rpi-imager-btn-wrap mt-3">
           <a class="btn btn-rpi" href="rpi-imager://open?repo=https%3A%2F%2Fraw.githubusercontent.com%2FColinWaddell%2FFlightTracker-Image%2Frefs%2Fheads%2Fmain%2Fos_list.json">

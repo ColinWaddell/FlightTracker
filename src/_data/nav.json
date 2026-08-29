@@ -1,5 +1,19 @@
 [
-  { "label": "Hardware // Build", "href": "/build/" },
-  { "label": "Flight Tracker OS // Install", "href": "/install/" },
-  { "label": "GitHub // Source Code", "href": "https://github.com/ColinWaddell/FlightTracker", "cta": true }
+    {
+        "label": "Hardware",
+        "href": "/build/"
+    },
+    {
+        "label": "Flight Tracker OS",
+        "href": "/os/"
+    },
+    {
+        "label": "Software",
+        "href": "/install/"
+    },
+    {
+        "label": "GitHub // Source Code",
+        "href": "https://github.com/ColinWaddell/FlightTracker",
+        "cta": true
+    }
 ]
