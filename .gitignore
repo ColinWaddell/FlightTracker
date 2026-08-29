@@ -1,8 +1,8 @@
 # Custom
 _crap/
 .vscode/
-config.py
-config.json
+/config.py
+/config.json
 tle_cache.json
 routes_cache.json
 captures/
