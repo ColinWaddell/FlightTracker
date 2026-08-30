@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed (#101): AeroAPI 400s (e.g. a tail-number/plain ident it doesn't recognise) no longer
   quarantine the provider — they read as not-found and the lookup moves to the next provider;
   auth/quota errors still quarantine
+- The same 4xx treatment applied across the other ident-forwarding providers (#101 family):
+  **adsbDB** (400), **AeroDataBox** (400/422), **AirLabs** (400/404) and the **FR24 API**
+  routes / aircraft lookups now read rejected/unknown idents as not-found - the lookup moves
+  to the next provider instead of quarantining a healthy provider
 - AeroAPI tail-number (private/GA) lookups now work: a rejected plain ident is retried once
   with `ident_type=registration`
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
