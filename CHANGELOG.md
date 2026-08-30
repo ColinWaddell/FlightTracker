@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   providers (API calls / aircraft returned), plus lookup-cache hits and misses. Batched
   in memory and written once a minute - negligible SD-card impact; history survives
   cache clears
-- New **`/status/api` page** (linked from the Status page): totals over the whole history or
-  any inclusive date range, with a JSON mirror on the same routes
-  (`/status/api/json`, `/status/api/<start>/<end>/json`)
+- New **`/status/api` page**: totals over the whole history or any inclusive date range, with
+  a JSON mirror on the same routes (`/status/api/json`, `/status/api/<start>/<end>/json`)
+  and a "Clear Logged Data" button on the page
+- Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
+  switching off stops new tallies and keeps recorded history until cleared on the API Usage
+  page
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
   re-cache write (missing `kind` argument)
 - Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level

@@ -173,6 +173,7 @@ DEFAULT_SATELLITE_TIMEOUT_SECONDS = (
 
 # Logging
 DEFAULT_LOG_LEVEL = "INFO"  # DEBUG / INFO / WARNING / ERROR / CRITICAL
+DEFAULT_PROVIDER_USAGE_LOGGING = True  # tally provider lookups into usage.sqlite3
 
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
@@ -281,6 +282,8 @@ DEFAULTS: dict[str, Any] = {
     "satellite_timeout_seconds": DEFAULT_SATELLITE_TIMEOUT_SECONDS,
     # Logging
     "log_level": DEFAULT_LOG_LEVEL,
+    # Provider usage tally (see lookups/usage.py + /status/api)
+    "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
 }
 
 
@@ -1366,6 +1369,15 @@ class Config:
             logging.getLevelName(logging.CRITICAL),
         }
         return val if val in valid else DEFAULT_LOG_LEVEL
+
+    @property
+    def provider_usage_logging(self) -> bool:
+        """Whether provider lookup tallies are being recorded (see /status/api)."""
+        return bool(
+            self.data_store.get(
+                "provider_usage_logging", DEFAULT_PROVIDER_USAGE_LOGGING
+            )
+        )
 
     # Derived: zone bounding box (same algorithm as DotboxServer)
     @property

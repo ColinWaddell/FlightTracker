@@ -181,6 +181,15 @@ class TestParseSettingsFormProviders:
         assert out["providers"] == {}
         assert out["max_flight_lookup"] == 5  # int_val's documented default
 
+    def test_provider_usage_logging_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"provider_usage_logging": "on"}, cfg)
+        assert out["provider_usage_logging"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["provider_usage_logging"] is False
+
     def test_legacy_data_source_key_not_produced(self):
         from web.app import parse_settings_form
 
@@ -468,3 +477,21 @@ class TestStatusApi:
         client = app.test_client()
         resp = client.get("/status/api")
         assert resp.status_code == 302  # redirected to login
+
+    def test_clear_empties_tallies(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 9)
+        ru.flush()
+
+        client = _authenticated_client()
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = "tok"
+
+        resp = client.post("/status/api/clear", data={"csrf_token": "tok"})
+        assert resp.status_code == 302
+        assert ru.summary()["providers"]["routes"] == {}
+
+    def test_clear_rejects_bad_csrf(self, isolated_usage):
+        client = _authenticated_client()
+        resp = client.post("/status/api/clear", data={"csrf_token": "wrong"})
+        assert resp.status_code == 403

@@ -14,9 +14,18 @@
 <div class="container-fluid py-4" style="max-width:1100px">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="fs-4 fw-semibold mb-0"><i class="bi bi-bar-chart-line me-2"></i>API Usage</h2>
-    <a href="{{ url_for('status') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Back to Status
-    </a>
+    <div class="d-flex gap-2">
+      <form method="post" action="{{ url_for('status_api_clear') }}"
+            onsubmit="return confirm('Erase all recorded provider usage data? This cannot be undone.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <button type="submit" class="btn btn-danger btn-sm">
+          <i class="bi bi-trash3 me-1"></i>Clear Logged Data
+        </button>
+      </form>
+      <a href="{{ url_for('status') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Status
+      </a>
+    </div>
   </div>
 
   <!-- ====== Date filter ====== -->

@@ -37,6 +37,20 @@ export default defineComponent({
           <a :href="store.ui.urls.logs">log viewer</a>. Change requires a restart.
         </div>
       </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="provider_usage_logging"
+               name="provider_usage_logging" :value="true"
+               v-model="store.config.provider_usage_logging" />
+        <label class="form-check-label small" for="provider_usage_logging">
+          Record provider API usage
+        </label>
+        <div class="form-text text-muted small">
+          Counts how often each lookup provider is used and how often they come back empty.
+          View the totals on the
+          <a :href="store.ui.urls.statusApi">API Usage</a> page. Turning this off stops new
+          tallies; recorded history is kept until cleared there.
+        </div>
+      </div>
     </div>
 
     <!-- ====== Clear Cache ====== -->

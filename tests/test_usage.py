@@ -261,3 +261,42 @@ class TestCacheClearIndependence:
         ru.flush()
         rc.clear()
         assert ru.summary()["providers"]["routes"]["hexdb"]["attempts"] == 1
+
+
+class TestCollectionToggle:
+    def test_disabled_collection_records_nothing(self, isolated_usage, monkeypatch):
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_collection_enabled", lambda: False)
+        ru.record("routes", "hexdb", "attempt")
+        ru.record("flights", "tar1090", "aircraft", n=7)
+        ru.record_cache("routes", "miss")
+        ru.flush()
+        assert ru.summary()["providers"] == {
+            "flights": {},
+            "routes": {},
+            "aircraft": {},
+        }
+        assert ru.summary()["cache"]["routes"] == {"hits": 0, "misses": 0}
+
+    def test_gate_defaults_on_without_config(self, isolated_usage, monkeypatch):
+        """A config hiccup must never stop tallying (fail-open)."""
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_collection_enabled", lambda: True)
+        ru.record("routes", "hexdb", "attempt")
+        assert next(iter(ru._providers_dirty.values())) == 1
+
+
+class TestClear:
+    def test_clear_wipes_pending_and_history(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 4)
+        ru.record_cache("aircraft", "hit")
+        ru.flush()
+        assert ru.summary()["providers"]["routes"]["hexdb"]["attempts"] == 4
+        ru.record("routes", "hexdb", "attempt")  # unflushed, should go too
+        ru.clear()
+        result = ru.summary()
+        assert result["providers"]["routes"] == {}
+        assert result["cache"]["aircraft"] == {"hits": 0, "misses": 0}
+        assert ru._conn.execute("SELECT COUNT(*) FROM provider_hits").fetchone()[0] == 0
+        assert ru._conn.execute("SELECT COUNT(*) FROM cache_events").fetchone()[0] == 0

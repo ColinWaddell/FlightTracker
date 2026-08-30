@@ -124,6 +124,16 @@ _cache_dirty: dict[tuple[str, str, str], int] = {}
 _last_flush: float = 0.0
 
 
+def _collection_enabled() -> bool:
+    """Latest provider-usage-logging toggle (settings save updates it live)."""
+    from setup.configuration import Config
+
+    try:
+        return bool(Config.instance().provider_usage_logging)
+    except Exception:  # never let a config hiccup break a lookup
+        return True
+
+
 def _today() -> str:
     """Current UTC day, the tally's time bucket."""
     return time.strftime("%Y-%m-%d", time.gmtime())
@@ -210,9 +220,11 @@ def record(kind: str, provider: str, outcome: str, n: int = 1) -> None:
 
     ``n`` accumulates quantities as well as events - the flights
     `aircraft` tally adds the number of observations returned, so a feed
-    of 15 aircraft records ``+15``.
+    of 15 aircraft records ``+15``.  Tallying can be switched off in the
+    settings (provider_usage_logging); switching off stops new records
+    but leaves recorded history in place.
     """
-    if n <= 0:
+    if n <= 0 or not _collection_enabled():
         return
     with _lock:
         key = (_today(), kind, provider, outcome)
@@ -221,6 +233,8 @@ def record(kind: str, provider: str, outcome: str, n: int = 1) -> None:
 
 def record_cache(kind: str, outcome: str) -> None:
     """Tally a cache attempt (`hit` or `miss`) for a lookup."""
+    if not _collection_enabled():
+        return
     with _lock:
         key = (_today(), kind, outcome)
         _cache_dirty[key] = _cache_dirty.get(key, 0) + 1
@@ -243,6 +257,16 @@ def flush_if_due() -> None:
         if now - _last_flush < FLUSH_EVERY_S:
             return
         _flush_pending_locked(now)
+
+
+def clear() -> None:
+    """Erase all recorded provider usage tallies (pending + history)."""
+    with _lock:
+        _providers_dirty.clear()
+        _cache_dirty.clear()
+        conn = _connect()
+        conn.execute("DELETE FROM provider_hits")
+        conn.execute("DELETE FROM cache_events")
 
 
 def flush() -> None:

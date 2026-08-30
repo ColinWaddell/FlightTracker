@@ -587,6 +587,8 @@ def parse_settings_form(form, cfg) -> dict:
             in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
             else cfg.log_level
         ),
+        # Provider usage tally (see lookups/usage.py + /status/api)
+        "provider_usage_logging": bool_val(form.get("provider_usage_logging")),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
@@ -927,6 +929,7 @@ def _settings_page_data(
             "backupExport": "/backup/export",
             "backupRestore": "/backup/restore",
             "debugConfig": "/debug-config",
+            "statusApi": "/status/api",
         },
     }
 
@@ -1779,3 +1782,14 @@ def status_api_json():
 def status_api_range_json(start, end):
     """Provider API usage totals between two dates (inclusive) as JSON."""
     return jsonify(_usage_summary_for(start, end))
+
+
+@app.route("/status/api/clear", methods=["POST"])
+@login_required
+def status_api_clear():
+    """Erase all recorded provider usage tallies."""
+    if not validate_csrf(request.form):
+        abort(403, description="Invalid CSRF token.")
+    usage_tally.clear()
+    logger.info("Provider usage tallies cleared")
+    return redirect(url_for("status_api"))
