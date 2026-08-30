@@ -442,11 +442,7 @@ class TestStatusApi:
         ru.record("routes", "hexdb", "attempt", 4)
         ru.flush()
 
-        data = (
-            _authenticated_client()
-            .get("/api/2026-08-01/2026-08-01/json")
-            .get_json()
-        )
+        data = _authenticated_client().get("/api/2026-08-01/2026-08-01/json").get_json()
         assert data["providers"]["routes"]["hexdb"]["attempts"] == 10
         assert data["range"] == {"start": "2026-08-01", "end": "2026-08-01"}
 
@@ -461,11 +457,7 @@ class TestStatusApi:
         ru.record("routes", "hexdb", "attempt")
         ru.flush()
 
-        data = (
-            _authenticated_client()
-            .get("/api/2026-08-31/2026-08-01/json")
-            .get_json()
-        )
+        data = _authenticated_client().get("/api/2026-08-31/2026-08-01/json").get_json()
         assert data["range"]["start"] == "2026-08-01"
         assert data["providers"]["routes"]["hexdb"]["attempts"] == 1
 
