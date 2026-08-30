@@ -55,6 +55,13 @@ class RouteProvider:
             return LookupResult.unavailable(
                 f"airlabs rejected the request (HTTP {resp.status_code})"
             )
+        if resp.status_code in (400, 404):
+            # A rejected/unknown ident is "no answer" for this query, not a
+            # provider failure - must not quarantine.  (#101 family)
+            logger.debug(
+                "airlabs: no route for %r (HTTP %d)", callsign, resp.status_code
+            )
+            return LookupResult.not_found("airlabs has no answer for this callsign")
         if resp.status_code >= 400:
             return LookupResult.unavailable(f"airlabs HTTP {resp.status_code}")
         try:

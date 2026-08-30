@@ -33,6 +33,9 @@ class AircraftProvider:
         if resp.status_code == 404:
             logger.debug("adsbdb: unknown aircraft %r", mode_s)
             return LookupResult.not_found("adsbdb has no aircraft for this hex")
+        if resp.status_code == 400:
+            logger.debug("adsbdb: rejected hex %r (HTTP 400)", mode_s)
+            return LookupResult.not_found("adsbdb rejected this hex")
         try:
             resp.raise_for_status()
             data = resp.json()

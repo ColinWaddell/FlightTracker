@@ -57,6 +57,12 @@ class RouteProvider:
         if resp.status_code == 404:
             logger.debug("adsbdb: unknown callsign %r", callsign)
             return LookupResult.not_found("adsbdb has no route for this callsign")
+        if resp.status_code == 400:
+            # adsbdb rejects malformed idents (whitespace, symbols) with a
+            # 400.  That is "no answer for this callsign", not a provider
+            # failure - the pipeline walks to the next provider.  (#101 family)
+            logger.debug("adsbdb: rejected callsign %r (HTTP 400)", callsign)
+            return LookupResult.not_found("adsbdb rejected this callsign")
         try:
             resp.raise_for_status()
             data = resp.json()

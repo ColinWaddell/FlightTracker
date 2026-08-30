@@ -43,11 +43,18 @@ def aerodatabox_get(path: str, api_key: str, timeout: int = PROVIDER_TIMEOUT_S):
     - connection failures raise ``requests.RequestException``
     - 429/403 = rate-limited (``RATE_LIMIT_CODES``)
     - 404 = unknown callsign/aircraft (body not parsed)
+    - 400/422 = rejected parameters (body not parsed) - callers treat as
+      "no answer", not a provider failure
     - other non-2xx = error (body not parsed)
     - 2xx with unparseable body raises ``ValueError``
     """
     resp = requests.get(f"{BASE}{path}", headers=headers_for(api_key), timeout=timeout)
     if resp.status_code == 404 or resp.status_code in RATE_LIMIT_CODES:
+        return resp, None
+    if resp.status_code in (400, 422):
+        # Malformed request parameters (e.g. an ident the API cannot
+        # parse): surface the raw response so the caller classifies it as
+        # "no answer" rather than a provider failure.  (#101 family)
         return resp, None
     # Any other non-2xx: surface as HTTPError for callers that treat all
     # errors alike; 2xx responses fall through to parsing.

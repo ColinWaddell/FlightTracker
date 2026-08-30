@@ -58,6 +58,16 @@ class RouteProvider:
             logger.debug("aerodatabox: unknown callsign %r", callsign)
             return LookupResult.not_found("aerodatabox has no route for this callsign")
 
+        if resp.status_code in (400, 422):
+            # Rejected parameters (e.g. an odd callsign shape): a "no
+            # answer", not a provider failure - must not quarantine.
+            logger.debug(
+                "aerodatabox: rejected parameters for %r (HTTP %d)",
+                callsign,
+                resp.status_code,
+            )
+            return LookupResult.not_found("aerodatabox rejected the request parameters")
+
         if resp.status_code in RATE_LIMIT_CODES:
             logger.warning(
                 "aerodatabox: rate limit / quota exceeded (HTTP %d) for %r",
