@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   providers (API calls / aircraft returned), plus lookup-cache hits and misses. Batched
   in memory and written once a minute - negligible SD-card impact; history survives
   cache clears
-- New **`/status/api` page**: totals over the whole history or any inclusive date range, with
-  a JSON mirror on the same routes (`/status/api/json`, `/status/api/<start>/<end>/json`)
+- New **`/api` page**: totals over the whole history or any inclusive date range, with
+  a JSON mirror on the same routes (`/api/json`, `/api/<start>/<end>/json`)
   and a "Clear Logged Data" button on the page
 - Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
   switching off stops new tallies and keeps recorded history until cleared on the API Usage

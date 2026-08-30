@@ -587,7 +587,7 @@ def parse_settings_form(form, cfg) -> dict:
             in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
             else cfg.log_level
         ),
-        # Provider usage tally (see lookups/usage.py + /status/api)
+        # Provider usage tally (see lookups/usage.py + /api)
         "provider_usage_logging": bool_val(form.get("provider_usage_logging")),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
@@ -929,7 +929,7 @@ def _settings_page_data(
             "backupExport": "/backup/export",
             "backupRestore": "/backup/restore",
             "debugConfig": "/debug-config",
-            "statusApi": "/status/api",
+            "statusApi": "/api",
         },
     }
 
@@ -1726,7 +1726,7 @@ def cached_data_tles_delete():
 
 
 # ---------------------------------------------------------------------------
-# Provider API usage (/status/api) - totals over a date range or all history
+# Provider API usage (/api) - totals over a date range or all history
 # ---------------------------------------------------------------------------
 
 
@@ -1746,50 +1746,50 @@ def _usage_summary_for(start=None, end=None) -> dict:
     return usage_tally.summary(start=start, end=end)
 
 
-@app.route("/status/api")
+@app.route("/api")
 @login_required
-def status_api():
+def api_usage():
     """Provider API usage totals over the whole logging history."""
     return render_template(
-        "status_api.html",
+        "api_usage.html",
         summary=_usage_summary_for(),
         csrf_token=csrf_token(),
-        active_page="status_api",
+        active_page="api_usage",
     )
 
 
-@app.route("/status/api/<start>/<end>")
+@app.route("/api/<start>/<end>")
 @login_required
-def status_api_range(start, end):
+def api_usage_range(start, end):
     """Provider API usage totals between two dates (inclusive)."""
     return render_template(
-        "status_api.html",
+        "api_usage.html",
         summary=_usage_summary_for(start, end),
         csrf_token=csrf_token(),
-        active_page="status_api",
+        active_page="api_usage",
     )
 
 
-@app.route("/status/api/json")
+@app.route("/api/json")
 @login_required
-def status_api_json():
+def api_usage_json():
     """Provider API usage totals (all history) as JSON."""
     return jsonify(_usage_summary_for())
 
 
-@app.route("/status/api/<start>/<end>/json")
+@app.route("/api/<start>/<end>/json")
 @login_required
-def status_api_range_json(start, end):
+def api_usage_range_json(start, end):
     """Provider API usage totals between two dates (inclusive) as JSON."""
     return jsonify(_usage_summary_for(start, end))
 
 
-@app.route("/status/api/clear", methods=["POST"])
+@app.route("/api/clear", methods=["POST"])
 @login_required
-def status_api_clear():
+def api_usage_clear():
     """Erase all recorded provider usage tallies."""
     if not validate_csrf(request.form):
         abort(403, description="Invalid CSRF token.")
     usage_tally.clear()
     logger.info("Provider usage tallies cleared")
-    return redirect(url_for("status_api"))
+    return redirect(url_for("api_usage"))

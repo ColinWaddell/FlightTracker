@@ -282,7 +282,7 @@ DEFAULTS: dict[str, Any] = {
     "satellite_timeout_seconds": DEFAULT_SATELLITE_TIMEOUT_SECONDS,
     # Logging
     "log_level": DEFAULT_LOG_LEVEL,
-    # Provider usage tally (see lookups/usage.py + /status/api)
+    # Provider usage tally (see lookups/usage.py + /api)
     "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
 }
 
@@ -1372,7 +1372,7 @@ class Config:
 
     @property
     def provider_usage_logging(self) -> bool:
-        """Whether provider lookup tallies are being recorded (see /status/api)."""
+        """Whether provider lookup tallies are being recorded (see /api)."""
         return bool(
             self.data_store.get(
                 "provider_usage_logging", DEFAULT_PROVIDER_USAGE_LOGGING

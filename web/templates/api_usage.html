@@ -15,7 +15,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="fs-4 fw-semibold mb-0"><i class="bi bi-bar-chart-line me-2"></i>API Usage</h2>
     <div class="d-flex gap-2">
-      <form method="post" action="{{ url_for('status_api_clear') }}"
+      <form method="post" action="{{ url_for('api_usage_clear') }}"
             onsubmit="return confirm('Erase all recorded provider usage data? This cannot be undone.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button type="submit" class="btn btn-danger btn-sm">
@@ -53,7 +53,7 @@
         </div>
         <div class="col-auto">
           <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Apply</button>
-          <a href="{{ url_for('status_api') }}" class="btn btn-sm btn-outline-secondary">All history</a>
+          <a href="{{ url_for('api_usage') }}" class="btn btn-sm btn-outline-secondary">All history</a>
         </div>
       </form>
     </div>
@@ -176,9 +176,9 @@
 
   <p class="text-muted small mb-0">
     <i class="bi bi-code-slash me-1"></i>JSON:
-    <a href="{{ url_for('status_api_json') }}">{{ url_for('status_api_json') }}</a>
+    <a href="{{ url_for('api_usage_json') }}">{{ url_for('api_usage_json') }}</a>
     {% if summary.range.start %}
-    &middot; <a href="{{ url_for('status_api_range_json', start=summary.range.start, end=summary.range.end) }}">range JSON</a>
+    &middot; <a href="{{ url_for('api_usage_range_json', start=summary.range.start, end=summary.range.end) }}">range JSON</a>
     {% endif %}
   </p>
 
@@ -189,13 +189,13 @@ function filterUsage(form) {
   var start = form.start.value;
   var end = form.end.value;
   if (start && end) {
-    window.location = '/status/api/' + start + '/' + end;
+    window.location = '/api/' + start + '/' + end;
   } else if (start) {
-    window.location = '/status/api/' + start + '/' + new Date().toISOString().slice(0, 10);
+    window.location = '/api/' + start + '/' + new Date().toISOString().slice(0, 10);
   } else if (end) {
-    window.location = '/status/api/2020-01-01/' + end;
+    window.location = '/api/2020-01-01/' + end;
   } else {
-    window.location = '/status/api';
+    window.location = '/api';
   }
   return false;
 }

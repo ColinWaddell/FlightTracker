@@ -367,7 +367,7 @@ class TestCachedDataPage:
 
 
 # ---------------------------------------------------------------------------
-# /status/api - provider usage page + JSON API
+# /api - provider usage page + JSON API
 # ---------------------------------------------------------------------------
 
 
@@ -406,15 +406,15 @@ class TestStatusApi:
         ru.record("flights", "tar1090", "api_call")
         ru.record("flights", "tar1090", "aircraft", 7)
 
-        html = _authenticated_client().get("/status/api").get_data(as_text=True)
+        html = _authenticated_client().get("/api").get_data(as_text=True)
         assert "API Usage" in html
         assert "hexdb" in html
         assert "tar1090" in html
-        assert '/status/api"' in html
+        assert '/api"' in html
 
     def test_status_page_links_to_usage(self):
         html = _authenticated_client().get("/status").get_data(as_text=True)
-        assert '/status/api"' in html
+        assert '/api"' in html
 
     def test_json_shape_matches_summary(self, isolated_usage):
         ru = isolated_usage
@@ -423,7 +423,7 @@ class TestStatusApi:
         ru.record("flights", "tar1090", "aircraft", 7)
         ru.record_cache("routes", "miss")
 
-        resp = _authenticated_client().get("/status/api/json")
+        resp = _authenticated_client().get("/api/json")
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["cache"]["routes"] == {"hits": 0, "misses": 1}
@@ -444,7 +444,7 @@ class TestStatusApi:
 
         data = (
             _authenticated_client()
-            .get("/status/api/2026-08-01/2026-08-01/json")
+            .get("/api/2026-08-01/2026-08-01/json")
             .get_json()
         )
         assert data["providers"]["routes"]["hexdb"]["attempts"] == 10
@@ -452,8 +452,8 @@ class TestStatusApi:
 
     def test_malformed_dates_return_400(self, isolated_usage):
         client = _authenticated_client()
-        assert client.get("/status/api/foo/bar/json").status_code == 400
-        assert client.get("/status/api/foo/bar").status_code == 400
+        assert client.get("/api/foo/bar/json").status_code == 400
+        assert client.get("/api/foo/bar").status_code == 400
 
     def test_reversed_range_is_swapped(self, isolated_usage, monkeypatch):
         ru = isolated_usage
@@ -463,7 +463,7 @@ class TestStatusApi:
 
         data = (
             _authenticated_client()
-            .get("/status/api/2026-08-31/2026-08-01/json")
+            .get("/api/2026-08-31/2026-08-01/json")
             .get_json()
         )
         assert data["range"]["start"] == "2026-08-01"
@@ -475,7 +475,7 @@ class TestStatusApi:
         from web.app import app
 
         client = app.test_client()
-        resp = client.get("/status/api")
+        resp = client.get("/api")
         assert resp.status_code == 302  # redirected to login
 
     def test_clear_empties_tallies(self, isolated_usage):
@@ -487,11 +487,11 @@ class TestStatusApi:
         with client.session_transaction() as sess:
             sess["csrf_token"] = "tok"
 
-        resp = client.post("/status/api/clear", data={"csrf_token": "tok"})
+        resp = client.post("/api/clear", data={"csrf_token": "tok"})
         assert resp.status_code == 302
         assert ru.summary()["providers"]["routes"] == {}
 
     def test_clear_rejects_bad_csrf(self, isolated_usage):
         client = _authenticated_client()
-        resp = client.post("/status/api/clear", data={"csrf_token": "wrong"})
+        resp = client.post("/api/clear", data={"csrf_token": "wrong"})
         assert resp.status_code == 403
