@@ -1,9 +1,15 @@
 """FlightAware AeroAPI route lookup (optional paid-tier provider).
 
-Resolves a callsign to its origin/destination airports via AeroAPI v4's
-flights-by-ident endpoint.  Requests are billed per result set, so this
-provider is best suited to per-new-callsign lookups (the lookup caches
-suppress repeats) rather than position polling.
+Resolves a callsign or aircraft registration to its origin/destination
+airports via AeroAPI v4's flights-by-ident endpoint.  Requests are billed
+per result set, so this provider is best suited to per-new-callsign
+lookups (the lookup caches suppress repeats) rather than position
+polling.
+
+AeroAPI only recognises idents in fa_flight_id format on this endpoint,
+and rejects plain idents (callsigns, tail numbers) with HTTP 400; when
+that happens the lookup retries once with ``ident_type=registration``,
+which is how tail-number (private/GA) flights are looked up (#101).
 """
 
 from __future__ import annotations
@@ -39,12 +45,12 @@ class RouteProvider:
             return LookupResult.unavailable("aeroapi key not configured")
 
         try:
-            resp = requests.get(
-                f"{BASE}/flights/{callsign}",
-                params={"max_results": 5},
-                headers={"x-apikey": self.api_key},
-                timeout=PROVIDER_TIMEOUT,
-            )
+            resp = self._fetch(callsign)
+            if resp.status_code == 400:
+                # AeroAPI rejects non-fa_flight_id idents with a 400.  Retry
+                # once explicitly as a registration - tail-number (private
+                # and GA flights) lookups only work that way.  (#101)
+                resp = self._fetch(callsign, ident_type="registration")
         except (RequestException, OSError) as e:
             logger.debug("aeroapi route lookup failed for %r: %s", callsign, e)
             return LookupResult.unavailable(f"aeroapi unreachable: {e}")
@@ -92,6 +98,18 @@ class RouteProvider:
             return resp is not None
         except Exception:
             return False
+
+    def _fetch(self, ident: str, ident_type: str | None = None):
+        """Call the flights-by-ident endpoint for *ident*."""
+        params = {"max_results": 5}
+        if ident_type:
+            params["ident_type"] = ident_type
+        return requests.get(
+            f"{BASE}/flights/{ident}",
+            params=params,
+            headers={"x-apikey": self.api_key},
+            timeout=PROVIDER_TIMEOUT,
+        )
 
 
 def _flight_to_route(flight: dict) -> RouteInfo | None:
