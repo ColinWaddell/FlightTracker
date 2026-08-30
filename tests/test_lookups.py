@@ -359,6 +359,32 @@ class TestLookupRouteService:
 
         assert rc.get("WWW111", rc.KIND_ROUTE) is None
 
+    def test_not_found_walks_chain_without_quarantine(self):
+        """(#101) A not-found answer (e.g. AeroAPI rejecting a tail-number
+        ident with HTTP 400) must hand the lookup to the next provider and
+        leave the provider out of quarantine."""
+        import lookups.routes as rs
+        from lookups.quarantine import QUARANTINE
+
+        first = MagicMock()
+        first.lookup_route.return_value = LookupResult.not_found(
+            "aeroapi: ident is not in fa_flight_id format"
+        )
+        second = MagicMock()
+        second.lookup_route.return_value = LookupResult.found(
+            RouteInfo(origin="LHR", destination="GLA")
+        )
+
+        result = rs._run_pipeline_with_cache(
+            LookupContext(callsign="N40726"),
+            "N40726",
+            [("flightaware", first), ("hexdb", second)],
+        )
+
+        assert result.destination == "GLA"
+        second.lookup_route.assert_called_once()
+        assert not QUARANTINE.is_quarantined("flightaware")
+
     def test_miss_entry_skips_providers(self):
         import lookups.cache as rc
         import lookups.routes as rs

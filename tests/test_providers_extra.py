@@ -260,6 +260,32 @@ class TestAirLabs:
             result = provider.lookup_route(_context("BAW123"))
         assert result.is_unavailable
 
+    def test_400_is_not_found_not_unavailable(self):
+        """AeroAPI 400s when the ident isn't in fa_flight_id format (e.g. a
+        tail number).  The query was mis-shaped for the endpoint - the
+        provider is healthy - so it must read as NOT_FOUND and never
+        quarantine the provider.  (#101)
+        """
+        import lookups.providers.flightaware.routes as flightaware
+
+        provider = flightaware.RouteProvider({"api_key": "k"})
+        with mock.patch.object(
+            flightaware.requests, "get", return_value=_response({}, status=400)
+        ):
+            result = provider.lookup_route(_context("N40726"))
+        assert result.is_not_found
+        assert not result.is_unavailable
+
+    def test_rate_limit_is_still_unavailable(self):
+        import lookups.providers.flightaware.routes as flightaware
+
+        provider = flightaware.RouteProvider({"api_key": "k"})
+        with mock.patch.object(
+            flightaware.requests, "get", return_value=_response({}, status=429)
+        ):
+            result = provider.lookup_route(_context("BAW123"))
+        assert result.is_unavailable
+
 
 # ---------------------------------------------------------------------------
 # FlightRadar24 API (official, commercial)

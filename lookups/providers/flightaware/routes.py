@@ -58,6 +58,18 @@ class RouteProvider:
         if resp.status_code == 404:
             logger.debug("aeroapi: unknown flight %r", callsign)
             return LookupResult.not_found("aeroapi has no flight for this callsign")
+        if resp.status_code == 400:
+            # AeroAPI 400s when the ident isn't in fa_flight_id format - the
+            # request was mis-shaped for this endpoint, not the provider
+            # failing.  Treat it as a valid "no answer" and let the
+            # pipeline walk to the next provider.
+            logger.debug(
+                "aeroapi rejected ident %r (HTTP 400) - treating as not found",
+                callsign,
+            )
+            return LookupResult.not_found(
+                "aeroapi: ident is not in fa_flight_id format"
+            )
         if resp.status_code >= 400:
             return LookupResult.unavailable(f"aeroapi HTTP {resp.status_code}")
 
