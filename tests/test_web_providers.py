@@ -355,3 +355,116 @@ class TestCachedDataPage:
         assert rc.get("BAW123", rc.KIND_ROUTE) is None
         # kind-scoped delete: the airframe entry (400f5a) survives
         assert rc.get("400f5a", rc.KIND_AIRCRAFT) is not None
+
+
+# ---------------------------------------------------------------------------
+# /status/api - provider usage page + JSON API
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def isolated_usage(tmp_path, monkeypatch):
+    """Point the usage tally at a temp db with fresh in-memory state."""
+    import lookups.usage as ru
+
+    monkeypatch.setattr(ru, "DB_PATH", tmp_path / "usage.sqlite3")
+    monkeypatch.setattr(ru, "_conn", None)
+    monkeypatch.setattr(ru, "_providers_dirty", {})
+    monkeypatch.setattr(ru, "_cache_dirty", {})
+    monkeypatch.setattr(ru, "_last_flush", 0.0)
+    yield ru
+    if ru._conn is not None:
+        ru._conn.close()
+        ru._conn = None
+
+
+def _authenticated_client():
+    from web.app import app
+
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["csrf_token"] = "tok"
+    return client
+
+
+class TestStatusApi:
+    def test_page_renders_totals_and_link_tile_exists(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 5)
+        ru.record("routes", "hexdb", "no_result", 2)
+        ru.record_cache("aircraft", "hit")
+        ru.record("flights", "tar1090", "api_call")
+        ru.record("flights", "tar1090", "aircraft", 7)
+
+        html = _authenticated_client().get("/status/api").get_data(as_text=True)
+        assert "API Usage" in html
+        assert "hexdb" in html
+        assert "tar1090" in html
+        assert '/status/api"' in html
+
+    def test_status_page_links_to_usage(self):
+        html = _authenticated_client().get("/status").get_data(as_text=True)
+        assert '/status/api"' in html
+
+    def test_json_shape_matches_summary(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 5)
+        ru.record("flights", "tar1090", "api_call")
+        ru.record("flights", "tar1090", "aircraft", 7)
+        ru.record_cache("routes", "miss")
+
+        resp = _authenticated_client().get("/status/api/json")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["cache"]["routes"] == {"hits": 0, "misses": 1}
+        assert data["providers"]["routes"]["hexdb"] == {"attempts": 5, "no_results": 0}
+        assert data["providers"]["flights"]["tar1090"] == {
+            "api_calls": 1,
+            "aircraft": 7,
+        }
+        assert data["range"] == {"start": None, "end": None}
+
+    def test_range_url_filters_totals(self, isolated_usage, monkeypatch):
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-01")
+        ru.record("routes", "hexdb", "attempt", 10)
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-20")
+        ru.record("routes", "hexdb", "attempt", 4)
+        ru.flush()
+
+        data = (
+            _authenticated_client()
+            .get("/status/api/2026-08-01/2026-08-01/json")
+            .get_json()
+        )
+        assert data["providers"]["routes"]["hexdb"]["attempts"] == 10
+        assert data["range"] == {"start": "2026-08-01", "end": "2026-08-01"}
+
+    def test_malformed_dates_return_400(self, isolated_usage):
+        client = _authenticated_client()
+        assert client.get("/status/api/foo/bar/json").status_code == 400
+        assert client.get("/status/api/foo/bar").status_code == 400
+
+    def test_reversed_range_is_swapped(self, isolated_usage, monkeypatch):
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-20")
+        ru.record("routes", "hexdb", "attempt")
+        ru.flush()
+
+        data = (
+            _authenticated_client()
+            .get("/status/api/2026-08-31/2026-08-01/json")
+            .get_json()
+        )
+        assert data["range"]["start"] == "2026-08-01"
+        assert data["providers"]["routes"]["hexdb"]["attempts"] == 1
+
+    def test_login_required(self, isolated_usage, monkeypatch):
+        # remove the existing isolation fixture patches for a clean look? no -
+        # just bypass the authenticated session
+        from web.app import app
+
+        client = app.test_client()
+        resp = client.get("/status/api")
+        assert resp.status_code == 302  # redirected to login

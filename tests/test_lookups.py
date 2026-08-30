@@ -41,16 +41,25 @@ if "FlightRadar24" not in sys.modules:
 
 @pytest.fixture(autouse=True)
 def isolated_caches(monkeypatch, tmp_path):
-    """Isolate the persistent cache and reset quarantine state per test."""
+    """Isolate the persistent cache, usage tallies and quarantine per test."""
     import lookups.cache as rc
+    import lookups.usage as ru
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
     monkeypatch.setattr(rc, "_conn", None)
+    monkeypatch.setattr(ru, "DB_PATH", tmp_path / "usage.sqlite3")
+    monkeypatch.setattr(ru, "_conn", None)
+    monkeypatch.setattr(ru, "_providers_dirty", {})
+    monkeypatch.setattr(ru, "_cache_dirty", {})
+    monkeypatch.setattr(ru, "_last_flush", 0.0)
     yield rc
     if rc._conn is not None:
         rc._conn.close()
         rc._conn = None
+    if ru._conn is not None:
+        ru._conn.close()
+        ru._conn = None
 
 
 @pytest.fixture(autouse=True)
@@ -1108,3 +1117,268 @@ class TestHexdbRouteLookup:
 
         result = adapter.lookup_route(LookupContext(callsign="BAW123"))
         assert result.is_unavailable
+
+
+# ---------------------------------------------------------------------------
+# Provider usage tallies
+# ---------------------------------------------------------------------------
+
+
+def _provider_tallies(us, kind, provider):
+    """Flush and return the summary bucket for one provider (or None)."""
+    us.flush()
+    result = us.summary()
+    return result["providers"].get(kind, {}).get(provider)
+
+
+def _cache_tallies(us, kind):
+    us.flush()
+    return us.summary()["cache"][kind]
+
+
+class TestRouteUsageTallies:
+    def test_found_records_attempt_only(self):
+        import lookups.routes as rs
+
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.found(
+            RouteInfo(origin="LHR", destination="GLA", operator_icao="BAW", owner="BA")
+        )
+        rs._run_pipeline_with_cache(
+            LookupContext(callsign="BAW123"), "BAW123", [("a", adapter)]
+        )
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
+
+    def test_not_found_records_attempt_and_no_result(self):
+        import lookups.routes as rs
+
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.not_found("nope")
+        rs._run_pipeline_with_cache(
+            LookupContext(callsign="ZZZ999"), "ZZZ999", [("a", adapter)]
+        )
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 1}
+
+    def test_unavailable_records_attempt_only(self):
+        import lookups.routes as rs
+
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.unavailable("down")
+        rs._run_pipeline_with_cache(
+            LookupContext(callsign="WWW111"), "WWW111", [("a", adapter)]
+        )
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
+
+    def test_crash_records_attempt_only(self):
+        import lookups.routes as rs
+
+        adapter = MagicMock()
+        adapter.lookup_route.side_effect = Exception("boom")
+        rs._run_pipeline_with_cache(
+            LookupContext(callsign="EXPLODE"), "EXPLODE", [("a", adapter)]
+        )
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
+
+
+class TestAircraftUsageTallies:
+    def _install(self, monkeypatch, providers):
+        import lookups.aircraft as ac
+
+        monkeypatch.setattr(
+            ac, "resolve_aircraft_providers", lambda cfg=None: providers
+        )
+
+    def test_found_records_attempt_only(self, monkeypatch):
+        import lookups.aircraft as ac
+
+        adapter = MagicMock()
+        adapter.lookup_aircraft.return_value = LookupResult.found(
+            AircraftInfo(plane="C172", registration="G-BSFE")
+        )
+        self._install(monkeypatch, [("a", adapter)])
+        ac.lookup_aircraft(LookupContext(callsign="", mode_s="400f5a"))
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "aircraft", "a") == {
+            "attempts": 1,
+            "no_results": 0,
+        }
+
+    def test_not_found_records_no_result(self, monkeypatch):
+        import lookups.aircraft as ac
+
+        adapter = MagicMock()
+        adapter.lookup_aircraft.return_value = LookupResult.not_found("404")
+        self._install(monkeypatch, [("a", adapter)])
+        ac.lookup_aircraft(LookupContext(callsign="", mode_s="000000"))
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "aircraft", "a") == {
+            "attempts": 1,
+            "no_results": 1,
+        }
+
+
+class TestFlightsUsageTallies:
+    def _query(self):
+        return FlightQuery(
+            zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+            home=[55.5, -4.0, 6371.0],
+        )
+
+    def test_found_observations_sum(self, monkeypatch):
+        import lookups.flights as fs
+
+        obs = [
+            FlightObservation(callsign="BAW1"),
+            FlightObservation(callsign="BAW2"),
+            FlightObservation(callsign="BAW3"),
+        ]
+        adapter = MagicMock()
+        adapter.fetch.return_value = LookupResult.found(obs)
+        monkeypatch.setattr(fs, "_chain", lambda: [("fr24", adapter)])
+
+        outcome = fs.fetch_flights(self._query())
+        assert outcome.ok is True
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "flights", "fr24") == {
+            "api_calls": 1,
+            "aircraft": 3,
+        }
+
+    def test_empty_sky_counts_call_only(self, monkeypatch):
+        import lookups.flights as fs
+
+        adapter = MagicMock()
+        adapter.fetch.return_value = LookupResult.found([])
+        monkeypatch.setattr(fs, "_chain", lambda: [("fr24", adapter)])
+
+        assert fs.fetch_flights(self._query()).ok is True
+
+        import lookups.usage as us
+
+        assert _provider_tallies(us, "flights", "fr24") == {
+            "api_calls": 1,
+            "aircraft": 0,
+        }
+
+    def test_unavailable_counts_call_only(self, monkeypatch):
+        import lookups.flights as fs
+        import lookups.usage as us
+
+        adapter = MagicMock()
+        adapter.fetch.return_value = LookupResult.unavailable("503")
+        monkeypatch.setattr(fs, "_chain", lambda: [("dead", adapter)])
+
+        assert fs.fetch_flights(self._query()).ok is False
+
+        assert _provider_tallies(us, "flights", "dead") == {
+            "api_calls": 1,
+            "aircraft": 0,
+        }
+
+
+class TestCacheUsageTallies:
+    def test_cached_complete_route_is_hit_without_providers(self):
+        import lookups.cache as rc
+        import lookups.routes as rs
+
+        adapter = MagicMock()
+        rc.put(
+            "BAW123",
+            {
+                "origin": "LHR",
+                "destination": "GLA",
+                "plane": "A319",
+                "registration": "G-EUPD",
+            },
+            kind=rc.KIND_ROUTE,
+        )
+        rs.lookup_route(
+            LookupContext(callsign="BAW123"),
+            cfg=StubConfig(route_providers=[]),
+        )
+
+        import lookups.usage as us
+
+        assert _cache_tallies(us, "routes") == {"hits": 1, "misses": 0}
+        adapter.lookup_route.assert_not_called()
+
+    def test_uncached_route_is_miss(self):
+        import lookups.routes as rs
+
+        rs.lookup_route(
+            LookupContext(callsign="ZZZ999"),
+            cfg=StubConfig(route_providers=[]),
+        )
+
+        import lookups.usage as us
+
+        assert _cache_tallies(us, "routes") == {"hits": 0, "misses": 1}
+
+    def test_negative_entry_counts_as_hit(self):
+        import lookups.cache as rc
+        import lookups.routes as rs
+
+        rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
+        rs.lookup_route(
+            LookupContext(callsign="ZZZ999"),
+            cfg=StubConfig(route_providers=[{"provider": "a", "enabled": True}]),
+        )
+
+        import lookups.usage as us
+
+        assert _cache_tallies(us, "routes") == {"hits": 1, "misses": 0}
+        assert us.summary()["providers"]["routes"] == {}
+
+    def test_blank_aircraft_entry_is_hit(self):
+        import lookups.aircraft as ac
+        import lookups.cache as rc
+
+        rc.put("400f5a", {}, kind=rc.KIND_AIRCRAFT)
+        ac.lookup_aircraft(LookupContext(callsign="", mode_s="400f5a"))
+
+        import lookups.usage as us
+
+        assert _cache_tallies(us, "aircraft") == {"hits": 1, "misses": 0}
+
+    def test_gap_fill_records_hit_and_attempt(self, monkeypatch):
+        """A cached-but-incomplete route hits the cache AND still calls providers."""
+        import lookups.cache as rc
+        import lookups.routes as rs
+
+        rc.put("BAW123", {"origin": "LHR"}, kind=rc.KIND_ROUTE)
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.found(
+            RouteInfo(destination="GLA")
+        )
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, chains: [("hexdb", adapter)]
+        )
+
+        result = rs.lookup_route(LookupContext(callsign="BAW123"), cfg=StubConfig())
+        assert result.destination == "GLA"
+
+        import lookups.usage as us
+
+        assert _cache_tallies(us, "routes")["hits"] == 1
+        assert _provider_tallies(us, "routes", "hexdb") == {
+            "attempts": 1,
+            "no_results": 0,
+        }

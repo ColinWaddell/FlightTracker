@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}" />
+  <title>FlightTracker - API Usage</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+{% include "navbar.html" %}
+<div class="container-fluid py-4" style="max-width:1100px">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="fs-4 fw-semibold mb-0"><i class="bi bi-bar-chart-line me-2"></i>API Usage</h2>
+    <a href="{{ url_for('status') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Status
+    </a>
+  </div>
+
+  <!-- ====== Date filter ====== -->
+  <div class="card mb-3">
+    <div class="card-body py-2">
+      <form class="row g-2 align-items-center"
+            onsubmit="return filterUsage(this)">
+        <div class="col-auto">
+          <span class="small text-muted">
+            <i class="bi bi-filter me-1"></i>Totals
+            {% if summary.range.start %}
+              between <strong>{{ summary.range.start }}</strong> and <strong>{{ summary.range.end }}</strong>
+            {% else %}
+              over <strong>all history</strong>
+            {% endif %}
+          </span>
+        </div>
+        <div class="col-auto">
+          <input type="date" class="form-control form-control-sm" name="start"
+                 value="{{ summary.range.start or '' }}" aria-label="start date" />
+        </div>
+        <div class="col-auto">
+          <input type="date" class="form-control form-control-sm" name="end"
+                 value="{{ summary.range.end or '' }}" aria-label="end date" />
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Apply</button>
+          <a href="{{ url_for('status_api') }}" class="btn btn-sm btn-outline-secondary">All history</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====== Cache attempts ====== -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-hdd me-1"></i>Lookup Cache Attempts</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Kind</th>
+              <th scope="col">Hits</th>
+              <th scope="col">Misses</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kind in ["routes", "aircraft"] %}
+            <tr>
+              <td class="fw-semibold text-capitalize">{{ kind }}</td>
+              <td>{{ summary.cache[kind].hits }}</td>
+              <td>{{ summary.cache[kind].misses }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer text-muted small">
+        A cached "unknown" (negative) entry counts as a hit - it answered the lookup without
+        touching a provider. Days roll at UTC midnight.
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Route + aircraft providers ====== -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-signpost-split me-1"></i>Route &amp; Aircraft Lookups</div>
+    <div class="card-body p-0">
+      {% set lookup_rows = [] %}
+      {% for kind in ["routes", "aircraft"] %}
+        {% for provider, stats in summary.providers[kind].items() %}
+          {% set _ = lookup_rows.append((kind, provider, stats)) %}
+        {% endfor %}
+      {% endfor %}
+      {% if lookup_rows %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Kind</th>
+              <th scope="col">Provider</th>
+              <th scope="col">Total attempts</th>
+              <th scope="col">No results</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kind, provider, stats in lookup_rows %}
+            <tr>
+              <td class="fw-semibold text-capitalize">{{ kind }}</td>
+              <td>{{ provider }}</td>
+              <td>{{ stats.attempts }}</td>
+              <td>{{ stats.no_results }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-4 empty-state">
+        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+        <p class="mb-0 small">No route or aircraft lookups recorded in this period.</p>
+      </div>
+      {% endif %}
+      <div class="card-footer text-muted small">
+        Failures count as attempts but not "no results" - a downed provider is one that never
+        answered.
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Flight providers ====== -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-airplane me-1"></i>Flights (Overhead)</div>
+    <div class="card-body p-0">
+      {% if summary.providers.flights %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Provider</th>
+              <th scope="col">API calls</th>
+              <th scope="col">Aircraft returned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for provider, stats in summary.providers.flights.items() %}
+            <tr>
+              <td class="fw-semibold">{{ provider }}</td>
+              <td>{{ stats.api_calls }}</td>
+              <td>{{ stats.aircraft }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-4 empty-state">
+        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+        <p class="mb-0 small">No flight lookups recorded in this period.</p>
+      </div>
+      {% endif %}
+      <div class="card-footer text-muted small">
+        "Aircraft returned" is the total number of aircraft across all responses, not the
+        number of calls.
+      </div>
+    </div>
+  </div>
+
+  <p class="text-muted small mb-0">
+    <i class="bi bi-code-slash me-1"></i>JSON:
+    <a href="{{ url_for('status_api_json') }}">{{ url_for('status_api_json') }}</a>
+    {% if summary.range.start %}
+    &middot; <a href="{{ url_for('status_api_range_json', start=summary.range.start, end=summary.range.end) }}">range JSON</a>
+    {% endif %}
+  </p>
+
+  {% include "footer.html" %}
+</div>
+<script>
+function filterUsage(form) {
+  var start = form.start.value;
+  var end = form.end.value;
+  if (start && end) {
+    window.location = '/status/api/' + start + '/' + end;
+  } else if (start) {
+    window.location = '/status/api/' + start + '/' + new Date().toISOString().slice(0, 10);
+  } else if (end) {
+    window.location = '/status/api/2020-01-01/' + end;
+  } else {
+    window.location = '/status/api';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

@@ -31,9 +31,20 @@ import threading
 import time
 from pathlib import Path
 
-from flask import Flask, Response, redirect, render_template, request, session, url_for
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from lookups import cache as routes_cache
+from lookups import usage as usage_tally
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
 from utilities.flight import Flight
@@ -250,6 +261,12 @@ def _get_live_data_overhead() -> tuple[object, str]:
 
 def restart_after(delay: float = 1.0):
     """Schedule os.execv after `delay` seconds on a daemon thread."""
+
+    # os.execv bypasses atexit, so persist the usage tallies now - every
+    # restart path funnels through here.
+    from lookups import usage as usage_tally
+
+    usage_tally.flush()
 
     def do_restart():
         import time
@@ -1703,3 +1720,62 @@ def cached_data_tles_delete():
         logger.error("TLE cache delete failed: %s", exc)
 
     return redirect(url_for("cached_data"))
+
+
+# ---------------------------------------------------------------------------
+# Provider API usage (/status/api) - totals over a date range or all history
+# ---------------------------------------------------------------------------
+
+
+def _usage_summary_for(start=None, end=None) -> dict:
+    """Validate the optional date range and return aggregated usage tallies."""
+    for name, value in (("start", start), ("end", end)):
+        if value is not None:
+            try:
+                time.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                abort(
+                    400,
+                    description=f"invalid {name} date (expected YYYY-MM-DD): {value!r}",
+                )
+    if start is not None and end is not None and start > end:
+        start, end = end, start  # friendlier than an error
+    return usage_tally.summary(start=start, end=end)
+
+
+@app.route("/status/api")
+@login_required
+def status_api():
+    """Provider API usage totals over the whole logging history."""
+    return render_template(
+        "status_api.html",
+        summary=_usage_summary_for(),
+        csrf_token=csrf_token(),
+        active_page="status_api",
+    )
+
+
+@app.route("/status/api/<start>/<end>")
+@login_required
+def status_api_range(start, end):
+    """Provider API usage totals between two dates (inclusive)."""
+    return render_template(
+        "status_api.html",
+        summary=_usage_summary_for(start, end),
+        csrf_token=csrf_token(),
+        active_page="status_api",
+    )
+
+
+@app.route("/status/api/json")
+@login_required
+def status_api_json():
+    """Provider API usage totals (all history) as JSON."""
+    return jsonify(_usage_summary_for())
+
+
+@app.route("/status/api/<start>/<end>/json")
+@login_required
+def status_api_range_json(start, end):
+    """Provider API usage totals between two dates (inclusive) as JSON."""
+    return jsonify(_usage_summary_for(start, end))

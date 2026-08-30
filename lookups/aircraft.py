@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import time
 
-from lookups import cache
+from lookups import cache, usage
 from lookups.quarantine import QUARANTINE
 from lookups.registry import AIRCRAFT, load_config, resolve_chain
 from lookups.results import AircraftInfo, LookupContext
@@ -56,6 +56,7 @@ def run_aircraft_pipeline(
             all_answered = False
             continue
 
+        usage.record("aircraft", pid, "attempt")
         try:
             lookup = adapter.lookup_aircraft(ctx)
         except Exception as e:  # defensive: adapters shouldn't raise
@@ -76,6 +77,7 @@ def run_aircraft_pipeline(
             all_answered = False
         else:
             QUARANTINE.record_success(pid)
+            usage.record("aircraft", pid, "no_result")
 
     return info, all_answered, first_hit
 
@@ -92,6 +94,7 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
     # 1. Persistent cache - blank entries are cached too (24 h), so any hit
     #    short-circuits the providers.
     cached = cache.get(mode_s, cache.KIND_AIRCRAFT)
+    usage.record_cache("aircraft", "hit" if cached is not None else "miss")
     if cached is not None:
         return AircraftInfo(
             plane=cached.get("plane", ""),

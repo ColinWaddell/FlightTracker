@@ -25,7 +25,7 @@ from __future__ import annotations
 import logging
 import time
 
-from lookups import cache
+from lookups import cache, usage
 from lookups.providers.common.airports import fill_airport_details
 from lookups.quarantine import QUARANTINE
 from lookups.registry import ROUTES, load_config, resolve_chain
@@ -75,6 +75,7 @@ def run_route_pipeline(
             all_answered = False
             continue
 
+        usage.record("routes", pid, "attempt")
         try:
             lookup = adapter.lookup_route(ctx)
         except Exception as e:  # defensive: adapters shouldn't raise
@@ -96,6 +97,7 @@ def run_route_pipeline(
         else:
             QUARANTINE.record_success(pid)
             # NOT_FOUND: keep walking - a lower-priority provider may know.
+            usage.record("routes", pid, "no_result")
 
     return result, all_answered, first_hit
 
@@ -181,7 +183,7 @@ def _fill_cached_gaps(
     )
     result.merge_missing(pipeline_result)
     if result.to_dict() != before:
-        cache.put(callsign, _cacheable(result))
+        cache.put(callsign, _cacheable(result), kind=cache.KIND_ROUTE)
     return result
 
 
@@ -213,6 +215,7 @@ def lookup_route(
 
     # 1. Persistent cache.
     cached = cache.get(callsign, cache.KIND_ROUTE)
+    usage.record_cache("routes", "hit" if cached is not None else "miss")
     if cached is not None and cached.get("miss"):
         # Whole pipeline (all providers, FR24 included) answered "unknown"
         # recently - skip everything for this poll.

@@ -59,8 +59,8 @@ import re
 import sqlite3
 import threading
 import time
-from pathlib import Path
 
+from lookups import _sqlite
 from setup.configuration import PLATFORM_DATA_DIR, ROOT_PATH, migrate_legacy_json
 
 logger = logging.getLogger(__name__)
@@ -220,37 +220,14 @@ def _retire_legacy_json():
 
 def _move_corrupt_db_aside():
     """Move an unusable database (and WAL sidecars) out of the way."""
-    for suffix in ("", "-wal", "-shm"):
-        path = Path(str(DB_PATH) + suffix)
-        if not path.exists():
-            continue
-        aside = Path(f"{path}.corrupt-{int(time.time())}")
-        try:
-            path.rename(aside)
-            logger.warning("Moved unusable cache file aside: %s", aside)
-        except OSError:
-            try:
-                path.unlink()
-            except OSError as exc:
-                logger.warning("Cache file %s unremovable: %s", path, exc)
+    _sqlite.move_db_aside(DB_PATH)
 
 
 def _open_and_prepare(path):
     """Open *path* (or in-memory when None) with schema ready; None on failure."""
     conn = None
     try:
-        if path is not None:
-            path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(
-            path or ":memory:",
-            timeout=5.0,
-            check_same_thread=False,
-            isolation_level=None,  # autocommit; migration uses explicit BEGIN
-        )
-        conn.execute("PRAGMA busy_timeout = 5000")
-        if path is not None:
-            conn.execute("PRAGMA journal_mode = WAL")
-        conn.execute("PRAGMA synchronous = NORMAL")
+        conn = _sqlite.open_db(path)
         _prepare(conn)
         return conn
     except (sqlite3.Error, OSError) as exc:
