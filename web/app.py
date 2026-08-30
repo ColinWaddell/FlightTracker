@@ -1570,32 +1570,25 @@ def cached_data():
     # --- Route cache ---
     route_entries = []
     try:
-        if routes_cache.CACHE_PATH.exists():
-            with open(routes_cache.CACHE_PATH) as f:
-                raw = _json.load(f)
-            now = time.time()
-            ttl = routes_cache.CACHE_TTL
-            for callsign, entry in raw.items():
-                ts = entry.get("_ts", 0)
-                cached_at = (
-                    _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
-                    if ts
-                    else ""
-                )
-                expired = ts > 0 and (now - ts) > ttl
-                route_entries.append(
-                    {
-                        "callsign": callsign,
-                        "plane": entry.get("plane", ""),
-                        "origin": entry.get("origin", ""),
-                        "destination": entry.get("destination", ""),
-                        "origin_name": entry.get("origin_name", ""),
-                        "destination_name": entry.get("destination_name", ""),
-                        "cached_at": cached_at,
-                        "expired": expired,
-                    }
-                )
-            route_entries.sort(key=lambda e: e["callsign"])
+        now = time.time()
+        for row in routes_cache.debug_entries(routes_cache.KIND_ROUTE):
+            ts = row["ts"]
+            cached_at = (
+                _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M") if ts else ""
+            )
+            route_entries.append(
+                {
+                    "callsign": row["key"],
+                    "plane": row["entry"].get("plane", ""),
+                    "origin": row["entry"].get("origin", ""),
+                    "destination": row["entry"].get("destination", ""),
+                    "origin_name": row["entry"].get("origin_name", ""),
+                    "destination_name": row["entry"].get("destination_name", ""),
+                    "cached_at": cached_at,
+                    "expired": ts > 0 and (now - ts) > row["ttl"],
+                }
+            )
+        route_entries.sort(key=lambda e: e["callsign"])
     except Exception as exc:
         logger.warning("Failed to read route cache: %s", exc)
 
@@ -1661,7 +1654,7 @@ def cached_data_routes_delete():
     if not keys:
         return redirect(url_for("cached_data"))
 
-    removed = routes_cache.delete(keys)
+    removed = routes_cache.delete(keys, routes_cache.KIND_ROUTE)
     logger.info("Deleted %d route cache entries (requested %d)", removed, len(keys))
     return redirect(url_for("cached_data"))
 

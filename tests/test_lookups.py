@@ -44,11 +44,13 @@ def isolated_caches(monkeypatch, tmp_path):
     """Isolate the persistent cache and reset quarantine state per test."""
     import lookups.cache as rc
 
-    monkeypatch.setattr(rc, "CACHE_PATH", tmp_path / "routes_cache.json")
-    monkeypatch.setattr(rc, "_cache", {})
-    monkeypatch.setattr(rc, "_loaded", True)
-    monkeypatch.setattr(rc, "_dirty", False)
-    return rc
+    monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
+    monkeypatch.setattr(rc, "_conn", None)
+    yield rc
+    if rc._conn is not None:
+        rc._conn.close()
+        rc._conn = None
 
 
 @pytest.fixture(autouse=True)
@@ -315,7 +317,7 @@ class TestLookupRouteService:
         result = rs._run_pipeline_with_cache(ctx, "BAW123", [("a", adapter)])
 
         assert result.origin == "LHR"
-        entry = rc.get("BAW123")
+        entry = rc.get("BAW123", rc.KIND_ROUTE)
         assert entry is not None
         assert entry["origin"] == "LHR"
         # operator/owner belong to the airframe, never the callsign key
@@ -333,7 +335,7 @@ class TestLookupRouteService:
         result = rs._run_pipeline_with_cache(ctx, "ZZZ999", [("a", adapter)])
 
         assert result.origin == ""
-        entry = rc.get("ZZZ999")
+        entry = rc.get("ZZZ999", rc.KIND_ROUTE)
         assert entry is not None and entry.get("miss") is True
 
     def test_unavailable_not_miss_cached(self):
@@ -346,13 +348,13 @@ class TestLookupRouteService:
         ctx = LookupContext(callsign="WWW111")
         rs._run_pipeline_with_cache(ctx, "WWW111", [("a", adapter)])
 
-        assert rc.get("WWW111") is None
+        assert rc.get("WWW111", rc.KIND_ROUTE) is None
 
     def test_miss_entry_skips_providers(self):
         import lookups.cache as rc
         import lookups.routes as rs
 
-        rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS)
+        rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
         adapter = MagicMock()
 
         result = rs.lookup_route(
@@ -377,6 +379,7 @@ class TestLookupRouteService:
                 "plane": "A319",
                 "registration": "G-EUPD",
             },
+            kind=rc.KIND_ROUTE,
         )
         adapter = MagicMock()
 
@@ -395,12 +398,12 @@ class TestLookupRouteService:
 
         # Seed a stale (expired-but-within-7-days) entry directly.
         stale_ts = time.time() - 2 * rs.cache.CACHE_TTL
-        rc._cache["BAW123"] = {
-            "origin": "LHR",
-            "destination": "GLA",
-            "_ts": stale_ts,
-        }
-        monkeypatch.setattr(rc, "_dirty", True)
+        rc.put(
+            "BAW123",
+            {"origin": "LHR", "destination": "GLA"},
+            ts=stale_ts,
+            kind=rc.KIND_ROUTE,
+        )
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.not_found("nope")
@@ -412,7 +415,7 @@ class TestLookupRouteService:
         # Re-cached with the timestamp advanced 4h.  (The entry stays past
         # its normal TTL by design - it re-expires quickly so providers are
         # retried again soon - so assert on the raw entry, not get().)
-        refreshed_ts = rc._cache["BAW123"]["_ts"]
+        refreshed_ts = rc.get_stale("BAW123", rc.KIND_ROUTE)["_ts"]
         assert refreshed_ts == pytest.approx(stale_ts + rc.STALE_RECACHE_ADVANCE)
 
     def test_stale_entry_past_7_days_not_reused(self, monkeypatch):
@@ -420,11 +423,12 @@ class TestLookupRouteService:
         import lookups.routes as rs
 
         ancient_ts = time.time() - (rc.CACHE_TTL_STALE + 86400)
-        rc._cache["BAW123"] = {
-            "origin": "LHR",
-            "destination": "GLA",
-            "_ts": ancient_ts,
-        }
+        rc.put(
+            "BAW123",
+            {"origin": "LHR", "destination": "GLA"},
+            ts=ancient_ts,
+            kind=rc.KIND_ROUTE,
+        )
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.not_found("nope")
@@ -434,11 +438,7 @@ class TestLookupRouteService:
 
         assert result.origin == ""
         # A miss was cached instead.
-        assert rc.get(
-            "BAW123",
-        ) and rc.get(
-            "BAW123"
-        ).get("miss")
+        assert rc.get("BAW123", rc.KIND_ROUTE).get("miss")
 
     def test_no_providers_dont_cache_miss(self):
         import lookups.cache as rc
@@ -447,7 +447,7 @@ class TestLookupRouteService:
         ctx = LookupContext(callsign="EMPTYY")
         rs._run_pipeline_with_cache(ctx, "EMPTYY", [])
 
-        assert rc.get("EMPTYY") is None
+        assert rc.get("EMPTYY", rc.KIND_ROUTE) is None
 
 
 # ---------------------------------------------------------------------------
@@ -524,7 +524,7 @@ class TestAircraftPipeline:
         info = ac.lookup_aircraft(ctx)
 
         assert not info.plane
-        entry = rc.get("000000")
+        entry = rc.get("000000", rc.KIND_AIRCRAFT)
         assert entry is not None
         assert entry["plane"] == ""
 
@@ -539,13 +539,15 @@ class TestAircraftPipeline:
         ctx = LookupContext(callsign="", mode_s="111111")
         ac.lookup_aircraft(ctx)
 
-        assert rc.get("111111") is None
+        assert rc.get("111111", rc.KIND_AIRCRAFT) is None
 
     def test_cached_positive_short_circuits(self, install_providers):
         import lookups.aircraft as ac
         import lookups.cache as rc
 
-        rc.put("400f5a", {"plane": "A320", "registration": "G-EUXM"})
+        rc.put(
+            "400f5a", {"plane": "A320", "registration": "G-EUXM"}, kind=rc.KIND_AIRCRAFT
+        )
         adapter = MagicMock()
         install_providers([("hexdb", adapter)])
 
@@ -560,13 +562,17 @@ class TestAircraftPipeline:
         import lookups.cache as rc
 
         stale_ts = time.time() - 2 * ac.cache.CACHE_TTL
-        rc._cache["400f5a"] = {
-            "plane": "A320",
-            "registration": "G-EUXM",
-            "operator_icao": "",
-            "owner": "",
-            "_ts": stale_ts,
-        }
+        rc.put(
+            "400f5a",
+            {
+                "plane": "A320",
+                "registration": "G-EUXM",
+                "operator_icao": "",
+                "owner": "",
+            },
+            ts=stale_ts,
+            kind=rc.KIND_AIRCRAFT,
+        )
 
         adapter = MagicMock()
         # Fresh answer: nothing useful, but resolves the operator.
@@ -581,7 +587,7 @@ class TestAircraftPipeline:
         assert info.plane == "A320"  # stale
         assert info.operator_icao == "BAW"  # fresh beats blank
         # Re-cached with the advanced timestamp.
-        assert rc._cache["400f5a"]["_ts"] == pytest.approx(
+        assert rc.get_stale("400f5a", rc.KIND_AIRCRAFT)["_ts"] == pytest.approx(
             stale_ts + rc.STALE_RECACHE_ADVANCE
         )
 

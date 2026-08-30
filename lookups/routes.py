@@ -135,13 +135,13 @@ def _run_pipeline_with_cache(
     if result.origin or result.destination:
         # Positive result - enrich names and cache under the callsign.
         enrich_route_names(result)
-        cache.put(callsign, _cacheable(result))
+        cache.put(callsign, _cacheable(result), kind=cache.KIND_ROUTE)
         return result
 
     # Providers found nothing.  Stale fallback: a recently-expired positive
     # entry (within 7 days) is returned and re-cached so the screen shows
     # real data while providers keep failing.
-    stale = cache.get_stale(callsign)
+    stale = cache.get_stale(callsign, cache.KIND_ROUTE)
     if stale is not None and (stale.get("origin") or stale.get("destination")):
         stale_route = RouteInfo.from_dict(stale)
         enrich_route_names(stale_route)
@@ -149,6 +149,7 @@ def _run_pipeline_with_cache(
             callsign,
             _cacheable(stale_route),
             ts=stale["_ts"] + cache.STALE_RECACHE_ADVANCE,
+            kind=cache.KIND_ROUTE,
         )
         logger.debug(
             "Route providers found nothing for %r - reusing stale cached "
@@ -160,7 +161,9 @@ def _run_pipeline_with_cache(
 
     # Cache the miss only when the pipeline answered truthfully.
     if all_answered and providers:
-        cache.put(callsign, {"miss": True}, ttl=cache.CACHE_TTL_MISS)
+        cache.put(
+            callsign, {"miss": True}, ttl=cache.CACHE_TTL_MISS, kind=cache.KIND_ROUTE
+        )
     return result
 
 
@@ -209,7 +212,7 @@ def lookup_route(
         return result
 
     # 1. Persistent cache.
-    cached = cache.get(callsign)
+    cached = cache.get(callsign, cache.KIND_ROUTE)
     if cached is not None and cached.get("miss"):
         # Whole pipeline (all providers, FR24 included) answered "unknown"
         # recently - skip everything for this poll.
@@ -229,7 +232,7 @@ def lookup_route(
     #     from live providers (e.g. a cached route missing its airline).
     cached_route = RouteInfo.from_dict(cached)
     if enrich_route_names(cached_route):
-        cache.put(callsign, _cacheable(cached_route))
+        cache.put(callsign, _cacheable(cached_route), kind=cache.KIND_ROUTE)
     result.merge_missing(cached_route)
 
     if not result.is_complete():

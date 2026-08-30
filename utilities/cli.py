@@ -183,7 +183,7 @@ def _cache_clear() -> int:
     cleared = []
 
     routes_cache.clear()
-    cleared.append(f"routes cache ({routes_cache.CACHE_PATH})")
+    cleared.append(f"routes cache ({routes_cache.DB_PATH})")
 
     if TLE_CACHE_PATH.exists():
         try:

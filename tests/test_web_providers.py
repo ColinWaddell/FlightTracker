@@ -293,3 +293,65 @@ class TestProviderGuidance:
             "register with AeroDataBox directly" in html
         )  # ' is \\u0027-escaped in the JSON blob
         assert "30-second polling" in html
+
+
+# ---------------------------------------------------------------------------
+# /cached-data page (SQLite-backed route cache listing)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def isolated_cache(tmp_path, monkeypatch):
+    """Point lookups.cache at a temp database for the request under test."""
+    import lookups.cache as rc
+
+    monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
+    monkeypatch.setattr(rc, "_conn", None)
+    yield rc
+    if rc._conn is not None:
+        rc._conn.close()
+        rc._conn = None
+
+
+class TestCachedDataPage:
+    def test_route_rows_render_from_sqlite(self, isolated_cache):
+        rc = isolated_cache
+        rc.put(
+            "BAW123",
+            {"plane": "A320", "origin": "LHR", "destination": "GLA"},
+            kind=rc.KIND_ROUTE,
+        )
+        rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
+
+        from web.app import app
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["authenticated"] = True
+
+        html = client.get("/cached-data").get_data(as_text=True)
+        assert "BAW123" in html
+        assert "A320" in html
+        assert "ZZZ999" in html  # miss entries are listed too
+
+    def test_routes_delete_removes_entries(self, isolated_cache):
+        rc = isolated_cache
+        rc.put("BAW123", {"origin": "LHR", "destination": "GLA"}, kind=rc.KIND_ROUTE)
+        rc.put("400f5a", {"plane": "A320"}, kind=rc.KIND_AIRCRAFT)
+
+        from web.app import app
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["authenticated"] = True
+            sess["csrf_token"] = "tok"
+
+        resp = client.post(
+            "/cached-data/routes/delete",
+            data={"keys": "BAW123", "csrf_token": "tok"},
+        )
+        assert resp.status_code == 302
+        assert rc.get("BAW123", rc.KIND_ROUTE) is None
+        # kind-scoped delete: the airframe entry (400f5a) survives
+        assert rc.get("400f5a", rc.KIND_AIRCRAFT) is not None
