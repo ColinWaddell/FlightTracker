@@ -46,6 +46,16 @@ class AircraftProvider:
             logger.debug("aerodatabox: unknown aircraft %r", mode_s)
             return LookupResult.not_found("aerodatabox has no aircraft for this hex")
 
+        if resp.status_code in (400, 422):
+            # Rejected parameters (odd hex shapes from the feed): a "no
+            # answer", not a provider failure - must not quarantine.
+            logger.debug(
+                "aerodatabox: rejected parameters for %r (HTTP %d)",
+                mode_s,
+                resp.status_code,
+            )
+            return LookupResult.not_found("aerodatabox rejected the request parameters")
+
         if resp.status_code in RATE_LIMIT_CODES:
             logger.warning(
                 "aerodatabox: rate limit / quota exceeded (HTTP %d) for %r",

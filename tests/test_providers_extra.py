@@ -589,3 +589,158 @@ class TestFr24ApiCatalogue:
         route = {e["provider"] for e in data["route_providers"]}
         assert flight["fr24api"] is False
         assert "fr24api" in route
+
+
+# ---------------------------------------------------------------------------
+# 4xx ident-rejection semantics (#101 family): providers must treat
+# parameter/format rejections as NOT_FOUND and never quarantine.
+# ---------------------------------------------------------------------------
+
+
+class TestAdsbDbRejectedIdent:
+    def test_route_400_is_not_found(self):
+        import lookups.providers.adsbdb.routes as adsbdb
+
+        provider = adsbdb.RouteProvider({})
+        with mock.patch.object(adsbdb, "_get", return_value=_response({}, status=400)):
+            result = provider.lookup_route(_context("BA 123"))
+        assert result.is_not_found
+        assert not result.is_unavailable
+
+    def test_route_server_error_is_unavailable(self):
+        # fail-closed still works: 500 is a provider failure
+        import requests
+
+        import lookups.providers.adsbdb.routes as adsbdb
+
+        response = _response({}, status=500)
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError("500")
+        provider = adsbdb.RouteProvider({})
+        with mock.patch.object(adsbdb, "_get", return_value=response):
+            result = provider.lookup_route(_context("BAW123"))
+        assert result.is_unavailable
+
+    def test_aircraft_400_is_not_found(self):
+        import lookups.providers.adsbdb.aircraft as adsbdb_aircraft
+
+        provider = adsbdb_aircraft.AircraftProvider({})
+        with mock.patch.object(
+            adsbdb_aircraft, "_get", return_value=_response({}, status=400)
+        ):
+            result = provider.lookup_aircraft(
+                LookupContext(callsign="", mode_s="zz zz")
+            )
+        assert result.is_not_found
+
+
+class TestAeroDataBoxRejectedParams:
+    @pytest.mark.parametrize("status", [400, 422])
+    def test_routes_rejected_parameters_are_not_found(self, status):
+        import lookups.providers.aerodatabox.routes as aerodatabox
+
+        response = _response({}, status=status)
+        with mock.patch.object(
+            aerodatabox, "aerodatabox_get", return_value=(response, None)
+        ):
+            result = aerodatabox.RouteProvider({"api_key": "***"}).lookup_route(
+                _context("BA 123")
+            )
+        assert result.is_not_found
+        assert not result.is_unavailable
+
+    def test_routes_rate_limit_is_unavailable(self):
+        import lookups.providers.aerodatabox.routes as aerodatabox
+
+        response = _response({}, status=429)
+        with mock.patch.object(
+            aerodatabox, "aerodatabox_get", return_value=(response, None)
+        ):
+            result = aerodatabox.RouteProvider({"api_key": "***"}).lookup_route(
+                _context("BAW123")
+            )
+        assert result.is_unavailable
+
+    def test_routes_server_error_is_unavailable(self):
+        import requests
+
+        import lookups.providers.aerodatabox.routes as aerodatabox
+
+        with mock.patch.object(
+            aerodatabox,
+            "aerodatabox_get",
+            side_effect=requests.exceptions.HTTPError("boom"),
+        ):
+            result = aerodatabox.RouteProvider({"api_key": "***"}).lookup_route(
+                _context("BAW123")
+            )
+        assert result.is_unavailable
+
+    @pytest.mark.parametrize("status", [400, 422])
+    def test_aircraft_rejected_parameters_are_not_found(self, status):
+        import lookups.providers.aerodatabox.aircraft as aerodatabox
+
+        response = _response({}, status=status)
+        with mock.patch.object(
+            aerodatabox, "aerodatabox_get", return_value=(response, None)
+        ):
+            result = aerodatabox.AircraftProvider({"api_key": "***"}).lookup_aircraft(
+                LookupContext(callsign="", mode_s="40 6df5")
+            )
+        assert result.is_not_found
+
+
+class TestAirLabsRejectedIdent:
+    @pytest.mark.parametrize("status", [400, 404])
+    def test_rejected_ident_is_not_found(self, status):
+        import lookups.providers.airlabs.routes as airlabs
+
+        provider = airlabs.RouteProvider({"api_key": "k"})
+        with mock.patch.object(
+            airlabs.requests, "get", return_value=_response({}, status=status)
+        ):
+            result = provider.lookup_route(_context("BA 123"))
+        assert result.is_not_found
+        assert not result.is_unavailable
+
+    def test_auth_error_is_unavailable(self):
+        import lookups.providers.airlabs.routes as airlabs
+
+        provider = airlabs.RouteProvider({"api_key": "k"})
+        with mock.patch.object(
+            airlabs.requests, "get", return_value=_response({}, status=401)
+        ):
+            result = provider.lookup_route(_context("BAW123"))
+        assert result.is_unavailable
+
+
+class TestFr24ApiRejectedIdent:
+    def test_routes_400_is_not_found(self, monkeypatch):
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.routes as fr24api
+
+        monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 400))
+        result = fr24api.RouteProvider({"api_key": "TOK"}).lookup_route(
+            _context("BA 123")
+        )
+        assert result.is_not_found
+        assert not result.is_unavailable
+
+    def test_routes_server_error_is_unavailable(self, monkeypatch):
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.routes as fr24api
+
+        monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 500))
+        result = fr24api.RouteProvider({"api_key": "TOK"}).lookup_route(
+            _context("BAW123")
+        )
+        assert result.is_unavailable
+
+    def test_aircraft_400_is_not_found(self, monkeypatch):
+        import lookups.providers.fr24api.aircraft as fr24api
+        import lookups.providers.fr24api.client as client
+
+        monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 400))
+        result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("BA 123")
+        )
+        assert result.is_not_found

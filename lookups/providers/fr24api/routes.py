@@ -50,6 +50,16 @@ class RouteProvider:
                 return LookupResult.unavailable(f"FR24 API unreachable: {e}")
             raise
 
+        if resp.status_code in (400, 404):
+            # Ident rejected or unknown: "no answer for this callsign",
+            # not a provider failure - must not quarantine.  (#101 family)
+            logger.debug(
+                "FR24 API rejected ident %r (HTTP %d)",
+                callsign,
+                resp.status_code,
+            )
+            return LookupResult.not_found("FR24 API rejected the ident format")
+
         if resp.status_code != 200:
             reason = api_unavailable(resp)
             logger.debug("FR24 API routes for %r: %s", callsign, reason)
