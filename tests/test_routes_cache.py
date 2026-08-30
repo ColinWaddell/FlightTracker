@@ -412,9 +412,7 @@ class TestRoutesCacheLegacyImport:
     def test_import_stamps_missing_ts(self, isolated_cache):
         rc = isolated_cache
         rc.LEGACY_JSON_PATH.write_text(
-            json.dumps(
-                {"BAW123": {"origin": "LHR"}}  # no _ts - stamped with now
-            )
+            json.dumps({"BAW123": {"origin": "LHR"}})  # no _ts - stamped with now
         )
         assert rc.get("BAW123", rc.KIND_ROUTE) == {"origin": "LHR"}
 
