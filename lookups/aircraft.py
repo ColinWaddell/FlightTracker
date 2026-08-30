@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import time
 
-from lookups import cache
+from lookups import cache, usage
 from lookups.quarantine import QUARANTINE
 from lookups.registry import AIRCRAFT, load_config, resolve_chain
 from lookups.results import AircraftInfo, LookupContext
@@ -56,6 +56,7 @@ def run_aircraft_pipeline(
             all_answered = False
             continue
 
+        usage.record("aircraft", pid, "attempt")
         try:
             lookup = adapter.lookup_aircraft(ctx)
         except Exception as e:  # defensive: adapters shouldn't raise
@@ -76,6 +77,7 @@ def run_aircraft_pipeline(
             all_answered = False
         else:
             QUARANTINE.record_success(pid)
+            usage.record("aircraft", pid, "no_result")
 
     return info, all_answered, first_hit
 
@@ -91,7 +93,8 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
 
     # 1. Persistent cache - blank entries are cached too (24 h), so any hit
     #    short-circuits the providers.
-    cached = cache.get(mode_s)
+    cached = cache.get(mode_s, cache.KIND_AIRCRAFT)
+    usage.record_cache("aircraft", "hit" if cached is not None else "miss")
     if cached is not None:
         return AircraftInfo(
             plane=cached.get("plane", ""),
@@ -105,13 +108,13 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
 
     if info.plane or info.registration:
         # Resolved something usable - cache the full airframe record.
-        cache.put(mode_s, _aircraft_cache_entry(info))
+        cache.put(mode_s, _aircraft_cache_entry(info), kind=cache.KIND_AIRCRAFT)
         return info
 
     # Providers resolved nothing usable.  Stale fallback: a recently-
     # expired entry (within 7 days) is returned and re-cached; its stale
     # type/registration are combined with any freshly-resolved identity.
-    stale = cache.get_stale(mode_s)
+    stale = cache.get_stale(mode_s, cache.KIND_AIRCRAFT)
     if stale is not None and (stale.get("plane") or stale.get("registration")):
         stale_info = AircraftInfo(
             plane=stale.get("plane", ""),
@@ -123,6 +126,7 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
             mode_s,
             _aircraft_cache_entry(stale_info),
             ts=stale["_ts"] + cache.STALE_RECACHE_ADVANCE,
+            kind=cache.KIND_AIRCRAFT,
         )
         logger.debug(
             "Aircraft providers found nothing for mode_s %r - reusing "
@@ -135,7 +139,7 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
     # All-answered blanks are cached (24 h) so 404s aren't repeated - but
     # only when the pipeline actually ran and answered truthfully.
     if all_answered and providers:
-        cache.put(mode_s, _aircraft_cache_entry(info))
+        cache.put(mode_s, _aircraft_cache_entry(info), kind=cache.KIND_AIRCRAFT)
     return info
 
 

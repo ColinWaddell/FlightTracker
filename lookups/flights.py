@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
+from lookups import usage
 from lookups.quarantine import QUARANTINE
 from lookups.registry import (
     FLIGHTS,
@@ -87,6 +88,7 @@ def fetch_flights(query) -> FlightFetchOutcome:
             continue
 
         attempted_any = True
+        usage.record("flights", pid, "api_call")
 
         try:
             result = adapter.fetch(query)
@@ -97,10 +99,13 @@ def fetch_flights(query) -> FlightFetchOutcome:
             continue
 
         if result.is_found:
+            observations = list(result.value or [])
+            if observations:
+                usage.record("flights", pid, "aircraft", n=len(observations))
             QUARANTINE.record_success(pid)
             return FlightFetchOutcome(
                 ok=True,
-                observations=list(result.value or []),
+                observations=observations,
                 provider_id=pid,
                 source_name=spec.name if spec else pid,
             )

@@ -181,6 +181,15 @@ class TestParseSettingsFormProviders:
         assert out["providers"] == {}
         assert out["max_flight_lookup"] == 5  # int_val's documented default
 
+    def test_provider_usage_logging_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"provider_usage_logging": "on"}, cfg)
+        assert out["provider_usage_logging"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["provider_usage_logging"] is False
+
     def test_legacy_data_source_key_not_produced(self):
         from web.app import parse_settings_form
 
@@ -293,3 +302,196 @@ class TestProviderGuidance:
             "register with AeroDataBox directly" in html
         )  # ' is \\u0027-escaped in the JSON blob
         assert "30-second polling" in html
+
+
+# ---------------------------------------------------------------------------
+# /cached-data page (SQLite-backed route cache listing)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def isolated_cache(tmp_path, monkeypatch):
+    """Point lookups.cache at a temp database for the request under test."""
+    import lookups.cache as rc
+
+    monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
+    monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
+    monkeypatch.setattr(rc, "_conn", None)
+    yield rc
+    if rc._conn is not None:
+        rc._conn.close()
+        rc._conn = None
+
+
+class TestCachedDataPage:
+    def test_route_rows_render_from_sqlite(self, isolated_cache):
+        rc = isolated_cache
+        rc.put(
+            "BAW123",
+            {"plane": "A320", "origin": "LHR", "destination": "GLA"},
+            kind=rc.KIND_ROUTE,
+        )
+        rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
+
+        from web.app import app
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["authenticated"] = True
+
+        html = client.get("/cached-data").get_data(as_text=True)
+        assert "BAW123" in html
+        assert "A320" in html
+        assert "ZZZ999" in html  # miss entries are listed too
+
+    def test_routes_delete_removes_entries(self, isolated_cache):
+        rc = isolated_cache
+        rc.put("BAW123", {"origin": "LHR", "destination": "GLA"}, kind=rc.KIND_ROUTE)
+        rc.put("400f5a", {"plane": "A320"}, kind=rc.KIND_AIRCRAFT)
+
+        from web.app import app
+
+        client = app.test_client()
+        with client.session_transaction() as sess:
+            sess["authenticated"] = True
+            sess["csrf_token"] = "tok"
+
+        resp = client.post(
+            "/cached-data/routes/delete",
+            data={"keys": "BAW123", "csrf_token": "tok"},
+        )
+        assert resp.status_code == 302
+        assert rc.get("BAW123", rc.KIND_ROUTE) is None
+        # kind-scoped delete: the airframe entry (400f5a) survives
+        assert rc.get("400f5a", rc.KIND_AIRCRAFT) is not None
+
+
+# ---------------------------------------------------------------------------
+# /api - provider usage page + JSON API
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def isolated_usage(tmp_path, monkeypatch):
+    """Point the usage tally at a temp db with fresh in-memory state."""
+    import lookups.usage as ru
+
+    monkeypatch.setattr(ru, "DB_PATH", tmp_path / "usage.sqlite3")
+    monkeypatch.setattr(ru, "_conn", None)
+    monkeypatch.setattr(ru, "_providers_dirty", {})
+    monkeypatch.setattr(ru, "_cache_dirty", {})
+    monkeypatch.setattr(ru, "_last_flush", 0.0)
+    yield ru
+    if ru._conn is not None:
+        ru._conn.close()
+        ru._conn = None
+
+
+def _authenticated_client():
+    from web.app import app
+
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["csrf_token"] = "tok"
+    return client
+
+
+class TestStatusApi:
+    def test_page_renders_totals_and_link_tile_exists(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 5)
+        ru.record("routes", "hexdb", "no_result", 2)
+        ru.record_cache("aircraft", "hit")
+        ru.record("flights", "tar1090", "api_call")
+        ru.record("flights", "tar1090", "aircraft", 7)
+
+        html = _authenticated_client().get("/api").get_data(as_text=True)
+        assert "API Usage" in html
+        assert "hexdb" in html
+        assert "tar1090" in html
+        assert '/api"' in html
+
+    def test_status_page_links_to_usage(self):
+        html = _authenticated_client().get("/status").get_data(as_text=True)
+        assert '/api"' in html
+
+    def test_json_shape_matches_summary(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 5)
+        ru.record("flights", "tar1090", "api_call")
+        ru.record("flights", "tar1090", "aircraft", 7)
+        ru.record_cache("routes", "miss")
+
+        resp = _authenticated_client().get("/api/json")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["cache"]["routes"] == {"hits": 0, "misses": 1}
+        assert data["providers"]["routes"]["hexdb"] == {"attempts": 5, "no_results": 0}
+        assert data["providers"]["flights"]["tar1090"] == {
+            "api_calls": 1,
+            "aircraft": 7,
+        }
+        assert data["range"] == {"start": None, "end": None}
+
+    def test_range_url_filters_totals(self, isolated_usage, monkeypatch):
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-01")
+        ru.record("routes", "hexdb", "attempt", 10)
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-20")
+        ru.record("routes", "hexdb", "attempt", 4)
+        ru.flush()
+
+        data = (
+            _authenticated_client()
+            .get("/api/2026-08-01/2026-08-01/json")
+            .get_json()
+        )
+        assert data["providers"]["routes"]["hexdb"]["attempts"] == 10
+        assert data["range"] == {"start": "2026-08-01", "end": "2026-08-01"}
+
+    def test_malformed_dates_return_400(self, isolated_usage):
+        client = _authenticated_client()
+        assert client.get("/api/foo/bar/json").status_code == 400
+        assert client.get("/api/foo/bar").status_code == 400
+
+    def test_reversed_range_is_swapped(self, isolated_usage, monkeypatch):
+        ru = isolated_usage
+        monkeypatch.setattr(ru, "_today", lambda: "2026-08-20")
+        ru.record("routes", "hexdb", "attempt")
+        ru.flush()
+
+        data = (
+            _authenticated_client()
+            .get("/api/2026-08-31/2026-08-01/json")
+            .get_json()
+        )
+        assert data["range"]["start"] == "2026-08-01"
+        assert data["providers"]["routes"]["hexdb"]["attempts"] == 1
+
+    def test_login_required(self, isolated_usage, monkeypatch):
+        # remove the existing isolation fixture patches for a clean look? no -
+        # just bypass the authenticated session
+        from web.app import app
+
+        client = app.test_client()
+        resp = client.get("/api")
+        assert resp.status_code == 302  # redirected to login
+
+    def test_clear_empties_tallies(self, isolated_usage):
+        ru = isolated_usage
+        ru.record("routes", "hexdb", "attempt", 9)
+        ru.flush()
+
+        client = _authenticated_client()
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = "tok"
+
+        resp = client.post("/api/clear", data={"csrf_token": "tok"})
+        assert resp.status_code == 302
+        assert ru.summary()["providers"]["routes"] == {}
+
+    def test_clear_rejects_bad_csrf(self, isolated_usage):
+        client = _authenticated_client()
+        resp = client.post("/api/clear", data={"csrf_token": "wrong"})
+        assert resp.status_code == 403

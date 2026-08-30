@@ -25,6 +25,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link{{ ' active' if active_page == 'api_usage' }}" href="{{ url_for('api_usage') }}">
+            <i class="bi  bi-bar-chart-line me-1"></i>API Usage
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link{{ ' active' if active_page == 'logs' }}" href="{{ url_for('logs') }}">
             <i class="bi bi-terminal me-1"></i>Log Viewer
           </a>

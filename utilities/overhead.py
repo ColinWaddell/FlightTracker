@@ -211,11 +211,15 @@ class Overhead:
 
         The cache is flushed once per poll cycle rather than on every
         individual put() to reduce SD-card writes on a Raspberry Pi.
+        The usage tally's debounced flush rides the same cycle.
         """
         with self.lock:
             self.processing_store = False
         self.done.set()
         cache.flush()
+        from lookups import usage as _usage  # light import, same pattern as fetch
+
+        _usage.flush_if_due()
 
     # ------------------------------------------------------------------
     # Properties (scene contract)

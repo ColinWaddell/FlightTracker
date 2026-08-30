@@ -31,9 +31,20 @@ import threading
 import time
 from pathlib import Path
 
-from flask import Flask, Response, redirect, render_template, request, session, url_for
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from lookups import cache as routes_cache
+from lookups import usage as usage_tally
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
 from utilities.flight import Flight
@@ -250,6 +261,12 @@ def _get_live_data_overhead() -> tuple[object, str]:
 
 def restart_after(delay: float = 1.0):
     """Schedule os.execv after `delay` seconds on a daemon thread."""
+
+    # os.execv bypasses atexit, so persist the usage tallies now - every
+    # restart path funnels through here.
+    from lookups import usage as usage_tally
+
+    usage_tally.flush()
 
     def do_restart():
         import time
@@ -570,6 +587,8 @@ def parse_settings_form(form, cfg) -> dict:
             in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
             else cfg.log_level
         ),
+        # Provider usage tally (see lookups/usage.py + /api)
+        "provider_usage_logging": bool_val(form.get("provider_usage_logging")),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
@@ -910,6 +929,7 @@ def _settings_page_data(
             "backupExport": "/backup/export",
             "backupRestore": "/backup/restore",
             "debugConfig": "/debug-config",
+            "statusApi": "/api",
         },
     }
 
@@ -1570,32 +1590,25 @@ def cached_data():
     # --- Route cache ---
     route_entries = []
     try:
-        if routes_cache.CACHE_PATH.exists():
-            with open(routes_cache.CACHE_PATH) as f:
-                raw = _json.load(f)
-            now = time.time()
-            ttl = routes_cache.CACHE_TTL
-            for callsign, entry in raw.items():
-                ts = entry.get("_ts", 0)
-                cached_at = (
-                    _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
-                    if ts
-                    else ""
-                )
-                expired = ts > 0 and (now - ts) > ttl
-                route_entries.append(
-                    {
-                        "callsign": callsign,
-                        "plane": entry.get("plane", ""),
-                        "origin": entry.get("origin", ""),
-                        "destination": entry.get("destination", ""),
-                        "origin_name": entry.get("origin_name", ""),
-                        "destination_name": entry.get("destination_name", ""),
-                        "cached_at": cached_at,
-                        "expired": expired,
-                    }
-                )
-            route_entries.sort(key=lambda e: e["callsign"])
+        now = time.time()
+        for row in routes_cache.debug_entries(routes_cache.KIND_ROUTE):
+            ts = row["ts"]
+            cached_at = (
+                _dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M") if ts else ""
+            )
+            route_entries.append(
+                {
+                    "callsign": row["key"],
+                    "plane": row["entry"].get("plane", ""),
+                    "origin": row["entry"].get("origin", ""),
+                    "destination": row["entry"].get("destination", ""),
+                    "origin_name": row["entry"].get("origin_name", ""),
+                    "destination_name": row["entry"].get("destination_name", ""),
+                    "cached_at": cached_at,
+                    "expired": ts > 0 and (now - ts) > row["ttl"],
+                }
+            )
+        route_entries.sort(key=lambda e: e["callsign"])
     except Exception as exc:
         logger.warning("Failed to read route cache: %s", exc)
 
@@ -1661,7 +1674,7 @@ def cached_data_routes_delete():
     if not keys:
         return redirect(url_for("cached_data"))
 
-    removed = routes_cache.delete(keys)
+    removed = routes_cache.delete(keys, routes_cache.KIND_ROUTE)
     logger.info("Deleted %d route cache entries (requested %d)", removed, len(keys))
     return redirect(url_for("cached_data"))
 
@@ -1710,3 +1723,73 @@ def cached_data_tles_delete():
         logger.error("TLE cache delete failed: %s", exc)
 
     return redirect(url_for("cached_data"))
+
+
+# ---------------------------------------------------------------------------
+# Provider API usage (/api) - totals over a date range or all history
+# ---------------------------------------------------------------------------
+
+
+def _usage_summary_for(start=None, end=None) -> dict:
+    """Validate the optional date range and return aggregated usage tallies."""
+    for name, value in (("start", start), ("end", end)):
+        if value is not None:
+            try:
+                time.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                abort(
+                    400,
+                    description=f"invalid {name} date (expected YYYY-MM-DD): {value!r}",
+                )
+    if start is not None and end is not None and start > end:
+        start, end = end, start  # friendlier than an error
+    return usage_tally.summary(start=start, end=end)
+
+
+@app.route("/api")
+@login_required
+def api_usage():
+    """Provider API usage totals over the whole logging history."""
+    return render_template(
+        "api_usage.html",
+        summary=_usage_summary_for(),
+        csrf_token=csrf_token(),
+        active_page="api_usage",
+    )
+
+
+@app.route("/api/<start>/<end>")
+@login_required
+def api_usage_range(start, end):
+    """Provider API usage totals between two dates (inclusive)."""
+    return render_template(
+        "api_usage.html",
+        summary=_usage_summary_for(start, end),
+        csrf_token=csrf_token(),
+        active_page="api_usage",
+    )
+
+
+@app.route("/api/json")
+@login_required
+def api_usage_json():
+    """Provider API usage totals (all history) as JSON."""
+    return jsonify(_usage_summary_for())
+
+
+@app.route("/api/<start>/<end>/json")
+@login_required
+def api_usage_range_json(start, end):
+    """Provider API usage totals between two dates (inclusive) as JSON."""
+    return jsonify(_usage_summary_for(start, end))
+
+
+@app.route("/api/clear", methods=["POST"])
+@login_required
+def api_usage_clear():
+    """Erase all recorded provider usage tallies."""
+    if not validate_csrf(request.form):
+        abort(403, description="Invalid CSRF token.")
+    usage_tally.clear()
+    logger.info("Provider usage tallies cleared")
+    return redirect(url_for("api_usage"))

@@ -4,6 +4,28 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- New **API usage tally** (`usage.sqlite3` in the platform data dir): per-day, per-provider
+  counts for route and aircraft lookups (total attempts / no results), flights-overhead
+  providers (API calls / aircraft returned), plus lookup-cache hits and misses. Batched
+  in memory and written once a minute - negligible SD-card impact; history survives
+  cache clears
+- New **`/api` page**: totals over the whole history or any inclusive date range, with
+  a JSON mirror on the same routes (`/api/json`, `/api/<start>/<end>/json`)
+  and a "Clear Logged Data" button on the page
+- Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
+  switching off stops new tallies and keeps recorded history until cleared on the API Usage
+  page
+- Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
+  re-cache write (missing `kind` argument)
+- Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level
+  page writes instead of whole-file rewrites), entries now survive crashes and settings
+  restarts, and new lookup fields need no cache-migration ever again
+- Existing `routes_cache.json` is imported automatically on first use (timestamps preserved)
+  and kept beside the database as `routes_cache.json.imported`
+
 ## [v2.9.0] - 2026-08-29
 
 - All-new provider system: pick your data sources from a list and set their priority
