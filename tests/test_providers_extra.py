@@ -260,21 +260,67 @@ class TestAirLabs:
             result = provider.lookup_route(_context("BAW123"))
         assert result.is_unavailable
 
-    def test_400_is_not_found_not_unavailable(self):
-        """AeroAPI 400s when the ident isn't in fa_flight_id format (e.g. a
-        tail number).  The query was mis-shaped for the endpoint - the
-        provider is healthy - so it must read as NOT_FOUND and never
-        quarantine the provider.  (#101)
+    def test_400_retried_as_registration_finds_route(self):
+        """AeroAPI rejects plain idents (e.g. tail numbers) with HTTP 400.
+        The lookup retries once with ident_type=registration so private/GA
+        flights resolve instead of quarantining the provider.  (#101)
+        """
+        import lookups.providers.flightaware.routes as flightaware
+
+        provider = flightaware.RouteProvider({"api_key": "k"})
+        responses = [
+            _response({}, status=400),  # plain ident rejected
+            _response(
+                {
+                    "flights": [
+                        {"origin": {"code": "EGLL"}, "destination": {"code": "KJFK"}}
+                    ]
+                }
+            ),
+        ]
+        with mock.patch.object(
+            flightaware.requests, "get", side_effect=responses
+        ) as mocked:
+            result = provider.lookup_route(_context("N40726"))
+
+        assert result.is_found
+        assert result.value.origin == "LHR"
+        assert result.value.destination == "JFK"
+        first, second = mocked.call_args_list
+        assert "ident_type" not in first.kwargs["params"]
+        assert second.kwargs["params"].get("ident_type") == "registration"
+
+    def test_double_400_reads_as_not_found(self):
+        """A 400 on both attempts (ident rejected as registration too) reads
+        as NOT_FOUND - it must never quarantine the provider.  (#101)
         """
         import lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
-            flightaware.requests, "get", return_value=_response({}, status=400)
-        ):
+            flightaware.requests,
+            "get",
+            side_effect=[_response({}, status=400), _response({}, status=400)],
+        ) as mocked:
             result = provider.lookup_route(_context("N40726"))
         assert result.is_not_found
         assert not result.is_unavailable
+        assert mocked.call_count == 2
+
+    def test_successful_first_call_needs_no_ident_type(self):
+        import lookups.providers.flightaware.routes as flightaware
+
+        provider = flightaware.RouteProvider({"api_key": "k"})
+        response = _response(
+            {"flights": [{"origin": {"code": "EGLL"}, "destination": {"code": "KJFK"}}]}
+        )
+        with mock.patch.object(
+            flightaware.requests, "get", return_value=response
+        ) as mocked:
+            result = provider.lookup_route(_context("BAW123"))
+        assert result.is_found
+        assert mocked.call_count == 1
+        assert "ident_type" not in mocked.call_args.kwargs["params"]
 
     def test_rate_limit_is_still_unavailable(self):
         import lookups.providers.flightaware.routes as flightaware

@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
   switching off stops new tallies and keeps recorded history until cleared on the API Usage
   page
+- Fixed (#101): AeroAPI 400s (e.g. a tail-number/plain ident it doesn't recognise) no longer
+  quarantine the provider — they read as not-found and the lookup moves to the next provider;
+  auth/quota errors still quarantine
+- AeroAPI tail-number (private/GA) lookups now work: a rejected plain ident is retried once
+  with `ident_type=registration`
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
   re-cache write (missing `kind` argument)
 - Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level
