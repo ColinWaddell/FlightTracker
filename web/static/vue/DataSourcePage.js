@@ -302,15 +302,15 @@ export default defineComponent({
               </li>
             </ul>
             <div class="card-footer mt-auto">
-              <span v-if="inAnyList(meta.id)" class="badge"
+              <span v-if="inAnyList(meta.id)" class="badge me-1"
                     :class="providerEnabled(meta.id) ? 'text-bg-success' : 'text-bg-light text-secondary'">
                 {{ providerEnabled(meta.id) ? 'enabled' : 'disabled' }}
               </span>
-              <span v-if="meta.configured" class="badge text-bg-success">configured</span>
-              <span v-else-if="meta.missing_required.length" class="badge text-bg-warning">
+              <span v-if="meta.configured" class="badge me-1 text-bg-success">configured</span>
+              <span v-else-if="meta.missing_required.length" class="badge me-1 text-bg-warning">
                 missing {{ meta.missing_required.join(', ') }}
               </span>
-              <span class="badge text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
+              <span class="badge me-1 text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
             </div>
           </div>
         </div>
