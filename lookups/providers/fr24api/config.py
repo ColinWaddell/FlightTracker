@@ -19,10 +19,7 @@ PROVIDER = ProviderConfig(
         "from a credit balance, so live polling over a busy zone burns credits "
         'fastest. <a href="https://www.flightradar24.com/" target="_blank" '
         'rel="noopener noreferrer">flightradar24.com</a>. '
-        "<strong>Billing warning:</strong> one "
-        "live-positions call bills roughly 8 credits per returned record with a "
-        "1-credit minimum even when nothing is returned - a ten-flight zone poll "
-        "costs ~80 credits, and rapid re-calls trip the burst limit."
+        "<strong>Billing warning:</strong> "
         "Best suited to occasional route/aircraft lookups; leave "
         "continuous polling to the free providers."
     ),
