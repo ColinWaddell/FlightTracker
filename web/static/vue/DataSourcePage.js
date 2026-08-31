@@ -116,6 +116,23 @@ export default defineComponent({
       return JSON.stringify(list.map((e) => ({ provider: e.provider, enabled: !!e.enabled })));
     }
 
+    // A provider is enabled if its checkbox is ticked in either lookup
+    // priority list above; both lists are reactive so the badge in each
+    // provider's settings card updates live.
+    function inAnyList(pid) {
+      return (
+        props.store.flightProvidersOrder.some((e) => e.provider === pid) ||
+        props.store.routeProvidersOrder.some((e) => e.provider === pid)
+      );
+    }
+
+    function providerEnabled(pid) {
+      return (
+        props.store.flightProvidersOrder.some((e) => e.provider === pid && e.enabled) ||
+        props.store.routeProvidersOrder.some((e) => e.provider === pid && e.enabled)
+      );
+    }
+
     function anyFlightProviderEnabled() {
       return props.store.flightProvidersOrder.some((e) => e.enabled);
     }
@@ -135,6 +152,8 @@ export default defineComponent({
       providerName,
       settingsFor,
       providersJson,
+      inAnyList,
+      providerEnabled,
       anyFlightProviderEnabled,
     };
   },
@@ -161,7 +180,8 @@ export default defineComponent({
                 @dragend="onDragEnd">
               <input type="checkbox" class="form-check-input mt-0" :id="'fp-enabled-' + entry.provider"
                      v-model="entry.enabled" />
-              <label class="form-check-label flex-grow-1" :for="'fp-enabled-' + entry.provider">
+              <label class="form-check-label flex-grow-1" :for="'fp-enabled-' + entry.provider"
+                     :class="{ 'text-body-secondary': !entry.enabled }">
                 {{ providerName(store.flightProvidersOrder, entry.provider) }}
               </label>
               <button type="button" class="btn btn-sm btn-outline-secondary ft-drag-handle"
@@ -192,7 +212,8 @@ export default defineComponent({
                 @dragend="onDragEnd">
               <input type="checkbox" class="form-check-input mt-0" :id="'rp-enabled-' + entry.provider"
                      v-model="entry.enabled" />
-              <label class="form-check-label flex-grow-1" :for="'rp-enabled-' + entry.provider">
+              <label class="form-check-label flex-grow-1" :for="'rp-enabled-' + entry.provider"
+                     :class="{ 'text-body-secondary': !entry.enabled }">
                 {{ providerName(store.routeProvidersOrder, entry.provider) }}
               </label>
               <button type="button" class="btn btn-sm btn-outline-secondary ft-drag-handle"
@@ -281,6 +302,10 @@ export default defineComponent({
               </li>
             </ul>
             <div class="card-footer mt-auto">
+              <span v-if="inAnyList(meta.id)" class="badge"
+                    :class="providerEnabled(meta.id) ? 'text-bg-success' : 'text-bg-light text-secondary'">
+                {{ providerEnabled(meta.id) ? 'enabled' : 'disabled' }}
+              </span>
               <span v-if="meta.configured" class="badge text-bg-success">configured</span>
               <span v-else-if="meta.missing_required.length" class="badge text-bg-warning">
                 missing {{ meta.missing_required.join(', ') }}
