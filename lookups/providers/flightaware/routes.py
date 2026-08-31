@@ -2,19 +2,33 @@
 
 Resolves a callsign or aircraft registration to its origin/destination
 airports via AeroAPI v4's flights-by-ident endpoint.  Requests are billed
-per result set, so this provider is best suited to per-new-callsign
-lookups (the lookup caches suppress repeats) rather than position
-polling.
+per result set, so this provider makes exactly one call per lookup: the
+endpoint answers with a single page of recent flights (roughly the past
+11 days through 2 days ahead) by default.
 
-AeroAPI only recognises idents in fa_flight_id format on this endpoint,
-and rejects plain idents (callsigns, tail numbers) with HTTP 400; when
-that happens the lookup retries once with ``ident_type=registration``,
-which is how tail-number (private/GA) flights are looked up (#101).
+The endpoint accepts an ident, a registration, or an fa_flight_id.  The
+documented ``ident_type`` parameter disambiguates which kind was passed:
+it is sent explicitly when the ident is recognisably a callsign
+(``designator``) or a tail number (``registration``), and omitted
+otherwise so the API applies its default interpretation.  Only documented
+parameters are ever sent - AeroAPI rejects unknown query arguments with a
+400 ("Invalid argument 'max_results' supplied", #101).
+
+An unknown ident is signalled by a 200 response with an empty ``flights``
+list, not a 404; flights without route data (position-only records) are
+skipped.  A 400 means the request itself was unparseable - an unsupported
+parameter or malformed ident - not that the provider is failing: the
+response body is logged and the lookup reads as not-found so the pipeline
+walks to the next provider (#101).  Auth and quota problems
+(401/403/429) still read as UNAVAILABLE so the provider is held off
+rather than treated as a dead callsign.
 """
 
 from __future__ import annotations
 
 import logging
+import re
+import urllib.parse
 
 import requests
 from requests.exceptions import RequestException
@@ -28,6 +42,36 @@ BASE = "https://aeroapi.flightaware.com/aeroapi"
 
 # Request timeout (seconds).
 PROVIDER_TIMEOUT = 10
+
+# ICAO operator code + flight number (e.g. AAY430, UAL4, RYR215K).
+_DESIGNATOR_RE = re.compile(r"^[A-Z]{3}[0-9][A-Z0-9]{0,3}$")
+# US registration (N40726) or hyphenated registration (G-XWBA, VH-XYZ).
+_REGISTRATION_RE = re.compile(r"^(N[0-9]{1,5}[A-Z]{0,3}|[A-Z0-9]{1,2}-[A-Z]{1,4})$")
+
+
+def _ident_type(callsign: str) -> str | None:
+    """Pick the documented ident_type for *callsign*, or None.
+
+    None lets AeroAPI apply its default interpretation, which handles
+    anything ambiguous (IATA-style idents, hex addresses, unknown
+    shapes).  Sending a wrong explicit type is worse than omitting it.
+    """
+    if _DESIGNATOR_RE.match(callsign):
+        return "designator"
+    if _REGISTRATION_RE.match(callsign):
+        return "registration"
+    return None
+
+
+def _error_detail(resp) -> str:
+    """Extract a message from an AeroAPI error body ({title, reason, detail})."""
+    try:
+        body = resp.json() or {}
+    except ValueError:
+        return (resp.text or "").strip()[:200]
+    if isinstance(body, dict):
+        return str(body.get("detail") or body.get("title") or body)[:200]
+    return str(body)[:200]
 
 
 class RouteProvider:
@@ -45,12 +89,7 @@ class RouteProvider:
             return LookupResult.unavailable("aeroapi key not configured")
 
         try:
-            resp = self._fetch(callsign)
-            if resp.status_code == 400:
-                # AeroAPI rejects non-fa_flight_id idents with a 400.  Retry
-                # once explicitly as a registration - tail-number (private
-                # and GA flights) lookups only work that way.  (#101)
-                resp = self._fetch(callsign, ident_type="registration")
+            resp = self._fetch(callsign, ident_type=_ident_type(callsign))
         except (RequestException, OSError) as e:
             logger.debug("aeroapi route lookup failed for %r: %s", callsign, e)
             return LookupResult.unavailable(f"aeroapi unreachable: {e}")
@@ -65,17 +104,17 @@ class RouteProvider:
             logger.debug("aeroapi: unknown flight %r", callsign)
             return LookupResult.not_found("aeroapi has no flight for this callsign")
         if resp.status_code == 400:
-            # AeroAPI 400s when the ident isn't in fa_flight_id format - the
-            # request was mis-shaped for this endpoint, not the provider
-            # failing.  Treat it as a valid "no answer" and let the
-            # pipeline walk to the next provider.
+            # AeroAPI 400s when the request itself is unparseable - an
+            # unsupported query parameter or a malformed ident.  That is a
+            # mis-shaped request, not a provider failure: log the body (it
+            # names the offending argument) and read as not-found so the
+            # pipeline walks to the next provider.  (#101)
             logger.debug(
-                "aeroapi rejected ident %r (HTTP 400) - treating as not found",
+                "aeroapi rejected the request for %r (HTTP 400): %s",
                 callsign,
+                _error_detail(resp),
             )
-            return LookupResult.not_found(
-                "aeroapi: ident is not in fa_flight_id format"
-            )
+            return LookupResult.not_found("aeroapi: invalid request")
         if resp.status_code >= 400:
             return LookupResult.unavailable(f"aeroapi HTTP {resp.status_code}")
 
@@ -100,12 +139,10 @@ class RouteProvider:
             return False
 
     def _fetch(self, ident: str, ident_type: str | None = None):
-        """Call the flights-by-ident endpoint for *ident*."""
-        params = {"max_results": 5}
-        if ident_type:
-            params["ident_type"] = ident_type
+        """Call the flights-by-ident endpoint for *ident* (single page)."""
+        params = {"ident_type": ident_type} if ident_type else {}
         return requests.get(
-            f"{BASE}/flights/{ident}",
+            f"{BASE}/flights/{urllib.parse.quote(ident, safe='')}",
             params=params,
             headers={"x-apikey": self.api_key},
             timeout=PROVIDER_TIMEOUT,
@@ -117,7 +154,9 @@ def _flight_to_route(flight: dict) -> RouteInfo | None:
 
     AeroAPI answers with ICAO-coded airports; the bundled ICAO->IATA
     table restores the display format (falling back to the raw code).
-    The lookup walks the returned flights until one carries both ends.
+    The lookup walks the returned flights until one carries both ends -
+    flights without an origin/destination (position-only records like
+    N40726's) are skipped.
     """
     origin_code = (flight.get("origin") or {}).get("code", "")
     destination_code = (flight.get("destination") or {}).get("code", "")
