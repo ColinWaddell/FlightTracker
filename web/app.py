@@ -603,10 +603,11 @@ def parse_settings_form(form, cfg) -> dict:
         # mask-token semantics for sensitive fields)
         "providers": _parse_provider_settings(form, cfg),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
-        # Lookup cache durations (days; clamped 1-30 here and in Config)
-        "cache_route_days": max(1, min(30, int_val(form.get("cache_route_days"), 1))),
+        # Lookup cache durations (route in hours, aircraft in days; clamped
+        # here and in Config)
+        "cache_route_hours": max(1, min(48, int_val(form.get("cache_route_hours"), 2))),
         "cache_aircraft_days": max(
-            1, min(30, int_val(form.get("cache_aircraft_days"), 1))
+            1, min(30, int_val(form.get("cache_aircraft_days"), 7))
         ),
         "callsign_format": (
             "iata"

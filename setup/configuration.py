@@ -130,9 +130,11 @@ DEFAULT_DATA_SOURCE = (
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
 # Lookup cache durations - how long route/aircraft lookups are reused
-# before providers are asked again (clamped to 1-30 days in the UI/server).
-DEFAULT_CACHE_ROUTE_DAYS = 1
-DEFAULT_CACHE_AIRCRAFT_DAYS = 1
+# before providers are asked again.  Routes churn fast (turnarounds, GA
+# missions, number reuse) so they're measured in HOURS; aircraft identity
+# is stable for long periods so it's measured in DAYS.
+DEFAULT_CACHE_ROUTE_HOURS = 2
+DEFAULT_CACHE_AIRCRAFT_DAYS = 7
 DEFAULT_CALLSIGN_FORMAT = (
     "icao"  # 'icao' = callsign, 'iata' = flight number (FR24 only)
 )
@@ -274,8 +276,8 @@ DEFAULTS: dict[str, Any] = {
         "flightaware": {"api_key": ""},
         "fr24api": {"api_key": ""},
     },
-    # Lookup cache durations (days; clamped 1-30 in Config properties)
-    "cache_route_days": DEFAULT_CACHE_ROUTE_DAYS,
+    # Lookup cache durations (route in hours, aircraft in days)
+    "cache_route_hours": DEFAULT_CACHE_ROUTE_HOURS,
     "cache_aircraft_days": DEFAULT_CACHE_AIRCRAFT_DAYS,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
@@ -1263,20 +1265,23 @@ class Config:
         except (TypeError, ValueError):
             return DEFAULT_MAX_FLIGHT_LOOKUP
 
-    def _cache_days(self, key: str, default: int) -> int:
-        """Lookup-cache duration in days, clamped to 1-30."""
+    def _clamped_int(self, key: str, default: int, lo: int, hi: int) -> int:
         try:
-            return max(1, min(30, int(self.data_store.get(key, default))))
+            return max(lo, min(hi, int(self.data_store.get(key, default))))
         except (TypeError, ValueError):
             return default
 
     @property
-    def cache_route_days(self) -> int:
-        return self._cache_days("cache_route_days", DEFAULT_CACHE_ROUTE_DAYS)
+    def cache_route_hours(self) -> int:
+        """Route lookup cache duration - HOURS, 1-48 (default 2)."""
+        return self._clamped_int("cache_route_hours", DEFAULT_CACHE_ROUTE_HOURS, 1, 48)
 
     @property
     def cache_aircraft_days(self) -> int:
-        return self._cache_days("cache_aircraft_days", DEFAULT_CACHE_AIRCRAFT_DAYS)
+        """Aircraft lookup cache duration - DAYS, 1-30 (default 7)."""
+        return self._clamped_int(
+            "cache_aircraft_days", DEFAULT_CACHE_AIRCRAFT_DAYS, 1, 30
+        )
 
     @property
     def callsign_format(self) -> str:

@@ -69,34 +69,50 @@ logger = logging.getLogger(__name__)
 # Constants - values unchanged from the historical cache
 # ---------------------------------------------------------------------------
 
-CACHE_TTL = 86400  # 24 hours - legacy/default positive / aircraft entries
+CACHE_TTL = 86400  # 24 hours - LEGACY default, kept for the stale-window arithmetic (superseded by ttl_for)
 CACHE_TTL_MISS = 3600  # 1 hour   - negative / miss entries
 CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
 STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance ts on stale re-cache
 
-# User-configurable duration clamps (see Config.cache_route_days).
-TTL_MIN_DAYS = 1
-TTL_MAX_DAYS = 30
+# Stale-fallback grace: how long PAST its own expiry a row remains
+# eligible for get_stale() before it is purged.
+STALE_GRACE_PAST_EXPIRY = CACHE_TTL_STALE - CACHE_TTL
+
+# Per-kind duration clamps for the user-configurable cache settings:
+# routes churn fast (turnarounds, GA missions, flight-number reuse) so
+# they are measured in HOURS; aircraft identity is stable so it uses DAYS.
+ROUTE_TTL_MIN_HOURS, ROUTE_TTL_MAX_HOURS = 1, 48
+AIRCRAFT_TTL_MIN_DAYS, AIRCRAFT_TTL_MAX_DAYS = 1, 30
+
+# Fallbacks when the app config is unreadable (defaults 2h / 7d).
+_ROUTE_TTL_FALLBACK = 2 * 3600
+_AIRCRAFT_TTL_FALLBACK = 7 * 86400
 
 
 def ttl_for(kind: str) -> int:
     """Positive-entry TTL for *kind* in seconds, from the user's settings.
 
-    Reads ``cache_route_days`` / ``cache_aircraft_days`` off the app
-    config (days, clamped 1-30, default 1 day) so users can set their own
-    cache duration.  Falls back to the legacy ``CACHE_TTL`` when anything
-    goes wrong - the default is exactly the historical behaviour.
+    Routes: ``cache_route_hours`` (1-48 hours, default 2).  Aircraft:
+    ``cache_aircraft_days`` (1-30 days, default 7).  Falls back to those
+    same defaults when anything goes wrong reading the config - never to
+    the historical 1-day-for-everything behaviour.
     """
     try:
         from setup.configuration import Config
 
         cfg = Config.instance()
-        days = (
-            cfg.cache_aircraft_days if kind == KIND_AIRCRAFT else cfg.cache_route_days
+        if kind == KIND_AIRCRAFT:
+            days = max(
+                AIRCRAFT_TTL_MIN_DAYS,
+                min(AIRCRAFT_TTL_MAX_DAYS, int(cfg.cache_aircraft_days)),
+            )
+            return days * 86400
+        hours = max(
+            ROUTE_TTL_MIN_HOURS, min(ROUTE_TTL_MAX_HOURS, int(cfg.cache_route_hours))
         )
+        return hours * 3600
     except Exception:  # pragma: no cover - config unavailable
-        return CACHE_TTL
-    return max(TTL_MIN_DAYS, min(TTL_MAX_DAYS, int(days))) * 86400
+        return _AIRCRAFT_TTL_FALLBACK if kind == KIND_AIRCRAFT else _ROUTE_TTL_FALLBACK
 
 
 CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
@@ -340,9 +356,9 @@ def get_stale(key, kind, max_age: int | None = None) -> dict | None:
     timestamp.  Miss entries are never eligible.
     """
     if max_age is None:
-        # Stale window grows with the configured duration so entries never
-        # fall out of the fallback path while still considered cacheable.
-        max_age = max(CACHE_TTL_STALE, ttl_for(kind))
+        # Stale window: the row's configured duration plus the standard
+        # grace, so long TTLs are not cut off by the absolute threshold.
+        max_age = ttl_for(kind) + STALE_GRACE_PAST_EXPIRY
     if key is None:
         return None
     with _lock:
@@ -433,12 +449,15 @@ def flush():
     Called once per poll cycle from the overhead facade.  Puts commit
     immediately these days, so there is nothing to persist here.
     """
-    # Purge horizon: the configured durations may exceed the 7-day stale
-    # threshold, and live-but-old entries must not be deleted underneath
+    # Purge each row once it has overstayed its OWN ttl plus the standard
+    # grace - the configured durations may exceed the legacy 7-day
+    # threshold and live-but-old entries must not be deleted underneath
     # the TTL the user asked for.
-    horizon = max(CACHE_TTL_STALE, ttl_for(KIND_ROUTE), ttl_for(KIND_AIRCRAFT))
     with _lock:
-        _connect().execute("DELETE FROM cache WHERE ts < ?", (time.time() - horizon,))
+        _connect().execute(
+            "DELETE FROM cache WHERE ts + ttl < ?",
+            (time.time() - (CACHE_TTL_STALE - CACHE_TTL),),
+        )
 
 
 def debug_entries(kind=None) -> list[dict]:

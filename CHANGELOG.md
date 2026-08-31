@@ -48,10 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   paths and the lazy loader updated; the bundled ICAO→IATA table path re-anchored for the new
   depth; pyproject package glob trimmed. No behaviour change
 - **Cache card**: the sidebar entry and settings card formerly known as "Clear Cache" are now
-  "Cache", with new **Aircraft cache duration** and **Route cache duration** settings (days;
-  clamped 1-30, default 1 day = the previous fixed TTL). Positive cache entries use the
-  configured duration when written; the purge/stale windows grow with it, so long durations
-  are honoured end-to-end. The "Clear Cache" button and restart flow are unchanged
+  "Cache", with new **Aircraft cache duration** (days, clamped 1-30, default **7** — airframe
+  identity is stable so it caches well) and **Route cache duration** (hours, clamped 1-48,
+  default **2** — callsigns are flight identifiers, not route identifiers: flight numbers get
+  reused across markets/turnarounds and GA/H EMS routes change per mission, so a day-long
+  route cache goes stale-wrong). Positive cache entries use the configured duration when
+  written; the purge/stale windows grow with it, so long durations are honoured end-to-end.
+  The "Clear Cache" button and restart flow are unchanged
 - FR24 API: route + aircraft lookups for the same callsign share one billed request (short
   30s dedup in the shared client; only successful answers are cached - errors still re-issue
   per capability)
