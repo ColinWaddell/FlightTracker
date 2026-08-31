@@ -217,7 +217,9 @@ class Overhead:
             self.processing_store = False
         self.done.set()
         cache.flush()
-        from scenes.flight.lookups import usage as _usage  # light import, same pattern as fetch
+        from scenes.flight.lookups import (
+            usage as _usage,  # light import, same pattern as fetch
+        )
 
         _usage.flush_if_due()
 

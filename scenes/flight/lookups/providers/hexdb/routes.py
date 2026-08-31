@@ -15,7 +15,10 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
-from scenes.flight.lookups.providers.common.airports import fill_airport_details, icao_to_iata_code
+from scenes.flight.lookups.providers.common.airports import (
+    fill_airport_details,
+    icao_to_iata_code,
+)
 from scenes.flight.lookups.results import LookupResult, RouteInfo
 
 logger = logging.getLogger(__name__)

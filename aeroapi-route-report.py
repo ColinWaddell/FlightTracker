@@ -18,9 +18,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, os.getcwd())
+
 BASE = "https://aeroapi.flightaware.com/aeroapi"
 OUT = "tests/fixtures/aeroapi/route-check"
-
 IDENTS = ["N688CB", "GOHAS", "EAI34N", "CFE772"]
 
 
@@ -38,20 +39,6 @@ def fetch(path: str, params: dict, key: str):
         return e.code, e.read().decode("utf-8", "replace")
 
 
-def route_of(body: dict) -> str | None:
-    """Route from the first flight carrying both ends (mirrors the app)."""
-    for fl in body.get("flights") or []:
-        o = (fl.get("origin") or {}).get("code_iata") or (fl.get("origin") or {}).get(
-            "code"
-        )
-        d = (fl.get("destination") or {}).get("code_iata") or (
-            fl.get("destination") or {}
-        ).get("code")
-        if o and d:
-            return f"{o}->{d} (ident={fl.get('ident')} reg={fl.get('registration')} status={fl.get('status')})"
-    return None
-
-
 def main() -> int:
     key_file = os.environ.get("KEY_FILE", "/tmp/aero.key")
     with open(key_file) as fh:
@@ -61,8 +48,8 @@ def main() -> int:
         outdir = sys.argv[sys.argv.index("--out") + 1]
     os.makedirs(outdir, exist_ok=True)
 
-    sys.path.insert(0, os.getcwd())
-    from scenes.flight.lookups..providers.flightaware.routes import _ident_type
+    from scenes.flight.lookups.providers.flightaware.routes import _ident_type
+
     for ident in IDENTS:
         chosen = _ident_type(ident)
         print(f"\n### {ident}  (app sends ident_type={chosen!r})")
@@ -71,14 +58,20 @@ def main() -> int:
             ("plain", {}),
         ):
             time.sleep(1.0)
-            status, body = fetch(f"/flights/{urllib.parse.quote(ident)}", params, key)
+            path = f"/flights/{urllib.parse.quote(ident)}"
+            status, body = fetch(path, params, key)
             name = f"{ident}-{label}".lower()
-            record = {"name": name, "ident": ident, "params": params, "status": status}
             try:
                 parsed = json.loads(body)
             except ValueError:
                 parsed = body[:500]
-            record["body"] = parsed
+            record = {
+                "name": name,
+                "ident": ident,
+                "params": params,
+                "status": status,
+                "body": parsed,
+            }
             with open(os.path.join(outdir, f"{name}.json"), "w") as fh:
                 json.dump(record, fh, indent=2, sort_keys=True)
 
@@ -87,19 +80,20 @@ def main() -> int:
                 print(f"  {label:9} HTTP {status}: {detail}")
                 continue
             flights = parsed.get("flights") or []
+
             routes = [
-                f"{(f.get('origin') or {}).get('code_iata') or (f.get('origin') or {}).get('code')}"
-                f"-{(f.get('destination') or {}).get('code_iata') or (f.get('destination') or {}).get('code')}"
-                for f in flights
+                f"{code_of(f, 'origin')}-{code_of(f, 'destination')}" for f in flights
             ]
-            route = route_of(parsed)
             print(
                 f"  {label:9} HTTP 200 flights={len(flights)} routes={routes or ['-']}"
             )
-            if route:
-                print(f"  {label:9} FIRST ROUTE: {route}")
         print()
     return 0
+
+
+def code_of(flight: dict, side: str) -> str:
+    node = flight.get(side) or {}
+    return node.get("code_iata") or node.get("code") or "-"
 
 
 if __name__ == "__main__":

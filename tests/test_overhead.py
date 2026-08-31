@@ -7,7 +7,9 @@ import pytest
 # ---------------------------------------------------------------------------
 # Shared helpers (in overhead_utilities)
 # ---------------------------------------------------------------------------
-from scenes.flight.lookups.providers.tar1090.flights import FlightProvider as Tar1090FlightProvider
+from scenes.flight.lookups.providers.tar1090.flights import (
+    FlightProvider as Tar1090FlightProvider,
+)
 from scenes.flight.lookups.providers.tar1090.flights import _to_observation
 from utilities.overhead_utilities import (
     airport_info,

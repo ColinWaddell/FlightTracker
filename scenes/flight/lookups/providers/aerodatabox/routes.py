@@ -34,7 +34,9 @@ class RouteProvider:
         if not self.api_key:
             return False
         try:
-            from scenes.flight.lookups.providers.aerodatabox.client import aerodatabox_get
+            from scenes.flight.lookups.providers.aerodatabox.client import (
+                aerodatabox_get,
+            )
 
             resp, _ = aerodatabox_get("/subscriptions/balance", self.api_key, timeout=5)
             return resp.status_code == 200

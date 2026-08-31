@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import logging
 
-from scenes.flight.lookups.providers.common.airports import fill_airport_details, icao_to_iata_code
+from scenes.flight.lookups.providers.common.airports import (
+    fill_airport_details,
+    icao_to_iata_code,
+)
 from scenes.flight.lookups.providers.fr24api.client import (
     api_key,
     api_unavailable,
