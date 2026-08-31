@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.9.1] - 2026-08-30
 
 ### Changed
+- API usage interface
 - Properly tested the commercial API providers and got them working
 - Moved to SQLite for caching to reduce SD-card wear
 - Some UI tweaks to the data provider interface
