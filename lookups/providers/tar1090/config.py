@@ -27,7 +27,7 @@ PROVIDER = ProviderConfig(
             type="text",
             default="",
             required=False,
-            sensitive=True,
+            sensitive=False,
             description=("e.g. http://192.168.1.x/tar1090/data/aircraft.json"),
         ),
     ),
