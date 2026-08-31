@@ -3,6 +3,7 @@
 import json
 import threading
 import time
+import types
 from pathlib import Path
 
 import pytest
@@ -520,7 +521,7 @@ class TestRoutesCacheDebugEntries:
         route = entries["BAW123"]
         assert route["kind"] == rc.KIND_ROUTE
         assert isinstance(route["ts"], float)
-        assert route["ttl"] == rc.CACHE_TTL
+        assert route["ttl"] == rc.ttl_for(rc.KIND_ROUTE)  # 2h by the new default
         assert route["entry"]["plane"] == "A320"
         miss = entries["ZZZ999"]
         assert miss["ttl"] == rc.CACHE_TTL_MISS
@@ -535,3 +536,146 @@ class TestRoutesCacheDebugEntries:
         # unfiltered listing is ordered by kind, then key: aircraft < route
         keys = [r["key"] for r in rc.debug_entries()]
         assert keys == ["400f5a", "BAW123"]
+
+
+# ---------------------------------------------------------------------------
+# Configurable cache durations (#102)
+# ---------------------------------------------------------------------------
+
+
+class TestConfiguredTtl:
+    """put()/get_stale()/flush() honour the user's configured durations:
+    routes in HOURS, aircraft in DAYS, misses always 1 hour."""
+
+    @staticmethod
+    def _patch_ttls(monkeypatch, route_hours, aircraft_days):
+        import setup.configuration as configuration
+
+        stub = types.SimpleNamespace(
+            cache_route_hours=route_hours, cache_aircraft_days=aircraft_days
+        )
+        monkeypatch.setattr(
+            configuration,
+            "Config",
+            type("StubConfig", (), {"instance": staticmethod(lambda s=stub: s)}),
+        )
+
+    def test_put_uses_configured_route_hours(self, isolated_cache, monkeypatch):
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=5, aircraft_days=1)
+        rc.put("BAW123", {"plane": "A320"}, kind=rc.KIND_ROUTE)
+
+        rows = rc.debug_entries(rc.KIND_ROUTE)
+        assert rows[0]["ttl"] == 5 * 3600
+
+    def test_put_uses_configured_aircraft_days(self, isolated_cache, monkeypatch):
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=2, aircraft_days=14)
+        rc.put("400f5a", {"plane": "B738"}, kind=rc.KIND_AIRCRAFT)
+
+        rows = rc.debug_entries(rc.KIND_AIRCRAFT)
+        assert rows[0]["ttl"] == 14 * 86400
+
+    def test_miss_entries_keep_miss_ttl(self, isolated_cache, monkeypatch):
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=5, aircraft_days=7)
+        rc.put("ZZZ999", {"miss": True}, kind=rc.KIND_ROUTE)
+
+        rows = rc.debug_entries(rc.KIND_ROUTE)
+        assert rows[0]["ttl"] == rc.CACHE_TTL_MISS
+
+    def test_default_matches_new_defaults(self, isolated_cache, monkeypatch):
+        """Defaults: routes reuse for 2 hours, aircraft for 7 days - a
+        90-minute-old route entry stays fresh, a 2-day-old one does not;
+        aircraft survive both."""
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=2, aircraft_days=7)
+
+        ninety_min = time.time() - 90 * 60
+        rc.put("BAW123", {"plane": "A320"}, ts=ninety_min, kind=rc.KIND_ROUTE)
+        rc.put("400f5a", {"plane": "B738"}, ts=ninety_min, kind=rc.KIND_AIRCRAFT)
+        assert rc.get("BAW123", rc.KIND_ROUTE) is not None  # route: 2h ttl
+        assert rc.get("400f5a", rc.KIND_AIRCRAFT) is not None  # aircraft: 7d
+
+        two_days = time.time() - 2 * 86400
+        rc.put("OLD_ROUTE", {"plane": "A320"}, ts=two_days, kind=rc.KIND_ROUTE)
+        rc.put("OLD_AIR", {"plane": "B738"}, ts=two_days, kind=rc.KIND_AIRCRAFT)
+        assert rc.get("OLD_ROUTE", rc.KIND_ROUTE) is None  # 2d > 2h route ttl
+        assert rc.get("OLD_AIR", rc.KIND_AIRCRAFT) is not None  # 2d < 7d
+
+    def test_route_stale_window_grows_with_config(self, isolated_cache, monkeypatch):
+        """The stale fallback runs for the row's ttl plus the standard
+        grace - so a long route duration keeps stale data servable too."""
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=36, aircraft_days=1)
+
+        rc.put(
+            "BAW123", {"plane": "A320"}, ts=time.time() - 2 * 86400, kind=rc.KIND_ROUTE
+        )
+        # 2d age > 36h ttl -> expired via get()...
+        assert rc.get("BAW123", rc.KIND_ROUTE) is None
+        # ... but within ttl + grace -> stale fallback serves it.
+        assert rc.get_stale("BAW123", rc.KIND_ROUTE) is not None
+
+    def test_rows_purge_after_ttl_plus_grace(self, isolated_cache, monkeypatch):
+        rc = isolated_cache
+        self._patch_ttls(monkeypatch, route_hours=2, aircraft_days=7)
+        rc.put("OLD", {"plane": "A320"}, ts=time.time() - 9 * 86400, kind=rc.KIND_ROUTE)
+        rc.flush()
+        assert rc.get("OLD", rc.KIND_ROUTE) is None  # 9d > 2h-ttl + 6d grace
+
+
+class TestTtlForSource:
+    def test_route_reads_hours_and_clamps(self, monkeypatch):
+        import scenes.flight.lookups.cache as rc
+        import setup.configuration as configuration
+
+        for hours, expected in ((0, 1), (5, 5), (49, 48)):
+            stub = types.SimpleNamespace(cache_route_hours=hours, cache_aircraft_days=7)
+            monkeypatch.setattr(
+                configuration,
+                "Config",
+                type(
+                    "StubConfig",
+                    (),
+                    {"instance": staticmethod(lambda s=stub: s)},
+                ),
+            )
+            assert rc.ttl_for(rc.KIND_ROUTE) == expected * 3600
+
+    def test_aircraft_reads_days_and_clamps(self, monkeypatch):
+        import scenes.flight.lookups.cache as rc
+        import setup.configuration as configuration
+
+        for days, expected in ((0, 1), (7, 7), (55, 30)):
+            stub = types.SimpleNamespace(cache_route_hours=2, cache_aircraft_days=days)
+            monkeypatch.setattr(
+                configuration,
+                "Config",
+                type(
+                    "StubConfig",
+                    (),
+                    {"instance": staticmethod(lambda s=stub: s)},
+                ),
+            )
+            assert rc.ttl_for(rc.KIND_AIRCRAFT) == expected * 86400
+
+    def test_unreadable_config_falls_back_to_new_defaults(
+        self, isolated_cache, monkeypatch
+    ):
+        """When config is unreadable the per-kind defaults apply:
+        2h for routes, 7 days for aircraft (no legacy 1-day-everything)."""
+        rc = isolated_cache
+        import setup.configuration as configuration
+
+        class _Broken:
+            def instance(self):
+                raise RuntimeError("no config")
+
+        monkeypatch.setattr(configuration, "Config", _Broken)
+        rc.put("BAW123", {"plane": "A320"}, kind=rc.KIND_ROUTE)
+        rc.put("400f5a", {"plane": "B738"}, kind=rc.KIND_AIRCRAFT)
+        rows = {r["key"]: r for r in rc.debug_entries()}
+        assert rows["BAW123"]["ttl"] == 2 * 3600
+        assert rows["400f5a"]["ttl"] == 7 * 86400
+        assert rc.get("BAW123", rc.KIND_ROUTE)["plane"] == "A320"

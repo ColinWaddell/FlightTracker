@@ -596,7 +596,7 @@ class TestAircraftPipeline:
         import scenes.flight.lookups.aircraft as ac
         import scenes.flight.lookups.cache as rc
 
-        stale_ts = time.time() - 2 * ac.cache.CACHE_TTL
+        stale_ts = time.time() - (rc.ttl_for(rc.KIND_AIRCRAFT) + 2 * 86400)
         rc.put(
             "400f5a",
             {

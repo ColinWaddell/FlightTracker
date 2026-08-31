@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to SQLite for caching to reduce SD-card wear
 - Some UI tweaks to the data provider interface
 - TLE Manager handles not being able to grab a new TLE more gracefully
+- Caching duration now user-configurable
 
 ## [v2.9.0] - 2026-08-29
 

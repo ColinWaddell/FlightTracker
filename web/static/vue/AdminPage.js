@@ -53,12 +53,39 @@ export default defineComponent({
       </div>
     </div>
 
-    <!-- ====== Clear Cache ====== -->
+    <!-- ====== Cache ====== -->
     <div id="group-clear-cache" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-trash3 me-2"></i>Clear Cache</p>
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <p class="section-heading"><i class="bi bi-database me-2"></i>Cache</p>
+      <div class="row g-3 mb-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label small mb-1" for="cache_aircraft_days">
+            Aircraft cache duration (days)
+          </label>
+          <input type="number" class="form-control form-control-sm" id="cache_aircraft_days"
+                 name="cache_aircraft_days" min="1" max="30" step="1"
+                 v-model.number="store.config.cache_aircraft_days" style="width:8rem" />
+          <div class="form-text text-muted small">
+            How long aircraft details are reused from cache (1-30 days) before
+            providers are asked again.
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label small mb-1" for="cache_route_hours">
+            Route cache duration (hours)
+          </label>
+          <input type="number" class="form-control form-control-sm" id="cache_route_hours"
+                 name="cache_route_hours" min="1" max="48" step="1"
+                 v-model.number="store.config.cache_route_hours" style="width:8rem" />
+          <div class="form-text text-muted small">
+            How long callsign routing is reused from cache (1-48 hours) before
+            providers are asked again. Short is safer - flight numbers move between
+            routes - but costs more lookups.
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 border-top pt-3">
         <div>
-          <div class="text-muted small">Remove cached JSON files used by route and TLE lookups.</div>
+          <div class="text-muted small">Clears cached lookup data and the TLE cache.</div>
           <div class="fw-semibold">Clearing cache will restart FlightTracker.</div>
         </div>
         <a :href="store.ui.urls.cacheClear" class="btn btn-outline-danger btn-sm">

@@ -42,7 +42,7 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle{{ ' active' if active_page in ('live_data', 'cached_data') }}"
              href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-database me-1"></i>Data
+            <i class="bi bi-table me-1"></i>Data
           </a>
           <ul class="dropdown-menu">
             <li>
@@ -52,7 +52,7 @@
             </li>
             <li>
               <a class="dropdown-item{{ ' active' if active_page == 'cached_data' }}" href="{{ url_for('cached_data') }}">
-                <i class="bi bi-database-check me-1"></i>Cached Data
+                <i class="bi bi-database me-1"></i>Cached Data
               </a>
             </li>
           </ul>

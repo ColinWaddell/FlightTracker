@@ -69,8 +69,52 @@ logger = logging.getLogger(__name__)
 # Constants - values unchanged from the historical cache
 # ---------------------------------------------------------------------------
 
-CACHE_TTL = 86400  # 24 hours - positive / aircraft entries
+CACHE_TTL = 86400  # 24 hours - LEGACY default, kept for the stale-window arithmetic (superseded by ttl_for)
 CACHE_TTL_MISS = 3600  # 1 hour   - negative / miss entries
+CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
+STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance ts on stale re-cache
+
+# Stale-fallback grace: how long PAST its own expiry a row remains
+# eligible for get_stale() before it is purged.
+STALE_GRACE_PAST_EXPIRY = CACHE_TTL_STALE - CACHE_TTL
+
+# Per-kind duration clamps for the user-configurable cache settings:
+# routes churn fast (turnarounds, GA missions, flight-number reuse) so
+# they are measured in HOURS; aircraft identity is stable so it uses DAYS.
+ROUTE_TTL_MIN_HOURS, ROUTE_TTL_MAX_HOURS = 1, 48
+AIRCRAFT_TTL_MIN_DAYS, AIRCRAFT_TTL_MAX_DAYS = 1, 30
+
+# Fallbacks when the app config is unreadable (defaults 2h / 7d).
+_ROUTE_TTL_FALLBACK = 2 * 3600
+_AIRCRAFT_TTL_FALLBACK = 7 * 86400
+
+
+def ttl_for(kind: str) -> int:
+    """Positive-entry TTL for *kind* in seconds, from the user's settings.
+
+    Routes: ``cache_route_hours`` (1-48 hours, default 2).  Aircraft:
+    ``cache_aircraft_days`` (1-30 days, default 7).  Falls back to those
+    same defaults when anything goes wrong reading the config - never to
+    the historical 1-day-for-everything behaviour.
+    """
+    try:
+        from setup.configuration import Config
+
+        cfg = Config.instance()
+        if kind == KIND_AIRCRAFT:
+            days = max(
+                AIRCRAFT_TTL_MIN_DAYS,
+                min(AIRCRAFT_TTL_MAX_DAYS, int(cfg.cache_aircraft_days)),
+            )
+            return days * 86400
+        hours = max(
+            ROUTE_TTL_MIN_HOURS, min(ROUTE_TTL_MAX_HOURS, int(cfg.cache_route_hours))
+        )
+        return hours * 3600
+    except Exception:  # pragma: no cover - config unavailable
+        return _AIRCRAFT_TTL_FALLBACK if kind == KIND_AIRCRAFT else _ROUTE_TTL_FALLBACK
+
+
 CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
 STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance ts on stale re-cache
 
@@ -291,7 +335,11 @@ def get(key, kind) -> dict | None:
     if row is None:
         return None
     ts, ttl, miss, payload = row
-    if time.time() - ts > ttl:
+    # Positive entries age against the user's configured cache duration
+    # (ttl_for) so duration changes apply immediately; miss entries keep
+    # their stored 1-hour TTL.
+    ttl_used = ttl if miss else ttl_for(kind)
+    if time.time() - ts > ttl_used:
         return None
     entry = json.loads(payload) if payload else {}
     if miss:
@@ -299,7 +347,7 @@ def get(key, kind) -> dict | None:
     return entry
 
 
-def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
+def get_stale(key, kind, max_age: int | None = None) -> dict | None:
     """Return an entry for *key* within *max_age* even if past its TTL.
 
     Unlike :func:`get` this includes freshly-written entries (the stale
@@ -307,6 +355,10 @@ def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
     dict carries ``_ts`` so callers can re-cache with an advanced
     timestamp.  Miss entries are never eligible.
     """
+    if max_age is None:
+        # Stale window: the row's configured duration plus the standard
+        # grace, so long TTLs are not cut off by the absolute threshold.
+        max_age = ttl_for(kind) + STALE_GRACE_PAST_EXPIRY
     if key is None:
         return None
     with _lock:
@@ -326,19 +378,26 @@ def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
     entry = json.loads(payload) if payload else {}
     entry["_ts"] = ts
     return entry
+    entry = json.loads(payload) if payload else {}
+    entry["_ts"] = ts
+    return entry
 
 
 def put(
-    key, info: dict, ttl: int = CACHE_TTL, ts: float | None = None, *, kind
+    key, info: dict, ttl: int | None = None, ts: float | None = None, *, kind
 ) -> None:
     """Store *info* under (*kind*, *key*) - committed immediately.
 
     ``ttl`` overrides the per-entry TTL (``CACHE_TTL_MISS`` for negative
     entries); ``ts`` overrides the timestamp, used by the stale-fallback
-    path to advance an entry rather than reset it to now.
+    path to advance an entry rather than reset it to now.  When ``ttl`` is
+    omitted, the user's configured duration for *kind* applies
+    (:func:`ttl_for`; 1 day by default).
     """
     if key is None:
         return
+    if ttl is None:
+        ttl = CACHE_TTL_MISS if info.get("miss") else ttl_for(kind)
     stored_ts = time.time() if ts is None else float(ts)
     payload = {k: v for k, v in info.items() if not k.startswith("_") and k != "miss"}
     with _lock:
@@ -390,9 +449,14 @@ def flush():
     Called once per poll cycle from the overhead facade.  Puts commit
     immediately these days, so there is nothing to persist here.
     """
+    # Purge each row once it has overstayed its OWN ttl plus the standard
+    # grace - the configured durations may exceed the legacy 7-day
+    # threshold and live-but-old entries must not be deleted underneath
+    # the TTL the user asked for.
     with _lock:
         _connect().execute(
-            "DELETE FROM cache WHERE ts < ?", (time.time() - CACHE_TTL_STALE,)
+            "DELETE FROM cache WHERE ts + ttl < ?",
+            (time.time() - (CACHE_TTL_STALE - CACHE_TTL),),
         )
 
 
