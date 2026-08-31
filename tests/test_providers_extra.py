@@ -42,7 +42,9 @@ def _provider(module_name, response):
     """Aggregator provider with a stubbed HTTP session."""
     import importlib
 
-    flights = importlib.import_module(f"scenes.flight.lookups.providers.{module_name}.flights")
+    flights = importlib.import_module(
+        f"scenes.flight.lookups.providers.{module_name}.flights"
+    )
     provider = flights.FlightProvider({})
     provider._session = mock.Mock()
     provider._session.get.return_value = response
@@ -111,7 +113,9 @@ class TestFlightAggregators:
 
         import requests
 
-        flights = importlib.import_module(f"scenes.flight.lookups.providers.{module_name}.flights")
+        flights = importlib.import_module(
+            f"scenes.flight.lookups.providers.{module_name}.flights"
+        )
         provider = flights.FlightProvider({})
         provider._session = mock.Mock()
         provider._session.get.side_effect = requests.ConnectionError("boom")

@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `max_results` fix above — tail idents now go out with `ident_type=registration` directly)*
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
   re-cache write (missing `kind` argument)
+- Package restructure: `lookups/` moved under the flight scene as `scenes/flight/lookups/` —
+  every import site (main, web, CLI, setup, scenes, tests), the registry's dynamic module
+  paths and the lazy loader updated; the bundled ICAO→IATA table path re-anchored for the new
+  depth; pyproject package glob trimmed. No behaviour change
 - FR24 API: route + aircraft lookups for the same callsign share one billed request (short
   30s dedup in the shared client; only successful answers are cached - errors still re-issue
   per capability)

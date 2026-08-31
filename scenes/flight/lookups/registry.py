@@ -142,7 +142,9 @@ _FACTORY_CLASS = {
 def _descriptor(pid: str) -> ProviderConfig:
     import importlib
 
-    return importlib.import_module(f"scenes.flight.lookups.providers.{pid}.config").PROVIDER
+    return importlib.import_module(
+        f"scenes.flight.lookups.providers.{pid}.config"
+    ).PROVIDER
 
 
 def _spec(pid: str) -> ProviderSpec:
@@ -169,7 +171,8 @@ def _spec(pid: str) -> ProviderSpec:
         config=descriptor,
         factories={
             capability: _factory(
-                f"scenes.flight.lookups.providers.{pid}.{capability}", _FACTORY_CLASS[capability]
+                f"scenes.flight.lookups.providers.{pid}.{capability}",
+                _FACTORY_CLASS[capability],
             )
             for capability in descriptor.capabilities
         },
