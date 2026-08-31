@@ -1,6 +1,6 @@
 /* ===== Shared styles for FlightTracker web UI ===== */
 
-body { background: #f8f9fa; }
+body { background: #f1f1f1; }
 
 .card { border: none; box-shadow: 0 1px 6px rgba(0,0,0,.1); }
 
@@ -59,7 +59,7 @@ body { background: #f8f9fa; }
 .ft-drag-handle:focus-visible {
   color: #495057;
   border-color: #dee2e6;
-  background: #f8f9fa;
+  background: #f1f1f1;
 }
 .ft-drag-handle:active { cursor: grabbing; }
 
