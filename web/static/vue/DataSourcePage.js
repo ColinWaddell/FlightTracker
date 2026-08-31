@@ -303,7 +303,7 @@ export default defineComponent({
             </ul>
             <div class="card-footer mt-auto">
               <span v-if="inAnyList(meta.id)" class="badge me-1"
-                    :class="providerEnabled(meta.id) ? 'text-bg-success' : 'text-bg-light text-secondary'">
+                    :class="providerEnabled(meta.id) ? 'text-bg-success' : 'text-bg-dark text-light'">
                 {{ providerEnabled(meta.id) ? 'enabled' : 'disabled' }}
               </span>
               <span v-if="meta.configured" class="badge me-1 text-bg-success">configured</span>
