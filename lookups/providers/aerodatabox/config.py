@@ -18,7 +18,7 @@ PROVIDER = ProviderConfig(
         'href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" '
         'target="_blank" rel="noopener noreferrer">RapidAPI</a>. You\'ll need to '
         "sign up for an account, search for AeroDataBox, hit the Test button up "
-        "the top right and then subscribe to the free plan. After that it'll"
+        "the top right and then subscribe to the free plan. After that it'll "
         "show you your key."
     ),
     capabilities=("routes", "aircraft"),

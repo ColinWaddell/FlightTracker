@@ -745,7 +745,7 @@ class TestFr24ApiCatalogue:
         from lookups.registry import PROVIDERS
 
         spec = PROVIDERS["fr24api"]
-        text = " ".join(spec.description)
+        text = spec.description  # description is a plain str
         assert "8 credits" in text
         assert "1-credit minimum" in text
         assert "429" in text
