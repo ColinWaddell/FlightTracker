@@ -14,6 +14,7 @@ from lookups.providers.common.operators import clean_operator_code
 from lookups.providers.fr24api.client import (
     api_key,
     api_unavailable,
+    callsign_position,
     data_of,
     is_transport_error,
 )
@@ -36,14 +37,10 @@ class AircraftProvider:
         if not self._api_key:
             return LookupResult.unavailable("FR24 API token not configured")
 
-        from lookups.providers.fr24api.client import get
-
         try:
-            resp = get(
-                "/api/live/flight-positions/full",
-                self._api_key,
-                {"callsigns": callsign, "limit": 1},
-            )
+            # Shared with the route capability: both capabilities need
+            # the identical callsign request, and every call is billed.
+            resp = callsign_position(self._api_key, callsign)
         except Exception as e:
             if is_transport_error(e):
                 logger.debug("FR24 API aircraft lookup failed for %r: %s", callsign, e)

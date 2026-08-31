@@ -3,8 +3,11 @@
 GET /api/live/flight-positions/full?bounds=N,S,W,E - the full variant
 carries origin/destination airports and the operating airline ICAO code
 alongside telemetry, which rides along as pre-filled enrichment.  The
-API bills per returned record, so the zone bounding box is exact and the
-altitude band is requested server-side via ``altitude_ranges``.
+API bills per returned record (measured 2026-08-31 at ~8 credits per
+record with a 1-credit minimum per call; responses carry
+x-fr24-credits-consumed/-remaining headers), so the zone bounding box
+is exact and the altitude band is requested server-side via
+``altitude_ranges``.
 """
 
 from __future__ import annotations
