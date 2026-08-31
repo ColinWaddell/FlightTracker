@@ -14,8 +14,7 @@ PROVIDER = ProviderConfig(
     id="airplaneslive",
     name="airplanes.live",
     description=(
-        "Free community feeder network aggregator. Please keep request rates",
-        "low (max 1/second).",
+        "Free community feeder network aggregator. Please keep request rates low (max 1/second)."
     ),
     capabilities=("flights",),
     fields=(),

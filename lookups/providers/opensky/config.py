@@ -14,10 +14,10 @@ PROVIDER = ProviderConfig(
     id="opensky",
     name="OpenSky Network",
     description=(
-        'Create an API client at <a href="https://opensky-network.org/login"',
-        'target="_blank" rel="noopener noreferrer">opensky-network.org</a>',
-        "(Account &rarr; API Clients) to get your credentials. A free",
-        "registered account is sufficient for 30-second polling.",
+        'Create an API client at <a href="https://opensky-network.org/login" '
+        'target="_blank" rel="noopener noreferrer">opensky-network.org</a> '
+        "(Account &rarr; API Clients) to get your credentials. A free "
+        "registered account is sufficient for 30-second polling."
     ),
     capabilities=("flights",),
     fields=(

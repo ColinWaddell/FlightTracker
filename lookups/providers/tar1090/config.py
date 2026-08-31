@@ -14,10 +14,10 @@ PROVIDER = ProviderConfig(
     id="tar1090",
     name="tar1090",
     description=(
-        "Point this at your local tar1090 instance's <code>aircraft.json</code>",
-        "endpoint. Currently tested against the latest RPi image from <a",
-        'href="https://adsb.im/home" target="_blank" rel="noopener',
-        'noreferrer">ADSB.im</a>.',
+        "Point this at your local tar1090 instance's <code>aircraft.json</code> "
+        "endpoint. Currently tested against the latest RPi image from <a "
+        'href="https://adsb.im/home" target="_blank" rel="noopener '
+        'noreferrer">ADSB.im</a>.'
     ),
     capabilities=("flights",),
     fields=(

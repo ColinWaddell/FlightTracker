@@ -14,11 +14,11 @@ PROVIDER = ProviderConfig(
     id="flightaware",
     name="FlightAware AeroAPI",
     description=(
-        "FlightAware's commercial API. The Personal plan includes $5/month of",
-        "free credit and requires a card on file - fine for per-callsign route",
-        "lookups, too costly for position polling. Get a key at <a",
-        'href="https://www.flightaware.com/aeroapi/portal" target="_blank"',
-        'rel="noopener noreferrer">the AeroAPI portal</a>.',
+        "FlightAware's commercial API. The Personal plan includes $5/month of "
+        "free credit and requires a card on file - fine for per-callsign route "
+        "lookups, too costly for position polling. Get a key at <a "
+        'href="https://www.flightaware.com/aeroapi/portal" target="_blank" '
+        'rel="noopener noreferrer">the AeroAPI portal</a>.'
     ),
     capabilities=("routes",),
     fields=(
