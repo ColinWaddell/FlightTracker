@@ -65,18 +65,21 @@ export default defineComponent({
                  name="cache_aircraft_days" min="1" max="30" step="1"
                  v-model.number="store.config.cache_aircraft_days" style="width:8rem" />
           <div class="form-text text-muted small">
-            How long aircraft details are reused from cache before providers are asked again.
+            How long aircraft details are reused from cache (1-30 days) before
+            providers are asked again.
           </div>
         </div>
         <div class="col-12 col-md-6">
-          <label class="form-label small mb-1" for="cache_route_days">
-            Route cache duration (days)
+          <label class="form-label small mb-1" for="cache_route_hours">
+            Route cache duration (hours)
           </label>
-          <input type="number" class="form-control form-control-sm" id="cache_route_days"
-                 name="cache_route_days" min="1" max="30" step="1"
-                 v-model.number="store.config.cache_route_days" style="width:8rem" />
+          <input type="number" class="form-control form-control-sm" id="cache_route_hours"
+                 name="cache_route_hours" min="1" max="48" step="1"
+                 v-model.number="store.config.cache_route_hours" style="width:8rem" />
           <div class="form-text text-muted small">
-            How long callsign routing is reused from cache before providers are asked again.
+            How long callsign routing is reused from cache (1-48 hours) before
+            providers are asked again. Short is safer - flight numbers move between
+            routes - but costs more lookups.
           </div>
         </div>
       </div>
