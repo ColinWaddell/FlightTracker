@@ -21,12 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed (#101): AeroAPI 400s (e.g. a tail-number/plain ident it doesn't recognise) no longer
   quarantine the provider — they read as not-found and the lookup moves to the next provider;
   auth/quota errors still quarantine
+- Fixed: every AeroAPI lookup failed with HTTP 400 because the app sent an undocumented
+  `max_results` query parameter (AeroAPI: "Invalid argument 'max_results' supplied"), which
+  the 400 treatment above then read as not-found — every lookup burned two billed calls and
+  returned nothing. The lookup now sends only documented parameters: a single call per
+  lookup, with `ident_type` disambiguation chosen from the ident shape (callsign →
+  `designator`, tail number → `registration`, everything else left to the API's default).
+  Rejected requests (400) log the API error body and read as not-found; unknown idents (a
+  200 answer with an empty `flights` list, the real not-found signal — not a 404) likewise
+  fall through to the next provider. Verified against the live API with a one-shot probe;
+  responses captured as fixtures for the test-suite
 - The same 4xx treatment applied across the other ident-forwarding providers (#101 family):
   **adsbDB** (400), **AeroDataBox** (400/422), **AirLabs** (400/404) and the **FR24 API**
   routes / aircraft lookups now read rejected/unknown idents as not-found - the lookup moves
   to the next provider instead of quarantining a healthy provider
 - AeroAPI tail-number (private/GA) lookups now work: a rejected plain ident is retried once
-  with `ident_type=registration`
+  with `ident_type=registration` *(superseded before release: the retry never fired, see the
+  `max_results` fix above — tail idents now go out with `ident_type=registration` directly)*
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
   re-cache write (missing `kind` argument)
 - Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level
