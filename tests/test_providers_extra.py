@@ -740,15 +740,16 @@ class TestFr24ApiCatalogue:
         assert "fr24api" in route
 
     def test_billing_warning_surfaces_for_users(self):
-        """Provider description warns about the measured credit economics
-        (probe 2026-08-31: ~8 credits/record, 1-credit call minimum)."""
+        """Provider description carries the warning Colin trimmed to his
+        preferred short wording (11:32 tidy-up): billing is per returned
+        record and continuous polling is discouraged."""
         from lookups.registry import PROVIDERS
 
         spec = PROVIDERS["fr24api"]
         text = spec.description  # description is a plain str
-        assert "8 credits" in text
-        assert "1-credit minimum" in text
-        assert "429" in text
+        assert "Billing warning" in text
+        assert "Billed per returned record" in text
+        assert "free providers" in text
 
 
 # ---------------------------------------------------------------------------
