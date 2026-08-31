@@ -53,12 +53,36 @@ export default defineComponent({
       </div>
     </div>
 
-    <!-- ====== Clear Cache ====== -->
+    <!-- ====== Cache ====== -->
     <div id="group-clear-cache" class="card mb-3 p-3">
-      <p class="section-heading"><i class="bi bi-trash3 me-2"></i>Clear Cache</p>
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <p class="section-heading"><i class="bi bi-database me-2"></i>Cache</p>
+      <div class="row g-3 mb-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label small mb-1" for="cache_aircraft_days">
+            Aircraft cache duration (days)
+          </label>
+          <input type="number" class="form-control form-control-sm" id="cache_aircraft_days"
+                 name="cache_aircraft_days" min="1" max="30" step="1"
+                 v-model.number="store.config.cache_aircraft_days" style="width:8rem" />
+          <div class="form-text text-muted small">
+            How long aircraft details are reused from cache before providers are asked again.
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label small mb-1" for="cache_route_days">
+            Route cache duration (days)
+          </label>
+          <input type="number" class="form-control form-control-sm" id="cache_route_days"
+                 name="cache_route_days" min="1" max="30" step="1"
+                 v-model.number="store.config.cache_route_days" style="width:8rem" />
+          <div class="form-text text-muted small">
+            How long callsign routing is reused from cache before providers are asked again.
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 border-top pt-3">
         <div>
-          <div class="text-muted small">Remove cached JSON files used by route and TLE lookups.</div>
+          <div class="text-muted small">Clears cached lookup data and the TLE cache.</div>
           <div class="fw-semibold">Clearing cache will restart FlightTracker.</div>
         </div>
         <a :href="store.ui.urls.cacheClear" class="btn btn-outline-danger btn-sm">
