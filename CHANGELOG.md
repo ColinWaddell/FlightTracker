@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
   switching off stops new tallies and keeps recorded history until cleared on the API Usage
   page
+- Data Source page: provider rows whose checkbox is unticked now render with muted text in
+  the aircraft/route priority lists, and every provider settings card footer shows an
+  "enabled" / "disabled" badge that updates live as the lists above are toggled
 - Fixed (#101): AeroAPI 400s (e.g. a tail-number/plain ident it doesn't recognise) no longer
   quarantine the provider — they read as not-found and the lookup moves to the next provider;
   auth/quota errors still quarantine
