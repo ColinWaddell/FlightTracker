@@ -7,66 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.9.1] - 2026-08-30
 
 ### Changed
-- New **API usage tally** (`usage.sqlite3` in the platform data dir): per-day, per-provider
-  counts for route and aircraft lookups (total attempts / no results), flights-overhead
-  providers (API calls / aircraft returned), plus lookup-cache hits and misses. Batched
-  in memory and written once a minute - negligible SD-card impact; history survives
-  cache clears
-- New **`/api` page**: totals over the whole history or any inclusive date range, with
-  a JSON mirror on the same routes (`/api/json`, `/api/<start>/<end>/json`)
-  and a "Clear Logged Data" button on the page
-- Collection can be toggled in **Settings → Admin → Logging** ("Record provider API usage");
-  switching off stops new tallies and keeps recorded history until cleared on the API Usage
-  page
-- Data Source page: provider rows whose checkbox is unticked now render with muted text in
-  the aircraft/route priority lists, and every provider settings card footer shows an
-  "enabled" / "disabled" badge that updates live as the lists above are toggled
-- Fixed (#101): AeroAPI 400s (e.g. a tail-number/plain ident it doesn't recognise) no longer
-  quarantine the provider — they read as not-found and the lookup moves to the next provider;
-  auth/quota errors still quarantine
-- Fixed: every AeroAPI lookup failed with HTTP 400 because the app sent an undocumented
-  `max_results` query parameter (AeroAPI: "Invalid argument 'max_results' supplied"), which
-  the 400 treatment above then read as not-found — every lookup burned two billed calls and
-  returned nothing. The lookup now sends only documented parameters: a single call per
-  lookup, with `ident_type` disambiguation chosen from the ident shape (callsign →
-  `designator`, tail number → `registration`, everything else left to the API's default).
-  Rejected requests (400) log the API error body and read as not-found; unknown idents (a
-  200 answer with an empty `flights` list, the real not-found signal — not a 404) likewise
-  fall through to the next provider. Verified against the live API with a one-shot probe;
-  responses captured as fixtures for the test-suite
-- The same 4xx treatment applied across the other ident-forwarding providers (#101 family):
-  **adsbDB** (400), **AeroDataBox** (400/422), **AirLabs** (400/404) and the **FR24 API**
-  routes / aircraft lookups now read rejected/unknown idents as not-found - the lookup moves
-  to the next provider instead of quarantining a healthy provider
-- AeroAPI tail-number (private/GA) lookups now work: a rejected plain ident is retried once
-  with `ident_type=registration` *(superseded before release: the retry never fired, see the
-  `max_results` fix above — tail idents now go out with `ident_type=registration` directly)*
-- Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
-  re-cache write (missing `kind` argument)
-- Package restructure: `lookups/` moved under the flight scene as `scenes/flight/lookups/` —
-  every import site (main, web, CLI, setup, scenes, tests), the registry's dynamic module
-  paths and the lazy loader updated; the bundled ICAO→IATA table path re-anchored for the new
-  depth; pyproject package glob trimmed. No behaviour change
-- FR24 API: route + aircraft lookups for the same callsign share one billed request (short
-  30s dedup in the shared client; only successful answers are cached - errors still re-issue
-  per capability)
-- Satellite scenes no longer spam the log during a CelesTrak outage: pass recomputation
-  holds off while TLE data is unavailable (the manager keeps its own fetch/backoff schedule;
-  the scene re-checks on a 60s cooldown) and the "no TLE data available" warning is
-  rate-limited to once per 10 minutes; empty pass computations likewise recompute at most
-  once per 60s instead of every frame
-- TLE cache survives outages: the on-disk cache is served even when older than 24h (with a
-  warning, up to 30 days) so pass prediction keeps working while the refresh loop retries in
-  the background - stale-TLE prediction degrades gracefully over days and beats having none
-- FR24 API: provider description now warns about the measured billing model — roughly 8
-  credits per returned record with a 1-credit minimum per call, burst limits on rapid
-  re-calls (HTTP 429), and the `x-fr24-credits-consumed`/-`remaining` response headers for
-  monitoring the balance (verified against the live API with a one-shot probe)
-- Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level
-  page writes instead of whole-file rewrites), entries now survive crashes and settings
-  restarts, and new lookup fields need no cache-migration ever again
-- Existing `routes_cache.json` is imported automatically on first use (timestamps preserved)
-  and kept beside the database as `routes_cache.json.imported`
+- Properly tested the commercial API providers and got them working
+- Moved to SQLite for caching to reduce SD-card wear
+- Some UI tweaks to the data provider interface
+- TLE Manager handles not being able to grab a new TLE more gracefully
 
 ## [v2.9.0] - 2026-08-29
 
