@@ -69,8 +69,36 @@ logger = logging.getLogger(__name__)
 # Constants - values unchanged from the historical cache
 # ---------------------------------------------------------------------------
 
-CACHE_TTL = 86400  # 24 hours - positive / aircraft entries
+CACHE_TTL = 86400  # 24 hours - legacy/default positive / aircraft entries
 CACHE_TTL_MISS = 3600  # 1 hour   - negative / miss entries
+CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
+STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance ts on stale re-cache
+
+# User-configurable duration clamps (see Config.cache_route_days).
+TTL_MIN_DAYS = 1
+TTL_MAX_DAYS = 30
+
+
+def ttl_for(kind: str) -> int:
+    """Positive-entry TTL for *kind* in seconds, from the user's settings.
+
+    Reads ``cache_route_days`` / ``cache_aircraft_days`` off the app
+    config (days, clamped 1-30, default 1 day) so users can set their own
+    cache duration.  Falls back to the legacy ``CACHE_TTL`` when anything
+    goes wrong - the default is exactly the historical behaviour.
+    """
+    try:
+        from setup.configuration import Config
+
+        cfg = Config.instance()
+        days = (
+            cfg.cache_aircraft_days if kind == KIND_AIRCRAFT else cfg.cache_route_days
+        )
+    except Exception:  # pragma: no cover - config unavailable
+        return CACHE_TTL
+    return max(TTL_MIN_DAYS, min(TTL_MAX_DAYS, int(days))) * 86400
+
+
 CACHE_TTL_STALE = 604800  # 7 days  - stale fallback threshold
 STALE_RECACHE_ADVANCE = 14400  # 4 hours - how far to advance ts on stale re-cache
 
@@ -291,7 +319,11 @@ def get(key, kind) -> dict | None:
     if row is None:
         return None
     ts, ttl, miss, payload = row
-    if time.time() - ts > ttl:
+    # Positive entries age against the user's configured cache duration
+    # (ttl_for) so duration changes apply immediately; miss entries keep
+    # their stored 1-hour TTL.
+    ttl_used = ttl if miss else ttl_for(kind)
+    if time.time() - ts > ttl_used:
         return None
     entry = json.loads(payload) if payload else {}
     if miss:
@@ -299,7 +331,7 @@ def get(key, kind) -> dict | None:
     return entry
 
 
-def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
+def get_stale(key, kind, max_age: int | None = None) -> dict | None:
     """Return an entry for *key* within *max_age* even if past its TTL.
 
     Unlike :func:`get` this includes freshly-written entries (the stale
@@ -307,6 +339,10 @@ def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
     dict carries ``_ts`` so callers can re-cache with an advanced
     timestamp.  Miss entries are never eligible.
     """
+    if max_age is None:
+        # Stale window grows with the configured duration so entries never
+        # fall out of the fallback path while still considered cacheable.
+        max_age = max(CACHE_TTL_STALE, ttl_for(kind))
     if key is None:
         return None
     with _lock:
@@ -326,19 +362,26 @@ def get_stale(key, kind, max_age: int = CACHE_TTL_STALE) -> dict | None:
     entry = json.loads(payload) if payload else {}
     entry["_ts"] = ts
     return entry
+    entry = json.loads(payload) if payload else {}
+    entry["_ts"] = ts
+    return entry
 
 
 def put(
-    key, info: dict, ttl: int = CACHE_TTL, ts: float | None = None, *, kind
+    key, info: dict, ttl: int | None = None, ts: float | None = None, *, kind
 ) -> None:
     """Store *info* under (*kind*, *key*) - committed immediately.
 
     ``ttl`` overrides the per-entry TTL (``CACHE_TTL_MISS`` for negative
     entries); ``ts`` overrides the timestamp, used by the stale-fallback
-    path to advance an entry rather than reset it to now.
+    path to advance an entry rather than reset it to now.  When ``ttl`` is
+    omitted, the user's configured duration for *kind* applies
+    (:func:`ttl_for`; 1 day by default).
     """
     if key is None:
         return
+    if ttl is None:
+        ttl = CACHE_TTL_MISS if info.get("miss") else ttl_for(kind)
     stored_ts = time.time() if ts is None else float(ts)
     payload = {k: v for k, v in info.items() if not k.startswith("_") and k != "miss"}
     with _lock:
@@ -390,10 +433,12 @@ def flush():
     Called once per poll cycle from the overhead facade.  Puts commit
     immediately these days, so there is nothing to persist here.
     """
+    # Purge horizon: the configured durations may exceed the 7-day stale
+    # threshold, and live-but-old entries must not be deleted underneath
+    # the TTL the user asked for.
+    horizon = max(CACHE_TTL_STALE, ttl_for(KIND_ROUTE), ttl_for(KIND_AIRCRAFT))
     with _lock:
-        _connect().execute(
-            "DELETE FROM cache WHERE ts < ?", (time.time() - CACHE_TTL_STALE,)
-        )
+        _connect().execute("DELETE FROM cache WHERE ts < ?", (time.time() - horizon,))
 
 
 def debug_entries(kind=None) -> list[dict]:
