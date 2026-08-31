@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `max_results` fix above — tail idents now go out with `ident_type=registration` directly)*
 - Fixed: a cached-but-incomplete route whose gaps had just been filled crashed its
   re-cache write (missing `kind` argument)
+- FR24 API: route + aircraft lookups for the same callsign share one billed request (short
+  30s dedup in the shared client; only successful answers are cached - errors still re-issue
+  per capability)
+- FR24 API: provider description now warns about the measured billing model — roughly 8
+  credits per returned record with a 1-credit minimum per call, burst limits on rapid
+  re-calls (HTTP 429), and the `x-fr24-credits-consumed`/-`remaining` response headers for
+  monitoring the balance (verified against the live API with a one-shot probe)
 - Lookup cache moved from a JSON file (`routes_cache.json`) to a SQLite  database (`cache.sqlite3`) in the platform data dir — far fewer SD-card writes (row-level
   page writes instead of whole-file rewrites), entries now survive crashes and settings
   restarts, and new lookup fields need no cache-migration ever again

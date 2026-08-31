@@ -444,6 +444,16 @@ def _fr24_response(data, status=200):
     return response
 
 
+@pytest.fixture
+def fresh_fr24api_cache():
+    """Isolate the module-level fr24api callsign dedup cache per test."""
+    import lookups.providers.fr24api.client as client
+
+    client.clear_position_cache()
+    yield
+    client.clear_position_cache()
+
+
 class TestFr24ApiFlights:
     def _fetch(self, monkeypatch, data=None, status=200):
         import lookups.providers.fr24api.flights as fr24api
@@ -537,6 +547,7 @@ class TestFr24ApiFlights:
         assert result.is_unavailable
 
 
+@pytest.mark.usefixtures("fresh_fr24api_cache")
 class TestFr24ApiRoutes:
     def _lookup(self, monkeypatch, data=None, status=200, callsign="BAW1AB"):
         import lookups.providers.fr24api.client as client
@@ -594,6 +605,7 @@ class TestFr24ApiRoutes:
         assert "credit" in result.reason
 
 
+@pytest.mark.usefixtures("fresh_fr24api_cache")
 class TestFr24ApiAircraft:
     def test_found(self, monkeypatch):
         import lookups.providers.fr24api.aircraft as fr24api
@@ -634,6 +646,68 @@ class TestFr24ApiAircraft:
         result = fr24api.AircraftProvider({}).lookup_aircraft(_context("BAW1AB"))
         assert result.is_unavailable
 
+    def test_route_and_aircraft_share_one_billed_call(self, monkeypatch):
+        """Route + aircraft fire the IDENTICAL callsign request; the client
+        dedups them into one billed call (every call is billed - measured
+        2026-08-31 at ~8 credits/record, rapid re-calls 429)."""
+        import lookups.providers.fr24api.aircraft as fr24_aircraft
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.routes as fr24_routes
+
+        calls = []
+
+        def fake_get(path, token, params=None):
+            calls.append((path, token, params))
+            return _fr24_response([_fr24_record()])
+
+        monkeypatch.setattr(client, "get", fake_get)
+
+        route = fr24_routes.RouteProvider({"api_key": "TOK"}).lookup_route(
+            _context("BAW1AB")
+        )
+        plane = fr24_aircraft.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("BAW1AB")
+        )
+
+        assert route.is_found
+        assert route.value.origin == "LHR"
+        assert route.value.destination == "DOH"
+        assert plane.is_found
+        assert plane.value.registration == "G-XWBA"
+        assert len(calls) == 1
+        assert calls[0][2] == {"callsigns": "BAW1AB", "limit": 1}
+
+    def test_error_answers_are_never_cached(self, monkeypatch):
+        """A 400 on the route walk must not poison the aircraft walk's own
+        request - errors re-issue (and re-bill) per capability."""
+        import lookups.providers.fr24api.aircraft as fr24_aircraft
+        import lookups.providers.fr24api.client as client
+        import lookups.providers.fr24api.routes as fr24_routes
+
+        calls = []
+        responses = [
+            _fr24_response([], status=400),  # route walk rejected
+            _fr24_response([_fr24_record()]),  # aircraft walk succeeds
+        ]
+
+        def fake_get(path, token, params=None):
+            calls.append(params)
+            return responses.pop(0)
+
+        monkeypatch.setattr(client, "get", fake_get)
+
+        route = fr24_routes.RouteProvider({"api_key": "TOK"}).lookup_route(
+            _context("BAW1AB")
+        )
+        plane = fr24_aircraft.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
+            _context("BAW1AB")
+        )
+
+        assert route.is_not_found  # 400 -> not-found, never unavailable
+        assert plane.is_found
+        assert len(calls) == 2  # the 400 was not cached
+        assert calls[0] == calls[1]  # identical request re-issued
+
 
 class TestFr24ApiCatalogue:
     def test_registered(self):
@@ -664,6 +738,17 @@ class TestFr24ApiCatalogue:
         route = {e["provider"] for e in data["route_providers"]}
         assert flight["fr24api"] is False
         assert "fr24api" in route
+
+    def test_billing_warning_surfaces_for_users(self):
+        """Provider description warns about the measured credit economics
+        (probe 2026-08-31: ~8 credits/record, 1-credit call minimum)."""
+        from lookups.registry import PROVIDERS
+
+        spec = PROVIDERS["fr24api"]
+        text = " ".join(spec.description)
+        assert "8 credits" in text
+        assert "1-credit minimum" in text
+        assert "429" in text
 
 
 # ---------------------------------------------------------------------------
