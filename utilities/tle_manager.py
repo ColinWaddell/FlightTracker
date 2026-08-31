@@ -42,6 +42,12 @@ STALE_RECACHE_ADVANCE = 14400  # 4 hours
 BACKOFF_MIN = 60.0
 BACKOFF_MAX = 3600.0
 
+# A cached TLE set older than TLE_CACHE_TTL is still served (with a
+# warning) while a refresh keeps retrying in the background - stale-TLE
+# pass prediction degrades gracefully over days and beats having none at
+# all during a CelesTrak outage.  Beyond this age the cache is discarded.
+STALE_SERVE_MAX = 30 * 86400
+
 GP_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={catnr}&FORMAT=TLE"
 
 
@@ -153,13 +159,7 @@ class TLEManager:
         self.ready.clear()
 
     def run_loop(self) -> None:
-        # Serve from disk cache immediately if still fresh
-        cached = load_cache()
-        if cached and (time.time() - cached["timestamp"]) < TLE_CACHE_TTL:
-            with self.lock:
-                self.tles = [tuple(t) for t in cached["tles"]]
-                self.fetched_at = cached["timestamp"]
-            self.ready.set()
+        self.prime_from_disk()
 
         while True:
             now = time.time()
@@ -176,6 +176,32 @@ class TLEManager:
             else:
                 wait = max(0.0, self.next_attempt_at - now) if in_backoff else 300.0
             time.sleep(max(1.0, min(wait, 300.0)))  # check at most every 5 min
+
+    def prime_from_disk(self) -> None:
+        """Serve the disk cache at startup, even when stale (up to
+        STALE_SERVE_MAX), so pass prediction keeps working during a
+        CelesTrak outage; the refresh loop continues regardless.
+        """
+        cached = load_cache()
+        if not cached:
+            return
+        age = time.time() - float(cached["timestamp"])
+        if age >= STALE_SERVE_MAX:
+            logger.warning(
+                "TLE cache too old to serve (%.1f days) - fetching fresh",
+                age / 86400.0,
+            )
+            return
+        with self.lock:
+            self.tles = [tuple(t) for t in cached["tles"]]
+            self.fetched_at = float(cached["timestamp"])
+        self.ready.set()
+        if age >= TLE_CACHE_TTL:
+            logger.warning(
+                "Serving stale TLE cache (%.1f days old) - refresh "
+                "continues in the background",
+                age / 86400.0,
+            )
 
     def do_fetch(self) -> None:
         norad_ids = Config.instance().satellite_norad_ids

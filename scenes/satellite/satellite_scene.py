@@ -36,6 +36,14 @@ PRIORITY = 2
 # How long (in seconds) to display each satellite's telemetry before cycling
 CYCLE_INTERVAL_S = 4
 
+# When TLE data is unavailable, back off instead of recomputing every poll
+# tick: the TLE manager runs its own fetch/backoff schedule, so the scene
+# only needs to re-check for data periodically.  Without this, a CelesTrak
+# outage re-logs the skip warning every frame.  The skip warning itself is
+# rate-limited to once per NO_TLE_LOG_INTERVAL seconds.
+NO_TLE_RETRY_SECONDS = 60
+NO_TLE_LOG_INTERVAL = 600
+
 # Right-column text positions (extrasmall 4x6 font, 6 lines)
 TEXT_COL_X = 0
 NAME_Y = 5  # satellite name (yellow)
@@ -81,6 +89,13 @@ class SatelliteScene:
         # Whether the ring has been drawn yet (drawn once on enter, redrawn on reset)
         self.ring_drawn: bool = False
 
+        # TLE-unavailability holdoff: recompute happens at most once per
+        # NO_TLE_RETRY_SECONDS while pass data is unavailable (the TLE
+        # manager fetches on its own schedule), and the skip warning is
+        # logged at most once per NO_TLE_LOG_INTERVAL seconds.
+        self.next_recompute_at: float = 0.0
+        self.last_no_tle_logged_at: float = 0.0
+
     # ------------------------------------------------------------------
     # Scene protocol
     # ------------------------------------------------------------------
@@ -101,7 +116,7 @@ class SatelliteScene:
             or (now_ts - self.windows_computed_at) > 3600
         )
 
-        if needs_refresh:
+        if needs_refresh and now_ts >= self.next_recompute_at:
             self.recompute_passes(cfg)
 
     def has_data(self) -> bool:
@@ -165,9 +180,27 @@ class SatelliteScene:
     # ------------------------------------------------------------------
 
     def recompute_passes(self, cfg) -> None:
+        now_ts = datetime.datetime.utcnow().timestamp()
+        # Every path leaves a short cooldown so a failing or empty
+        # computation does not re-run on every poll tick (pass geometry
+        # barely moves in a minute; recomputing SGP4 per frame was the
+        # spam source during CelesTrak outages).
+        self.next_recompute_at = now_ts + NO_TLE_RETRY_SECONDS
+        self._recompute_passes(cfg, now_ts)
+
+    def _recompute_passes(self, cfg, now_ts: float) -> None:
         tles = self.tle_manager.try_get()
         if not tles:
-            logger.warning("Satellite pass computation skipped - no TLE data available")
+            # Hold off: the TLE manager is fetching (or backing off) in its
+            # own loop.  Warn only once per log interval - a prolonged
+            # CelesTrak outage must not spam the log.
+            if now_ts - self.last_no_tle_logged_at >= NO_TLE_LOG_INTERVAL:
+                logger.warning(
+                    "Satellite pass computation skipped - no TLE data available"
+                    " (retry in %ds)",
+                    NO_TLE_RETRY_SECONDS,
+                )
+                self.last_no_tle_logged_at = now_ts
             return
         try:
             self.pass_windows = passes_mod.compute_passes(
@@ -181,6 +214,8 @@ class SatelliteScene:
             # Force redraw of ring + trajectories on next draw()
             self.ring_drawn = False
             self.last_positions = {}
+            # Allow the next unavailability to warn immediately again.
+            self.last_no_tle_logged_at = 0.0
             logger.debug(
                 "Pass computation complete - %d pass window(s) for %d satellite(s) "
                 "(min elevation %d°)",
