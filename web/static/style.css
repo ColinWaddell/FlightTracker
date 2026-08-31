@@ -53,7 +53,7 @@ body { background: #f1f1f1; }
   cursor: grab;
   color: #6c757d;
   border-color: transparent;
-  padding-inline: .25rem;
+  padding-inline: 1rem;
 }
 .ft-drag-handle:hover,
 .ft-drag-handle:focus-visible {
