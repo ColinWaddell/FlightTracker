@@ -7,7 +7,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import asdict
 
-from lookups import cache as routes_cache
+from scenes.flight.lookups import cache as routes_cache
 from setup.configuration import CONFIG_PATH, DEFAULTS, Config
 from utilities.tle_manager import TLE_CACHE_PATH, fetch_tle
 from version import VERSION

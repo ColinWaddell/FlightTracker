@@ -19,7 +19,7 @@ def client():
 
 @pytest.fixture(autouse=True)
 def reset_quarantine():
-    from lookups.quarantine import QUARANTINE
+    from scenes.flight.lookups.quarantine import QUARANTINE
 
     QUARANTINE.reset()
     yield
@@ -53,7 +53,7 @@ class TestStatusPage:
         assert resp.status_code == 302
 
     def test_lists_all_registered_providers(self, client):
-        from lookups.registry import PROVIDERS
+        from scenes.flight.lookups.registry import PROVIDERS
 
         html = client.get("/status").get_data(as_text=True)
         for spec in PROVIDERS.values():
@@ -65,7 +65,7 @@ class TestStatusPage:
         assert "enabled" in html
 
     def test_shows_hold_off_for_quarantined_provider(self, client):
-        from lookups.quarantine import QUARANTINE
+        from scenes.flight.lookups.quarantine import QUARANTINE
 
         QUARANTINE.record_failure("hexdb")
         html = client.get("/status").get_data(as_text=True)

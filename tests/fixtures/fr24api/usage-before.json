@@ -1,0 +1,10 @@
+{
+  "body": {
+    "data": []
+  },
+  "name": "usage-before",
+  "params": {},
+  "rate_headers": {},
+  "status": 200,
+  "url": "/api/usage"
+}

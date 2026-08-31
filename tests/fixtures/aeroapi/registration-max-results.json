@@ -1,0 +1,16 @@
+{
+  "body": {
+    "detail": "Invalid argument 'max_results' supplied",
+    "reason": "PARSING_ERROR",
+    "status": 400,
+    "title": "Error Parsing Arguments"
+  },
+  "name": "registration-max-results",
+  "params": {
+    "ident_type": "registration",
+    "max_results": "5"
+  },
+  "rate_limit_headers": {},
+  "status": 400,
+  "url": "/flights/N40726"
+}

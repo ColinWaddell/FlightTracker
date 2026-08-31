@@ -1,0 +1,41 @@
+{
+  "body": {
+    "data": [
+      {
+        "alt": 41000,
+        "callsign": "BAW86",
+        "dest_iata": "LHR",
+        "dest_icao": "EGLL",
+        "eta": "2026-08-31T09:50:17Z",
+        "flight": "BA86",
+        "fr24_id": "416ef0ee",
+        "gspeed": 514,
+        "hex": "405BFE",
+        "lat": 55.23166,
+        "lon": -7.77945,
+        "operating_as": "BAW",
+        "orig_iata": "YVR",
+        "orig_icao": "CYVR",
+        "painted_as": "BAW",
+        "reg": "G-YMMU",
+        "source": "ADSB",
+        "squawk": "6314",
+        "timestamp": "2026-08-31T08:49:07Z",
+        "track": 122,
+        "type": "B772",
+        "vspeed": 64
+      }
+    ]
+  },
+  "name": "callsign-baseline",
+  "params": {
+    "callsigns": "BAW86",
+    "limit": "1"
+  },
+  "rate_headers": {
+    "x-fr24-credits-consumed": "8",
+    "x-fr24-credits-remaining": "59992"
+  },
+  "status": 200,
+  "url": "/api/live/flight-positions/full"
+}
