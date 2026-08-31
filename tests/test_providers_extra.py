@@ -11,7 +11,7 @@ import unittest.mock as mock
 
 import pytest
 
-from lookups.results import FlightQuery, LookupContext
+from scenes.flight.lookups.results import FlightQuery, LookupContext
 
 
 def _record(**fields):
@@ -42,7 +42,7 @@ def _provider(module_name, response):
     """Aggregator provider with a stubbed HTTP session."""
     import importlib
 
-    flights = importlib.import_module(f"lookups.providers.{module_name}.flights")
+    flights = importlib.import_module(f"scenes.flight.lookups.providers.{module_name}.flights")
     provider = flights.FlightProvider({})
     provider._session = mock.Mock()
     provider._session.get.return_value = response
@@ -111,7 +111,7 @@ class TestFlightAggregators:
 
         import requests
 
-        flights = importlib.import_module(f"lookups.providers.{module_name}.flights")
+        flights = importlib.import_module(f"scenes.flight.lookups.providers.{module_name}.flights")
         provider = flights.FlightProvider({})
         provider._session = mock.Mock()
         provider._session.get.side_effect = requests.ConnectionError("boom")
@@ -128,7 +128,7 @@ class TestFlightAggregators:
 
 class TestAdsbImRoutes:
     def test_route_found(self, monkeypatch):
-        import lookups.providers.adsbim.routes as adsbim
+        import scenes.flight.lookups.providers.adsbim.routes as adsbim
 
         entry = {
             "callsign": "BAW123",
@@ -147,7 +147,7 @@ class TestAdsbImRoutes:
         assert result.value.airline_icao == "BAW"
 
     def test_implausible_is_not_found(self, monkeypatch):
-        import lookups.providers.adsbim.routes as adsbim
+        import scenes.flight.lookups.providers.adsbim.routes as adsbim
 
         entry = {"callsign": "X", "airport_codes": "EGLL-OTHH", "plausible": False}
         monkeypatch.setattr(adsbim.requests, "post", lambda *a, **k: _response([entry]))
@@ -156,7 +156,7 @@ class TestAdsbImRoutes:
         assert result.is_not_found
 
     def test_unknown_callsign_is_not_found(self, monkeypatch):
-        import lookups.providers.adsbim.routes as adsbim
+        import scenes.flight.lookups.providers.adsbim.routes as adsbim
 
         entry = {"callsign": "BAW123", "airport_codes": "unknown", "plausible": False}
         monkeypatch.setattr(adsbim.requests, "post", lambda *a, **k: _response([entry]))
@@ -165,7 +165,7 @@ class TestAdsbImRoutes:
         assert result.is_not_found
 
     def test_missing_position_is_not_found(self):
-        import lookups.providers.adsbim.routes as adsbim
+        import scenes.flight.lookups.providers.adsbim.routes as adsbim
 
         ctx = LookupContext(callsign="BAW123")  # no lat/lng
         result = adsbim.RouteProvider({}).lookup_route(ctx)
@@ -174,7 +174,7 @@ class TestAdsbImRoutes:
     def test_connection_error_is_unavailable(self, monkeypatch):
         import requests
 
-        import lookups.providers.adsbim.routes as adsbim
+        import scenes.flight.lookups.providers.adsbim.routes as adsbim
 
         def boom(*args, **kwargs):
             raise requests.ConnectionError("down")
@@ -195,7 +195,7 @@ def _context(callsign="BAW123", lat=55.5, lng=-4.0):
 
 class TestAirLabs:
     def test_route_found(self):
-        import lookups.providers.airlabs.routes as airlabs
+        import scenes.flight.lookups.providers.airlabs.routes as airlabs
 
         provider = airlabs.RouteProvider({"api_key": "k"})
         response = _response(
@@ -214,13 +214,13 @@ class TestAirLabs:
         assert result.value.airline_icao == "BAW"
 
     def test_missing_key_is_unavailable(self):
-        from lookups.providers.airlabs.routes import RouteProvider
+        from scenes.flight.lookups.providers.airlabs.routes import RouteProvider
 
         result = RouteProvider({}).lookup_route(_context("BAW123"))
         assert result.is_unavailable
 
     def test_empty_response_is_not_found(self):
-        import lookups.providers.airlabs.routes as airlabs
+        import scenes.flight.lookups.providers.airlabs.routes as airlabs
 
         provider = airlabs.RouteProvider({"api_key": "k"})
         with mock.patch.object(airlabs.requests, "get", return_value=_response({})):
@@ -228,7 +228,7 @@ class TestAirLabs:
         assert result.is_not_found
 
     def test_route_found_with_icao_to_iata(self):
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         response = _response(
@@ -243,7 +243,7 @@ class TestAirLabs:
         assert result.value.destination == "JFK"
 
     def test_404_is_not_found(self):
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         response = _response({}, status=404)
@@ -252,7 +252,7 @@ class TestAirLabs:
         assert result.is_not_found
 
     def test_auth_error_is_unavailable(self):
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -268,7 +268,7 @@ class TestAirLabs:
         used to send max_results on every call (#101).  Response shape
         matches the 2026-08-31 live probe capture for AAY430.
         """
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         response = _response(
@@ -299,7 +299,7 @@ class TestAirLabs:
 
     def test_tail_number_sends_registration_type(self):
         """Tail numbers are disambiguated with ident_type=registration (#101)."""
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -316,7 +316,7 @@ class TestAirLabs:
     def test_position_only_flights_are_not_found(self):
         """Live probe: N40726's recent flights carry no origin/destination -
         the lookup walks them all and reads as not-found, not unavailable."""
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         response = _response(
@@ -340,7 +340,7 @@ class TestAirLabs:
         """Shapes that are neither obviously a callsign nor a registration
         rely on the API's default interpretation - and never undocumented
         parameters (#101)."""
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -357,7 +357,7 @@ class TestAirLabs:
         """AeroAPI 400s on unparseable requests (unsupported parameter or
         malformed ident).  The body is logged, the lookup reads as
         not-found, and no retry spends a second billed call (#101)."""
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         response = _response(
@@ -384,7 +384,7 @@ class TestAirLabs:
 
     def test_ident_with_space_is_url_encoded(self):
         """Whitespace in feed idents must not corrupt the request path."""
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -398,7 +398,7 @@ class TestAirLabs:
         assert mocked.call_args.args[0].endswith("/flights/BA%20123")
 
     def test_rate_limit_is_still_unavailable(self):
-        import lookups.providers.flightaware.routes as flightaware
+        import scenes.flight.lookups.providers.flightaware.routes as flightaware
 
         provider = flightaware.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -447,7 +447,7 @@ def _fr24_response(data, status=200):
 @pytest.fixture
 def fresh_fr24api_cache():
     """Isolate the module-level fr24api callsign dedup cache per test."""
-    import lookups.providers.fr24api.client as client
+    import scenes.flight.lookups.providers.fr24api.client as client
 
     client.clear_position_cache()
     yield
@@ -456,8 +456,8 @@ def fresh_fr24api_cache():
 
 class TestFr24ApiFlights:
     def _fetch(self, monkeypatch, data=None, status=200):
-        import lookups.providers.fr24api.flights as fr24api
-        from lookups.results import FlightQuery
+        import scenes.flight.lookups.providers.fr24api.flights as fr24api
+        from scenes.flight.lookups.results import FlightQuery
 
         captured = {}
 
@@ -469,7 +469,7 @@ class TestFr24ApiFlights:
 
         monkeypatch.setattr(fr24api, "_get_explicit", fake_get, raising=False)
         # The provider imports get() inside fetch(); patch the client module.
-        import lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.client as client
 
         monkeypatch.setattr(client, "get", fake_get)
 
@@ -503,19 +503,19 @@ class TestFr24ApiFlights:
         assert captured["token"] == "TOK"
 
     def test_no_token_is_unavailable(self):
-        import lookups.providers.fr24api.flights as fr24api
+        import scenes.flight.lookups.providers.fr24api.flights as fr24api
 
         result = fr24api.FlightProvider({}).fetch(_query())
         assert result.is_unavailable
 
     def test_auth_and_credit_errors_are_unavailable(self, monkeypatch):
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.flights as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.flights as fr24api
 
         monkeypatch.setattr(
             client, "get", lambda *a, **k: _fr24_response([], status=402)
         )
-        from lookups.results import FlightQuery
+        from scenes.flight.lookups.results import FlightQuery
 
         result = fr24api.FlightProvider({"api_key": "TOK"}).fetch(
             FlightQuery(
@@ -529,14 +529,14 @@ class TestFr24ApiFlights:
     def test_transport_error_is_unavailable(self, monkeypatch):
         import requests
 
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.flights as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.flights as fr24api
 
         def boom(*args, **kwargs):
             raise requests.ConnectionError("down")
 
         monkeypatch.setattr(client, "get", boom)
-        from lookups.results import FlightQuery
+        from scenes.flight.lookups.results import FlightQuery
 
         result = fr24api.FlightProvider({"api_key": "TOK"}).fetch(
             FlightQuery(
@@ -550,8 +550,8 @@ class TestFr24ApiFlights:
 @pytest.mark.usefixtures("fresh_fr24api_cache")
 class TestFr24ApiRoutes:
     def _lookup(self, monkeypatch, data=None, status=200, callsign="BAW1AB"):
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.routes as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.routes as fr24api
 
         monkeypatch.setattr(
             client, "get", lambda *a, **k: _fr24_response(data or [], status)
@@ -589,12 +589,12 @@ class TestFr24ApiRoutes:
         assert result.is_not_found
 
     def test_no_callsign_is_not_found(self):
-        from lookups.providers.fr24api.routes import RouteProvider
+        from scenes.flight.lookups.providers.fr24api.routes import RouteProvider
 
         assert RouteProvider({"api_key": "TOK"}).lookup_route(_context("")).is_not_found
 
     def test_missing_token_is_unavailable(self):
-        from lookups.providers.fr24api.routes import RouteProvider
+        from scenes.flight.lookups.providers.fr24api.routes import RouteProvider
 
         result = RouteProvider({}).lookup_route(_context("BAW1AB"))
         assert result.is_unavailable
@@ -608,8 +608,8 @@ class TestFr24ApiRoutes:
 @pytest.mark.usefixtures("fresh_fr24api_cache")
 class TestFr24ApiAircraft:
     def test_found(self, monkeypatch):
-        import lookups.providers.fr24api.aircraft as fr24api
-        import lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
 
         monkeypatch.setattr(
             client, "get", lambda *a, **k: _fr24_response([_fr24_record()])
@@ -623,8 +623,8 @@ class TestFr24ApiAircraft:
         assert result.value.operator_icao == "BAW"
 
     def test_unknown_callsign_is_not_found(self, monkeypatch):
-        import lookups.providers.fr24api.aircraft as fr24api
-        import lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
 
         monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([]))
         result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
@@ -633,7 +633,7 @@ class TestFr24ApiAircraft:
         assert result.is_not_found
 
     def test_no_callsign_is_not_found(self):
-        import lookups.providers.fr24api.aircraft as fr24api
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24api
 
         result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(
             _context("")
@@ -641,7 +641,7 @@ class TestFr24ApiAircraft:
         assert result.is_not_found
 
     def test_missing_token_is_unavailable(self):
-        import lookups.providers.fr24api.aircraft as fr24api
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24api
 
         result = fr24api.AircraftProvider({}).lookup_aircraft(_context("BAW1AB"))
         assert result.is_unavailable
@@ -650,9 +650,9 @@ class TestFr24ApiAircraft:
         """Route + aircraft fire the IDENTICAL callsign request; the client
         dedups them into one billed call (every call is billed - measured
         2026-08-31 at ~8 credits/record, rapid re-calls 429)."""
-        import lookups.providers.fr24api.aircraft as fr24_aircraft
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.routes as fr24_routes
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24_aircraft
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.routes as fr24_routes
 
         calls = []
 
@@ -680,9 +680,9 @@ class TestFr24ApiAircraft:
     def test_error_answers_are_never_cached(self, monkeypatch):
         """A 400 on the route walk must not poison the aircraft walk's own
         request - errors re-issue (and re-bill) per capability."""
-        import lookups.providers.fr24api.aircraft as fr24_aircraft
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.routes as fr24_routes
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24_aircraft
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.routes as fr24_routes
 
         calls = []
         responses = [
@@ -711,7 +711,7 @@ class TestFr24ApiAircraft:
 
 class TestFr24ApiCatalogue:
     def test_registered(self):
-        from lookups.registry import PROVIDERS
+        from scenes.flight.lookups.registry import PROVIDERS
 
         spec = PROVIDERS["fr24api"]
         assert spec.implements("flights")
@@ -743,7 +743,7 @@ class TestFr24ApiCatalogue:
         """Provider description carries the warning Colin trimmed to his
         preferred short wording (11:32 tidy-up): billing is per returned
         record and continuous polling is discouraged."""
-        from lookups.registry import PROVIDERS
+        from scenes.flight.lookups.registry import PROVIDERS
 
         spec = PROVIDERS["fr24api"]
         text = spec.description  # description is a plain str
@@ -760,7 +760,7 @@ class TestFr24ApiCatalogue:
 
 class TestAdsbDbRejectedIdent:
     def test_route_400_is_not_found(self):
-        import lookups.providers.adsbdb.routes as adsbdb
+        import scenes.flight.lookups.providers.adsbdb.routes as adsbdb
 
         provider = adsbdb.RouteProvider({})
         with mock.patch.object(adsbdb, "_get", return_value=_response({}, status=400)):
@@ -772,7 +772,7 @@ class TestAdsbDbRejectedIdent:
         # fail-closed still works: 500 is a provider failure
         import requests
 
-        import lookups.providers.adsbdb.routes as adsbdb
+        import scenes.flight.lookups.providers.adsbdb.routes as adsbdb
 
         response = _response({}, status=500)
         response.raise_for_status.side_effect = requests.exceptions.HTTPError("500")
@@ -782,7 +782,7 @@ class TestAdsbDbRejectedIdent:
         assert result.is_unavailable
 
     def test_aircraft_400_is_not_found(self):
-        import lookups.providers.adsbdb.aircraft as adsbdb_aircraft
+        import scenes.flight.lookups.providers.adsbdb.aircraft as adsbdb_aircraft
 
         provider = adsbdb_aircraft.AircraftProvider({})
         with mock.patch.object(
@@ -797,7 +797,7 @@ class TestAdsbDbRejectedIdent:
 class TestAeroDataBoxRejectedParams:
     @pytest.mark.parametrize("status", [400, 422])
     def test_routes_rejected_parameters_are_not_found(self, status):
-        import lookups.providers.aerodatabox.routes as aerodatabox
+        import scenes.flight.lookups.providers.aerodatabox.routes as aerodatabox
 
         response = _response({}, status=status)
         with mock.patch.object(
@@ -810,7 +810,7 @@ class TestAeroDataBoxRejectedParams:
         assert not result.is_unavailable
 
     def test_routes_rate_limit_is_unavailable(self):
-        import lookups.providers.aerodatabox.routes as aerodatabox
+        import scenes.flight.lookups.providers.aerodatabox.routes as aerodatabox
 
         response = _response({}, status=429)
         with mock.patch.object(
@@ -824,7 +824,7 @@ class TestAeroDataBoxRejectedParams:
     def test_routes_server_error_is_unavailable(self):
         import requests
 
-        import lookups.providers.aerodatabox.routes as aerodatabox
+        import scenes.flight.lookups.providers.aerodatabox.routes as aerodatabox
 
         with mock.patch.object(
             aerodatabox,
@@ -838,7 +838,7 @@ class TestAeroDataBoxRejectedParams:
 
     @pytest.mark.parametrize("status", [400, 422])
     def test_aircraft_rejected_parameters_are_not_found(self, status):
-        import lookups.providers.aerodatabox.aircraft as aerodatabox
+        import scenes.flight.lookups.providers.aerodatabox.aircraft as aerodatabox
 
         response = _response({}, status=status)
         with mock.patch.object(
@@ -853,7 +853,7 @@ class TestAeroDataBoxRejectedParams:
 class TestAirLabsRejectedIdent:
     @pytest.mark.parametrize("status", [400, 404])
     def test_rejected_ident_is_not_found(self, status):
-        import lookups.providers.airlabs.routes as airlabs
+        import scenes.flight.lookups.providers.airlabs.routes as airlabs
 
         provider = airlabs.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -864,7 +864,7 @@ class TestAirLabsRejectedIdent:
         assert not result.is_unavailable
 
     def test_auth_error_is_unavailable(self):
-        import lookups.providers.airlabs.routes as airlabs
+        import scenes.flight.lookups.providers.airlabs.routes as airlabs
 
         provider = airlabs.RouteProvider({"api_key": "k"})
         with mock.patch.object(
@@ -876,8 +876,8 @@ class TestAirLabsRejectedIdent:
 
 class TestFr24ApiRejectedIdent:
     def test_routes_400_is_not_found(self, monkeypatch):
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.routes as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.routes as fr24api
 
         monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 400))
         result = fr24api.RouteProvider({"api_key": "TOK"}).lookup_route(
@@ -887,8 +887,8 @@ class TestFr24ApiRejectedIdent:
         assert not result.is_unavailable
 
     def test_routes_server_error_is_unavailable(self, monkeypatch):
-        import lookups.providers.fr24api.client as client
-        import lookups.providers.fr24api.routes as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.routes as fr24api
 
         monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 500))
         result = fr24api.RouteProvider({"api_key": "TOK"}).lookup_route(
@@ -897,8 +897,8 @@ class TestFr24ApiRejectedIdent:
         assert result.is_unavailable
 
     def test_aircraft_400_is_not_found(self, monkeypatch):
-        import lookups.providers.fr24api.aircraft as fr24api
-        import lookups.providers.fr24api.client as client
+        import scenes.flight.lookups.providers.fr24api.aircraft as fr24api
+        import scenes.flight.lookups.providers.fr24api.client as client
 
         monkeypatch.setattr(client, "get", lambda *a, **k: _fr24_response([], 400))
         result = fr24api.AircraftProvider({"api_key": "TOK"}).lookup_aircraft(

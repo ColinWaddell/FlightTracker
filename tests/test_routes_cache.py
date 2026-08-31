@@ -11,7 +11,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def isolated_cache(tmp_path, monkeypatch):
     """Redirect the cache to a temp database (and legacy JSON source)."""
-    import lookups.cache as rc
+    import scenes.flight.lookups.cache as rc
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")

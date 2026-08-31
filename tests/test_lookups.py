@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from lookups.results import (
+from scenes.flight.lookups.results import (
     AircraftInfo,
     FlightObservation,
     FlightQuery,
@@ -42,8 +42,8 @@ if "FlightRadar24" not in sys.modules:
 @pytest.fixture(autouse=True)
 def isolated_caches(monkeypatch, tmp_path):
     """Isolate the persistent cache, usage tallies and quarantine per test."""
-    import lookups.cache as rc
-    import lookups.usage as ru
+    import scenes.flight.lookups.cache as rc
+    import scenes.flight.lookups.usage as ru
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
@@ -64,7 +64,7 @@ def isolated_caches(monkeypatch, tmp_path):
 
 @pytest.fixture(autouse=True)
 def reset_quarantine():
-    from lookups.quarantine import QUARANTINE
+    from scenes.flight.lookups.quarantine import QUARANTINE
 
     QUARANTINE.reset()
     yield
@@ -89,42 +89,42 @@ class StubConfig:
 
 class TestParseRoute:
     def test_standard_route(self):
-        from lookups.providers.hexdb.routes import parse_route
+        from scenes.flight.lookups.providers.hexdb.routes import parse_route
 
         assert parse_route("EGPF-LEMG") == ("EGPF", "LEMG")
 
     def test_lowercased(self):
-        from lookups.providers.hexdb.routes import parse_route
+        from scenes.flight.lookups.providers.hexdb.routes import parse_route
 
         assert parse_route("egpf-lemg") == ("EGPF", "LEMG")
 
     def test_no_separator(self):
-        from lookups.providers.hexdb.routes import parse_route
+        from scenes.flight.lookups.providers.hexdb.routes import parse_route
 
         assert parse_route("EGPF") == ("", "")
 
     def test_empty_string(self):
-        from lookups.providers.hexdb.routes import parse_route
+        from scenes.flight.lookups.providers.hexdb.routes import parse_route
 
         assert parse_route("") == ("", "")
 
 
 class TestParseAircraftType:
     def test_manufacturer_and_type(self):
-        from lookups.providers.hexdb.aircraft import parse_aircraft_type
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_aircraft_type
 
         data = {"Manufacturer": "Airbus", "ICAOTypeCode": "A320"}
         assert parse_aircraft_type(data) == "Airbus A320"
 
     def test_type_only(self):
-        from lookups.providers.hexdb.aircraft import parse_aircraft_type
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_aircraft_type
 
         assert (
             parse_aircraft_type({"Manufacturer": "", "ICAOTypeCode": "B738"}) == "B738"
         )
 
     def test_manufacturer_only(self):
-        from lookups.providers.hexdb.aircraft import parse_aircraft_type
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_aircraft_type
 
         assert (
             parse_aircraft_type({"Manufacturer": "Boeing", "ICAOTypeCode": ""})
@@ -132,24 +132,24 @@ class TestParseAircraftType:
         )
 
     def test_missing_fields(self):
-        from lookups.providers.hexdb.aircraft import parse_aircraft_type
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_aircraft_type
 
         assert parse_aircraft_type({}) == ""
 
 
 class TestHexdbParseOperatorIcao:
     def test_operator_flag_code(self):
-        from lookups.providers.hexdb.aircraft import parse_operator_icao
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_operator_icao
 
         assert parse_operator_icao({"OperatorFlagCode": "RYR"}) == "RYR"
 
     def test_missing_field(self):
-        from lookups.providers.hexdb.aircraft import parse_operator_icao
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_operator_icao
 
         assert parse_operator_icao({}) == ""
 
     def test_malformed_field_rejected(self):
-        from lookups.providers.hexdb.aircraft import parse_operator_icao
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_operator_icao
 
         assert parse_operator_icao({"OperatorFlagCode": "G-ABCD"}) == ""
 
@@ -158,7 +158,7 @@ class TestOwnerLookup:
     """Registered owner name - the only identity a GA aircraft has."""
 
     def test_hexdb_parses_registered_owners(self):
-        from lookups.providers.hexdb.aircraft import parse_owner
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_owner
 
         assert (
             parse_owner({"RegisteredOwners": "Leading Edge Flight Training"})
@@ -166,35 +166,35 @@ class TestOwnerLookup:
         )
 
     def test_hexdb_owner_missing(self):
-        from lookups.providers.hexdb.aircraft import parse_owner
+        from scenes.flight.lookups.providers.hexdb.aircraft import parse_owner
 
         assert parse_owner({}) == ""
 
 
 class TestCleanOperatorCode:
     def test_valid_code(self):
-        from lookups.providers.common.operators import clean_operator_code
+        from scenes.flight.lookups.providers.common.operators import clean_operator_code
 
         assert clean_operator_code("BAW") == "BAW"
 
     def test_strips_whitespace(self):
-        from lookups.providers.common.operators import clean_operator_code
+        from scenes.flight.lookups.providers.common.operators import clean_operator_code
 
         assert clean_operator_code(" RYR ") == "RYR"
 
     def test_rejects_wrong_length(self):
-        from lookups.providers.common.operators import clean_operator_code
+        from scenes.flight.lookups.providers.common.operators import clean_operator_code
 
         assert clean_operator_code("AB") == ""
         assert clean_operator_code("ABCD") == ""
 
     def test_rejects_non_alpha(self):
-        from lookups.providers.common.operators import clean_operator_code
+        from scenes.flight.lookups.providers.common.operators import clean_operator_code
 
         assert clean_operator_code("A1C") == ""
 
     def test_rejects_blank_and_none(self):
-        from lookups.providers.common.operators import clean_operator_code
+        from scenes.flight.lookups.providers.common.operators import clean_operator_code
 
         assert clean_operator_code("") == ""
         assert clean_operator_code(None) == ""
@@ -210,7 +210,7 @@ class TestRoutePipeline:
         return LookupContext(callsign=callsign)
 
     def test_first_found_wins_higher_priority(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         first = MagicMock()
         first.lookup_route.return_value = LookupResult.found(
@@ -234,7 +234,7 @@ class TestRoutePipeline:
         assert second.lookup_route.call_count == 1
 
     def test_merge_fills_blanks_from_lower_priority(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         first = MagicMock()
         first.lookup_route.return_value = LookupResult.found(
@@ -254,7 +254,7 @@ class TestRoutePipeline:
         assert result.registration == "G-XLEA"
 
     def test_not_found_continues_to_next_provider(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         first = MagicMock()
         first.lookup_route.return_value = LookupResult.not_found("nope")
@@ -272,8 +272,8 @@ class TestRoutePipeline:
         assert hit == "b"
 
     def test_unavailable_quarantines_and_falls_through(self):
-        import lookups.quarantine as q
-        import lookups.routes as rs
+        import scenes.flight.lookups.quarantine as q
+        import scenes.flight.lookups.routes as rs
 
         dead = MagicMock()
         dead.lookup_route.return_value = LookupResult.unavailable("429")
@@ -291,8 +291,8 @@ class TestRoutePipeline:
         assert q.QUARANTINE.is_quarantined("dead")
 
     def test_provider_crash_treated_as_unavailable(self):
-        import lookups.quarantine as q
-        import lookups.routes as rs
+        import scenes.flight.lookups.quarantine as q
+        import scenes.flight.lookups.routes as rs
 
         bad = MagicMock()
         bad.lookup_route.side_effect = RuntimeError("boom")
@@ -314,8 +314,8 @@ class TestLookupRouteService:
         return [(f"p{i}", a) for i, a in enumerate(adapters)]
 
     def test_positive_result_cached_under_callsign(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.found(
@@ -334,8 +334,8 @@ class TestLookupRouteService:
         assert "owner" not in entry
 
     def test_all_not_found_caches_miss(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.not_found("no route")
@@ -348,8 +348,8 @@ class TestLookupRouteService:
         assert entry is not None and entry.get("miss") is True
 
     def test_unavailable_not_miss_cached(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.unavailable("down")
@@ -363,8 +363,8 @@ class TestLookupRouteService:
         """(#101) A not-found answer (e.g. AeroAPI rejecting a tail-number
         ident with HTTP 400) must hand the lookup to the next provider and
         leave the provider out of quarantine."""
-        import lookups.routes as rs
-        from lookups.quarantine import QUARANTINE
+        import scenes.flight.lookups.routes as rs
+        from scenes.flight.lookups.quarantine import QUARANTINE
 
         first = MagicMock()
         first.lookup_route.return_value = LookupResult.not_found(
@@ -386,8 +386,8 @@ class TestLookupRouteService:
         assert not QUARANTINE.is_quarantined("flightaware")
 
     def test_miss_entry_skips_providers(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
         adapter = MagicMock()
@@ -401,8 +401,8 @@ class TestLookupRouteService:
         assert result.origin == ""
 
     def test_cached_route_returned_without_providers(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         rc.put(
             "BAW123",
@@ -428,8 +428,8 @@ class TestLookupRouteService:
         assert result.plane == "A319"
 
     def test_stale_entry_reused_when_providers_fail(self, monkeypatch):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         # Seed a stale (expired-but-within-7-days) entry directly.
         stale_ts = time.time() - 2 * rs.cache.CACHE_TTL
@@ -454,8 +454,8 @@ class TestLookupRouteService:
         assert refreshed_ts == pytest.approx(stale_ts + rc.STALE_RECACHE_ADVANCE)
 
     def test_stale_entry_past_7_days_not_reused(self, monkeypatch):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         ancient_ts = time.time() - (rc.CACHE_TTL_STALE + 86400)
         rc.put(
@@ -476,8 +476,8 @@ class TestLookupRouteService:
         assert rc.get("BAW123", rc.KIND_ROUTE).get("miss")
 
     def test_no_providers_dont_cache_miss(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         ctx = LookupContext(callsign="EMPTYY")
         rs._run_pipeline_with_cache(ctx, "EMPTYY", [])
@@ -494,7 +494,7 @@ class TestAircraftPipeline:
     @pytest.fixture
     def install_providers(self, monkeypatch):
         """Return a helper that patches the aircraft provider resolver."""
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         def _install(adapters):
             monkeypatch.setattr(
@@ -504,7 +504,7 @@ class TestAircraftPipeline:
         return _install
 
     def test_first_hit_wins(self):
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         first = MagicMock()
         first.lookup_aircraft.return_value = LookupResult.found(
@@ -526,7 +526,7 @@ class TestAircraftPipeline:
     def test_identity_only_does_not_stop_chain(self):
         """A provider returning only operator/owner is retained but the
         chain keeps walking for the type (legacy chain behaviour)."""
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         identity_only = MagicMock()
         identity_only.lookup_aircraft.return_value = LookupResult.found(
@@ -548,8 +548,8 @@ class TestAircraftPipeline:
         assert info.owner == "Flying Club"
 
     def test_blank_result_cached_24h_when_all_answered(self, install_providers):
-        import lookups.aircraft as ac
-        import lookups.cache as rc
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.cache as rc
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.not_found("404")
@@ -564,8 +564,8 @@ class TestAircraftPipeline:
         assert entry["plane"] == ""
 
     def test_unavailable_not_cached(self, install_providers):
-        import lookups.aircraft as ac
-        import lookups.cache as rc
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.cache as rc
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.unavailable("dead")
@@ -577,8 +577,8 @@ class TestAircraftPipeline:
         assert rc.get("111111", rc.KIND_AIRCRAFT) is None
 
     def test_cached_positive_short_circuits(self, install_providers):
-        import lookups.aircraft as ac
-        import lookups.cache as rc
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.cache as rc
 
         rc.put(
             "400f5a", {"plane": "A320", "registration": "G-EUXM"}, kind=rc.KIND_AIRCRAFT
@@ -593,8 +593,8 @@ class TestAircraftPipeline:
         assert info.plane == "A320"
 
     def test_stale_reused_with_fresh_identity(self, install_providers, monkeypatch):
-        import lookups.aircraft as ac
-        import lookups.cache as rc
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.cache as rc
 
         stale_ts = time.time() - 2 * ac.cache.CACHE_TTL
         rc.put(
@@ -653,10 +653,10 @@ class TestFr24RouteProvider:
 
     @pytest.fixture
     def provider(self, client, monkeypatch):
-        import lookups.providers.fr24.routes as fr
+        import scenes.flight.lookups.providers.fr24.routes as fr
 
         monkeypatch.setattr(fr, "get_client", lambda: client)
-        from lookups.providers.fr24.routes import RouteProvider
+        from scenes.flight.lookups.providers.fr24.routes import RouteProvider
 
         return RouteProvider({})
 
@@ -727,10 +727,10 @@ class TestFr24AircraftProvider:
 
     @pytest.fixture
     def provider(self, client, monkeypatch):
-        import lookups.providers.fr24.aircraft as fr
+        import scenes.flight.lookups.providers.fr24.aircraft as fr
 
         monkeypatch.setattr(fr, "get_client", lambda: client)
-        from lookups.providers.fr24.aircraft import AircraftProvider
+        from scenes.flight.lookups.providers.fr24.aircraft import AircraftProvider
 
         return AircraftProvider({})
 
@@ -771,7 +771,7 @@ class TestFr24AircraftProvider:
 
 class TestFr24Client:
     def test_bubble_radius_bounds(self):
-        from lookups.providers.fr24.client import bubble_radius_for
+        from scenes.flight.lookups.providers.fr24.client import bubble_radius_for
 
         assert bubble_radius_for(0) == 1000  # baseline
         assert bubble_radius_for(10) == 1000  # 10*30=300 -> baseline
@@ -779,7 +779,7 @@ class TestFr24Client:
         assert bubble_radius_for(1000) == 20000  # capped
 
     def test_bubble_memo_shares_one_feed_call(self):
-        from lookups.providers.fr24 import client as fc
+        from scenes.flight.lookups.providers.fr24 import client as fc
 
         c = fc.FR24Client()
         api = MagicMock()
@@ -794,7 +794,7 @@ class TestFr24Client:
         assert first == second
 
     def test_miss_ttl_expiry(self, monkeypatch):
-        from lookups.providers.fr24 import client as fc
+        from scenes.flight.lookups.providers.fr24 import client as fc
 
         c = fc.FR24Client()
         fake_time = [1000.0]
@@ -807,7 +807,7 @@ class TestFr24Client:
         assert c.recently_missed("BAW123") is False
 
     def test_get_client_singleton(self):
-        from lookups.providers.fr24 import client as fc
+        from scenes.flight.lookups.providers.fr24 import client as fc
 
         fc.reset_client()
         assert fc.get_client() is fc.get_client()
@@ -829,12 +829,12 @@ class TestFlightsService:
 
     def _patch_resolution(self, monkeypatch, providers):
         """Patch provider resolution so [(pid, adapter)] stubs are used."""
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         monkeypatch.setattr(fs, "_chain", lambda: providers)
 
     def test_first_provider_answers(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         obs = [FlightObservation(callsign="BAW123")]
         adapter = MagicMock()
@@ -847,7 +847,7 @@ class TestFlightsService:
         assert outcome.observations == obs
 
     def test_unavailable_falls_through(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         dead = MagicMock()
         dead.fetch.return_value = LookupResult.unavailable("429")
@@ -862,7 +862,7 @@ class TestFlightsService:
         assert outcome.provider_id == "good"
 
     def test_all_unavailable_is_error(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         dead = MagicMock()
         dead.fetch.return_value = LookupResult.unavailable("down")
@@ -873,7 +873,7 @@ class TestFlightsService:
         assert outcome.errors
 
     def test_empty_list_is_ok_empty_sky(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         adapter = MagicMock()
         adapter.fetch.return_value = LookupResult.found([])
@@ -884,8 +884,8 @@ class TestFlightsService:
         assert outcome.observations == []
 
     def test_quarantined_provider_skipped(self, monkeypatch):
-        import lookups.flights as fs
-        from lookups.quarantine import QUARANTINE
+        import scenes.flight.lookups.flights as fs
+        from scenes.flight.lookups.quarantine import QUARANTINE
 
         QUARANTINE.record_failure("skipped")
         skipped = MagicMock()
@@ -902,8 +902,8 @@ class TestFlightsService:
         assert outcome.provider_id == "healthy"
 
     def test_adapter_crash_quarantines(self, monkeypatch):
-        import lookups.flights as fs
-        from lookups.quarantine import QUARANTINE
+        import scenes.flight.lookups.flights as fs
+        from scenes.flight.lookups.quarantine import QUARANTINE
 
         crashy = MagicMock()
         crashy.fetch.side_effect = RuntimeError("boom")
@@ -921,7 +921,7 @@ class TestFlightsService:
 
 class TestRegistry:
     def test_normalise_drops_unknown_provider(self):
-        from lookups.registry import normalise_provider_list
+        from scenes.flight.lookups.registry import normalise_provider_list
 
         clean, warnings = normalise_provider_list(
             [{"provider": "nosuch", "enabled": True}], "flights"
@@ -930,7 +930,7 @@ class TestRegistry:
         assert warnings
 
     def test_normalise_drops_capability_mismatch(self):
-        from lookups.registry import normalise_provider_list
+        from scenes.flight.lookups.registry import normalise_provider_list
 
         # hexdb cannot serve flights
         clean, _warnings = normalise_provider_list(
@@ -939,7 +939,7 @@ class TestRegistry:
         assert clean == []
 
     def test_normalise_coerces_enabled_to_bool(self):
-        from lookups.registry import normalise_provider_list
+        from scenes.flight.lookups.registry import normalise_provider_list
 
         clean, _warnings = normalise_provider_list(
             [{"provider": "fr24", "enabled": "yes"}], "flights"
@@ -947,7 +947,7 @@ class TestRegistry:
         assert clean == [{"provider": "fr24", "enabled": True}]
 
     def test_normalise_dedupes(self):
-        from lookups.registry import normalise_provider_list
+        from scenes.flight.lookups.registry import normalise_provider_list
 
         clean, warnings = normalise_provider_list(
             [
@@ -960,7 +960,7 @@ class TestRegistry:
         assert clean[0]["enabled"] is True
 
     def test_catalogue_capabilities(self):
-        from lookups.registry import PROVIDERS
+        from scenes.flight.lookups.registry import PROVIDERS
 
         assert "flights" in PROVIDERS["fr24"].capabilities
         assert "routes" in PROVIDERS["fr24"].capabilities
@@ -979,8 +979,8 @@ class TestRegistry:
 
 class TestEnrichment:
     def test_prefill_priority_over_providers(self, monkeypatch):
-        import lookups.routes as rs
-        from lookups.enrichment import enrich
+        import scenes.flight.lookups.routes as rs
+        from scenes.flight.lookups.enrichment import enrich
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.found(
@@ -1005,9 +1005,9 @@ class TestEnrichment:
         assert route.destination == "GLA"
 
     def test_operator_icao_replaced_by_aircraft_pipeline(self, monkeypatch):
-        import lookups.aircraft as ac
-        import lookups.routes as rs
-        from lookups.enrichment import enrich
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.routes as rs
+        from scenes.flight.lookups.enrichment import enrich
 
         # The route pipeline is unavailable for the callsign; a distinct
         # (non-quarantined) provider supplies the airframe answer.
@@ -1037,8 +1037,8 @@ class TestEnrichment:
 
     def test_no_callsign_still_enriches_airframe(self, monkeypatch):
         """GA aircraft without a callsign still get their type resolved."""
-        import lookups.aircraft as ac
-        from lookups.enrichment import enrich
+        import scenes.flight.lookups.aircraft as ac
+        from scenes.flight.lookups.enrichment import enrich
 
         aircraft_adapter = MagicMock()
         aircraft_adapter.lookup_aircraft.return_value = LookupResult.found(
@@ -1062,23 +1062,23 @@ class TestEnrichment:
 
 class TestIcaoToIata:
     def test_known_code(self):
-        from lookups.providers.common.airports import icao_to_iata_code
+        from scenes.flight.lookups.providers.common.airports import icao_to_iata_code
 
         assert icao_to_iata_code("EGPF") == "GLA"
 
     def test_unknown_code_returns_empty(self):
-        from lookups.providers.common.airports import icao_to_iata_code
+        from scenes.flight.lookups.providers.common.airports import icao_to_iata_code
 
         assert icao_to_iata_code("ZZZZ") == ""
 
     def test_blank_and_none(self):
-        from lookups.providers.common.airports import icao_to_iata_code
+        from scenes.flight.lookups.providers.common.airports import icao_to_iata_code
 
         assert icao_to_iata_code("") == ""
         assert icao_to_iata_code(None) == ""
 
     def test_lowercase_normalised(self):
-        from lookups.providers.common.airports import icao_to_iata_code
+        from scenes.flight.lookups.providers.common.airports import icao_to_iata_code
 
         assert icao_to_iata_code("egpf") == "GLA"
 
@@ -1088,12 +1088,12 @@ class TestHexdbRouteLookup:
 
     @pytest.fixture
     def adapter(self):
-        from lookups.providers.hexdb.routes import RouteProvider
+        from scenes.flight.lookups.providers.hexdb.routes import RouteProvider
 
         return RouteProvider({})
 
     def test_route_found_and_enriched(self, adapter, monkeypatch):
-        from lookups.providers.hexdb import routes as hex_routes
+        from scenes.flight.lookups.providers.hexdb import routes as hex_routes
 
         response = MagicMock()
         response.status_code = 200
@@ -1111,7 +1111,7 @@ class TestHexdbRouteLookup:
         assert result.value.destination_name != ""
 
     def test_404_is_not_found(self, adapter, monkeypatch):
-        from lookups.providers.hexdb import routes as hex_routes
+        from scenes.flight.lookups.providers.hexdb import routes as hex_routes
 
         response = MagicMock()
         response.status_code = 404
@@ -1121,7 +1121,7 @@ class TestHexdbRouteLookup:
         assert result.is_not_found
 
     def test_unconvertible_codes_are_not_found(self, adapter, monkeypatch):
-        from lookups.providers.hexdb import routes as hex_routes
+        from scenes.flight.lookups.providers.hexdb import routes as hex_routes
 
         response = MagicMock()
         response.status_code = 200
@@ -1134,7 +1134,7 @@ class TestHexdbRouteLookup:
     def test_connection_error_is_unavailable(self, adapter, monkeypatch):
         from requests.exceptions import ConnectionError as ReqConnError
 
-        from lookups.providers.hexdb import routes as hex_routes
+        from scenes.flight.lookups.providers.hexdb import routes as hex_routes
 
         def boom(url, timeout=10):
             raise ReqConnError("nope")
@@ -1164,7 +1164,7 @@ def _cache_tallies(us, kind):
 
 class TestRouteUsageTallies:
     def test_found_records_attempt_only(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.found(
@@ -1174,12 +1174,12 @@ class TestRouteUsageTallies:
             LookupContext(callsign="BAW123"), "BAW123", [("a", adapter)]
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
 
     def test_not_found_records_attempt_and_no_result(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.not_found("nope")
@@ -1187,12 +1187,12 @@ class TestRouteUsageTallies:
             LookupContext(callsign="ZZZ999"), "ZZZ999", [("a", adapter)]
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 1}
 
     def test_unavailable_records_attempt_only(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.return_value = LookupResult.unavailable("down")
@@ -1200,12 +1200,12 @@ class TestRouteUsageTallies:
             LookupContext(callsign="WWW111"), "WWW111", [("a", adapter)]
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
 
     def test_crash_records_attempt_only(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         adapter.lookup_route.side_effect = Exception("boom")
@@ -1213,21 +1213,21 @@ class TestRouteUsageTallies:
             LookupContext(callsign="EXPLODE"), "EXPLODE", [("a", adapter)]
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "routes", "a") == {"attempts": 1, "no_results": 0}
 
 
 class TestAircraftUsageTallies:
     def _install(self, monkeypatch, providers):
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         monkeypatch.setattr(
             ac, "resolve_aircraft_providers", lambda cfg=None: providers
         )
 
     def test_found_records_attempt_only(self, monkeypatch):
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.found(
@@ -1236,7 +1236,7 @@ class TestAircraftUsageTallies:
         self._install(monkeypatch, [("a", adapter)])
         ac.lookup_aircraft(LookupContext(callsign="", mode_s="400f5a"))
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "aircraft", "a") == {
             "attempts": 1,
@@ -1244,14 +1244,14 @@ class TestAircraftUsageTallies:
         }
 
     def test_not_found_records_no_result(self, monkeypatch):
-        import lookups.aircraft as ac
+        import scenes.flight.lookups.aircraft as ac
 
         adapter = MagicMock()
         adapter.lookup_aircraft.return_value = LookupResult.not_found("404")
         self._install(monkeypatch, [("a", adapter)])
         ac.lookup_aircraft(LookupContext(callsign="", mode_s="000000"))
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "aircraft", "a") == {
             "attempts": 1,
@@ -1267,7 +1267,7 @@ class TestFlightsUsageTallies:
         )
 
     def test_found_observations_sum(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         obs = [
             FlightObservation(callsign="BAW1"),
@@ -1281,7 +1281,7 @@ class TestFlightsUsageTallies:
         outcome = fs.fetch_flights(self._query())
         assert outcome.ok is True
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "flights", "fr24") == {
             "api_calls": 1,
@@ -1289,7 +1289,7 @@ class TestFlightsUsageTallies:
         }
 
     def test_empty_sky_counts_call_only(self, monkeypatch):
-        import lookups.flights as fs
+        import scenes.flight.lookups.flights as fs
 
         adapter = MagicMock()
         adapter.fetch.return_value = LookupResult.found([])
@@ -1297,7 +1297,7 @@ class TestFlightsUsageTallies:
 
         assert fs.fetch_flights(self._query()).ok is True
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _provider_tallies(us, "flights", "fr24") == {
             "api_calls": 1,
@@ -1305,8 +1305,8 @@ class TestFlightsUsageTallies:
         }
 
     def test_unavailable_counts_call_only(self, monkeypatch):
-        import lookups.flights as fs
-        import lookups.usage as us
+        import scenes.flight.lookups.flights as fs
+        import scenes.flight.lookups.usage as us
 
         adapter = MagicMock()
         adapter.fetch.return_value = LookupResult.unavailable("503")
@@ -1322,8 +1322,8 @@ class TestFlightsUsageTallies:
 
 class TestCacheUsageTallies:
     def test_cached_complete_route_is_hit_without_providers(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         adapter = MagicMock()
         rc.put(
@@ -1341,26 +1341,26 @@ class TestCacheUsageTallies:
             cfg=StubConfig(route_providers=[]),
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _cache_tallies(us, "routes") == {"hits": 1, "misses": 0}
         adapter.lookup_route.assert_not_called()
 
     def test_uncached_route_is_miss(self):
-        import lookups.routes as rs
+        import scenes.flight.lookups.routes as rs
 
         rs.lookup_route(
             LookupContext(callsign="ZZZ999"),
             cfg=StubConfig(route_providers=[]),
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _cache_tallies(us, "routes") == {"hits": 0, "misses": 1}
 
     def test_negative_entry_counts_as_hit(self):
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         rc.put("ZZZ999", {"miss": True}, ttl=rc.CACHE_TTL_MISS, kind=rc.KIND_ROUTE)
         rs.lookup_route(
@@ -1368,26 +1368,26 @@ class TestCacheUsageTallies:
             cfg=StubConfig(route_providers=[{"provider": "a", "enabled": True}]),
         )
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _cache_tallies(us, "routes") == {"hits": 1, "misses": 0}
         assert us.summary()["providers"]["routes"] == {}
 
     def test_blank_aircraft_entry_is_hit(self):
-        import lookups.aircraft as ac
-        import lookups.cache as rc
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.cache as rc
 
         rc.put("400f5a", {}, kind=rc.KIND_AIRCRAFT)
         ac.lookup_aircraft(LookupContext(callsign="", mode_s="400f5a"))
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _cache_tallies(us, "aircraft") == {"hits": 1, "misses": 0}
 
     def test_gap_fill_records_hit_and_attempt(self, monkeypatch):
         """A cached-but-incomplete route hits the cache AND still calls providers."""
-        import lookups.cache as rc
-        import lookups.routes as rs
+        import scenes.flight.lookups.cache as rc
+        import scenes.flight.lookups.routes as rs
 
         rc.put("BAW123", {"origin": "LHR"}, kind=rc.KIND_ROUTE)
         adapter = MagicMock()
@@ -1401,7 +1401,7 @@ class TestCacheUsageTallies:
         result = rs.lookup_route(LookupContext(callsign="BAW123"), cfg=StubConfig())
         assert result.destination == "GLA"
 
-        import lookups.usage as us
+        import scenes.flight.lookups.usage as us
 
         assert _cache_tallies(us, "routes")["hits"] == 1
         assert _provider_tallies(us, "routes", "hexdb") == {

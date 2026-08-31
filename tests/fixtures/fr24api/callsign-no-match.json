@@ -1,0 +1,16 @@
+{
+  "body": {
+    "data": []
+  },
+  "name": "callsign-no-match",
+  "params": {
+    "callsigns": "ZZZ9ZZ",
+    "limit": "1"
+  },
+  "rate_headers": {
+    "x-fr24-credits-consumed": "1",
+    "x-fr24-credits-remaining": "59991"
+  },
+  "status": 200,
+  "url": "/api/live/flight-positions/full"
+}
