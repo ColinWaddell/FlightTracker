@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FR24 API: route + aircraft lookups for the same callsign share one billed request (short
   30s dedup in the shared client; only successful answers are cached - errors still re-issue
   per capability)
+- Satellite scenes no longer spam the log during a CelesTrak outage: pass recomputation
+  holds off while TLE data is unavailable (the manager keeps its own fetch/backoff schedule;
+  the scene re-checks on a 60s cooldown) and the "no TLE data available" warning is
+  rate-limited to once per 10 minutes; empty pass computations likewise recompute at most
+  once per 60s instead of every frame
+- TLE cache survives outages: the on-disk cache is served even when older than 24h (with a
+  warning, up to 30 days) so pass prediction keeps working while the refresh loop retries in
+  the background - stale-TLE prediction degrades gracefully over days and beats having none
 - FR24 API: provider description now warns about the measured billing model — roughly 8
   credits per returned record with a 1-credit minimum per call, burst limits on rapid
   re-calls (HTTP 429), and the `x-fr24-credits-consumed`/-`remaining` response headers for
