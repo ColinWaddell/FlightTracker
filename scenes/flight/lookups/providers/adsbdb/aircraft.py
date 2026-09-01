@@ -50,6 +50,9 @@ class AircraftProvider:
         if not (info.plane or info.registration or info.operator_icao or info.owner):
             return LookupResult.not_found("adsbdb aircraft record empty")
 
+        fields = (info.plane, info.registration, info.operator_icao or info.owner)
+        identity = " ".join(part for part in fields if part)
+        logger.debug("adsbdb aircraft for %r: %s", mode_s, identity)
         return LookupResult.found(info)
 
 

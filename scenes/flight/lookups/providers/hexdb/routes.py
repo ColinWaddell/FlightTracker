@@ -96,6 +96,9 @@ class RouteProvider:
             route.destination = dest_iata
             fill_airport_details(route, "destination")
 
+        logger.debug(
+            "hexdb route for %r: %s->%s", callsign, route.origin, route.destination
+        )
         return LookupResult.found(route)
 
 

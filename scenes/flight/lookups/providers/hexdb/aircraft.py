@@ -46,6 +46,9 @@ class AircraftProvider:
             operator_icao=parse_operator_icao(data),
             owner=parse_owner(data),
         )
+        fields = (info.plane, info.registration, info.operator_icao or info.owner)
+        identity = " ".join(part for part in fields if part)
+        logger.debug("hexdb aircraft for %r: %s", mode_s, identity)
         return LookupResult.found(info)
 
 

@@ -14,6 +14,7 @@ class FlightProvider(AggregatorFlightProvider):
     """
 
     endpoint = "https://api.airplanes.live/v2/point/{lat}/{lon}/{radius}"
+    name = "airplanes.live"
 
 
 def startup_check(settings: dict | None = None) -> bool:

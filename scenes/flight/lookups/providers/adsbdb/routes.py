@@ -75,6 +75,12 @@ class RouteProvider:
             return LookupResult.not_found("adsbdb has no flightroute")
 
         if route.origin or route.destination:
+            logger.debug(
+                "adsbdb route for %r: %s->%s",
+                callsign,
+                route.origin,
+                route.destination,
+            )
             return LookupResult.found(route)
         return LookupResult.not_found("adsbdb flightroute has no airports")
 

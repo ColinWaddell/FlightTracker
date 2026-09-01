@@ -130,6 +130,12 @@ class RouteProvider:
         for flight in flights:
             route = _flight_to_route(flight)
             if route is not None:
+                logger.debug(
+                    "aeroapi route for %r: %s->%s",
+                    callsign,
+                    route.origin,
+                    route.destination,
+                )
                 return LookupResult.found(route)
         return LookupResult.not_found("aeroapi flight has no route")
 

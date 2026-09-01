@@ -120,7 +120,9 @@ class FlightProvider:
                 home, obs.latitude or 0.0, obs.longitude or 0.0, obs.altitude_ft or 0
             )
         )
-        return LookupResult.found(candidates[: query.max_results])
+        selected = candidates[: query.max_results]
+        logger.debug("FR24 API fetch complete - %d flight(s) in zone", len(selected))
+        return LookupResult.found(selected)
 
 
 def _altitude_range(query: FlightQuery) -> str:

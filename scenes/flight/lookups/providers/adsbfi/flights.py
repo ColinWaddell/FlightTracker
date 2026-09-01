@@ -13,6 +13,7 @@ class FlightProvider(AggregatorFlightProvider):
     """
 
     endpoint = "https://opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/{radius}"
+    name = "adsb.fi"
 
 
 def startup_check(settings: dict | None = None) -> bool:

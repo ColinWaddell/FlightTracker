@@ -62,5 +62,7 @@ class AircraftProvider:
             info.registration = registration
 
         client.clear_feed_miss(callsign)
-        logger.debug("FR24 aircraft for %r: %r", callsign, plane)
+        fields = (info.plane, info.registration)
+        identity = " ".join(part for part in fields if part)
+        logger.debug("FR24 aircraft for %r: %s", callsign, identity)
         return LookupResult.found(info)

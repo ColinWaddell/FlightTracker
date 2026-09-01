@@ -76,6 +76,9 @@ class RouteProvider:
         if route is None:
             return LookupResult.not_found("adsb.im has no plausible route")
 
+        logger.debug(
+            "adsb.im route for %r: %s->%s", callsign, route.origin, route.destination
+        )
         return LookupResult.found(route)
 
 

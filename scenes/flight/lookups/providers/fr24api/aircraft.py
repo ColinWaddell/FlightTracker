@@ -70,6 +70,9 @@ class AircraftProvider:
         info = _to_aircraft(record)
         if info is None:
             return LookupResult.not_found("FR24 API flight has no aircraft data")
+        fields = (info.plane, info.registration, info.operator_icao)
+        identity = " ".join(part for part in fields if part)
+        logger.debug("FR24 API aircraft for %r: %s", callsign, identity)
         return LookupResult.found(info)
 
 

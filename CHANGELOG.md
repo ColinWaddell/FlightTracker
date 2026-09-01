@@ -4,6 +4,21 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Consistent DEBUG logging across all lookup providers: every provider now logs a one-line
+  summary of what it retrieved on success (previously only the FR24 providers did, so e.g.
+  a successful AeroAPI route lookup appeared in the log only as raw HTTP transport lines):
+  **AeroAPI / adsbDB / hexdb / AirLabs / AeroDataBox / adsb.im** route lookups log the
+  resolved airport pair (``aeroapi route for 'DAL958': ATL->EDI``), the aircraft providers
+  (adsbDB, hexdb, AeroDataBox, FR24 API, FR24 feed) log the resolved type, registration
+  and operator/owner, and the **FR24 API** zone fetch logs its result count like the other
+  flight providers
+- The community aggregator feeds (adsb.fi, ADSB.lol, airplanes.live) now log under their
+  own names instead of the generic class name (``FlightProvider fetch complete`` is now
+  e.g. ``adsb.fi fetch complete``)
+
 ## [v2.9.1] - 2026-08-30
 
 ### Changed

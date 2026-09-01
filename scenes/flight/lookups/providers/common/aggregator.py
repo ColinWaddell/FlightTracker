@@ -99,6 +99,10 @@ class AggregatorFlightProvider:
     timeout_seconds = 10
     envelope_keys = ("aircraft", "ac")
 
+    # Log/display name - subclasses override so log lines identify the
+    # feed (every subclass is named "FlightProvider").
+    name = "aggregator"
+
     def __init__(self, settings: dict | None = None):
         self._settings = settings or {}
         import requests
@@ -128,7 +132,7 @@ class AggregatorFlightProvider:
             response.raise_for_status()
             payload = response.json()
         except Exception as e:
-            logger.warning("%s fetch failed: %s", type(self).__name__, e)
+            logger.warning("%s fetch failed: %s", self.name, e)
             return LookupResult.unavailable(f"aggregator unreachable: {e}")
 
         min_alt_ft = query.min_altitude_m / 0.3048
@@ -159,7 +163,5 @@ class AggregatorFlightProvider:
             observation_from_record(record)
             for record in candidates[: query.max_results]
         ]
-        logger.debug(
-            "%s fetch complete - %d flight(s)", type(self).__name__, len(observations)
-        )
+        logger.debug("%s fetch complete - %d flight(s)", self.name, len(observations))
         return LookupResult.found(observations)

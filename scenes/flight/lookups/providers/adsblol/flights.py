@@ -12,6 +12,7 @@ class FlightProvider(AggregatorFlightProvider):
     """
 
     endpoint = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/{radius}"
+    name = "adsb.lol"
 
 
 def startup_check(settings: dict | None = None) -> bool:

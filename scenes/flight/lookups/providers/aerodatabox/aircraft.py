@@ -90,6 +90,9 @@ class AircraftProvider:
         ):
             return LookupResult.not_found("aerodatabox aircraft record empty")
 
+        fields = (info.plane, info.registration, info.operator_icao or info.owner)
+        identity = " ".join(part for part in fields if part)
+        logger.debug("aerodatabox aircraft for %r: %s", mode_s, identity)
         return LookupResult.found(info)
 
 

@@ -105,6 +105,12 @@ class RouteProvider:
         if route is None or not (route.origin or route.destination):
             return LookupResult.not_found("aerodatabox flight has no route")
 
+        logger.debug(
+            "aerodatabox route for %r: %s->%s",
+            callsign,
+            route.origin,
+            route.destination,
+        )
         return LookupResult.found(route)
 
 

@@ -72,6 +72,12 @@ class RouteProvider:
         for row in rows:
             route = _row_to_route(row)
             if route is not None:
+                logger.debug(
+                    "airlabs route for %r: %s->%s",
+                    callsign,
+                    route.origin,
+                    route.destination,
+                )
                 return LookupResult.found(route)
         return LookupResult.not_found("airlabs has no usable route for this callsign")
 
