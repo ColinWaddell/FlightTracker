@@ -4,9 +4,14 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.10.1] - 2026-09-02
+
+- Tweaks to how flight data is collated to reduce API usage (hopefully)
+- Fixed rainfall graph timing
+- New config option for pixel ordering
+
 ## [v2.10.0] - 2026-09-01
 
-### Changed
 - API usage interface
 - Properly tested the commercial API providers and got them working
 - Moved to SQLite for caching to reduce SD-card wear

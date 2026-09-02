@@ -1200,7 +1200,9 @@ class TestEnrichment:
             )
         )
         monkeypatch.setattr(
-            rs, "resolve_route_providers", lambda cfg=None: [("routeprov", route_adapter)]
+            rs,
+            "resolve_route_providers",
+            lambda cfg=None: [("routeprov", route_adapter)],
         )
 
         aircraft_adapter = MagicMock()
@@ -1239,7 +1241,9 @@ class TestEnrichment:
             )
         )
         monkeypatch.setattr(
-            rs, "resolve_route_providers", lambda cfg=None: [("routeprov", route_adapter)]
+            rs,
+            "resolve_route_providers",
+            lambda cfg=None: [("routeprov", route_adapter)],
         )
 
         aircraft_adapter = MagicMock()
