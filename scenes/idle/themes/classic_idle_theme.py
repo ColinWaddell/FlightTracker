@@ -315,7 +315,7 @@ class ClassicIdleTheme(BaseIdleScene):
             return None
         forecast = weather["hourly"]
         start = datetime.datetime.now().hour
-        slice = forecast[start : start + RAINFALL_HOURS]
+        slice = forecast[:RAINFALL_HOURS]
         return [
             {
                 "precip_mm": h["precip_mm"],
