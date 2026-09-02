@@ -190,19 +190,19 @@ class RouteInfo:
     destination_country: str = ""
 
     def is_complete(self) -> bool:
-        """True when every enrichable route field has a value.
+        """True when the flight-level route data is fully known.
 
-        Airport names/municipalities/countries are filled from the bundled
+        The route pipeline stops once this is True.  The bar covers only
+        what describes the *flight* (its callsign): the airport pair and
+        the operating carrier.  Airframe identity (``plane`` /
+        ``registration``) is deliberately excluded - it belongs to the
+        mode-s aircraft pipeline, which caches it per airframe, so route
+        providers are never re-queried just to fill airframe fields.
+        Airport names/municipalities/countries come from the bundled
         airports.json rather than by providers, so only the codes and
         identity fields count as "enrichable pipeline fields".
         """
-        return bool(
-            self.origin
-            and self.destination
-            and self.airline_icao
-            and self.plane
-            and self.registration
-        )
+        return bool(self.origin and self.destination and self.airline_icao)
 
     def merge_missing(self, update: RouteInfo) -> None:
         """Fill blank fields from *update* without overwriting existing values."""

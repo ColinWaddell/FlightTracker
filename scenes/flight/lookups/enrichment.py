@@ -11,12 +11,14 @@ pipelines then fill whatever remains:
 2.  Route pipeline (callsign-keyed): persistent cache, then the configured
     route providers.  ``merge_missing`` semantics mean the prefill can
     never be overwritten - providers only fill blanks.
-3.  Aircraft pipeline (mode-s-keyed): runs whenever plane/registration/
-    airline identity is still missing (the airframe's registered operator
-    is the only per-airframe signal and resolves ICAO designator
-    collisions).  Operator/owner from the mode-s lookup *replace* any
-    flight-level answer - the airframe's registered operator is stronger
-    evidence for logo resolution than a callsign-prefix guess.
+3.  Aircraft pipeline (mode-s-keyed): runs whenever airframe identity
+    (type, registration or registered operator) is still unknown -
+    independent of whether the route is complete.  The airframe's data is
+    cached per mode-s (default 7 days), so identity costs one provider
+    chain per airframe, not per poll.  Operator/owner from the mode-s
+    lookup *replace* any flight-level answer - the airframe's registered
+    operator is stronger evidence for logo resolution than a
+    callsign-prefix guess.
 4.  Position-gated providers (FR24's live-feed bubble) only participate
     when the context carries a position; the aircraft pipeline requests
     the expensive type lookup (``want_plane``) only while the type is
@@ -72,11 +74,16 @@ def enrich(observation: FlightObservation) -> RouteInfo:
     )
 
     ctx = build_context(observation)
-    if ctx.mode_s and not result.is_complete():
+    if ctx.mode_s and not (
+        result.plane and result.registration and result.operator_icao
+    ):
         # The mode-s lookup fills two independent gaps: the aircraft type
         # and the airframe's registered operator (the only per-airframe
         # identity signal).  Its operator/owner answers are authoritative
-        # for the airframe, so they replace rather than merge.
+        # for the airframe, so they replace rather than merge.  This runs
+        # even when the route is already complete - but the airframe
+        # cache (default 7 days) means it costs one provider chain per
+        # airframe, not per poll.
         info = aircraft_service.lookup_aircraft(ctx)
         if not result.plane:
             result.plane = info.plane

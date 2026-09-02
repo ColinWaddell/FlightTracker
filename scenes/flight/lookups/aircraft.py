@@ -3,8 +3,9 @@ Aircraft lookup service.
 
 Resolves airframe metadata (type, registration, registered operator, owner)
 for a Mode-S hex by walking the user's configured aircraft-capable provider
-priority list, backed by the same persistent cache (mode-s keys, 24 h TTL -
-blank entries are also cached 24 h so repeated 404s aren't re-fetched).
+priority list, backed by the same persistent cache (mode-s keys, TTL from
+the user's aircraft-cache setting - default 7 days; blank entries are also
+cached so repeated 404s aren't re-fetched).
 
 Higher-priority answers are never overwritten; lower-priority providers
 only fill blanks, and the pipeline stops as soon as the result is complete
@@ -91,8 +92,12 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
     if not mode_s:
         return AircraftInfo()
 
-    # 1. Persistent cache - blank entries are cached too (24 h), so any hit
-    #    short-circuits the providers.
+    # 1. Persistent cache - blank entries are cached too, so any hit
+    #    short-circuits the providers.  Note an incomplete cached entry
+    #    (e.g. a GA airframe with no operator code anywhere) is returned
+    #    as-is: the chain re-runs only when the entry expires, so a
+    #    never-completing airframe costs one chain per cache TTL, not one
+    #    per poll.
     cached = cache.get(mode_s, cache.KIND_AIRCRAFT)
     usage.record_cache("aircraft", "hit" if cached is not None else "miss")
     if cached is not None:

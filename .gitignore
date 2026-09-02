@@ -161,3 +161,4 @@ cython_debug/
 package-lock.json
 package.jsonde421.bsp
 AGENTS.md
+tests/.testdata/

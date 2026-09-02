@@ -10,19 +10,28 @@ backed by the persistent callsign cache:
 2.  Provider pipeline: each *enabled, configured, non-quarantined* provider
     fills what it can.  Higher-priority results are never overwritten -
     lower-priority providers only fill blanks (``RouteInfo.merge_missing``)
-    - and the pipeline stops as soon as the result is complete.  An
+    - and the pipeline stops as soon as the *flight-level* result is
+    complete (origin, destination, airline).  Airframe identity (type,
+    registration, operator) is deliberately not chased here: the mode-s
+    aircraft pipeline owns it and caches it per airframe, so route
+    providers are never re-queried just to fill airframe fields.  An
     ``UNAVAILABLE`` result quarantines the provider temporarily and is
     never cached as a miss.
-3.  Stale fallback: a recently-expired positive entry (within 7 days) is
+3.  Gap-fill back-off: a cached route that is still incomplete (e.g. a GA
+    flight with no airline anywhere) re-asks the chain at most once an
+    hour instead of on every poll, so a paid provider low in the priority
+    list is called once per flight, not once per poll.
+4.  Stale fallback: a recently-expired positive entry (within 7 days) is
     re-cached with its timestamp advanced 4 h and returned, so the display
     keeps showing real route data while providers are failing.
-4.  Miss caching: when every provider answers ``NOT_FOUND``, the callsign
+5.  Miss caching: when every provider answers ``NOT_FOUND``, the callsign
     is miss-cached for 1 h so repeated polls skip the HTTP calls.
 """
 
 from __future__ import annotations
 
 import logging
+import threading
 import time
 
 from scenes.flight.lookups import cache, usage
@@ -49,6 +58,64 @@ def reset_adapters() -> None:
     from scenes.flight.lookups.registry import reset_adapters as _reset
 
     _reset()
+
+
+# ---------------------------------------------------------------------------
+# Gap-fill back-off
+# ---------------------------------------------------------------------------
+
+# How long to wait before re-walking the provider chain for a cached route
+# that is still incomplete.  Without this, a callsign whose route can never
+# complete (a GA flight with no airline, say) re-queried every enabled
+# provider - including paid ones - on every poll (10-30 s) for as long as
+# the entry is cached.
+GAPFILL_RETRY_SECONDS = 3600
+
+# callsign -> monotonic time of the last chain run for it.
+_gapfill_last_attempt: dict[str, float] = {}
+_gapfill_lock = threading.Lock()
+
+# Cap the throttle table; callsigns not seen since the retry window are
+# pruned once the table outgrows this many entries.
+_GAPFILL_MAX_KEYS = 4096
+
+
+def _gapfill_record(callsign: str, now: float | None = None) -> None:
+    """Record that the provider chain just ran for *callsign*."""
+    now = time.monotonic() if now is None else now
+    with _gapfill_lock:
+        _gapfill_last_attempt[callsign] = now
+        if len(_gapfill_last_attempt) > _GAPFILL_MAX_KEYS:
+            cutoff = now - GAPFILL_RETRY_SECONDS
+            for key in [
+                k
+                for k, ts in _gapfill_last_attempt.items()
+                if ts < cutoff and k != callsign
+            ]:
+                del _gapfill_last_attempt[key]
+
+
+def _gapfill_gate(callsign: str) -> bool:
+    """True when a gap-fill attempt may run for *callsign* now.
+
+    Checks the back-off window and records the attempt atomically, so a
+    passing decision and its timestamp cannot race.
+    """
+    now = time.monotonic()
+    with _gapfill_lock:
+        last = _gapfill_last_attempt.get(callsign)
+        if last is not None and now - last < GAPFILL_RETRY_SECONDS:
+            return False
+        _gapfill_last_attempt[callsign] = now
+        if len(_gapfill_last_attempt) > _GAPFILL_MAX_KEYS:
+            cutoff = now - GAPFILL_RETRY_SECONDS
+            for key in [
+                k
+                for k, ts in _gapfill_last_attempt.items()
+                if ts < cutoff and k != callsign
+            ]:
+                del _gapfill_last_attempt[key]
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +200,9 @@ def _run_pipeline_with_cache(
 ) -> RouteInfo:
     """Pipeline plus the full cache bookkeeping (positive/stale/miss)."""
     result, all_answered, _hit = run_route_pipeline(ctx, providers)
+    # The chain just ran for this callsign - arm the gap-fill back-off so
+    # the first re-walk waits out the window instead of firing next poll.
+    _gapfill_record(callsign)
 
     if result.origin or result.destination:
         # Positive result - enrich names and cache under the callsign.
@@ -174,9 +244,16 @@ def _fill_cached_gaps(
 ) -> RouteInfo:
     """Run the provider pipeline against a cached-but-incomplete route.
 
-    The result is only re-cached when the merge actually improved the
-    entry, so a poll that fills nothing costs no cache write.
+    Back-off: the chain is re-walked at most once per
+    ``GAPFILL_RETRY_SECONDS`` per callsign, so a route whose remaining gap
+    can never be filled (no airline for a GA flight) costs one attempt an
+    hour rather than one per poll.  The result is only re-cached when the
+    merge actually improved the entry, so a poll that fills nothing costs
+    no cache write.
     """
+    if not _gapfill_gate(callsign):
+        return result
+
     before = result.to_dict()
     pipeline_result, _answered, _hit = run_route_pipeline(
         ctx, resolve_chain(load_config(), ROUTES)

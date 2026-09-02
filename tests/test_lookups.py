@@ -229,11 +229,16 @@ class TestRoutePipeline:
         assert result.origin == "LHR"
         assert result.destination == "GLA"
         assert hit == "a"
-        # The route-only answer isn't "complete" (no plane/registration),
+        # The route-only answer isn't flight-level complete (no airline),
         # so the pipeline kept walking for the remaining fields.
         assert second.lookup_route.call_count == 1
 
-    def test_merge_fills_blanks_from_lower_priority(self):
+    def test_chain_stops_once_flight_level_data_known(self):
+        """Route + airline known, airframe fields blank: the chain stops.
+
+        Airframe identity (type/registration) is the mode-s aircraft
+        pipeline's job - route providers are never re-queried for it.
+        """
         import scenes.flight.lookups.routes as rs
 
         first = MagicMock()
@@ -241,17 +246,38 @@ class TestRoutePipeline:
             RouteInfo(origin="LHR", destination="GLA", airline_icao="BAW")
         )
         second = MagicMock()
-        second.lookup_route.return_value = LookupResult.found(
-            RouteInfo(plane="Airbus A320", registration="G-XLEA")
-        )
 
         result, _answered, _hit = rs.run_route_pipeline(
             self._ctx(), [("a", first), ("b", second)]
         )
 
         assert result.origin == "LHR"
+        assert result.airline_icao == "BAW"
+        # Flight-level data complete - even though plane/registration are
+        # blank, the lower-priority provider is never consulted.
+        assert result.plane == ""
+        second.lookup_route.assert_not_called()
+
+    def test_merge_fills_blanks_from_lower_priority(self):
+        import scenes.flight.lookups.routes as rs
+
+        first = MagicMock()
+        first.lookup_route.return_value = LookupResult.found(
+            RouteInfo(origin="LHR", destination="GLA")
+        )
+        second = MagicMock()
+        second.lookup_route.return_value = LookupResult.found(
+            RouteInfo(airline_icao="BAW", plane="Airbus A320")
+        )
+
+        result, _answered, _hit = rs.run_route_pipeline(
+            self._ctx(), [("a", first), ("b", second)]
+        )
+
+        # First answer lacks the airline, so the walk continues and the
+        # lower-priority provider's answer fills the blanks.
+        assert result.airline_icao == "BAW"
         assert result.plane == "Airbus A320"
-        assert result.registration == "G-XLEA"
 
     def test_not_found_continues_to_next_provider(self):
         import scenes.flight.lookups.routes as rs
@@ -483,6 +509,108 @@ class TestLookupRouteService:
         rs._run_pipeline_with_cache(ctx, "EMPTYY", [])
 
         assert rc.get("EMPTYY", rc.KIND_ROUTE) is None
+
+
+# ---------------------------------------------------------------------------
+# Gap-fill back-off (cached-but-incomplete routes)
+# ---------------------------------------------------------------------------
+
+
+class TestGapFillBackoff:
+    def _seed(self, callsign="BAW123"):
+        import scenes.flight.lookups.cache as rc
+
+        rc.put(callsign, {"origin": "LHR"}, kind=rc.KIND_ROUTE)
+
+    def _adapter_filling(self):
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.found(
+            RouteInfo(destination="GLA")
+        )
+        return adapter
+
+    def _lookup(self, callsign="BAW123", cfg=None):
+        import scenes.flight.lookups.routes as rs
+
+        return rs.lookup_route(LookupContext(callsign=callsign), cfg=cfg)
+
+    def test_gapfill_blocked_within_retry_window(self, monkeypatch):
+        """A second poll inside the back-off window must not call providers."""
+        import scenes.flight.lookups.routes as rs
+
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {})
+        adapter = self._adapter_filling()
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, chains: [("hexdb", adapter)]
+        )
+        self._seed()
+
+        first = self._lookup()
+        assert first.destination == "GLA"
+        adapter.lookup_route.assert_called_once()
+
+        # Still incomplete (no airline anywhere) - second poll backs off.
+        second = self._lookup()
+        assert second.destination == "GLA"  # cached answer still returned
+        adapter.lookup_route.assert_called_once()
+
+    def test_gapfill_retries_after_window(self, monkeypatch):
+        import time as _time
+
+        import scenes.flight.lookups.routes as rs
+
+        old = _time.monotonic() - rs.GAPFILL_RETRY_SECONDS - 1
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {"BAW123": old})
+        adapter = self._adapter_filling()
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, chains: [("hexdb", adapter)]
+        )
+        self._seed()
+
+        self._lookup()
+        adapter.lookup_route.assert_called_once()
+
+    def test_gapfill_independent_per_callsign(self, monkeypatch):
+        """One callsign's back-off must not throttle another callsign."""
+        import scenes.flight.lookups.routes as rs
+
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {"OTHER1": time.monotonic()})
+        adapter = self._adapter_filling()
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, chains: [("hexdb", adapter)]
+        )
+        self._seed("BAW123")
+
+        result = self._lookup("BAW123")
+        assert result.destination == "GLA"
+        adapter.lookup_route.assert_called_once()
+
+    def test_gapfill_gate_is_atomic_decision_and_record(self, monkeypatch):
+        import scenes.flight.lookups.routes as rs
+
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {})
+        assert rs._gapfill_gate("BAW123") is True
+        # The attempt was recorded by the same call that allowed it.
+        assert rs._gapfill_gate("BAW123") is False
+
+    def test_first_full_run_arms_the_backoff(self, monkeypatch):
+        """The initial cache-miss chain run counts as the first attempt,
+        so the next poll doesn't re-walk the chain immediately."""
+        import scenes.flight.lookups.routes as rs
+
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {})
+        adapter = self._adapter_filling()
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, chains: [("hexdb", adapter)]
+        )
+
+        first = self._lookup(cfg=StubConfig())  # cache miss - full chain runs
+        assert first.destination == "GLA"
+        adapter.lookup_route.assert_called_once()
+
+        second = self._lookup()  # cached, still incomplete - back off
+        assert second.destination == "GLA"
+        adapter.lookup_route.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -1054,6 +1182,79 @@ class TestEnrichment:
         route = enrich(obs)
         assert route.plane == "C172"
 
+    def test_aircraft_pipeline_runs_when_route_complete(self, monkeypatch):
+        """Route fully known but airframe identity missing: the aircraft
+        pipeline still runs (route completeness no longer gates it)."""
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.routes as rs
+        from scenes.flight.lookups.enrichment import enrich
+
+        route_adapter = MagicMock()
+        route_adapter.lookup_route.return_value = LookupResult.found(
+            RouteInfo(
+                origin="LHR",
+                destination="GLA",
+                airline_icao="BAW",
+                plane="A320",
+                registration="G-XLEH",
+            )
+        )
+        monkeypatch.setattr(
+            rs, "resolve_route_providers", lambda cfg=None: [("routeprov", route_adapter)]
+        )
+
+        aircraft_adapter = MagicMock()
+        aircraft_adapter.lookup_aircraft.return_value = LookupResult.found(
+            AircraftInfo(operator_icao="BAW", owner="British Airways")
+        )
+        monkeypatch.setattr(
+            ac,
+            "resolve_aircraft_providers",
+            lambda cfg=None: [("aircraftprov", aircraft_adapter)],
+        )
+
+        obs = FlightObservation(callsign="BAW123", icao="400f5a")
+        route = enrich(obs)
+        # Route is flight-level complete, yet the operator was still filled
+        # by the mode-s lookup (authoritative for the airframe).
+        aircraft_adapter.lookup_aircraft.assert_called_once()
+        assert route.operator_icao == "BAW"
+
+    def test_aircraft_pipeline_skipped_when_identity_complete(self, monkeypatch):
+        """Type, registration and operator all known: no aircraft lookup."""
+        import scenes.flight.lookups.aircraft as ac
+        import scenes.flight.lookups.routes as rs
+        from scenes.flight.lookups.enrichment import enrich
+
+        route_adapter = MagicMock()
+        route_adapter.lookup_route.return_value = LookupResult.found(
+            RouteInfo(
+                origin="LHR",
+                destination="GLA",
+                airline_icao="BAW",
+                plane="A320",
+                registration="G-XLEH",
+                operator_icao="BAW",
+                owner="British Airways",
+            )
+        )
+        monkeypatch.setattr(
+            rs, "resolve_route_providers", lambda cfg=None: [("routeprov", route_adapter)]
+        )
+
+        aircraft_adapter = MagicMock()
+        monkeypatch.setattr(
+            ac,
+            "resolve_aircraft_providers",
+            lambda cfg=None: [("aircraftprov", aircraft_adapter)],
+        )
+
+        obs = FlightObservation(callsign="BAW123", icao="400f5a")
+        route = enrich(obs)
+        aircraft_adapter.lookup_aircraft.assert_not_called()
+        assert route.plane == "A320"
+        assert route.operator_icao == "BAW"
+
 
 # ---------------------------------------------------------------------------
 # ICAO->IATA conversion + hexdb airport enrichment (real bundled table)
@@ -1388,6 +1589,9 @@ class TestCacheUsageTallies:
         """A cached-but-incomplete route hits the cache AND still calls providers."""
         import scenes.flight.lookups.cache as rc
         import scenes.flight.lookups.routes as rs
+
+        # Fresh throttle state - the table is module-level and shared.
+        monkeypatch.setattr(rs, "_gapfill_last_attempt", {})
 
         rc.put("BAW123", {"origin": "LHR"}, kind=rc.KIND_ROUTE)
         adapter = MagicMock()
