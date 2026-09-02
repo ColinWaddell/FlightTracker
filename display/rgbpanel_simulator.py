@@ -166,6 +166,7 @@ class SimulatorPanel(RGBPanel):
         rotation=0,
         hat_pwm=True,
         gpio_slowdown=1,
+        colour_order="RGB",
     ):
         self._width = width
         self._height = height

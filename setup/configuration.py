@@ -120,6 +120,7 @@ DEFAULT_WEB_PASSWORD_HASH = ""  # SHA-256 hex; empty = default password "flightt
 # Hardware
 DEFAULT_GPIO_SLOWDOWN = 1
 DEFAULT_HAT_PWM_ENABLED = True
+DEFAULT_PANEL_COLOUR_ORDER = "RGB"  # panel LED wiring order: permutation of "RGB"
 DEFAULT_LOADING_INDICATOR = "pixel"  # none / pixel / gpio
 DEFAULT_LOADING_LED_GPIO_PIN = ""
 
@@ -241,6 +242,7 @@ DEFAULTS: dict[str, Any] = {
     # Hardware
     "gpio_slowdown": DEFAULT_GPIO_SLOWDOWN,
     "hat_pwm_enabled": DEFAULT_HAT_PWM_ENABLED,
+    "panel_colour_order": DEFAULT_PANEL_COLOUR_ORDER,
     "loading_indicator": DEFAULT_LOADING_INDICATOR,
     "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
     # Lookup providers - priority lists + per-provider settings subtree
@@ -1008,6 +1010,20 @@ class Config:
     def brightness_percent(self) -> int:
         """Map 1-5 brightness setting to 0-100 percent for rgbmatrix."""
         return {1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(self.screen_brightness, 60)
+
+    @property
+    def panel_colour_order(self) -> str:
+        """Panel LED wiring order - a permutation of "RGB".
+
+        Any invalid stored value falls back to the default rather than
+        raising, so a corrupted config can never stop the panel starting.
+        """
+        order = str(
+            self.data_store.get("panel_colour_order", DEFAULT_PANEL_COLOUR_ORDER)
+        ).upper()
+        if sorted(order) != ["B", "G", "R"]:
+            return DEFAULT_PANEL_COLOUR_ORDER
+        return order
 
     @property
     def screen_rotate(self) -> bool:

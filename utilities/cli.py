@@ -130,6 +130,7 @@ def _screen_test() -> int:
         rotation=180 if cfg.screen_rotate else 0,
         hat_pwm=cfg.hat_pwm_enabled,
         gpio_slowdown=cfg.gpio_slowdown,
+        colour_order=cfg.panel_colour_order,
     )
     canvas = panel.create_canvas()
 

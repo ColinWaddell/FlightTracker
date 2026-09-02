@@ -7,7 +7,7 @@ behind the unified RGBPanel interface.
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
-from display.rgbpanel import RGBPanel
+from display.rgbpanel import RGBPanel, channel_permutation
 
 # The rgbmatrix graphics.Font is a C++ binding object with no __dict__, so
 # we cannot stash the BDF path on it.  Instead we keep a module-level
@@ -48,6 +48,7 @@ class RGBMatrixPanel(RGBPanel):
         rotation=0,
         hat_pwm=True,
         gpio_slowdown=1,
+        colour_order="RGB",
     ):
         options = RGBMatrixOptions()
         options.hardware_mapping = "adafruit-hat-pwm" if hat_pwm else "adafruit-hat"
@@ -60,7 +61,10 @@ class RGBMatrixPanel(RGBPanel):
         options.pwm_bits = 11
         options.brightness = brightness
         options.pwm_lsb_nanoseconds = 130
-        options.led_rgb_sequence = "RGB"
+        # Validate here (consistent ValueError across backends) before the
+        # C++ binding gets a chance to throw its own error lower down.
+        channel_permutation(colour_order)
+        options.led_rgb_sequence = colour_order
         options.pixel_mapper_config = "Rotate:180" if rotation else ""
         options.show_refresh_rate = 0
         options.gpio_slowdown = gpio_slowdown

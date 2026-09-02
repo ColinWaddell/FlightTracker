@@ -198,6 +198,26 @@ class TestParseSettingsFormProviders:
         )
         assert "data_source" not in out
         assert "tar1090_url" not in out
+
+    def test_panel_colour_order_valid_values_pass_through(self):
+        from display.rgbpanel import PANEL_COLOUR_ORDERS
+        from web.app import parse_settings_form
+
+        for order in PANEL_COLOUR_ORDERS:
+            out = parse_settings_form({"panel_colour_order": order}, self._cfg())
+            assert out["panel_colour_order"] == order
+
+    def test_panel_colour_order_invalid_falls_back(self):
+        from web.app import parse_settings_form
+
+        out = parse_settings_form({"panel_colour_order": "bogus"}, self._cfg())
+        assert out["panel_colour_order"] == "RGB"
+
+    def test_panel_colour_order_absent_defaults(self):
+        from web.app import parse_settings_form
+
+        out = parse_settings_form({}, self._cfg())
+        assert out["panel_colour_order"] == "RGB"
         assert "osn_client_secret" not in out
         assert "aerodatabox_api_key" not in out
 

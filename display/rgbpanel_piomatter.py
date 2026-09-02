@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 
 from display.bdf_font import BDFFont
 from display.bdf_font import draw_text as bdf_draw_text
-from display.rgbpanel import Colour, RGBPanel
+from display.rgbpanel import Colour, RGBPanel, channel_permutation
 
 
 class PiomatterPanel(RGBPanel):
@@ -27,6 +27,7 @@ class PiomatterPanel(RGBPanel):
         self._height = 32
         self._brightness = 50  # 0-100
         self._rotation = 0
+        self._channel_permutation = None  # set in init_matrix
 
     @property
     def is_pi5(self):
@@ -40,6 +41,7 @@ class PiomatterPanel(RGBPanel):
         rotation=0,
         hat_pwm=True,
         gpio_slowdown=1,
+        colour_order="RGB",
     ):
         # hat_pwm and gpio_slowdown are ignored on Pi 5 - piomatter handles
         # PWM and timing internally.
@@ -68,6 +70,12 @@ class PiomatterPanel(RGBPanel):
         # Framebuffer is a numpy array that piomatter reads from.
         # We create a PIL Image as the canvas; at swap() time we copy
         # the image data into the framebuffer (with brightness scaling).
+        # piomatter only offers RGB and BGR physical pinouts, so we always
+        # drive the standard RGB bonnet pinout and remap channels in
+        # software at swap() time.  A 64x32x3 remap is ~6KB of numpy work
+        # per frame - negligible on a Pi 5.
+        self._channel_permutation = channel_permutation(colour_order)
+
         self.framebuffer = np.zeros((height, width, 3), dtype=np.uint8)
 
         self.matrix = piomatter.PioMatter(
@@ -117,6 +125,10 @@ class PiomatterPanel(RGBPanel):
 
         if scale < 1.0:
             pixels = (pixels * scale).astype(np.uint8)
+
+        # Remap channels for non-RGB panel wiring (see init_matrix)
+        if self._channel_permutation is not None:
+            pixels = pixels[:, :, self._channel_permutation]
 
         # Copy into framebuffer and push to display
         self.framebuffer[:] = pixels

@@ -43,6 +43,7 @@ from flask import (
     url_for,
 )
 
+from display.rgbpanel import PANEL_COLOUR_ORDERS
 from scenes.flight.lookups import cache as routes_cache
 from scenes.flight.lookups import usage as usage_tally
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
@@ -597,6 +598,9 @@ def parse_settings_form(form, cfg) -> dict:
             lambda v: v if v in ("none", "pixel", "gpio") else "pixel"
         )(str_val(form.get("loading_indicator"), "pixel").lower()),
         "loading_led_gpio_pin": int_val(form.get("loading_led_gpio_pin"), 25),
+        "panel_colour_order": (
+            lambda v: v if v in PANEL_COLOUR_ORDERS else "RGB"
+        )(str_val(form.get("panel_colour_order"), "RGB").upper()),
         # Lookup provider priority lists (reorderable, submitted as JSON)
         **_parse_provider_form(form, cfg),
         # Per-provider settings (providers.<pid>.<field> form keys, with

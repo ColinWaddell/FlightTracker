@@ -14,6 +14,33 @@ from collections import namedtuple
 # This matches the rgbmatrix graphics.Color interface (.red, .green, .blue).
 Colour = namedtuple("Colour", ["red", "green", "blue"])
 
+# Valid HUB75 panel colour orders - every permutation of "RGB".  A colour
+# order names the logical channel (R, G or B) that each of the panel's three
+# physical data channels carries; most panels are "RGB", some are "RBG" or
+# "BGR".
+PANEL_COLOUR_ORDERS = ("RGB", "RBG", "BGR", "BRG", "GBR", "GRB")
+
+
+def channel_permutation(colour_order: str) -> tuple[int, int, int] | None:
+    """Map a panel colour order to a framebuffer channel permutation.
+
+    Returns the indices that remap an (..., 3) RGB framebuffer so each
+    physical output channel receives the logical value it should display,
+    or ``None`` for the identity ("RGB") so callers can skip the work.
+
+    This mirrors the semantics of rgbmatrix's ``led_rgb_sequence``: the
+    n-th character of the order names the logical channel carried by the
+    n-th physical channel (e.g. "RBG" means channel 2 drives blue).
+
+    Raises ValueError for anything that isn't a permutation of "RGB".
+    """
+    order = (colour_order or "RGB").upper()
+    if sorted(order) != ["B", "G", "R"]:
+        raise ValueError(f"Invalid panel colour order: {colour_order!r}")
+    if order == "RGB":
+        return None
+    return tuple("RGB".index(c) for c in order)
+
 
 class RGBPanel(ABC):
     """Abstract LED matrix panel driver."""
@@ -27,8 +54,14 @@ class RGBPanel(ABC):
         rotation=0,
         hat_pwm=True,
         gpio_slowdown=1,
+        colour_order="RGB",
     ):
-        """Initialise the matrix hardware. Called once at startup."""
+        """Initialise the matrix hardware. Called once at startup.
+
+        ``colour_order`` names the panel LED wiring order (a permutation
+        of "RGB") so logical red/green/blue reach the correct physical
+        LEDs on panels wired in a non-RGB order.
+        """
         raise NotImplementedError
 
     @abstractmethod

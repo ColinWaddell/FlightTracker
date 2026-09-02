@@ -229,6 +229,7 @@ class TestScreenTest:
         cfg.screen_rotate = False
         cfg.hat_pwm_enabled = True
         cfg.gpio_slowdown = 1
+        cfg.panel_colour_order = "RGB"
 
         with (
             patch("display.panel_factory.get_panel") as mock_get_panel,
@@ -246,6 +247,7 @@ class TestScreenTest:
         assert kwargs["rotation"] == 0
         assert kwargs["hat_pwm"] is True
         assert kwargs["gpio_slowdown"] == 1
+        assert kwargs["colour_order"] == "RGB"
 
         # Seven colours x three brightness steps = 21 fills/swaps/sleeps
         assert panel.fill.call_count == 21
@@ -283,6 +285,7 @@ class TestScreenTest:
         cfg.screen_rotate = True
         cfg.hat_pwm_enabled = False
         cfg.gpio_slowdown = 2
+        cfg.panel_colour_order = "RBG"
 
         with (
             patch("display.panel_factory.get_panel") as mock_get_panel,
@@ -296,6 +299,7 @@ class TestScreenTest:
         assert kwargs["brightness"] == 80
         assert kwargs["hat_pwm"] is False
         assert kwargs["gpio_slowdown"] == 2
+        assert kwargs["colour_order"] == "RBG"
 
     def test_screen_test_clears_on_interrupt(self, mock_config, capsys):
         config_path, MockConfig = mock_config

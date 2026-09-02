@@ -234,6 +234,26 @@ export default defineComponent({
                style="max-width:80px" />
         <div class="form-text text-muted small">An external LED can be used to indicate the search for flights. Requires LED driving circuitry.</div>
       </div>
+
+      <hr class="my-3" />
+
+      <div class="mb-3">
+        <h5>Panel Colour Order</h5>
+        <select class="form-select form-select-sm" name="panel_colour_order" id="panel_colour_order"
+                style="max-width:200px" v-model="store.config.panel_colour_order">
+          <option value="RGB">RGB (default)</option>
+          <option value="RBG">RBG</option>
+          <option value="BGR">BGR</option>
+          <option value="BRG">BRG</option>
+          <option value="GBR">GBR</option>
+          <option value="GRB">GRB</option>
+        </select>
+        <div class="form-text text-muted small">
+          The order the red, green and blue LEDs are wired on your panel. Set this if colours appear
+          swapped on the display (e.g. red shows as blue). Most panels are RGB; if yours isn't, try the
+          alternative orders until the colours look right.
+        </div>
+      </div>
     </div>
 
     <!-- ====== Defaults ====== -->
