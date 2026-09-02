@@ -98,22 +98,19 @@ class TestPiomatterChannelRemap:
 
     The piomatter library itself can't be imported off-Pi, so we test the
     permutation maths the panel applies rather than the panel class.
+    Pure Python only - numpy is a Pi 5 backend dependency, not a test one.
     """
 
     def test_rbg_remap_swaps_green_and_blue(self):
-        import numpy as np
+        """The remap reorders each pixel's bytes so the panel's channel 2
+        (wired blue on an RBG panel) carries the logical blue value and
+        channel 3 carries green.  This mirrors the numpy indexing used in
+        PiomatterPanel.swap(): out[i] = in[perm[i]]."""
+        perm = channel_permutation("RBG")  # (0, 2, 1)
 
-        # A pixel that should DISPLAY as red (255, 0, 0) on an RBG panel
-        # must be stored so channel 2 (the panel's green pin) gets the red
-        # value... actually: perm for "RBG" is (0, 2, 1), meaning the
-        # framebuffer's second byte is sent to the blue pin and vice versa.
-        pixels = np.array([[[255, 0, 0], [0, 255, 0], [0, 0, 255]]], dtype=np.uint8)
-        remapped = pixels[:, :, channel_permutation("RBG")]
-        # Byte layout (R, B, G): red value rides in byte 0 unchanged,
-        # green and blue bytes swap.
-        assert remapped[0][0].tolist() == [255, 0, 0]
-        assert remapped[0][1].tolist() == [0, 0, 255]
-        assert remapped[0][2].tolist() == [0, 255, 0]
+        logical = [255, 128, 64]  # R=255, G=128, B=64
+        remapped = [logical[i] for i in perm]
+        assert remapped == [255, 64, 128]
 
     def test_identity_order_returns_none_so_no_copy(self):
         assert channel_permutation("RGB") is None
