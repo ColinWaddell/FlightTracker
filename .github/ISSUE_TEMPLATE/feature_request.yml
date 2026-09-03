@@ -11,6 +11,16 @@ body:
         [contributing guide](https://github.com/ColinWaddell/FlightTracker/blob/main/CONTRIBUTING.md)
         to understand how feature requests are triaged and what to expect.
 
+  - type: markdown
+    attributes:
+      value: |
+        **A note on screen sizes:** I currently have no plans to support
+        different screen sizes. I like the challenge of working within this
+        screen size, and the fact that it's cheap and easy for people to buy
+        and assemble themselves. With the amount of work that's gone into
+        making everything work pixel-perfect on this display, I don't really
+        fancy doing it all again for another size.
+
   - type: textarea
     id: problem
     attributes:
