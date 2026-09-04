@@ -387,6 +387,47 @@ def _parse_provider_form(form, cfg) -> dict:
     return out
 
 
+def _parse_schedule_advanced_form(form) -> dict:
+    """Parse the advanced brightness schedule submitted as JSON.
+
+    The Vue app serialises the schedule rows into a hidden
+    ``screen_schedule_advanced_json`` input.  Missing or malformed
+    payloads leave the configured schedule untouched; valid payloads are
+    validated, deduped (last occurrence wins) and sorted by time.
+    """
+    import json as _json
+
+    from setup.configuration import _parse_schedule_time
+
+    raw = form.get("screen_schedule_advanced_json")
+    if not raw:
+        return {}
+    try:
+        entries = _json.loads(raw)
+    except ValueError:
+        logger.warning("Ignoring malformed screen_schedule_advanced_json payload")
+        return {}
+    if not isinstance(entries, list):
+        return {}
+
+    cleaned: dict[int, dict] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        t = _parse_schedule_time(entry.get("time"))
+        if t is None:
+            continue
+        try:
+            brightness = max(0, min(5, int(entry.get("brightness", 0))))
+        except (TypeError, ValueError):
+            continue
+        cleaned[t.hour * 60 + t.minute] = {
+            "time": t.strftime("%H:%M"),
+            "brightness": brightness,
+        }
+    return {"screen_schedule_advanced": [cleaned[m] for m in sorted(cleaned)]}
+
+
 def _parse_provider_settings(form, cfg) -> dict[str, dict]:
     """Collect ``providers.<pid>.<field>`` form keys into a settings subtree.
 
@@ -546,6 +587,11 @@ def parse_settings_form(form, cfg) -> dict:
                 ),
             },
         },
+        "brightness_mode": (
+            "advanced"
+            if str_val(form.get("brightness_mode"), "simple").lower() == "advanced"
+            else "simple"
+        ),
         "screen_brightness": max(1, min(5, int_val(form.get("screen_brightness"), 3))),
         "screen_rotate": bool_val(form.get("screen_rotate")),
         "display_speed": (
@@ -603,6 +649,8 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         # Lookup provider priority lists (reorderable, submitted as JSON)
         **_parse_provider_form(form, cfg),
+        # Advanced brightness schedule (submitted as JSON)
+        **_parse_schedule_advanced_form(form),
         # Per-provider settings (providers.<pid>.<field> form keys, with
         # mask-token semantics for sensitive fields)
         "providers": _parse_provider_settings(form, cfg),

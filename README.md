@@ -272,6 +272,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `speed_unit` | `"kmh"` for km/h, `"mph"` for miles/h, `"kts"` for knots | `"kmh"` |
 | `height_unit` | `"m"` for metres, `"ft"` for feet | `"m"` |
 | `theme` | `0` = default, `1` = monochrome, `2` = pastel | `0` |
+| `brightness_mode` | `"simple"` (brightness slider + schedule) or `"advanced"` | `"simple"` |
 | `screen_brightness` | Display brightness from `1` (dim) to `5` (full) | `3` |
 | `screen_rotate` | Rotate the display by 180° | `false` |
 | `display_speed` | Animation speed preset: `default`, `slower`, or `faster` | `"default"` |
@@ -280,6 +281,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `screen_schedule_start` | Schedule start time (`HH:MM`) | `"22:00"` |
 | `screen_schedule_end` | Schedule end time (`HH:MM`) | `"07:00"` |
 | `screen_schedule_brightness` | Brightness level used during the scheduled window | `0` |
+| `screen_schedule_advanced` | Advanced schedule: JSON list of `{"time": "HH:MM", "brightness": 0-5}` pairs, sorted by time; each entry holds until the next, the last holds overnight | `[]` |
 | `clock_24hr` | `true` for 24-hour clock | `true` |
 | `date_format` | `0` = YYYY-MM-DD, `1` = DD-MM-YYYY, `2` = MM-DD-YYYY | `0` |
 | `web_interface_enabled` | Enable the config UI and QR code on boot | `true` |

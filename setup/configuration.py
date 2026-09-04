@@ -81,6 +81,7 @@ DEFAULT_WEATHER_REFRESH_MINUTES = 5  # how often (minutes) to re-fetch weather d
 
 # Display
 DEFAULT_COLOUR_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel, 3 = Classic (v1)
+DEFAULT_BRIGHTNESS_MODE = "simple"  # "simple" or "advanced"
 DEFAULT_SCREEN_BRIGHTNESS = 3  # 1-5
 DEFAULT_SCREEN_ROTATE = False
 DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
@@ -101,6 +102,9 @@ DEFAULT_SCREEN_SCHEDULE_AUTO = False
 DEFAULT_SCREEN_SCHEDULE_START = "22:00"
 DEFAULT_SCREEN_SCHEDULE_END = "07:00"
 DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
+# Advanced mode: ordered list of {"time": "HH:MM", "brightness": 0-5} pairs.
+# Each entry holds until the next; the last holds overnight until the first.
+DEFAULT_SCREEN_SCHEDULE_ADVANCED: list[dict[str, Any]] = []
 
 # Clock / date
 DEFAULT_CLOCK_24HR = True
@@ -218,6 +222,7 @@ DEFAULTS: dict[str, Any] = {
     "colour_theme": DEFAULT_COLOUR_THEME,
     # Per-theme configuration (nested dict)
     "theme": DEFAULT_THEME,
+    "brightness_mode": DEFAULT_BRIGHTNESS_MODE,
     "screen_brightness": DEFAULT_SCREEN_BRIGHTNESS,
     "screen_rotate": DEFAULT_SCREEN_ROTATE,
     "display_speed": DEFAULT_DISPLAY_SPEED,
@@ -228,6 +233,7 @@ DEFAULTS: dict[str, Any] = {
     "screen_schedule_start": DEFAULT_SCREEN_SCHEDULE_START,
     "screen_schedule_end": DEFAULT_SCREEN_SCHEDULE_END,
     "screen_schedule_brightness": DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS,
+    "screen_schedule_advanced": DEFAULT_SCREEN_SCHEDULE_ADVANCED,
     # Clock / date
     "clock_24hr": DEFAULT_CLOCK_24HR,
     "date_format": DEFAULT_DATE_FORMAT,
@@ -306,6 +312,7 @@ from utilities.sun_times import (  # noqa: E402
     approx_sunrise_sunset,
     parse_time,
     time_in_window,
+    time_to_mins,
 )
 
 
@@ -495,6 +502,59 @@ def _normalise_longitudes(data: dict[str, Any]) -> bool:
         except (TypeError, ValueError):
             pass
     return changed
+
+
+def _parse_schedule_time(value: Any) -> time | None:
+    """Parse an ``HH:MM`` string, returning None when it is not valid.
+
+    Unlike :func:`utilities.sun_times.parse_time` this never raises and
+    never falls back to a default - an invalid time means "drop the
+    entry", not "use midnight".
+    """
+    try:
+        return datetime.strptime(str(value).strip(), "%H:%M").time()
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
+def _normalise_advanced_schedule(data: dict[str, Any]) -> bool:
+    """Validate and normalise the advanced brightness schedule in-place.
+
+    ``screen_schedule_advanced`` is an ordered list of
+    ``{"time": "HH:MM", "brightness": 0-5}`` pairs.  Entries with an
+    invalid time or out-of-range brightness are dropped, duplicate times
+    keep the last occurrence, and the list is sorted ascending by time.
+
+    Returns True if the stored list was changed.
+    """
+    raw = data.get("screen_schedule_advanced")
+    if not isinstance(raw, list):
+        if raw is None:
+            return False
+        data["screen_schedule_advanced"] = []
+        return True
+
+    cleaned: dict[int, dict[str, Any]] = {}
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        t = _parse_schedule_time(entry.get("time"))
+        if t is None:
+            continue
+        try:
+            brightness = max(0, min(5, int(entry.get("brightness", 0))))
+        except (TypeError, ValueError):
+            continue
+        cleaned[time_to_mins(t)] = {
+            "time": t.strftime("%H:%M"),
+            "brightness": brightness,
+        }
+
+    ordered = [cleaned[m] for m in sorted(cleaned)]
+    if ordered != raw:
+        data["screen_schedule_advanced"] = ordered
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -733,6 +793,10 @@ class Config:
                 if _normalise_longitudes(self.data_store):
                     self.save()
 
+                # Validate/normalise the advanced brightness schedule.
+                if _normalise_advanced_schedule(self.data_store):
+                    self.save()
+
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -741,6 +805,7 @@ class Config:
             mod = import_legacy(LEGACY_PATH)
             self.data_store = migrate_config(mod)
             _normalise_longitudes(self.data_store)
+            _normalise_advanced_schedule(self.data_store)
             _migrate_provider_lists(self.data_store, self.data_store)
             self.save()
             return
@@ -995,6 +1060,13 @@ class Config:
         return merged
 
     @property
+    def brightness_mode(self) -> str:
+        val = str(
+            self.data_store.get("brightness_mode", DEFAULT_BRIGHTNESS_MODE)
+        ).lower()
+        return val if val in ("simple", "advanced") else DEFAULT_BRIGHTNESS_MODE
+
+    @property
     def screen_brightness(self) -> int:
         return max(
             1,
@@ -1084,6 +1156,37 @@ class Config:
                 ),
             ),
         )
+
+    @property
+    def screen_schedule_advanced(self) -> list[dict[str, Any]]:
+        """Advanced brightness schedule: ordered {"time", "brightness"} pairs.
+
+        Each entry holds until the next; the last holds overnight until
+        the first.  Invalid entries are dropped, duplicate times keep the
+        last occurrence, and the list is sorted ascending by time.
+        """
+        raw = self.data_store.get(
+            "screen_schedule_advanced", DEFAULT_SCREEN_SCHEDULE_ADVANCED
+        )
+        if not isinstance(raw, list):
+            return []
+
+        cleaned: dict[int, dict[str, Any]] = {}
+        for entry in raw:
+            if not isinstance(entry, dict):
+                continue
+            t = _parse_schedule_time(entry.get("time"))
+            if t is None:
+                continue
+            try:
+                brightness = max(0, min(5, int(entry.get("brightness", 0))))
+            except (TypeError, ValueError):
+                continue
+            cleaned[time_to_mins(t)] = {
+                "time": t.strftime("%H:%M"),
+                "brightness": brightness,
+            }
+        return [cleaned[m] for m in sorted(cleaned)]
 
     @property
     def schedule_brightness_percent(self) -> int:

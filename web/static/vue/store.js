@@ -26,6 +26,9 @@ export const RADIUS_BOUNDS = { min: 1, max: 100, step: 0.5 }; // km
 export const MIN_ALT_BOUNDS = { min: 10, max: 20000, step: 10 }; // metres
 export const MAX_ALT_BOUNDS = { min: 100, max: 40000, step: 100 }; // metres
 
+// Cap on advanced brightness schedule rows (48 = every half hour).
+export const MAX_SCHEDULE_ROWS = 48;
+
 // ---------------------------------------------------------------------------
 // Template reference data (single source of truth for the autocomplete)
 // ---------------------------------------------------------------------------
@@ -166,12 +169,114 @@ export function createStore(initialConfig, pageData) {
     (pageData.routeProvidersOrder || []).map((e) => ({ ...e }))
   );
 
+  // Advanced brightness schedule - reactive rows of {id, time, brightness}.
+  // The Hardware page edits these and serialises them into a hidden JSON
+  // input at submit time.  `id` is a stable row key so inputs keep focus
+  // when the list is re-sorted; it is never submitted.
+  let scheduleRowId = 0;
+  const screenScheduleAdvanced = reactive(
+    (config.screen_schedule_advanced || []).map((e) => ({
+      id: ++scheduleRowId,
+      time: e.time || "",
+      brightness: Number(e.brightness ?? 0),
+    }))
+  );
+
+  const timeToMinutes = (t) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t || "");
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (h > 23 || min > 59) return null;
+    return h * 60 + min;
+  };
+
+  const minutesToTime = (mins) =>
+    `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+
+  const addScheduleRow = () => {
+    if (screenScheduleAdvanced.length >= MAX_SCHEDULE_ROWS) return;
+    // Pick the first free half-hour slot so a new row never collides.
+    const taken = new Set(
+      screenScheduleAdvanced
+        .map((r) => timeToMinutes(r.time))
+        .filter((m) => m !== null)
+    );
+    let slot = 0;
+    while (taken.has(slot) && slot < 24 * 60) slot += 30;
+    screenScheduleAdvanced.push({
+      id: ++scheduleRowId,
+      time: minutesToTime(slot % 24 * 60),
+      brightness: 3,
+    });
+  };
+
+  const removeScheduleRow = (id) => {
+    const index = screenScheduleAdvanced.findIndex((r) => r.id === id);
+    if (index !== -1) screenScheduleAdvanced.splice(index, 1);
+  };
+
+  // Stable sort by time; called when a row's time input changes so the
+  // table always reads in chronological order.
+  const resortSchedule = () => {
+    const rows = screenScheduleAdvanced
+      .map((row, index) => ({ row, index, mins: timeToMinutes(row.time) }))
+      .sort((a, b) => {
+        // Rows without a valid time keep their current position.
+        if (a.mins === null && b.mins === null) return a.index - b.index;
+        if (a.mins === null) return 1;
+        if (b.mins === null) return -1;
+        return a.mins - b.mins || a.index - b.index;
+      })
+      .map((e) => e.row);
+    screenScheduleAdvanced.splice(0, screenScheduleAdvanced.length, ...rows);
+  };
+
+  const scheduleRowValid = (row) => {
+    const mins = timeToMinutes(row.time);
+    if (mins === null) return false;
+    return !screenScheduleAdvanced.some(
+      (other) => other.id !== row.id && timeToMinutes(other.time) === mins
+    );
+  };
+
+  // Serialise the valid rows into the hidden-input payload.  Invalid rows
+  // (empty/duplicate times) are excluded so the backend never sees them.
+  const scheduleAdvancedJson = () =>
+    JSON.stringify(
+      screenScheduleAdvanced
+        .filter((row) => scheduleRowValid(row))
+        .map((row) => ({ time: row.time, brightness: row.brightness }))
+    );
+
+  // Format an "HH:MM" string honouring the 12/24hr clock setting.
+  const formatTime = (t) => {
+    const mins = timeToMinutes(t);
+    if (mins === null) return "--:--";
+    if (config.clock_24hr) return minutesToTime(mins);
+    const h24 = Math.floor(mins / 60);
+    const suffix = h24 < 12 ? "AM" : "PM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    return `${h12}:${String(mins % 60).padStart(2, "0")} ${suffix}`;
+  };
+
+  const scheduleAdvancedPreview = computed(() => {
+    const rows = screenScheduleAdvanced
+      .filter((row) => scheduleRowValid(row))
+      .map((row) => `${formatTime(row.time)} \u2192 ${row.brightness}`);
+    return rows.length ? rows.join(", ") : "";
+  });
+
   // -- Computed helpers --------------------------------------------------
 
   const isImperial = computed(() => config.height_unit === "ft");
 
   const isAdvancedLocation = computed(
     () => config.flight_location_mode === "advanced",
+  );
+
+  const isAdvancedBrightness = computed(
+    () => config.brightness_mode === "advanced",
   );
 
   const noradIdsText = computed({
@@ -325,6 +430,7 @@ export function createStore(initialConfig, pageData) {
     ui,
     isImperial,
     isAdvancedLocation,
+    isAdvancedBrightness,
     noradIdsText,
     homeAirportHint,
     braceBalanced,
@@ -340,5 +446,12 @@ export function createStore(initialConfig, pageData) {
     altitudeHelpExample,
     flightProvidersOrder,
     routeProvidersOrder,
+    screenScheduleAdvanced,
+    addScheduleRow,
+    removeScheduleRow,
+    resortSchedule,
+    scheduleAdvancedJson,
+    scheduleAdvancedPreview,
+    formatTime,
   });
 }

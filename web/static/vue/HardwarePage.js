@@ -14,7 +14,9 @@ export default defineComponent({
       const [start, end] = this.store.ui.scheduleWindow;
       if (!start || !end) return "";
       const fmt = (t) =>
-        `${String(t.hour).padStart(2, "0")}:${String(t.minute).padStart(2, "0")}`;
+        this.store.formatTime(
+          `${String(t.hour).padStart(2, "0")}:${String(t.minute).padStart(2, "0")}`
+        );
       return `(${fmt(start)} - ${fmt(end)})`;
     },
   },
@@ -49,106 +51,175 @@ export default defineComponent({
       </div>
 
       <div class="mb-3">
-        <h5>Brightness</h5>
-        <label class="form-label small">Level: {{ store.config.screen_brightness }}/5</label>
-        <input type="range" class="form-range pt-3 px-2" name="screen_brightness" id="screen_brightness"
-               min="1" max="5" step="1" v-model.number="store.config.screen_brightness"
-               style="max-width:240px" />
-        <div v-if="store.ui.inSchedule" class="alert alert-warning small mt-2 mb-0 py-2">
-          <i class="bi bi-exclamation-triangle me-1"></i>
-          The brightness schedule is currently active - changes to the default brightness
-          will not take effect until the scheduled period ends
-          <span v-if="store.config.screen_schedule_auto">{{ scheduleWindowLabel }}</span>.
+        <h5>Brightness Mode</h5>
+        <div class="btn-group w-100 mb-1" role="group" aria-label="Brightness mode">
+          <input type="radio" class="btn-check" name="brightness_mode" id="brightness_mode_simple"
+                 value="simple" autocomplete="off"
+                 v-model="store.config.brightness_mode" />
+          <label class="btn btn-outline-primary btn-sm" for="brightness_mode_simple">
+            <i class="bi bi-brightness-high me-1"></i>Simple
+          </label>
+
+          <input type="radio" class="btn-check" name="brightness_mode" id="brightness_mode_advanced"
+                 value="advanced" autocomplete="off"
+                 v-model="store.config.brightness_mode" />
+          <label class="btn btn-outline-primary btn-sm" for="brightness_mode_advanced">
+            <i class="bi bi-sliders me-1"></i>Advanced
+          </label>
         </div>
       </div>
 
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
-               v-model="store.config.screen_rotate" />
-        <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
-        <div class="form-text text-muted small">Useful if you want to flip the unit and route cables from the other side.</div>
-      </div>
-
-      <hr class="my-3" />
-      <h5>Brightness Schedule</h5>
-
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
-               id="screen_schedule_enabled" v-model="store.config.screen_schedule_enabled" />
-        <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
-        <div class="form-text text-muted small">Automatically dims the screen at a set time and brightens it again in the morning.</div>
-      </div>
-
-      <div v-show="store.config.screen_schedule_enabled">
-        <div class="form-check mb-2">
-          <input type="checkbox" class="form-check-input" name="screen_schedule_auto" id="screen_schedule_auto"
-                 v-model="store.config.screen_schedule_auto" />
-          <label class="form-check-label" for="screen_schedule_auto">Automatically based on sunrise &amp; sunset</label>
-          <div class="form-text text-muted small">Uses your flight location coordinates to estimate sunrise and sunset times.</div>
+      <div id="brightness-simple" v-show="!store.isAdvancedBrightness">
+        <div class="mb-3">
+            <h5>Brightness</h5>
+            <label class="form-label small">Level: {{ store.config.screen_brightness }}/5</label>
+            <input type="range" class="form-range pt-3 px-2" name="screen_brightness" id="screen_brightness"
+                min="1" max="5" step="1" v-model.number="store.config.screen_brightness"
+                style="max-width:240px" />
+            <div v-if="store.ui.inSchedule" class="alert alert-warning small mt-2 mb-0 py-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            The brightness schedule is currently active - changes to the default brightness
+            will not take effect until the scheduled period ends
+            <span v-if="store.config.screen_schedule_auto">{{ scheduleWindowLabel }}</span>.
+            </div>
         </div>
 
-        <div v-show="!store.config.screen_schedule_auto">
-          <div class="row g-2 mt-1">
+        <hr class="my-3" />
+        <h5>Brightness Schedule</h5>
+
+        <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="screen_schedule_enabled"
+                id="screen_schedule_enabled" v-model="store.config.screen_schedule_enabled" />
+            <label class="form-check-label" for="screen_schedule_enabled">Brightness schedule (dim at night)</label>
+            <div class="form-text text-muted small">Automatically dims the screen at a set time and brightens it again in the morning.</div>
+        </div>
+
+        <div v-show="store.config.screen_schedule_enabled">
+            <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" name="screen_schedule_auto" id="screen_schedule_auto"
+                    v-model="store.config.screen_schedule_auto" />
+            <label class="form-check-label" for="screen_schedule_auto">Automatically based on sunrise &amp; sunset</label>
+            <div class="form-text text-muted small">Uses your flight location coordinates to estimate sunrise and sunset times.</div>
+            </div>
+
+            <div v-show="!store.config.screen_schedule_auto">
+            <div class="row g-2 mt-1">
+                <div class="col-auto">
+                <label class="form-label small">Dim at</label>
+                <input type="time" class="form-control form-control-sm"
+                        name="screen_schedule_start" v-model="store.config.screen_schedule_start" />
+                </div>
+                <div class="col-auto">
+                <label class="form-label small">Brighten at</label>
+                <input type="time" class="form-control form-control-sm"
+                        name="screen_schedule_end" v-model="store.config.screen_schedule_end" />
+                </div>
+            </div>
+            </div>
+
+            <div class="row g-2 mt-2">
             <div class="col-auto">
-              <label class="form-label small">Dim at</label>
-              <input type="time" class="form-control form-control-sm"
-                     name="screen_schedule_start" v-model="store.config.screen_schedule_start" />
+                <label class="form-label small">
+                Night brightness: {{ store.config.screen_schedule_brightness }}/5 (0=off)
+                </label>
+                <input type="range" class="form-range pt-3 px-2" name="screen_schedule_brightness"
+                    id="screen_schedule_brightness"
+                    min="0" max="5" step="1" v-model.number="store.config.screen_schedule_brightness"
+                    style="max-width:240px" />
+                <hr />
+                <div class="row">
+                <div class="col-1">
+                    <div class="text-center" style="font-size: 2em;">💤</div>
+                </div>
+                <div class="col-11">
+                    <p>Setting a brightness of <code>0</code> in the schedule puts the device in stand-by and will
+                    prevent polling of data-sources. Useful for keeping data-usage low.</p>
+                </div>
+                </div>
             </div>
-            <div class="col-auto">
-              <label class="form-label small">Brighten at</label>
-              <input type="time" class="form-control form-control-sm"
-                     name="screen_schedule_end" v-model="store.config.screen_schedule_end" />
             </div>
-          </div>
+        </div>
+      </div>
+
+      <div id="brightness-advanced" v-show="store.isAdvancedBrightness">
+        <hr class="my-3" />
+        <h5>Brightness Schedule</h5>
+        <div class="form-text text-muted small mb-2">
+          Set the brightness for different times of day. Each entry holds until the next one;
+          the last entry holds overnight until the first. A brightness of <code>0</code> puts
+          the device in stand-by and stops polling of data-sources.
         </div>
 
-        <div class="row g-2 mt-2">
-          <div class="col-auto">
-            <label class="form-label small">
-              Night brightness: {{ store.config.screen_schedule_brightness }}/5 (0=off)
-            </label>
-            <input type="range" class="form-range pt-3 px-2" name="screen_schedule_brightness"
-                   id="screen_schedule_brightness"
-                   min="0" max="5" step="1" v-model.number="store.config.screen_schedule_brightness"
-                   style="max-width:240px" />
-            <hr />
-            <div class="row">
-              <div class="col-1">
-                <div class="text-center" style="font-size: 2em;">💤</div>
-              </div>
-              <div class="col-11">
-                <p>Setting a brightness of <code>0</code> in the schedule puts the device in stand-by and will
-                  prevent polling of data-sources. Useful for keeping data-usage low.</p>
-              </div>
-            </div>
-          </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-2" style="max-width:420px">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width:45%">Time</th>
+                <th scope="col" style="width:35%">Brightness</th>
+                <th scope="col" class="text-end" style="width:20%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in store.screenScheduleAdvanced" :key="row.id">
+                <td>
+                  <input type="time" class="form-control form-control-sm"
+                         :class="{ 'is-invalid': !store.scheduleRowValid(row) }"
+                         v-model="row.time" @change="store.resortSchedule()"
+                         :aria-label="'Schedule time ' + ($index + 1)" />
+                  <div class="invalid-feedback small">
+                    Enter a time that isn't already used by another row.
+                  </div>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" v-model.number="row.brightness"
+                          :aria-label="'Brightness ' + ($index + 1)">
+                    <option :value="0">0 (off)</option>
+                    <option :value="1">1</option>
+                    <option :value="2">2</option>
+                    <option :value="3">3</option>
+                    <option :value="4">4</option>
+                    <option :value="5">5</option>
+                  </select>
+                </td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          :aria-label="'Remove schedule entry ' + ($index + 1)"
+                          @click="store.removeScheduleRow(row.id)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!store.screenScheduleAdvanced.length">
+                <td colspan="3" class="text-muted small">
+                  No schedule entries - the
+                  <a href="#brightness_mode_simple" role="button"
+                     @click.prevent="store.config.brightness_mode = 'simple'">default brightness</a>
+                  of {{ store.config.screen_brightness }}/5 applies all day.
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <button type="button" class="btn btn-sm btn-outline-primary"
+                :disabled="store.screenScheduleAdvanced.length >= 48"
+                @click="store.addScheduleRow()">
+          <i class="bi bi-plus-lg me-1"></i>Add
+        </button>
+
+        <div v-if="store.scheduleAdvancedPreview" class="form-text text-muted small mt-2">
+          <i class="bi bi-clock-history me-1"></i>{{ store.scheduleAdvancedPreview }}
+        </div>
+
+        <input type="hidden" name="screen_schedule_advanced_json"
+               :value="store.scheduleAdvancedJson()" />
       </div>
     </div>
+
 
     <!-- ====== Hardware ====== -->
     <div id="group-hardware" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-motherboard me-2"></i>Hardware</p>
-
-      <h5>Web Interface</h5>
-      <div class="mb-2 form-check">
-        <input type="checkbox" class="form-check-input" name="web_interface_enabled"
-               id="web_interface_enabled" v-model="store.config.web_interface_enabled" />
-        <label class="form-check-label" for="web_interface_enabled">Enable web interface on next boot</label>
-        <div class="form-text text-muted small">
-          If disabled, the config UI will not start and no QR code will be shown.
-          Re-enable by editing <code>config.json</code> directly.
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label small">Web interface port (1024-65535)</label>
-        <input type="number" min="1024" max="65535" class="form-control form-control-sm"
-               name="web_port" v-model.number="store.config.web_port" style="max-width:120px" />
-        <div class="form-text text-muted small">TCP port for this interface. Change requires a restart.</div>
-      </div>
-
-      <hr class="my-3" />
 
       <div class="mb-3">
         <h5>Adafruit HAT Mode</h5>
@@ -203,6 +274,15 @@ export default defineComponent({
 
       <hr class="my-3" />
 
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="screen_rotate" id="screen_rotate"
+            v-model="store.config.screen_rotate" />
+        <label class="form-check-label" for="screen_rotate">Rotate display 180°</label>
+        <div class="form-text text-muted small">Useful if you want to flip the unit and route cables from the other side.</div>
+      </div>
+
+      <hr class="my-3" />
+
       <div class="mb-3">
         <h5>GPIO Slowdown</h5>
         <label class="form-label small">Value (1-4)</label>
@@ -253,6 +333,28 @@ export default defineComponent({
           swapped on the display (e.g. red shows as blue). Most panels are RGB; if yours isn't, try the
           alternative orders until the colours look right.
         </div>
+      </div>
+    </div>
+
+    <!-- ====== Web-Interface ====== -->
+    <div id="group-hardware" class="card mb-3 p-3">
+      <p class="section-heading"><i class="bi bi-filetype-html me-2"></i>Web Interface</p>
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="web_interface_enabled"
+               id="web_interface_enabled" v-model="store.config.web_interface_enabled" />
+        <label class="form-check-label" for="web_interface_enabled">Enable web interface on next boot</label>
+        <div class="form-text text-muted small">
+          If disabled, the config UI will not start and no QR code will be shown.
+          Re-enable by editing <code>config.json</code> directly.
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">Web interface port (1024-65535)</label>
+        <input type="number" min="1024" max="65535" class="form-control form-control-sm"
+               name="web_port" v-model.number="store.config.web_port" style="max-width:120px" />
+        <div class="form-text text-muted small">TCP port for this interface. Change requires a restart.</div>
       </div>
     </div>
 
