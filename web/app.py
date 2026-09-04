@@ -44,8 +44,8 @@ from flask import (
 )
 
 from display.rgbpanel import PANEL_COLOUR_ORDERS
-from scenes.flight.lookups import cache as routes_cache
-from scenes.flight.lookups import usage as usage_tally
+from utilities.lookups import cache as routes_cache
+from utilities.lookups import usage as usage_tally
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
 from utilities.flight import Flight
@@ -155,7 +155,7 @@ def wrap_lng(lng: float) -> float:
 
 def _select_overhead_class():
     """Return the Overhead facade and the top flight provider's display name."""
-    from scenes.flight.lookups.flights import top_flight_provider
+    from utilities.lookups.flights import top_flight_provider
     from utilities.overhead import Overhead
 
     _pid, source_name = top_flight_provider()
@@ -265,7 +265,7 @@ def restart_after(delay: float = 1.0):
 
     # os.execv bypasses atexit, so persist the usage tallies now - every
     # restart path funnels through here.
-    from scenes.flight.lookups import usage as usage_tally
+    from utilities.lookups import usage as usage_tally
 
     usage_tally.flush()
 
@@ -377,7 +377,7 @@ def _parse_provider_form(form, cfg) -> dict:
             continue
         if not isinstance(order, list):
             continue
-        from scenes.flight.lookups.registry import normalise_provider_list
+        from utilities.lookups.registry import normalise_provider_list
 
         clean, warnings = normalise_provider_list(order, capability)
         if clean:
@@ -396,8 +396,8 @@ def _parse_provider_settings(form, cfg) -> dict[str, dict]:
     providers actually present in the form are returned, so unrelated
     providers' settings are never touched by this form submission.
     """
-    from scenes.flight.lookups.config import apply_submitted_settings
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.config import apply_submitted_settings
+    from utilities.lookups.registry import PROVIDERS
 
     collected: dict[str, dict[str, str]] = {}
     prefix = "providers."
@@ -423,8 +423,8 @@ def _parse_provider_settings(form, cfg) -> dict[str, dict]:
 
 def _merge_provider_settings(cfg, partial: dict) -> dict:
     """Validate *partial* provider settings and merge them into the stored subtree."""
-    from scenes.flight.lookups.config import validate_provider_settings
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.config import validate_provider_settings
+    from utilities.lookups.registry import PROVIDERS
 
     merged = cfg.providers_subtree
     for pid, settings in partial.items():
@@ -756,9 +756,9 @@ def _status_page_data() -> dict:
     """
 
     from display import get_overhead_instance
-    from scenes.flight.lookups.flights import refresh_interval
-    from scenes.flight.lookups.quarantine import QUARANTINE
-    from scenes.flight.lookups.registry import PROVIDERS, load_config
+    from utilities.lookups.flights import refresh_interval
+    from utilities.lookups.quarantine import QUARANTINE
+    from utilities.lookups.registry import PROVIDERS, load_config
 
     cfg = load_config()
     hold_offs = QUARANTINE.snapshot()
@@ -825,8 +825,8 @@ def _provider_ui_data(cfg) -> dict:
     per-provider descriptor metadata drives the Data Source page's
     provider settings cards.
     """
-    from scenes.flight.lookups.config import MASK, provider_settings_view
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.config import MASK, provider_settings_view
+    from utilities.lookups.registry import PROVIDERS
 
     cfg_masked = {
         key: value for key, value in cfg.as_dict().items() if key != "web_password_hash"
@@ -1087,8 +1087,8 @@ def _redact_for_debug(data: dict) -> dict:
     ``providers`` subtree is redacted from the provider descriptors so new
     sensitive fields are covered automatically.
     """
-    from scenes.flight.lookups.config import REDACTED
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.config import REDACTED
+    from utilities.lookups.registry import PROVIDERS
 
     safe: dict = {}
     for key, value in data.items():

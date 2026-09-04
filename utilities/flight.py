@@ -18,7 +18,7 @@ from dataclasses import dataclass, fields
 # The lookup result types moved into the lookups package when the provider
 # layer was decoupled; they are re-exported here so scenes and the web app
 # keep importing from utilities.flight.
-from scenes.flight.lookups.results import AircraftInfo, RouteInfo  # noqa: E402,F401
+from utilities.lookups.results import AircraftInfo, RouteInfo  # noqa: E402,F401
 
 # ---------------------------------------------------------------------------
 # Flight - a single tracked aircraft

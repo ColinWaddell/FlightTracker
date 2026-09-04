@@ -7,10 +7,10 @@ import pytest
 # ---------------------------------------------------------------------------
 # Shared helpers (in overhead_utilities)
 # ---------------------------------------------------------------------------
-from scenes.flight.lookups.providers.tar1090.flights import (
+from utilities.lookups.providers.tar1090.flights import (
     FlightProvider as Tar1090FlightProvider,
 )
-from scenes.flight.lookups.providers.tar1090.flights import _to_observation
+from utilities.lookups.providers.tar1090.flights import _to_observation
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,
@@ -180,7 +180,7 @@ class TestTar1090Fetch:
 
     @pytest.fixture
     def query(self):
-        from scenes.flight.lookups.results import FlightQuery
+        from utilities.lookups.results import FlightQuery
 
         return FlightQuery(
             zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},

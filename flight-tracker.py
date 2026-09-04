@@ -45,7 +45,7 @@ def local_ip() -> str:
 
 def _check_data_source(cfg: Config) -> bool:
     """Return True if the top enabled flight provider's endpoint is reachable."""
-    from scenes.flight.lookups.flights import startup_check as flights_startup_check
+    from utilities.lookups.flights import startup_check as flights_startup_check
 
     try:
         return flights_startup_check()
@@ -66,7 +66,7 @@ def _check_celestrack() -> bool:
 
 def _check_routing_reachable(cfg: Config) -> bool:
     """Return True if at least one enabled route provider is reachable."""
-    from scenes.flight.lookups.routes import check_routing
+    from utilities.lookups.routes import check_routing
 
     return check_routing()
 
@@ -100,7 +100,7 @@ def _render_celestrack_test(panel, canvas, cfg: Config, y):
 
 
 def _render_data_source_test(panel, canvas, cfg: Config, y):
-    from scenes.flight.lookups.flights import top_flight_provider
+    from utilities.lookups.flights import top_flight_provider
     from setup.colours import GREEN, GREY, RED
 
     pid, _name = top_flight_provider()

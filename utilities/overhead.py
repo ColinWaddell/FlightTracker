@@ -106,8 +106,8 @@ class Overhead:
     # ------------------------------------------------------------------
 
     def grab_data_impl(self):
-        from scenes.flight.lookups import cache, enrichment, flights
-        from scenes.flight.lookups.results import FlightQuery
+        from utilities.lookups import cache, enrichment, flights
+        from utilities.lookups.results import FlightQuery
         from setup.configuration import Config
 
         cfg = Config.instance()
@@ -217,7 +217,7 @@ class Overhead:
             self.processing_store = False
         self.done.set()
         cache.flush()
-        from scenes.flight.lookups import (
+        from utilities.lookups import (
             usage as _usage,  # light import, same pattern as fetch
         )
 

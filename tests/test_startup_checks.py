@@ -9,14 +9,14 @@ SPEC.loader.exec_module(flight_tracker_module)
 
 
 def test_check_data_source(monkeypatch):
-    import scenes.flight.lookups.flights as flights_service
+    import utilities.lookups.flights as flights_service
 
     monkeypatch.setattr(flights_service, "startup_check", lambda: True)
     assert flight_tracker_module._check_data_source(None) is True
 
 
 def test_check_data_source_handles_failure(monkeypatch):
-    import scenes.flight.lookups.flights as flights_service
+    import utilities.lookups.flights as flights_service
 
     def boom():
         raise RuntimeError("nope")
@@ -26,7 +26,7 @@ def test_check_data_source_handles_failure(monkeypatch):
 
 
 def test_check_routing_reachable(monkeypatch):
-    import scenes.flight.lookups.routes as routes_service
+    import utilities.lookups.routes as routes_service
 
     monkeypatch.setattr(routes_service, "check_routing", lambda: True)
 
@@ -34,7 +34,7 @@ def test_check_routing_reachable(monkeypatch):
 
 
 def test_check_routing_reachable_handles_failure(monkeypatch):
-    import scenes.flight.lookups.routes as routes_service
+    import utilities.lookups.routes as routes_service
 
     monkeypatch.setattr(routes_service, "check_routing", lambda: False)
     assert flight_tracker_module._check_routing_reachable(None) is False

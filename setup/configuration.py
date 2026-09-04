@@ -293,7 +293,7 @@ DEFAULTS: dict[str, Any] = {
     "satellite_timeout_seconds": DEFAULT_SATELLITE_TIMEOUT_SECONDS,
     # Logging
     "log_level": DEFAULT_LOG_LEVEL,
-    # Provider usage tally (see scenes/flight/lookups/usage.py + /api)
+    # Provider usage tally (see utilities/lookups/usage.py + /api)
     "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
 }
 
@@ -511,7 +511,7 @@ def _complete_provider_lists(data: dict[str, Any]) -> None:
     while existing ordering and choices are untouched.  Fresh installs
     already seed complete lists via DEFAULTS.
     """
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.registry import PROVIDERS
 
     # The route list gates both the routes and aircraft chains, so
     # aircraft-capable providers belong in it too.
@@ -544,7 +544,7 @@ def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> Non
 
     Modifies *data* in-place.
     """
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.registry import PROVIDERS
 
     if "flight_providers" not in loaded:
         _migrate_legacy_source(data, loaded)
@@ -633,7 +633,7 @@ def _migrate_legacy_source(data: dict[str, Any], loaded: dict[str, Any]) -> None
 
 def _validate_provider_lists(data: dict[str, Any]) -> None:
     """Normalise the persisted provider priority lists in-place."""
-    from scenes.flight.lookups.registry import normalise_provider_list
+    from utilities.lookups.registry import normalise_provider_list
 
     for capability in ("flights", "routes"):
         key = f"{capability}_providers"
@@ -646,7 +646,7 @@ def _validate_provider_lists(data: dict[str, Any]) -> None:
 
 def _validated_provider_settings(spec, raw: dict[str, Any]) -> dict[str, Any]:
     """Validate one provider's settings against its descriptor."""
-    from scenes.flight.lookups.config import validate_provider_settings
+    from utilities.lookups.config import validate_provider_settings
 
     clean, warnings = validate_provider_settings(spec.config, raw)
     for warning in warnings:
@@ -1234,8 +1234,8 @@ class Config:
 
     def set_provider_settings(self, provider_id: str, settings: dict[str, Any]) -> None:
         """Persist *settings* for *provider_id* after descriptor validation."""
-        from scenes.flight.lookups.config import validate_provider_settings
-        from scenes.flight.lookups.registry import provider_spec
+        from utilities.lookups.config import validate_provider_settings
+        from utilities.lookups.registry import provider_spec
 
         spec = provider_spec(provider_id)
         if spec is None:
@@ -1249,7 +1249,7 @@ class Config:
 
     def set_provider_order(self, capability: str, order: list[dict[str, Any]]) -> None:
         """Persist a new priority list for *capability* ("flights" or "routes")."""
-        from scenes.flight.lookups.registry import normalise_provider_list
+        from utilities.lookups.registry import normalise_provider_list
 
         key = f"{capability}_providers"
         clean, warnings = normalise_provider_list(order, capability)
@@ -1260,8 +1260,8 @@ class Config:
 
     def provider_settings_view(self) -> dict[str, Any]:
         """Masked view of all provider settings (safe for the browser)."""
-        from scenes.flight.lookups.config import provider_settings_view
-        from scenes.flight.lookups.registry import PROVIDERS
+        from utilities.lookups.config import provider_settings_view
+        from utilities.lookups.registry import PROVIDERS
 
         masked: dict[str, dict[str, Any]] = {}
         for pid, spec in PROVIDERS.items():
