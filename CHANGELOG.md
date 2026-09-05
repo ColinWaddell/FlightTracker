@@ -4,11 +4,11 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
 
-### Added
-- `brightness_mode` config key (`"simple"` or `"advanced"`, default `"simple"`) with a Tracking-Mode-style radio group in the System → Display settings
-- Advanced brightness schedule: an ordered list of time/brightness entries edited in a table in the web UI (`screen_schedule_advanced` config key). Entries are kept sorted by time, duplicate times are rejected, and the display honours the 12/24hr clock setting. Hardware application of the advanced schedule comes later.
+## [v2.11.0] - 2026-09-05
+
+- Interface for a more fine-tuned timing schedule
+- An "extended" list of airport names, allowing for regional 4-character codes
 
 ## [v2.10.1] - 2026-09-02
 
