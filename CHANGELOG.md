@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - 4-character airport codes (ICAO / FAA local, e.g. 98KY) now render in the
   short-code journey label using a smaller font with an identical footprint,
-  instead of overdrawn arrows and clipped characters; codes longer than four
-  characters are truncated, and 4-character home codes render unbolded
+  instead of overdrawn arrows and clipped characters; when either end of the
+  journey is four characters both ends render at the compact size so the
+  pair looks even; codes longer than four characters are truncated, and
+  4-character home codes render unbolded
 
 ## [v2.10.0] - 2026-09-01
 

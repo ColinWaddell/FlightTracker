@@ -40,19 +40,20 @@ def _display_code(code: str) -> str:
     return code[:4]
 
 
-def _code_font(code: str, is_home: bool, base, base_bold, compact):
+def _code_font(is_home: bool, pair_compact: bool, base, base_bold, compact):
     """Pick the font for one side of the short label.
 
     Three-character codes (IATA) use the layout's base size - bold when
-    the code is the home field.  Four-character codes (ICAO / FAA local,
-    e.g. 98KY) drop to the compact font, whose footprint is identical:
-    4 x 6px = 3 x 8px, so the fixed arrow and destination offsets still
-    clear.  No bold cut exists below 7px, so compact codes always render
-    plain.
+    the code is the home field.  If either end of the journey needs the
+    compact size (a 4-char ICAO / FAA local code such as 98KY), both
+    ends use it so the pair renders at the same size; the compact
+    footprint is identical (4 x 6px = 3 x 8px), so the fixed arrow and
+    destination offsets still clear.  No bold cut exists below 7px, so
+    compact codes always render plain.
     """
-    if len(code) <= 3:
-        return base_bold if is_home else base
-    return compact
+    if pair_compact:
+        return compact
+    return base_bold if is_home else base
 
 
 class ShortCodeLabel:
@@ -115,9 +116,12 @@ class ShortCodeLabel:
         origin_x = text_x_origin
         dest_x = text_x_origin + _DEST_OFFSET
 
+        # If either end needs the compact size, render both ends with it
+        # so the pair looks even.
+        pair_compact = len(origin) > 3 or len(destination) > 3
         font = _code_font(
-            origin,
             origin == home_code,
+            pair_compact,
             fonts.large,
             fonts.large_bold,
             fonts.regular,
@@ -126,8 +130,8 @@ class ShortCodeLabel:
             canvas, font, origin_x, _IATA_Y, TC(THEME_LOCATION_ORIGIN), origin
         )
         font = _code_font(
-            destination,
             destination == home_code,
+            pair_compact,
             fonts.large,
             fonts.large_bold,
             fonts.regular,
@@ -173,9 +177,10 @@ class ShortCodeLabel:
         arrow_tip_x = origin_x + 25
         dest_x = text_x_origin + 27
 
+        pair_compact = len(origin) > 3 or len(destination) > 3
         font = _code_font(
-            origin,
             origin == home_code,
+            pair_compact,
             fonts.medium,
             fonts.medium_bold,
             fonts.small,
@@ -184,8 +189,8 @@ class ShortCodeLabel:
             canvas, font, origin_x, _IATA_Y, TC(THEME_LOCATION_ORIGIN), origin
         )
         font = _code_font(
-            destination,
             destination == home_code,
+            pair_compact,
             fonts.medium,
             fonts.medium_bold,
             fonts.small,

@@ -503,33 +503,32 @@ class TestShortCodeLabel:
 class TestShortCodeFontSelection:
     """4-char codes (ICAO / FAA local) drop to the compact font.
 
-    Plan: 4-char airport codes - D3/D4 decisions.
+    Plan: 4-char airport codes - D3/D4 decisions.  If EITHER end of the
+    journey is 4 characters, both ends render compact so the pair looks
+    even.
     """
 
     base, base_bold, compact = object(), object(), object()
 
     def test_three_char_home_uses_bold(self):
         assert (
-            _code_font("GLA", True, self.base, self.base_bold, self.compact)
+            _code_font(True, False, self.base, self.base_bold, self.compact)
             is self.base_bold
         )
 
     def test_three_char_non_home_uses_base(self):
         assert (
-            _code_font("LHR", False, self.base, self.base_bold, self.compact)
+            _code_font(False, False, self.base, self.base_bold, self.compact)
             is self.base
         )
 
-    def test_four_char_uses_compact(self):
+    def test_pair_compact_forces_compact(self):
         assert (
-            _code_font("98KY", False, self.base, self.base_bold, self.compact)
+            _code_font(True, True, self.base, self.base_bold, self.compact)
             is self.compact
         )
-
-    def test_four_char_home_renders_plain(self):
-        # No bold cut exists below 7px, so 4-char home codes render plain.
         assert (
-            _code_font("98KY", True, self.base, self.base_bold, self.compact)
+            _code_font(False, True, self.base, self.base_bold, self.compact)
             is self.compact
         )
 
@@ -544,25 +543,45 @@ class TestShortCodeFontSelection:
     def test_blank_filler_untouched(self):
         assert _display_code("???") == "???"
 
-    def test_draw_uses_compact_font_for_four_char_codes(self):
-        from setup import fonts
-
+    def _draw(self, origin, destination, text_x_origin=1, icon_required=False):
         panel, canvas = _make_panel_and_canvas()
         panel.draw_text.side_effect = lambda *a, **k: 24
         label = ShortCodeLabel(panel)
-        label.draw(canvas, Flight(origin="98KY", destination="0I8"), 1, 63)
-        fonts_used = [call.args[1] for call in panel.draw_text.call_args_list]
-        assert fonts_used == [fonts.regular, fonts.large]  # 4-char / 3-char
+        label.draw(
+            canvas,
+            Flight(origin=origin, destination=destination),
+            text_x_origin,
+            63 if text_x_origin == 1 else 47,
+            icon_required=icon_required,
+        )
+        return [call.args[1] for call in panel.draw_text.call_args_list]
 
-    def test_draw_keeps_large_font_for_three_char_codes(self):
+    def test_draw_font_matrix_no_logo(self):
         from setup import fonts
 
-        panel, canvas = _make_panel_and_canvas()
-        panel.draw_text.side_effect = lambda *a, **k: 24
-        label = ShortCodeLabel(panel)
-        label.draw(canvas, Flight(origin="GLA", destination="LHR"), 1, 63)
-        fonts_used = [call.args[1] for call in panel.draw_text.call_args_list]
-        assert fonts_used == [fonts.large, fonts.large]
+        # (origin, destination): if either is 4-char, both render compact.
+        cases = {
+            ("GLA", "LHR"): [fonts.large, fonts.large],
+            ("GLA", "98KY"): [fonts.regular, fonts.regular],
+            ("98KY", "LHR"): [fonts.regular, fonts.regular],
+            ("98KY", "0I8"): [fonts.regular, fonts.regular],
+        }
+        for (origin, destination), expected in cases.items():
+            assert (
+                self._draw(origin, destination) == expected
+            ), f"{origin}->{destination}"
+
+    def test_draw_font_matrix_with_logo(self):
+        from setup import fonts
+
+        assert self._draw("GLA", "LHR", text_x_origin=17, icon_required=True) == [
+            fonts.medium,
+            fonts.medium,
+        ]
+        assert self._draw("98KY", "0I8", text_x_origin=17, icon_required=True) == [
+            fonts.small,
+            fonts.small,
+        ]
 
 
 class TestShortCodeGeometry:
@@ -595,6 +614,14 @@ class TestShortCodeGeometry:
         assert w == 20  # identical footprint to 3 x 7px
         assert 17 + w <= 17 + 25 - _ARROW_WIDTH_SMALL
         assert 17 + 27 + w <= 64
+
+    def test_mixed_pair_compact_sizes_fit(self):
+        # In a mixed pair the 3-char side also renders compact, so it is
+        # strictly narrower than the 4-char worst case already covered.
+        from setup import fonts
+
+        assert fonts.regular.text_width("GLA") <= fonts.regular.text_width("98KY")
+        assert fonts.small.text_width("GLA") <= fonts.small.text_width("98KY")
 
 
 # ---------------------------------------------------------------------------
