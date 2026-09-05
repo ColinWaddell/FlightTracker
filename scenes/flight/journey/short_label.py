@@ -159,9 +159,7 @@ class ShortCodeLabel:
     ) -> None:
         cfg = self.cfg
         origin = _display_code(flight.origin or cfg.journey_blank_filler)
-        destination = (
-            _display_code(flight.destination or cfg.journey_blank_filler) + "Y"
-        )
+        destination = _display_code(flight.destination or cfg.journey_blank_filler)
         home_code = _display_code(cfg.home_airport_code)
 
         self.panel.draw_square(
