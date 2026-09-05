@@ -60,6 +60,9 @@ DEFAULT_JOURNEY_BLANK_FILLER = "???"
 DEFAULT_SHOW_AIRLINE_ICON = (
     True  # show 16x16 airline logo (from callsign prefix) at (0,0)
 )
+DEFAULT_AIRPORT_LOOKUP_FULL = (
+    False  # airports-full.json (IATA + FAA local codes) instead of airports.json
+)
 
 # Plane info row
 DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = telemetry, 2 = custom template
@@ -203,6 +206,7 @@ DEFAULTS: dict[str, Any] = {
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
     "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
+    "airport_lookup_full": DEFAULT_AIRPORT_LOOKUP_FULL,
     # Plane info row
     "details": DEFAULT_DETAILS,
     "details_custom_template": DEFAULT_DETAILS_CUSTOM_TEMPLATE,
@@ -293,7 +297,7 @@ DEFAULTS: dict[str, Any] = {
     "satellite_timeout_seconds": DEFAULT_SATELLITE_TIMEOUT_SECONDS,
     # Logging
     "log_level": DEFAULT_LOG_LEVEL,
-    # Provider usage tally (see scenes/flight/lookups/usage.py + /api)
+    # Provider usage tally (see utilities/lookups/usage.py + /api)
     "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
 }
 
@@ -439,7 +443,7 @@ def migrate_config(mod) -> dict[str, Any]:
     # JOURNEY_CODE_SELECTED -> home_airport_code
     jcs = get("JOURNEY_CODE_SELECTED")
     if jcs:
-        data["home_airport_code"] = str(jcs).strip().upper()[:3]
+        data["home_airport_code"] = str(jcs).strip().upper()[:6]
 
     print("[config] Migrated legacy config.py -> config.json", file=sys.stderr)
     return data
@@ -511,7 +515,7 @@ def _complete_provider_lists(data: dict[str, Any]) -> None:
     while existing ordering and choices are untouched.  Fresh installs
     already seed complete lists via DEFAULTS.
     """
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.registry import PROVIDERS
 
     # The route list gates both the routes and aircraft chains, so
     # aircraft-capable providers belong in it too.
@@ -544,7 +548,7 @@ def _migrate_provider_lists(data: dict[str, Any], loaded: dict[str, Any]) -> Non
 
     Modifies *data* in-place.
     """
-    from scenes.flight.lookups.registry import PROVIDERS
+    from utilities.lookups.registry import PROVIDERS
 
     if "flight_providers" not in loaded:
         _migrate_legacy_source(data, loaded)
@@ -633,7 +637,7 @@ def _migrate_legacy_source(data: dict[str, Any], loaded: dict[str, Any]) -> None
 
 def _validate_provider_lists(data: dict[str, Any]) -> None:
     """Normalise the persisted provider priority lists in-place."""
-    from scenes.flight.lookups.registry import normalise_provider_list
+    from utilities.lookups.registry import normalise_provider_list
 
     for capability in ("flights", "routes"):
         key = f"{capability}_providers"
@@ -646,7 +650,7 @@ def _validate_provider_lists(data: dict[str, Any]) -> None:
 
 def _validated_provider_settings(spec, raw: dict[str, Any]) -> dict[str, Any]:
     """Validate one provider's settings against its descriptor."""
-    from scenes.flight.lookups.config import validate_provider_settings
+    from utilities.lookups.config import validate_provider_settings
 
     clean, warnings = validate_provider_settings(spec.config, raw)
     for warning in warnings:
@@ -881,6 +885,13 @@ class Config:
     @property
     def show_airline_icon(self) -> bool:
         return bool(self.data_store.get("show_airline_icon", DEFAULT_SHOW_AIRLINE_ICON))
+
+    @property
+    def airport_lookup_full(self) -> bool:
+        """Use airports-full.json (IATA + FAA local codes) when True."""
+        return bool(
+            self.data_store.get("airport_lookup_full", DEFAULT_AIRPORT_LOOKUP_FULL)
+        )
 
     @property
     def details(self) -> int:
@@ -1234,8 +1245,8 @@ class Config:
 
     def set_provider_settings(self, provider_id: str, settings: dict[str, Any]) -> None:
         """Persist *settings* for *provider_id* after descriptor validation."""
-        from scenes.flight.lookups.config import validate_provider_settings
-        from scenes.flight.lookups.registry import provider_spec
+        from utilities.lookups.config import validate_provider_settings
+        from utilities.lookups.registry import provider_spec
 
         spec = provider_spec(provider_id)
         if spec is None:
@@ -1249,7 +1260,7 @@ class Config:
 
     def set_provider_order(self, capability: str, order: list[dict[str, Any]]) -> None:
         """Persist a new priority list for *capability* ("flights" or "routes")."""
-        from scenes.flight.lookups.registry import normalise_provider_list
+        from utilities.lookups.registry import normalise_provider_list
 
         key = f"{capability}_providers"
         clean, warnings = normalise_provider_list(order, capability)
@@ -1260,8 +1271,8 @@ class Config:
 
     def provider_settings_view(self) -> dict[str, Any]:
         """Masked view of all provider settings (safe for the browser)."""
-        from scenes.flight.lookups.config import provider_settings_view
-        from scenes.flight.lookups.registry import PROVIDERS
+        from utilities.lookups.config import provider_settings_view
+        from utilities.lookups.registry import PROVIDERS
 
         masked: dict[str, dict[str, Any]] = {}
         for pid, spec in PROVIDERS.items():

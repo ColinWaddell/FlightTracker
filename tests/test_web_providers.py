@@ -190,6 +190,15 @@ class TestParseSettingsFormProviders:
         out = parse_settings_form({}, cfg)
         assert out["provider_usage_logging"] is False
 
+    def test_airport_lookup_full_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"airport_lookup_full": "on"}, cfg)
+        assert out["airport_lookup_full"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["airport_lookup_full"] is False
+
     def test_legacy_data_source_key_not_produced(self):
         from web.app import parse_settings_form
 
@@ -272,8 +281,8 @@ class TestDebugConfigRedaction:
 class TestSettingsPageDataMasking:
     def test_provider_secrets_masked_for_browser(self, monkeypatch):
         """provider_settings_view masks sensitive fields in FT_CONFIG."""
-        from scenes.flight.lookups.config import MASK, provider_settings_view
-        from scenes.flight.lookups.providers.opensky.config import PROVIDER as OPENSKY
+        from utilities.lookups.config import MASK, provider_settings_view
+        from utilities.lookups.providers.opensky.config import PROVIDER as OPENSKY
 
         view = provider_settings_view(
             OPENSKY, {"client_id": "cid", "client_secret": "S3CR3T"}
@@ -283,8 +292,8 @@ class TestSettingsPageDataMasking:
         assert "S3CR3T" not in str(view)
 
     def test_mask_token_semantics_through_apply(self):
-        from scenes.flight.lookups.config import MASK, apply_submitted_settings
-        from scenes.flight.lookups.providers.opensky.config import PROVIDER as OPENSKY
+        from utilities.lookups.config import MASK, apply_submitted_settings
+        from utilities.lookups.providers.opensky.config import PROVIDER as OPENSKY
 
         stored = {"client_id": "cid", "client_secret": "KEEPME"}
         clean, changed = apply_submitted_settings(
@@ -332,7 +341,7 @@ class TestProviderGuidance:
 @pytest.fixture
 def isolated_cache(tmp_path, monkeypatch):
     """Point lookups.cache at a temp database for the request under test."""
-    import scenes.flight.lookups.cache as rc
+    import utilities.lookups.cache as rc
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
@@ -394,7 +403,7 @@ class TestCachedDataPage:
 @pytest.fixture
 def isolated_usage(tmp_path, monkeypatch):
     """Point the usage tally at a temp db with fresh in-memory state."""
-    import scenes.flight.lookups.usage as ru
+    import utilities.lookups.usage as ru
 
     monkeypatch.setattr(ru, "DB_PATH", tmp_path / "usage.sqlite3")
     monkeypatch.setattr(ru, "_conn", None)

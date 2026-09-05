@@ -48,7 +48,7 @@ def build_display_class():
     theme_set(cfg.colour_theme)
     logger = logging.getLogger("display")
 
-    from scenes.flight.lookups.flights import refresh_interval, top_flight_provider
+    from utilities.lookups.flights import refresh_interval, top_flight_provider
 
     REFRESH_INTERVAL = refresh_interval()
     _pid, source_name = top_flight_provider()

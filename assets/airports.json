@@ -2294,6 +2294,11 @@
     "municipality": "Wilkes-Barre/Scranton",
     "name": "Wilkes-Barre/Scranton International Airport"
   },
+  "AVR": {
+    "country_name": "India",
+    "municipality": "Amravati",
+    "name": "Amravati  Airport"
+  },
   "AVU": {
     "country_name": "Solomon Islands",
     "municipality": "Avu Avu",
@@ -8894,11 +8899,6 @@
     "municipality": "Dhangarhi",
     "name": "Dhangarhi Airport"
   },
-  "DHL": {
-    "country_name": "Yemen",
-    "municipality": "Ad-Dali",
-    "name": "Ad-Dali Airport"
-  },
   "DHM": {
     "country_name": "India",
     "municipality": "Kangra",
@@ -9053,6 +9053,11 @@
     "country_name": "Australia",
     "municipality": "",
     "name": "Dajarra Airport"
+  },
+  "DJT": {
+    "country_name": "United States",
+    "municipality": "West Palm Beach",
+    "name": "President Donald J. Trump International Airport"
   },
   "DJU": {
     "country_name": "Iceland",
@@ -12412,7 +12417,7 @@
   "GBG": {
     "country_name": "United States",
     "municipality": "Galesburg",
-    "name": "Galesburg Municipal Airport"
+    "name": "Galesburg Regional HW Timmons  Airport"
   },
   "GBH": {
     "country_name": "United States",
@@ -12647,7 +12652,7 @@
   "GEC": {
     "country_name": "Cyprus",
     "municipality": "Lefkoniko (Geçitkale)",
-    "name": "Lefkoniko Airport / Geçitkale Air Base"
+    "name": "Geçitkale Airbase"
   },
   "GED": {
     "country_name": "United States",
@@ -12922,7 +12927,7 @@
   "GIG": {
     "country_name": "Brazil",
     "municipality": "Rio De Janeiro",
-    "name": "Rio Galeão - Tom Jobim International Airport"
+    "name": "Rio de Janeiro Galeão - Tom Jobim International Airport"
   },
   "GII": {
     "country_name": "Guinea",
@@ -13516,7 +13521,7 @@
   },
   "GRF": {
     "country_name": "United States",
-    "municipality": "Fort Lewis/Tacoma",
+    "municipality": "Joint Base Lewis McChord",
     "name": "Gray Army Air Field"
   },
   "GRG": {
@@ -13929,6 +13934,11 @@
     "municipality": "Greenville",
     "name": "Majors Airport"
   },
+  "GVX": {
+    "country_name": "Sweden",
+    "municipality": "Sandviken",
+    "name": "Gävle-Sandviken Airport"
+  },
   "GWA": {
     "country_name": "Myanmar",
     "municipality": "Gwa",
@@ -13957,7 +13967,7 @@
   "GWS": {
     "country_name": "United States",
     "municipality": "Glenwood Springs",
-    "name": "Glenwood Springs Municipal Airport"
+    "name": "Sumers Airpark"
   },
   "GWT": {
     "country_name": "Germany",
@@ -15968,6 +15978,11 @@
     "country_name": "Germany",
     "municipality": "Riesa",
     "name": "Riesa-Göhlis Airport"
+  },
+  "IEV": {
+    "country_name": "Ukraine",
+    "municipality": "Kyiv",
+    "name": "Igor Sikorsky Kyiv International Airport (Zhuliany)"
   },
   "IFA": {
     "country_name": "United States",
@@ -20194,6 +20209,11 @@
     "municipality": "Kuantan",
     "name": "Kuantan Airport"
   },
+  "KUB": {
+    "country_name": "Brunei",
+    "municipality": "Seria",
+    "name": "Anduki Airport"
+  },
   "KUC": {
     "country_name": "Kiribati",
     "municipality": "Kuria",
@@ -23457,7 +23477,7 @@
   "MEM": {
     "country_name": "United States",
     "municipality": "Memphis",
-    "name": "Memphis International Airport"
+    "name": "Frederick W. Smith International Airport"
   },
   "MEN": {
     "country_name": "France",
@@ -24932,7 +24952,7 @@
   "MQT": {
     "country_name": "United States",
     "municipality": "Gwinn",
-    "name": "Marquette/Sawyer International Airport"
+    "name": "Marquette Sawyer Regional Airport"
   },
   "MQU": {
     "country_name": "Colombia",
@@ -26839,6 +26859,11 @@
     "municipality": "Mexico City",
     "name": "Felipe Ángeles International Airport"
   },
+  "NLV": {
+    "country_name": "Ukraine",
+    "municipality": "Mykolaiv",
+    "name": "Mykolaiv International Airport [CLOSED]"
+  },
   "NMA": {
     "country_name": "Uzbekistan",
     "municipality": "Namangan",
@@ -27338,11 +27363,6 @@
     "country_name": "Australia",
     "municipality": "Normanton",
     "name": "Normanton Airport"
-  },
-  "NTO": {
-    "country_name": "Cape Verde",
-    "municipality": "Ponta do Sol",
-    "name": "Agostinho Neto Airport"
   },
   "NTQ": {
     "country_name": "Japan",
@@ -29318,11 +29338,6 @@
     "country_name": "Bhutan",
     "municipality": "Paro",
     "name": "Paro International Airport"
-  },
-  "PBI": {
-    "country_name": "United States",
-    "municipality": "West Palm Beach",
-    "name": "President Donald J. Trump International Airport"
   },
   "PBJ": {
     "country_name": "Vanuatu",
@@ -34462,7 +34477,7 @@
   "SJC": {
     "country_name": "United States",
     "municipality": "San Jose",
-    "name": "Norman Y. Mineta San Jose International Airport"
+    "name": "Mineta San Jose International Airport"
   },
   "SJD": {
     "country_name": "Mexico",
@@ -36187,7 +36202,7 @@
   "SXR": {
     "country_name": "India",
     "municipality": "Srinagar",
-    "name": "Sheikh ul Alam International Airport"
+    "name": "Srinagar International Airport"
   },
   "SXS": {
     "country_name": "Malaysia",
@@ -38456,8 +38471,8 @@
   },
   "TSY": {
     "country_name": "Indonesia",
-    "municipality": "Tasikmalaya-Java Island",
-    "name": "Cibeureum Airport"
+    "municipality": "Cibeureum, Tasikmalaya-Java Island",
+    "name": "Wiriadinata Airport"
   },
   "TSZ": {
     "country_name": "Mongolia",
@@ -38523,6 +38538,11 @@
     "country_name": "United States",
     "municipality": "Britton",
     "name": "Britton Municipal Airport"
+  },
+  "TTQ": {
+    "country_name": "Costa Rica",
+    "municipality": "Tortuguero",
+    "name": "Tortuguero Airport"
   },
   "TTR": {
     "country_name": "Indonesia",
@@ -40752,7 +40772,7 @@
   "VTZ": {
     "country_name": "India",
     "municipality": "Visakhapatnam",
-    "name": "Visakhapatnam International Airport"
+    "name": "Alluri Sitarama Raju International Airport (Vizag)"
   },
   "VUP": {
     "country_name": "Colombia",
@@ -42428,11 +42448,6 @@
     "country_name": "United States",
     "municipality": "Williston",
     "name": "Williston Basin International Airport"
-  },
-  "XXX": {
-    "country_name": "Turkey",
-    "municipality": "Serik",
-    "name": "Serik Bus Station Helipad"
   },
   "XYA": {
     "country_name": "Solomon Islands",
@@ -44717,7 +44732,7 @@
   "ZAT": {
     "country_name": "China",
     "municipality": "Zhaotong",
-    "name": "Zhaotong Zhaoyang Airport （Not fully opened)"
+    "name": "Zhaotong Zhaoyang Airport"
   },
   "ZAZ": {
     "country_name": "Spain",

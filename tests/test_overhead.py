@@ -7,10 +7,10 @@ import pytest
 # ---------------------------------------------------------------------------
 # Shared helpers (in overhead_utilities)
 # ---------------------------------------------------------------------------
-from scenes.flight.lookups.providers.tar1090.flights import (
+from utilities.lookups.providers.tar1090.flights import (
     FlightProvider as Tar1090FlightProvider,
 )
-from scenes.flight.lookups.providers.tar1090.flights import _to_observation
+from utilities.lookups.providers.tar1090.flights import _to_observation
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,
@@ -80,6 +80,50 @@ class TestAirportInfo:
 
     def test_empty_string(self):
         assert airport_info("") == {}
+
+
+class TestAirportLookupToggle:
+    """The airport_lookup_full toggle selects the bundled table.
+
+    The opt-in airports-full.json adds FAA/local-code keys (0I8, 98KY)
+    for US municipal airports and hospital heliports.  Both files ship
+    in assets/; tests exercise the real ones.
+    """
+
+    @pytest.fixture
+    def lookup(self, monkeypatch):
+        from utilities import overhead_utilities as oh
+
+        def use(filename):
+            monkeypatch.setattr(oh, "_selected_airports_filename", lambda: filename)
+            oh.reset_airports_cache()
+
+        yield use
+        # Restore the default table for whichever test runs next.
+        oh.reset_airports_cache()
+
+    def test_default_table_has_no_local_codes(self, lookup):
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
+        assert airport_info("98KY") == {}
+
+    def test_full_table_resolves_local_codes(self, lookup):
+        lookup("airports-full.json")
+        info = airport_info("0I8")
+        assert info["name"] == "Cynthiana-Harrison County Airport"
+        assert airport_info("98KY")["municipality"] == "Corbin"
+
+    def test_full_table_keeps_iata_entries(self, lookup):
+        lookup("airports-full.json")
+        assert airport_name("GLA") != ""
+
+    def test_toggle_switches_tables(self, lookup):
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
+        lookup("airports-full.json")
+        assert airport_info("0I8") != {}
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
 
 
 class TestAirportName:
@@ -180,7 +224,7 @@ class TestTar1090Fetch:
 
     @pytest.fixture
     def query(self):
-        from scenes.flight.lookups.results import FlightQuery
+        from utilities.lookups.results import FlightQuery
 
         return FlightQuery(
             zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},

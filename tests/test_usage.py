@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def isolated_usage(tmp_path, monkeypatch):
     """Redirect the usage db to a temp file and reset the in-memory state."""
-    import scenes.flight.lookups.usage as ru
+    import utilities.lookups.usage as ru
 
     monkeypatch.setattr(ru, "DB_PATH", tmp_path / "usage.sqlite3")
     monkeypatch.setattr(ru, "_conn", None)
@@ -24,7 +24,7 @@ def isolated_usage(tmp_path, monkeypatch):
 @pytest.fixture()
 def isolated_cache(tmp_path, monkeypatch):
     """Redirect the lookup cache db to a temp file (independence tests)."""
-    import scenes.flight.lookups.cache as rc
+    import utilities.lookups.cache as rc
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")

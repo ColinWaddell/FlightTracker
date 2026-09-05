@@ -18,7 +18,15 @@ from scenes.flight.callsign_bar import (
 from scenes.flight.flight_scene import callsigns_match, telemetry_changed
 from scenes.flight.journey import make_label
 from scenes.flight.journey.full_label import FullNameLabel, abbreviate
-from scenes.flight.journey.short_label import ShortCodeLabel
+from scenes.flight.journey.short_label import (
+    _ARROW_TIP_OFFSET,
+    _ARROW_WIDTH,
+    _ARROW_WIDTH_SMALL,
+    _DEST_OFFSET,
+    ShortCodeLabel,
+    _code_font,
+    _display_code,
+)
 from utilities.flight import Flight
 
 # ---------------------------------------------------------------------------
@@ -490,6 +498,130 @@ class TestShortCodeLabel:
         # First draw_text call should be at x=17 (the text_x_origin)
         first_call_args = panel.draw_text.call_args_list[0]
         assert first_call_args[0][2] == 17  # x argument position
+
+
+class TestShortCodeFontSelection:
+    """4-char codes (ICAO / FAA local) drop to the compact font.
+
+    Plan: 4-char airport codes - D3/D4 decisions.  If EITHER end of the
+    journey is 4 characters, both ends render compact so the pair looks
+    even.
+    """
+
+    base, base_bold, compact = object(), object(), object()
+
+    def test_three_char_home_uses_bold(self):
+        assert (
+            _code_font(True, False, self.base, self.base_bold, self.compact)
+            is self.base_bold
+        )
+
+    def test_three_char_non_home_uses_base(self):
+        assert (
+            _code_font(False, False, self.base, self.base_bold, self.compact)
+            is self.base
+        )
+
+    def test_pair_compact_forces_compact(self):
+        assert (
+            _code_font(True, True, self.base, self.base_bold, self.compact)
+            is self.compact
+        )
+        assert (
+            _code_font(False, True, self.base, self.base_bold, self.compact)
+            is self.compact
+        )
+
+    def test_display_code_keeps_three_and_four_chars(self):
+        assert _display_code("GLA") == "GLA"
+        assert _display_code("98KY") == "98KY"
+
+    def test_display_code_truncates_longer_codes(self):
+        # >4-char local codes are administrative numbering; truncate.
+        assert _display_code("SP0002") == "SP00"
+
+    def test_blank_filler_untouched(self):
+        assert _display_code("???") == "???"
+
+    def _draw(self, origin, destination, text_x_origin=1, icon_required=False):
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 24
+        label = ShortCodeLabel(panel)
+        label.draw(
+            canvas,
+            Flight(origin=origin, destination=destination),
+            text_x_origin,
+            63 if text_x_origin == 1 else 47,
+            icon_required=icon_required,
+        )
+        return [call.args[1] for call in panel.draw_text.call_args_list]
+
+    def test_draw_font_matrix_no_logo(self):
+        from setup import fonts
+
+        # (origin, destination): if either is 4-char, both render compact.
+        cases = {
+            ("GLA", "LHR"): [fonts.large, fonts.large],
+            ("GLA", "98KY"): [fonts.regular, fonts.regular],
+            ("98KY", "LHR"): [fonts.regular, fonts.regular],
+            ("98KY", "0I8"): [fonts.regular, fonts.regular],
+        }
+        for (origin, destination), expected in cases.items():
+            assert (
+                self._draw(origin, destination) == expected
+            ), f"{origin}->{destination}"
+
+    def test_draw_font_matrix_with_logo(self):
+        from setup import fonts
+
+        assert self._draw("GLA", "LHR", text_x_origin=17, icon_required=True) == [
+            fonts.medium,
+            fonts.medium,
+        ]
+        assert self._draw("98KY", "0I8", text_x_origin=17, icon_required=True) == [
+            fonts.small,
+            fonts.small,
+        ]
+
+
+class TestShortCodeGeometry:
+    """Real font metrics: 4-char codes must clear arrow and panel edge.
+
+    Panel is 64px wide; no-icon text starts at x=1 (origin x1, arrow
+    columns x29-x32, destination x40); icon-mode text starts at x=17
+    (origin x17, arrow x39-x41, destination x44).
+    """
+
+    def test_four_char_no_icon_clears_arrow_and_panel(self):
+        from setup import fonts
+
+        w = fonts.regular.text_width("98KY")
+        assert w == 24  # identical footprint to 3 x 8px
+        assert 1 + w <= 1 + _ARROW_TIP_OFFSET - _ARROW_WIDTH
+        assert 1 + _DEST_OFFSET + w <= 64
+
+    def test_three_char_no_icon_unchanged(self):
+        from setup import fonts
+
+        w = fonts.large.text_width("GLA")
+        assert w == 24
+        assert 1 + _DEST_OFFSET + w <= 64
+
+    def test_four_char_icon_clears_arrow_and_panel(self):
+        from setup import fonts
+
+        w = fonts.small.text_width("98KY")
+        assert w == 20  # identical footprint to 3 x 7px
+        assert 17 + w <= 17 + 25 - _ARROW_WIDTH_SMALL
+        assert 17 + 27 + w <= 64
+
+    def test_mixed_pair_compact_sizes_fit(self):
+        # In a mixed pair the 3-char side also renders compact, so it is
+        # strictly narrower than the 4-char worst case already covered.
+        from setup import fonts
+
+        assert fonts.regular.text_width("GLA") <= fonts.regular.text_width("98KY")
+        assert fonts.small.text_width("GLA") <= fonts.small.text_width("98KY")
 
 
 # ---------------------------------------------------------------------------

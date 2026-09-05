@@ -12,7 +12,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def isolated_cache(tmp_path, monkeypatch):
     """Redirect the cache to a temp database (and legacy JSON source)."""
-    import scenes.flight.lookups.cache as rc
+    import utilities.lookups.cache as rc
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
     monkeypatch.setattr(rc, "LEGACY_JSON_PATH", tmp_path / "routes_cache.json")
@@ -627,7 +627,7 @@ class TestConfiguredTtl:
 
 class TestTtlForSource:
     def test_route_reads_hours_and_clamps(self, monkeypatch):
-        import scenes.flight.lookups.cache as rc
+        import utilities.lookups.cache as rc
         import setup.configuration as configuration
 
         for hours, expected in ((0, 1), (5, 5), (49, 48)):
@@ -644,7 +644,7 @@ class TestTtlForSource:
             assert rc.ttl_for(rc.KIND_ROUTE) == expected * 3600
 
     def test_aircraft_reads_days_and_clamps(self, monkeypatch):
-        import scenes.flight.lookups.cache as rc
+        import utilities.lookups.cache as rc
         import setup.configuration as configuration
 
         for days, expected in ((0, 1), (7, 7), (55, 30)):

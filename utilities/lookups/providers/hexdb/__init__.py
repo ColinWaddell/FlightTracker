@@ -1,0 +1,10 @@
+"""
+HexDB provider package.
+
+Capabilities: routes (callsign airport-pair) and aircraft
+(type/registration/operator/owner by mode-s hex).  Free, no API key.
+"""
+
+from __future__ import annotations
+
+from utilities.lookups.providers.hexdb.config import PROVIDER  # noqa: F401
