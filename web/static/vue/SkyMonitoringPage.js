@@ -183,8 +183,8 @@ export default defineComponent({
         <label class="form-check-label" for="airport_lookup_full">Include local airport codes</label>
         <div class="form-text text-muted small">
           Also look up FAA/local airport codes (e.g. 0I8, 98KY) so small municipal
-          airports and hospital heliports show a name instead of "Unknown". Uses a
-          larger bundled table; off by default.
+          airports and hospital heliports are shown. This will increase RAM usage by
+          a few MB.
         </div>
       </div>
     </div>
