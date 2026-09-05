@@ -1194,7 +1194,7 @@ class Config:
     @property
     def schedule_brightness_percent(self) -> int:
         """Map 0-5 schedule brightness to 0-100 percent (0 = screen off)."""
-        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_schedule_brightness, 0)
+        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_schedule_brightness, 60)
 
     def advanced_brightness_percent_at(self, now: time | None = None) -> int | None:
         """Panel percent for the advanced schedule entry active at *now*.
@@ -1215,7 +1215,7 @@ class Config:
                 active = entry
             else:
                 break
-        return BRIGHTNESS_LEVEL_PERCENT.get(active["brightness"], 0)
+        return BRIGHTNESS_LEVEL_PERCENT.get(active["brightness"], 60)
 
     def active_advanced_entry(self, now: time | None = None) -> dict[str, Any] | None:
         """The advanced schedule entry active at *now*, or None.
