@@ -190,6 +190,15 @@ class TestParseSettingsFormProviders:
         out = parse_settings_form({}, cfg)
         assert out["provider_usage_logging"] is False
 
+    def test_airport_lookup_full_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"airport_lookup_full": "on"}, cfg)
+        assert out["airport_lookup_full"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["airport_lookup_full"] is False
+
     def test_legacy_data_source_key_not_produced(self):
         from web.app import parse_settings_form
 
