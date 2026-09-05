@@ -64,7 +64,7 @@ export default defineComponent({
                  value="advanced" autocomplete="off"
                  v-model="store.config.brightness_mode" />
           <label class="btn btn-outline-primary btn-sm" for="brightness_mode_advanced">
-            <i class="bi bi-sliders me-1"></i>Advanced
+            <i class="bi bi-sliders me-1"></i>Fine-tune
           </label>
         </div>
       </div>
