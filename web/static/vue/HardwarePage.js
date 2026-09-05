@@ -337,7 +337,7 @@ export default defineComponent({
     </div>
 
     <!-- ====== Web-Interface ====== -->
-    <div id="group-hardware" class="card mb-3 p-3">
+    <div id="group-web-interface" class="card mb-3 p-3">
       <p class="section-heading"><i class="bi bi-filetype-html me-2"></i>Web Interface</p>
 
       <div class="mb-2 form-check">

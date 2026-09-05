@@ -108,6 +108,7 @@ export const SIDEBAR_GROUPS = [
     items: [
       { section: "group-display", icon: "bi-pip", label: "Display" },
       { section: "group-hardware", icon: "bi-motherboard", label: "Hardware" },
+      { section: "group-web-interface", icon: "bi-filetype-html", label: "Web Interface" },
       { section: "group-defaults", icon: "bi-rulers", label: "Defaults" },
     ],
   },
