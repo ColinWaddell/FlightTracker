@@ -129,11 +129,13 @@ def build_display_class():
         def update_brightness(self):
             cfg = Config.instance()
             if cfg.is_in_brightness_schedule():
-                self.panel.set_brightness(cfg.schedule_brightness_percent)
-                if cfg.schedule_brightness_percent == 0:
-                    self.panel.clear(self.canvas)
+                if self.panel.get_brightness() != cfg.schedule_brightness_percent:
+                    self.panel.set_brightness(cfg.schedule_brightness_percent)
+                    if cfg.schedule_brightness_percent == 0:
+                        self.panel.clear(self.canvas)
             else:
-                self.panel.set_brightness(cfg.brightness_percent)
+                if self.panel.get_brightness() != cfg.brightness_percent:
+                    self.panel.set_brightness(cfg.brightness_percent)
 
         def run(self):
             print("Press CTRL-C to stop")

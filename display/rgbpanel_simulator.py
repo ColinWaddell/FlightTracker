@@ -206,6 +206,9 @@ class SimulatorPanel(RGBPanel):
     def set_brightness(self, percent):
         self._brightness = max(0, min(100, percent))
 
+    def get_brightness(self):
+        return self._brightness
+
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
         _draw_square(canvas, x0, y0, x1, y1, colour)
 
