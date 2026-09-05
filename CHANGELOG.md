@@ -4,6 +4,14 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- 4-character airport codes (ICAO / FAA local, e.g. 98KY) now render in the
+  short-code journey label using a smaller font with an identical footprint,
+  instead of overdrawn arrows and clipped characters; codes longer than four
+  characters are truncated, and 4-character home codes render unbolded
+
 ## [v2.10.0] - 2026-09-01
 
 ### Changed
