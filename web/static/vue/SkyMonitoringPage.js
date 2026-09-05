@@ -150,7 +150,7 @@ export default defineComponent({
         <hr />
         
         <h5>Home Airport</h5>
-        <input type="text" maxlength="3" class="form-control form-control-sm"
+        <input type="text" maxlength="6" class="form-control form-control-sm"
                name="home_airport_code" id="home_airport_code"
                :value="store.config.home_airport_code"
                @input="store.config.home_airport_code = $event.target.value.toUpperCase()"
@@ -172,6 +172,20 @@ export default defineComponent({
                v-model="store.config.journey_blank_filler"
                style="max-width:120px" />
         <div class="form-text text-muted small mt-1">Code to be displayed when no airport information is available.</div>
+      </div>
+
+      <hr />
+
+      <h5>Extended Airport Lookup</h5>
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="airport_lookup_full" id="airport_lookup_full"
+               v-model="store.config.airport_lookup_full" />
+        <label class="form-check-label" for="airport_lookup_full">Include local airport codes</label>
+        <div class="form-text text-muted small">
+          Also look up FAA/local airport codes (e.g. 0I8, 98KY) so small municipal
+          airports and hospital heliports show a name instead of "Unknown". Uses a
+          larger bundled table; off by default.
+        </div>
       </div>
     </div>
 

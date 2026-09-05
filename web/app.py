@@ -483,6 +483,7 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         "journey_blank_filler": str_val(form.get("journey_blank_filler"), " ? "),
         "show_airline_icon": bool_val(form.get("show_airline_icon")),
+        "airport_lookup_full": bool_val(form.get("airport_lookup_full")),
         # Plane info row
         "details": int_val(form.get("details"), 0),
         "details_custom_template": str_val(

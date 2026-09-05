@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Optional extended airport lookup (`airport_lookup_full` in config.json):
   FAA/local-code keys (0I8, 98KY) for US municipal airports and hospital
-  heliports, so their names resolve instead of showing "Unknown"
+  heliports, so their names resolve instead of showing "Unknown". Toggle:
+  Settings → Sky Monitoring → Extended Airport Lookup
 
 ### Changed
 - 4-character airport codes (ICAO / FAA local, e.g. 98KY) now render in the
