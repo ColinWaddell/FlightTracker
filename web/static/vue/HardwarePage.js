@@ -145,8 +145,7 @@ export default defineComponent({
         <hr class="my-3" />
         <h5>Brightness Schedule</h5>
         <div class="form-text text-muted small mb-2">
-          Set the brightness for different times of day. Each entry holds until the next one;
-          the last entry holds overnight until the first. A brightness of <code>0</code> puts
+          Fine-tune the display brightness at different times of day. A brightness of <code>0</code> puts
           the device in stand-by and stops polling of data-sources.
         </div>
 
