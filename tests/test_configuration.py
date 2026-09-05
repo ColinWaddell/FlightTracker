@@ -289,6 +289,12 @@ class TestMigrateConfig:
         data = migrate_config(mod)
         assert data["home_airport_code"] == "GLI"
 
+    def test_journey_code_selected_keeps_four_char_codes(self):
+        # FAA local codes (98KY) must survive the legacy migration
+        mod = self._make_legacy_module(JOURNEY_CODE_SELECTED="98ky")
+        data = migrate_config(mod)
+        assert data["home_airport_code"] == "98KY"
+
     def test_simple_renames(self):
         mod = self._make_legacy_module(
             GPIO_SLOWDOWN=4,
