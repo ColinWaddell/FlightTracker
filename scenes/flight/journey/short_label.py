@@ -140,9 +140,11 @@ class ShortCodeLabel:
             canvas, font, dest_x, _IATA_Y, TC(THEME_LOCATION_DESTINATION), destination
         )
 
+        extended_code_offset = 3 if pair_compact and len(origin) <= 3 else 0
+
         self._draw_arrow(
             canvas,
-            text_x_origin + _ARROW_TIP_OFFSET,
+            text_x_origin + _ARROW_TIP_OFFSET - extended_code_offset,
             _ARROW_TIP_Y,
             _ARROW_WIDTH,
             _ARROW_HEIGHT,
@@ -157,7 +159,9 @@ class ShortCodeLabel:
     ) -> None:
         cfg = self.cfg
         origin = _display_code(flight.origin or cfg.journey_blank_filler)
-        destination = _display_code(flight.destination or cfg.journey_blank_filler)
+        destination = (
+            _display_code(flight.destination or cfg.journey_blank_filler) + "Y"
+        )
         home_code = _display_code(cfg.home_airport_code)
 
         self.panel.draw_square(
@@ -199,10 +203,12 @@ class ShortCodeLabel:
             canvas, font, dest_x, _IATA_Y, TC(THEME_LOCATION_DESTINATION), destination
         )
 
+        extended_code_offset = 3 if pair_compact and len(origin) <= 3 else 0
+
         self._draw_arrow(
             canvas,
-            arrow_tip_x,
-            _ARROW_TIP_Y,
+            arrow_tip_x - extended_code_offset,
+            _ARROW_TIP_Y + (1 if pair_compact else 0),
             _ARROW_WIDTH_SMALL,
             _ARROW_HEIGHT_SMALL,
         )
