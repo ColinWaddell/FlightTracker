@@ -115,6 +115,11 @@ class RGBPanel(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_brightness(self):
+        """Get matrix brightness (0-100)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
         """Draw a filled rectangle from (x0, y0) to (x1, y1)."""
         raise NotImplementedError

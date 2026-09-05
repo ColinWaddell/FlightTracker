@@ -17,6 +17,12 @@ from utilities.sun_times import (
     time_to_mins,
 )
 
+
+def _t(hour: int, minute: int) -> time:
+    """Shorthand for building time objects in schedule tests."""
+    return time(hour=hour, minute=minute)
+
+
 # ---------------------------------------------------------------------------
 # _next_backup_path
 # ---------------------------------------------------------------------------
@@ -470,6 +476,42 @@ class TestColourTheme:
         assert cfg.colour_theme == 2
 
 
+class TestBrightnessMode:
+    def test_default_value(self):
+        from setup.configuration import DEFAULT_BRIGHTNESS_MODE, Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.brightness_mode == DEFAULT_BRIGHTNESS_MODE
+
+    def test_valid_modes(self):
+        from setup.configuration import Config
+
+        for mode in ("simple", "advanced"):
+            cfg = Config.__new__(Config)
+            cfg.data_store = {"brightness_mode": mode}
+            assert cfg.brightness_mode == mode
+
+    def test_invalid_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"brightness_mode": "bogus"}
+        assert cfg.brightness_mode == "simple"
+
+    def test_case_insensitive(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"brightness_mode": "ADVANCED"}
+        assert cfg.brightness_mode == "advanced"
+
+    def test_default_in_defaults(self):
+        from setup.configuration import DEFAULT_BRIGHTNESS_MODE, DEFAULTS
+
+        assert DEFAULTS["brightness_mode"] == DEFAULT_BRIGHTNESS_MODE
+
+
 # ---------------------------------------------------------------------------
 # loading_indicator property
 # ---------------------------------------------------------------------------
@@ -700,3 +742,235 @@ class TestDetailsCustomTemplate:
         from setup.configuration import DEFAULT_DETAILS_CUSTOM_TEMPLATE, DEFAULTS
 
         assert DEFAULTS["details_custom_template"] == DEFAULT_DETAILS_CUSTOM_TEMPLATE
+
+
+# ---------------------------------------------------------------------------
+# screen_schedule_advanced property + normalisation
+# ---------------------------------------------------------------------------
+
+
+class TestScreenScheduleAdvanced:
+    def test_default_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.screen_schedule_advanced == []
+
+    def test_valid_entries_sorted(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "screen_schedule_advanced": [
+                {"time": "17:00", "brightness": 5},
+                {"time": "08:00", "brightness": 2},
+            ]
+        }
+        assert cfg.screen_schedule_advanced == [
+            {"time": "08:00", "brightness": 2},
+            {"time": "17:00", "brightness": 5},
+        ]
+
+    def test_invalid_entries_dropped(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "screen_schedule_advanced": [
+                {"time": "08:00", "brightness": 2},
+                {"time": "bogus", "brightness": 3},
+                {"time": "", "brightness": 3},
+                {"time": None, "brightness": 3},
+                "junk",
+                {"time": "09:00", "brightness": "nope"},
+                {"brightness": 4},
+            ]
+        }
+        assert cfg.screen_schedule_advanced == [{"time": "08:00", "brightness": 2}]
+
+    def test_brightness_clamped(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "screen_schedule_advanced": [
+                {"time": "08:00", "brightness": 99},
+                {"time": "09:00", "brightness": -3},
+            ]
+        }
+        assert cfg.screen_schedule_advanced == [
+            {"time": "08:00", "brightness": 5},
+            {"time": "09:00", "brightness": 0},
+        ]
+
+    def test_duplicate_times_last_wins(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "screen_schedule_advanced": [
+                {"time": "08:00", "brightness": 2},
+                {"time": "08:00", "brightness": 4},
+            ]
+        }
+        assert cfg.screen_schedule_advanced == [{"time": "08:00", "brightness": 4}]
+
+    def test_non_list_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"screen_schedule_advanced": "not a list"}
+        assert cfg.screen_schedule_advanced == []
+
+    def test_default_in_defaults(self):
+        from setup.configuration import DEFAULT_SCREEN_SCHEDULE_ADVANCED, DEFAULTS
+
+        assert DEFAULTS["screen_schedule_advanced"] == DEFAULT_SCREEN_SCHEDULE_ADVANCED
+
+    def test_normalise_sorts_and_dedupes(self):
+        from setup.configuration import _normalise_advanced_schedule
+
+        data = {
+            "screen_schedule_advanced": [
+                {"time": "17:00", "brightness": 5},
+                {"time": "8:00", "brightness": 2},
+                {"time": "13:00", "brightness": 3},
+                {"time": "13:00", "brightness": 1},
+                {"time": "bogus", "brightness": 4},
+            ]
+        }
+        assert _normalise_advanced_schedule(data) is True
+        assert data["screen_schedule_advanced"] == [
+            {"time": "08:00", "brightness": 2},
+            {"time": "13:00", "brightness": 1},
+            {"time": "17:00", "brightness": 5},
+        ]
+
+    def test_normalise_idempotent(self):
+        from setup.configuration import _normalise_advanced_schedule
+
+        data = {"screen_schedule_advanced": [{"time": "07:00", "brightness": 5}]}
+        assert _normalise_advanced_schedule(data) is False
+        assert _normalise_advanced_schedule(data) is False
+
+    def test_normalise_non_list(self):
+        from setup.configuration import _normalise_advanced_schedule
+
+        data = {"screen_schedule_advanced": "nope"}
+        assert _normalise_advanced_schedule(data) is True
+        assert data["screen_schedule_advanced"] == []
+
+    def test_normalise_absent_key_no_change(self):
+        from setup.configuration import _normalise_advanced_schedule
+
+        data = {}
+        assert _normalise_advanced_schedule(data) is False
+        assert "screen_schedule_advanced" not in data
+
+    def test_parse_schedule_time(self):
+        from setup.configuration import _parse_schedule_time
+
+        assert _parse_schedule_time("08:30").strftime("%H:%M") == "08:30"
+        assert _parse_schedule_time(" 22:05 ").strftime("%H:%M") == "22:05"
+        assert _parse_schedule_time("bogus") is None
+        assert _parse_schedule_time("") is None
+        assert _parse_schedule_time(None) is None
+        assert _parse_schedule_time(25) is None
+
+
+class TestAdvancedBrightnessPercentAt:
+    """Tests for the advanced schedule's active-entry lookup."""
+
+    ENTRIES = [
+        {"time": "08:00", "brightness": 2},
+        {"time": "13:00", "brightness": 5},
+        {"time": "22:00", "brightness": 0},
+    ]
+
+    def _cfg(self, entries, mode="advanced"):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "brightness_mode": mode,
+            "screen_schedule_advanced": entries,
+        }
+        return cfg
+
+    def test_empty_schedule_returns_none(self):
+        cfg = self._cfg([])
+        assert cfg.advanced_brightness_percent_at(_t(10, 0)) is None
+        assert cfg.active_advanced_entry(_t(10, 0)) is None
+
+    def test_before_first_entry_wraps_to_last(self):
+        cfg = self._cfg(self.ENTRIES)
+        # 07:59 is before 08:00, so the last entry (22:00) still holds.
+        assert cfg.advanced_brightness_percent_at(_t(7, 59)) == 0
+        assert cfg.active_advanced_entry(_t(7, 59)) == {
+            "time": "22:00",
+            "brightness": 0,
+        }
+
+    def test_boundary_is_start_inclusive(self):
+        cfg = self._cfg(self.ENTRIES)
+        assert cfg.advanced_brightness_percent_at(_t(8, 0)) == 40
+        assert cfg.advanced_brightness_percent_at(_t(13, 0)) == 100
+        assert cfg.advanced_brightness_percent_at(_t(22, 0)) == 0
+
+    def test_between_entries(self):
+        cfg = self._cfg(self.ENTRIES)
+        assert cfg.advanced_brightness_percent_at(_t(12, 59)) == 40
+        assert cfg.advanced_brightness_percent_at(_t(21, 59)) == 100
+
+    def test_midnight_uses_last_entry(self):
+        cfg = self._cfg(self.ENTRIES)
+        assert cfg.advanced_brightness_percent_at(_t(0, 0)) == 0
+        assert cfg.advanced_brightness_percent_at(_t(23, 59)) == 0
+
+    def test_single_entry_always_active(self):
+        cfg = self._cfg([{"time": "12:00", "brightness": 3}])
+        assert cfg.advanced_brightness_percent_at(_t(0, 0)) == 60
+        assert cfg.advanced_brightness_percent_at(_t(23, 59)) == 60
+
+    def test_defaults_to_now(self):
+        cfg = self._cfg(self.ENTRIES)
+        # No injected time - must not raise and must return a percent.
+        assert cfg.advanced_brightness_percent_at() in (0, 20, 40, 60, 80, 100)
+
+
+class TestIsInDeviceStandbyAdvanced:
+    """Standby semantics for the advanced brightness schedule."""
+
+    def _cfg(self, entries, mode="advanced"):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {
+            "brightness_mode": mode,
+            "screen_schedule_advanced": entries,
+        }
+        return cfg
+
+    def test_zero_entry_is_standby(self):
+        cfg = self._cfg([{"time": "22:00", "brightness": 0}])
+        assert cfg.is_in_device_standby() is True
+
+    def test_nonzero_entry_not_standby(self):
+        cfg = self._cfg([{"time": "22:00", "brightness": 3}])
+        assert cfg.is_in_device_standby() is False
+
+    def test_empty_schedule_not_standby(self):
+        cfg = self._cfg([])
+        assert cfg.is_in_device_standby() is False
+
+    def test_simple_mode_unchanged(self):
+        cfg = self._cfg([], mode="simple")
+        cfg.data_store["screen_schedule_enabled"] = False
+        assert cfg.is_in_device_standby() is False
+
+        cfg.data_store["screen_schedule_enabled"] = True
+        cfg.data_store["screen_schedule_start"] = "00:00"
+        cfg.data_store["screen_schedule_end"] = "00:00"
+        cfg.data_store["screen_schedule_brightness"] = 0
+        assert cfg.is_in_device_standby() is True

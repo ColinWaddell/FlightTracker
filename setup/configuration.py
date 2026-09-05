@@ -84,6 +84,7 @@ DEFAULT_WEATHER_REFRESH_MINUTES = 5  # how often (minutes) to re-fetch weather d
 
 # Display
 DEFAULT_COLOUR_THEME = 0  # 0 = Default, 1 = Monochrome, 2 = Pastel, 3 = Classic (v1)
+DEFAULT_BRIGHTNESS_MODE = "simple"  # "simple" or "advanced"
 DEFAULT_SCREEN_BRIGHTNESS = 3  # 1-5
 DEFAULT_SCREEN_ROTATE = False
 DEFAULT_DISPLAY_SPEED = "default"  # default / slower / faster
@@ -104,6 +105,12 @@ DEFAULT_SCREEN_SCHEDULE_AUTO = False
 DEFAULT_SCREEN_SCHEDULE_START = "22:00"
 DEFAULT_SCREEN_SCHEDULE_END = "07:00"
 DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
+# Advanced mode: ordered list of {"time": "HH:MM", "brightness": 0-5} pairs.
+# Each entry holds until the next; the last holds overnight until the first.
+DEFAULT_SCREEN_SCHEDULE_ADVANCED: list[dict[str, Any]] = []
+
+# Map a 0-5 brightness level to a panel brightness percent (0 = screen off).
+BRIGHTNESS_LEVEL_PERCENT = {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}
 
 # Clock / date
 DEFAULT_CLOCK_24HR = True
@@ -222,6 +229,7 @@ DEFAULTS: dict[str, Any] = {
     "colour_theme": DEFAULT_COLOUR_THEME,
     # Per-theme configuration (nested dict)
     "theme": DEFAULT_THEME,
+    "brightness_mode": DEFAULT_BRIGHTNESS_MODE,
     "screen_brightness": DEFAULT_SCREEN_BRIGHTNESS,
     "screen_rotate": DEFAULT_SCREEN_ROTATE,
     "display_speed": DEFAULT_DISPLAY_SPEED,
@@ -232,6 +240,7 @@ DEFAULTS: dict[str, Any] = {
     "screen_schedule_start": DEFAULT_SCREEN_SCHEDULE_START,
     "screen_schedule_end": DEFAULT_SCREEN_SCHEDULE_END,
     "screen_schedule_brightness": DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS,
+    "screen_schedule_advanced": DEFAULT_SCREEN_SCHEDULE_ADVANCED,
     # Clock / date
     "clock_24hr": DEFAULT_CLOCK_24HR,
     "date_format": DEFAULT_DATE_FORMAT,
@@ -310,6 +319,7 @@ from utilities.sun_times import (  # noqa: E402
     approx_sunrise_sunset,
     parse_time,
     time_in_window,
+    time_to_mins,
 )
 
 
@@ -499,6 +509,59 @@ def _normalise_longitudes(data: dict[str, Any]) -> bool:
         except (TypeError, ValueError):
             pass
     return changed
+
+
+def _parse_schedule_time(value: Any) -> time | None:
+    """Parse an ``HH:MM`` string, returning None when it is not valid.
+
+    Unlike :func:`utilities.sun_times.parse_time` this never raises and
+    never falls back to a default - an invalid time means "drop the
+    entry", not "use midnight".
+    """
+    try:
+        return datetime.strptime(str(value).strip(), "%H:%M").time()
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
+def _normalise_advanced_schedule(data: dict[str, Any]) -> bool:
+    """Validate and normalise the advanced brightness schedule in-place.
+
+    ``screen_schedule_advanced`` is an ordered list of
+    ``{"time": "HH:MM", "brightness": 0-5}`` pairs.  Entries with an
+    invalid time or out-of-range brightness are dropped, duplicate times
+    keep the last occurrence, and the list is sorted ascending by time.
+
+    Returns True if the stored list was changed.
+    """
+    raw = data.get("screen_schedule_advanced")
+    if not isinstance(raw, list):
+        if raw is None:
+            return False
+        data["screen_schedule_advanced"] = []
+        return True
+
+    cleaned: dict[int, dict[str, Any]] = {}
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        t = _parse_schedule_time(entry.get("time"))
+        if t is None:
+            continue
+        try:
+            brightness = max(0, min(5, int(entry.get("brightness", 0))))
+        except (TypeError, ValueError):
+            continue
+        cleaned[time_to_mins(t)] = {
+            "time": t.strftime("%H:%M"),
+            "brightness": brightness,
+        }
+
+    ordered = [cleaned[m] for m in sorted(cleaned)]
+    if ordered != raw:
+        data["screen_schedule_advanced"] = ordered
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -737,6 +800,10 @@ class Config:
                 if _normalise_longitudes(self.data_store):
                     self.save()
 
+                # Validate/normalise the advanced brightness schedule.
+                if _normalise_advanced_schedule(self.data_store):
+                    self.save()
+
                 return
             except Exception as exc:
                 print(f"[config] Failed to read config.json: {exc}", file=sys.stderr)
@@ -745,6 +812,7 @@ class Config:
             mod = import_legacy(LEGACY_PATH)
             self.data_store = migrate_config(mod)
             _normalise_longitudes(self.data_store)
+            _normalise_advanced_schedule(self.data_store)
             _migrate_provider_lists(self.data_store, self.data_store)
             self.save()
             return
@@ -1006,6 +1074,13 @@ class Config:
         return merged
 
     @property
+    def brightness_mode(self) -> str:
+        val = str(
+            self.data_store.get("brightness_mode", DEFAULT_BRIGHTNESS_MODE)
+        ).lower()
+        return val if val in ("simple", "advanced") else DEFAULT_BRIGHTNESS_MODE
+
+    @property
     def screen_brightness(self) -> int:
         return max(
             1,
@@ -1020,7 +1095,7 @@ class Config:
     @property
     def brightness_percent(self) -> int:
         """Map 1-5 brightness setting to 0-100 percent for rgbmatrix."""
-        return {1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(self.screen_brightness, 60)
+        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_brightness, 60)
 
     @property
     def panel_colour_order(self) -> str:
@@ -1097,11 +1172,81 @@ class Config:
         )
 
     @property
+    def screen_schedule_advanced(self) -> list[dict[str, Any]]:
+        """Advanced brightness schedule: ordered {"time", "brightness"} pairs.
+
+        Each entry holds until the next; the last holds overnight until
+        the first.  Invalid entries are dropped, duplicate times keep the
+        last occurrence, and the list is sorted ascending by time.
+        """
+        raw = self.data_store.get(
+            "screen_schedule_advanced", DEFAULT_SCREEN_SCHEDULE_ADVANCED
+        )
+        if not isinstance(raw, list):
+            return []
+
+        cleaned: dict[int, dict[str, Any]] = {}
+        for entry in raw:
+            if not isinstance(entry, dict):
+                continue
+            t = _parse_schedule_time(entry.get("time"))
+            if t is None:
+                continue
+            try:
+                brightness = max(0, min(5, int(entry.get("brightness", 0))))
+            except (TypeError, ValueError):
+                continue
+            cleaned[time_to_mins(t)] = {
+                "time": t.strftime("%H:%M"),
+                "brightness": brightness,
+            }
+        return [cleaned[m] for m in sorted(cleaned)]
+
+    @property
     def schedule_brightness_percent(self) -> int:
         """Map 0-5 schedule brightness to 0-100 percent (0 = screen off)."""
-        return {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(
-            self.screen_schedule_brightness, 0
-        )
+        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_schedule_brightness, 60)
+
+    def advanced_brightness_percent_at(self, now: time | None = None) -> int | None:
+        """Panel percent for the advanced schedule entry active at *now*.
+
+        An entry applies from its time until the next entry's time
+        (start-inclusive, end-exclusive); the last entry holds overnight
+        until the first.  Returns None when the schedule has no entries.
+        """
+        entries = self.screen_schedule_advanced
+        if not entries:
+            return None
+        if now is None:
+            now = datetime.now().time()
+        now_mins = time_to_mins(now)
+        active = entries[-1]
+        for entry in entries:
+            if time_to_mins(_parse_schedule_time(entry["time"])) <= now_mins:
+                active = entry
+            else:
+                break
+        return BRIGHTNESS_LEVEL_PERCENT.get(active["brightness"], 60)
+
+    def active_advanced_entry(self, now: time | None = None) -> dict[str, Any] | None:
+        """The advanced schedule entry active at *now*, or None.
+
+        Same lookup as :meth:`advanced_brightness_percent_at` but returns
+        the raw entry (for display in the web UI).
+        """
+        entries = self.screen_schedule_advanced
+        if not entries:
+            return None
+        if now is None:
+            now = datetime.now().time()
+        now_mins = time_to_mins(now)
+        active = entries[-1]
+        for entry in entries:
+            if time_to_mins(_parse_schedule_time(entry["time"])) <= now_mins:
+                active = entry
+            else:
+                break
+        return dict(active)
 
     def is_in_brightness_schedule(self) -> bool:
         """True if the current time falls within the configured brightness schedule."""
@@ -1109,6 +1254,11 @@ class Config:
         return self.screen_schedule_enabled and time_in_window(start, end)
 
     def is_in_device_standby(self) -> bool:
+        if self.brightness_mode == "advanced":
+            # Advanced schedule: standby when the active entry is 0.  An
+            # empty schedule means "no schedule" rather than standby.
+            return self.advanced_brightness_percent_at() == 0
+
         if not self.screen_schedule_enabled:
             return False
 
@@ -1123,7 +1273,6 @@ class Config:
         The schedule dims the screen at night, so the window runs from the
         dim-start time to the brighten time.  In auto mode that is
         (sunset, sunrise); in manual mode it is the user-configured times.
-        Returns (00:00, 00:00) when the schedule is disabled.
         """
         if self.screen_schedule_auto:
             lat = round(self.observer_lat, 4)

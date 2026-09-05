@@ -120,6 +120,9 @@ class RGBMatrixPanel(RGBPanel):
         self.matrix.brightness = percent
         self._brightness = percent
 
+    def get_brightness(self):
+        return self._brightness
+
     def draw_square(self, canvas, x0, y0, x1, y1, colour):
         c = self._to_color(colour)
         for x in range(x0, x1):

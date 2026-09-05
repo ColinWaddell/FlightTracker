@@ -230,6 +230,56 @@ class TestParseSettingsFormProviders:
         assert "osn_client_secret" not in out
         assert "aerodatabox_api_key" not in out
 
+    def test_brightness_mode_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"brightness_mode": "advanced"}, cfg)
+        assert out["brightness_mode"] == "advanced"
+        out = parse_settings_form({"brightness_mode": "BOGUS"}, cfg)
+        assert out["brightness_mode"] == "simple"
+        out = parse_settings_form({}, cfg)
+        assert out["brightness_mode"] == "simple"
+
+    def test_schedule_advanced_valid_payload(self):
+        from web.app import parse_settings_form
+
+        payload = json.dumps(
+            [
+                {"time": "17:00", "brightness": 5},
+                {"time": "08:00", "brightness": 2},
+                {"time": "08:00", "brightness": 1},
+                {"time": "bogus", "brightness": 3},
+            ]
+        )
+        out = parse_settings_form(
+            {"screen_schedule_advanced_json": payload}, self._cfg()
+        )
+        assert out["screen_schedule_advanced"] == [
+            {"time": "08:00", "brightness": 1},
+            {"time": "17:00", "brightness": 5},
+        ]
+
+    def test_schedule_advanced_malformed_ignored(self):
+        from web.app import parse_settings_form
+
+        out = parse_settings_form(
+            {"screen_schedule_advanced_json": "{not json"}, self._cfg()
+        )
+        assert "screen_schedule_advanced" not in out
+
+    def test_schedule_advanced_absent_ignored(self):
+        from web.app import parse_settings_form
+
+        out = parse_settings_form({}, self._cfg())
+        assert "screen_schedule_advanced" not in out
+
+    def test_schedule_advanced_empty_list(self):
+        from web.app import parse_settings_form
+
+        out = parse_settings_form({"screen_schedule_advanced_json": "[]"}, self._cfg())
+        assert out["screen_schedule_advanced"] == []
+
 
 # ---------------------------------------------------------------------------
 # /debug-config redaction
