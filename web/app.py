@@ -950,6 +950,7 @@ def _settings_page_data(
         "in_schedule": cfg.is_in_brightness_schedule(),
         "schedule_window": schedule_window,
         "schedule_window_json": sw_json,
+        "schedule_advanced_active": cfg.active_advanced_entry(),
         "current_version": version_string(VERSION),
         "active_page": "settings",
         "providers_meta": provider_ui["providers_meta"],

@@ -128,14 +128,33 @@ def build_display_class():
 
         def update_brightness(self):
             cfg = Config.instance()
-            if cfg.is_in_brightness_schedule():
-                if self.panel.get_brightness() != cfg.schedule_brightness_percent:
-                    self.panel.set_brightness(cfg.schedule_brightness_percent)
-                    if cfg.schedule_brightness_percent == 0:
+
+            def brightness_schedule_simple():
+                if cfg.is_in_brightness_schedule():
+                    if self.panel.get_brightness() != cfg.schedule_brightness_percent:
+                        self.panel.set_brightness(cfg.schedule_brightness_percent)
+                        if cfg.schedule_brightness_percent == 0:
+                            self.panel.clear(self.canvas)
+                else:
+                    if self.panel.get_brightness() != cfg.brightness_percent:
+                        self.panel.set_brightness(cfg.brightness_percent)
+
+            def brightness_schedule_advanced():
+                percent = cfg.advanced_brightness_percent_at()
+                if percent is None:
+                    # No schedule entries - behave like "not in schedule".
+                    if self.panel.get_brightness() != cfg.brightness_percent:
+                        self.panel.set_brightness(cfg.brightness_percent)
+                    return
+                if self.panel.get_brightness() != percent:
+                    self.panel.set_brightness(percent)
+                    if percent == 0:
                         self.panel.clear(self.canvas)
+
+            if cfg.brightness_mode == "advanced":
+                brightness_schedule_advanced()
             else:
-                if self.panel.get_brightness() != cfg.brightness_percent:
-                    self.panel.set_brightness(cfg.brightness_percent)
+                brightness_schedule_simple()
 
         def run(self):
             print("Press CTRL-C to stop")

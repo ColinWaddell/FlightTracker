@@ -106,6 +106,9 @@ DEFAULT_SCREEN_SCHEDULE_BRIGHTNESS = 0
 # Each entry holds until the next; the last holds overnight until the first.
 DEFAULT_SCREEN_SCHEDULE_ADVANCED: list[dict[str, Any]] = []
 
+# Map a 0-5 brightness level to a panel brightness percent (0 = screen off).
+BRIGHTNESS_LEVEL_PERCENT = {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}
+
 # Clock / date
 DEFAULT_CLOCK_24HR = True
 DEFAULT_DATE_FORMAT = 0  # 0 = YYYY-MM-DD, 1 = DD-MM-YYYY, 2 = MM-DD-YYYY
@@ -1081,7 +1084,7 @@ class Config:
     @property
     def brightness_percent(self) -> int:
         """Map 1-5 brightness setting to 0-100 percent for rgbmatrix."""
-        return {1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(self.screen_brightness, 60)
+        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_brightness, 60)
 
     @property
     def panel_colour_order(self) -> str:
@@ -1191,9 +1194,48 @@ class Config:
     @property
     def schedule_brightness_percent(self) -> int:
         """Map 0-5 schedule brightness to 0-100 percent (0 = screen off)."""
-        return {0: 0, 1: 20, 2: 40, 3: 60, 4: 80, 5: 100}.get(
-            self.screen_schedule_brightness, 0
-        )
+        return BRIGHTNESS_LEVEL_PERCENT.get(self.screen_schedule_brightness, 0)
+
+    def advanced_brightness_percent_at(self, now: time | None = None) -> int | None:
+        """Panel percent for the advanced schedule entry active at *now*.
+
+        An entry applies from its time until the next entry's time
+        (start-inclusive, end-exclusive); the last entry holds overnight
+        until the first.  Returns None when the schedule has no entries.
+        """
+        entries = self.screen_schedule_advanced
+        if not entries:
+            return None
+        if now is None:
+            now = datetime.now().time()
+        now_mins = time_to_mins(now)
+        active = entries[-1]
+        for entry in entries:
+            if time_to_mins(_parse_schedule_time(entry["time"])) <= now_mins:
+                active = entry
+            else:
+                break
+        return BRIGHTNESS_LEVEL_PERCENT.get(active["brightness"], 0)
+
+    def active_advanced_entry(self, now: time | None = None) -> dict[str, Any] | None:
+        """The advanced schedule entry active at *now*, or None.
+
+        Same lookup as :meth:`advanced_brightness_percent_at` but returns
+        the raw entry (for display in the web UI).
+        """
+        entries = self.screen_schedule_advanced
+        if not entries:
+            return None
+        if now is None:
+            now = datetime.now().time()
+        now_mins = time_to_mins(now)
+        active = entries[-1]
+        for entry in entries:
+            if time_to_mins(_parse_schedule_time(entry["time"])) <= now_mins:
+                active = entry
+            else:
+                break
+        return dict(active)
 
     def is_in_brightness_schedule(self) -> bool:
         """True if the current time falls within the configured brightness schedule."""
@@ -1201,6 +1243,11 @@ class Config:
         return self.screen_schedule_enabled and time_in_window(start, end)
 
     def is_in_device_standby(self) -> bool:
+        if self.brightness_mode == "advanced":
+            # Advanced schedule: standby when the active entry is 0.  An
+            # empty schedule means "no schedule" rather than standby.
+            return self.advanced_brightness_percent_at() == 0
+
         if not self.screen_schedule_enabled:
             return False
 
@@ -1215,7 +1262,6 @@ class Config:
         The schedule dims the screen at night, so the window runs from the
         dim-start time to the brighten time.  In auto mode that is
         (sunset, sunrise); in manual mode it is the user-configured times.
-        Returns (00:00, 00:00) when the schedule is disabled.
         """
         if self.screen_schedule_auto:
             lat = round(self.observer_lat, 4)

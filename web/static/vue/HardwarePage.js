@@ -149,6 +149,13 @@ export default defineComponent({
           the device in stand-by and stops polling of data-sources.
         </div>
 
+        <div v-if="store.ui.scheduleAdvancedActive" class="alert alert-warning small mt-2 mb-2 py-2">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          The brightness schedule is currently active - showing
+          {{ store.formatTime(store.ui.scheduleAdvancedActive.time) }}
+          &rarr; {{ store.ui.scheduleAdvancedActive.brightness }}.
+        </div>
+
         <div class="table-responsive">
           <table class="table table-sm align-middle mb-2" style="max-width:420px">
             <thead class="table-light">

@@ -152,6 +152,7 @@ export function createStore(initialConfig, pageData) {
     currentVersion: pageData.currentVersion || "",
     inSchedule: pageData.inSchedule || false,
     scheduleWindow: pageData.scheduleWindow || [null, null],
+    scheduleAdvancedActive: pageData.scheduleAdvancedActive || null,
     csrfToken: pageData.csrfToken || "",
     staticUrls: pageData.staticUrls || {},
     symbolImages: pageData.symbolImages || {},
