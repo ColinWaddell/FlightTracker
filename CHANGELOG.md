@@ -4,7 +4,12 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.11.0] - 2026-09-05
+
+### Added
+- Optional extended airport lookup (`airport_lookup_full` in config.json):
+  FAA/local-code keys (0I8, 98KY) for US municipal airports and hospital
+  heliports, so their names resolve instead of showing "Unknown"
 
 ### Changed
 - 4-character airport codes (ICAO / FAA local, e.g. 98KY) now render in the
@@ -13,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   journey is four characters both ends render at the compact size so the
   pair looks even; codes longer than four characters are truncated, and
   4-character home codes render unbolded
+- Regenerated the bundled airport tables from the current ourairports.com CSV
 
 ## [v2.10.0] - 2026-09-01
 

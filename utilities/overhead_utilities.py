@@ -126,19 +126,37 @@ _airports_cache: dict[str, dict] = {}
 _airports_loaded = False
 
 
+def _selected_airports_filename() -> str:
+    """Pick the lookup table file from config.
+
+    Lazily imported: setup.configuration resolves its data paths at
+    import time and this module must stay import-light.
+    """
+    from setup.configuration import Config
+
+    full = bool(Config.instance().airport_lookup_full)
+    return "airports-full.json" if full else "airports.json"
+
+
 def _load_airports():
     global _airports_cache, _airports_loaded
     if _airports_loaded:
         return
     _airports_loaded = True
-    path = Path(__file__).parent.parent / "assets" / "airports.json"
-    if path.exists():
-        try:
-            with open(path, encoding="utf-8") as file:
-                _airports_cache = json.load(file)
-        except Exception as e:
-            logger.warning("Failed to load airports.json: %s", e)
-            _airports_cache = {}
+    path = Path(__file__).parent.parent / "assets" / _selected_airports_filename()
+    try:
+        with open(path, encoding="utf-8") as file:
+            _airports_cache = json.load(file)
+    except Exception as e:
+        logger.warning("Failed to load %s: %s", path, e)
+        _airports_cache = {}
+
+
+def reset_airports_cache() -> None:
+    """Reset the airports.json cache (used by tests)."""
+    global _airports_cache, _airports_loaded
+    _airports_cache = {}
+    _airports_loaded = False
 
 
 def airport_info(iata: str) -> dict:

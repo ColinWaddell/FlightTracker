@@ -60,6 +60,9 @@ DEFAULT_JOURNEY_BLANK_FILLER = "???"
 DEFAULT_SHOW_AIRLINE_ICON = (
     True  # show 16x16 airline logo (from callsign prefix) at (0,0)
 )
+DEFAULT_AIRPORT_LOOKUP_FULL = (
+    False  # airports-full.json (IATA + FAA local codes) instead of airports.json
+)
 
 # Plane info row
 DEFAULT_DETAILS = 0  # 0 = plane make/model, 1 = telemetry, 2 = custom template
@@ -203,6 +206,7 @@ DEFAULTS: dict[str, Any] = {
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
     "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
+    "airport_lookup_full": DEFAULT_AIRPORT_LOOKUP_FULL,
     # Plane info row
     "details": DEFAULT_DETAILS,
     "details_custom_template": DEFAULT_DETAILS_CUSTOM_TEMPLATE,
@@ -439,7 +443,7 @@ def migrate_config(mod) -> dict[str, Any]:
     # JOURNEY_CODE_SELECTED -> home_airport_code
     jcs = get("JOURNEY_CODE_SELECTED")
     if jcs:
-        data["home_airport_code"] = str(jcs).strip().upper()[:3]
+        data["home_airport_code"] = str(jcs).strip().upper()[:6]
 
     print("[config] Migrated legacy config.py -> config.json", file=sys.stderr)
     return data
@@ -881,6 +885,13 @@ class Config:
     @property
     def show_airline_icon(self) -> bool:
         return bool(self.data_store.get("show_airline_icon", DEFAULT_SHOW_AIRLINE_ICON))
+
+    @property
+    def airport_lookup_full(self) -> bool:
+        """Use airports-full.json (IATA + FAA local codes) when True."""
+        return bool(
+            self.data_store.get("airport_lookup_full", DEFAULT_AIRPORT_LOOKUP_FULL)
+        )
 
     @property
     def details(self) -> int:

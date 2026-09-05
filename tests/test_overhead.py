@@ -82,6 +82,50 @@ class TestAirportInfo:
         assert airport_info("") == {}
 
 
+class TestAirportLookupToggle:
+    """The airport_lookup_full toggle selects the bundled table.
+
+    The opt-in airports-full.json adds FAA/local-code keys (0I8, 98KY)
+    for US municipal airports and hospital heliports.  Both files ship
+    in assets/; tests exercise the real ones.
+    """
+
+    @pytest.fixture
+    def lookup(self, monkeypatch):
+        from utilities import overhead_utilities as oh
+
+        def use(filename):
+            monkeypatch.setattr(oh, "_selected_airports_filename", lambda: filename)
+            oh.reset_airports_cache()
+
+        yield use
+        # Restore the default table for whichever test runs next.
+        oh.reset_airports_cache()
+
+    def test_default_table_has_no_local_codes(self, lookup):
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
+        assert airport_info("98KY") == {}
+
+    def test_full_table_resolves_local_codes(self, lookup):
+        lookup("airports-full.json")
+        info = airport_info("0I8")
+        assert info["name"] == "Cynthiana-Harrison County Airport"
+        assert airport_info("98KY")["municipality"] == "Corbin"
+
+    def test_full_table_keeps_iata_entries(self, lookup):
+        lookup("airports-full.json")
+        assert airport_name("GLA") != ""
+
+    def test_toggle_switches_tables(self, lookup):
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
+        lookup("airports-full.json")
+        assert airport_info("0I8") != {}
+        lookup("airports.json")
+        assert airport_info("0I8") == {}
+
+
 class TestAirportName:
     def test_returns_string(self):
         name = airport_name("GLA")
