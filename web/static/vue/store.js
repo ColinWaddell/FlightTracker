@@ -77,7 +77,7 @@ export const SIDEBAR_GROUPS = [
     route: "/sky-monitoring",
     items: [
       { section: "group-sky-monitoring", icon: "bi-geo-alt", label: "Location" },
-      { section: "group-airport-display", icon: "bi-airplane", label: "Airport Display" },
+      { section: "group-airport-display", icon: "bi-building", label: "Airport Display" },
       { section: "group-airline-info", icon: "bi-ticket-perforated", label: "Airline Info" },
       { section: "group-plane-info", icon: "bi-info-circle", label: "Plane Details" },
       { section: "group-satellite", icon: "bi-rocket-takeoff", label: "Satellite Tracking" },
