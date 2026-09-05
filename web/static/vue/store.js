@@ -197,17 +197,24 @@ export function createStore(initialConfig, pageData) {
 
   const addScheduleRow = () => {
     if (screenScheduleAdvanced.length >= MAX_SCHEDULE_ROWS) return;
-    // Pick the first free half-hour slot so a new row never collides.
+    // New rows default to 3 hours after the last scheduled entry (wrapping
+    // past midnight), nudging forward in 30-minute steps if that slot is
+    // already taken.  With no entries the first row starts at 00:00.
     const taken = new Set(
       screenScheduleAdvanced
         .map((r) => timeToMinutes(r.time))
         .filter((m) => m !== null)
     );
-    let slot = 0;
-    while (taken.has(slot) && slot < 24 * 60) slot += 30;
+    const lastValid = [...screenScheduleAdvanced]
+      .reverse()
+      .find((r) => timeToMinutes(r.time) !== null);
+    let slot = lastValid ? (timeToMinutes(lastValid.time) + 180) % (24 * 60) : 0;
+    for (let i = 0; i < 48 && taken.has(slot); i++) {
+      slot = (slot + 30) % (24 * 60);
+    }
     screenScheduleAdvanced.push({
       id: ++scheduleRowId,
-      time: minutesToTime(slot % 24 * 60),
+      time: minutesToTime(slot),
       brightness: 3,
     });
   };
@@ -260,13 +267,6 @@ export function createStore(initialConfig, pageData) {
     const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
     return `${h12}:${String(mins % 60).padStart(2, "0")} ${suffix}`;
   };
-
-  const scheduleAdvancedPreview = computed(() => {
-    const rows = screenScheduleAdvanced
-      .filter((row) => scheduleRowValid(row))
-      .map((row) => `${formatTime(row.time)} \u2192 ${row.brightness}`);
-    return rows.length ? rows.join(", ") : "";
-  });
 
   // -- Computed helpers --------------------------------------------------
 
@@ -451,8 +451,8 @@ export function createStore(initialConfig, pageData) {
     addScheduleRow,
     removeScheduleRow,
     resortSchedule,
+    scheduleRowValid,
     scheduleAdvancedJson,
-    scheduleAdvancedPreview,
     formatTime,
   });
 }

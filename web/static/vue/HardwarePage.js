@@ -207,10 +207,6 @@ export default defineComponent({
           <i class="bi bi-plus-lg me-1"></i>Add
         </button>
 
-        <div v-if="store.scheduleAdvancedPreview" class="form-text text-muted small mt-2">
-          <i class="bi bi-clock-history me-1"></i>{{ store.scheduleAdvancedPreview }}
-        </div>
-
         <input type="hidden" name="screen_schedule_advanced_json"
                :value="store.scheduleAdvancedJson()" />
       </div>
