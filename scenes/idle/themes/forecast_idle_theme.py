@@ -56,7 +56,7 @@ from utilities.sun_times import is_daytime
 LABEL_FONT = fonts.extrasmall  # 4x6
 LABEL_FONT_HEIGHT = 5  # pixel height of 4x6 glyphs
 
-ICON_POSITIONS_X = (4, 25, 46)  # x positions for 3 sprites on a 64px panel
+ICON_POSITIONS_X = (3, 24, 45)  # x positions for 3 sprites on a 64px panel
 # Sprite is 18px tall (12px icon + 6px animation).
 # Layout: top label (~5px) + sprite (18px) + bottom label (~5px) = 28px
 # within 32px panel -> 4px spare, split as 2px top margin + 2px bottom.
