@@ -4,8 +4,8 @@ Run from the assets directory; generates three files relative to the
 current working directory:
 
   airports.json                IATA-keyed lookup (the bundled default)
-  airports-full.json           IATA + FAA/local codes (opt-in via the
-                               ``airport_lookup_full`` config toggle)
+  airports-full.json           IATA + FAA/local + ICAO/gps codes (opt-in via
+                               the ``airport_lookup_full`` config toggle)
   airports_icao_to_iata.json   ICAO -> IATA display-code mapping
 """
 
@@ -49,15 +49,21 @@ def build_airports(rows: list[dict]) -> tuple[dict, dict, dict]:
 
     ``full``
         A copy of ``airports`` extended with FAA/local-code keys for
-        rows without an IATA code.  Local codes longer than four
-        characters are excluded: ICAO and FAA local codes are four at
-        most (0I8, 98KY), and the longer values in the CSV are
-        administrative numbering (mostly Brazil) that route services
-        never send as a display code.  IATA always wins a colliding
-        key - some countries' local codes coincide with real IATA
-        codes (a local "MAN", "PVG", ...) and must not shadow them.
-        Closed airports are skipped, and repeated local codes are
-        settled by the CSV's ``score`` column.
+        rows without an IATA code, plus the row's ICAO/gps code when
+        the airport has no IATA code.  Route services answer with
+        ICAO-style codes for such airports (KRGA), and without the key
+        the code survives the ICAO->IATA fallback as a bare code with
+        no name.  A row's ``icao_code`` is preferred over its
+        ``gps_code`` (the ICAO column is sparse, but authoritative
+        when present).  Codes longer than four characters are
+        excluded: ICAO and FAA local codes are four at most (0I8,
+        98KY), and the longer values in the CSV are administrative
+        numbering (mostly Brazil) that route services never send as a
+        display code.  IATA always wins a colliding key - some
+        countries' local codes coincide with real IATA codes (a local
+        "MAN", "PVG", ...) and must not shadow them.  Closed airports
+        are skipped, and repeated codes are settled by the CSV's
+        ``score`` column.
 
     ``ica0``
         ICAO -> IATA mapping for rows that have both codes.
@@ -75,18 +81,29 @@ def build_airports(rows: list[dict]) -> tuple[dict, dict, dict]:
                 ica0[icao] = iata
             airports[iata] = OVERRIDES.get(iata, _entry(row))
 
-    # Pass 2 - FAA/local codes for rows the IATA table does not cover.
+    # Pass 2 - FAA/local, ICAO and GPS codes for rows the IATA table
+    # does not cover.
     candidates: dict[str, tuple[float, dict]] = {}
+
+    def _offer(code: str, row: dict) -> None:
+        code = code.strip().upper()
+        if not code or len(code) > 4 or code in airports:
+            return
+        score = _score(row)
+        current = candidates.get(code)
+        if current is None or score > current[0]:
+            candidates[code] = (score, _entry(row))
+
     for row in rows:
         if row["type"] == "closed":
             continue
-        local = row["local_code"].strip().upper()
-        if not local or len(local) > 4 or local in airports:
-            continue
-        score = _score(row)
-        current = candidates.get(local)
-        if current is None or score > current[0]:
-            candidates[local] = (score, _entry(row))
+        _offer(row["local_code"], row)
+        # Airports without an IATA code are answered by route services
+        # with their ICAO-style code (KRGA), which the ICAO->IATA pass
+        # cannot rewrite; index the row's own ICAO/gps code so the full
+        # table can name it.
+        if not row["iata_code"].strip():
+            _offer(row["icao_code"] or row["gps_code"], row)
 
     full = dict(airports)
     full.update({code: entry for code, (_, entry) in candidates.items()})

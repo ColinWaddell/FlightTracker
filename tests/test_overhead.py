@@ -86,7 +86,8 @@ class TestAirportLookupToggle:
     """The airport_lookup_full toggle selects the bundled table.
 
     The opt-in airports-full.json adds FAA/local-code keys (0I8, 98KY)
-    for US municipal airports and hospital heliports.  Both files ship
+    for US municipal airports and hospital heliports, plus ICAO/gps
+    codes (KRGA) for airports without an IATA code.  Both files ship
     in assets/; tests exercise the real ones.
     """
 
@@ -112,6 +113,17 @@ class TestAirportLookupToggle:
         info = airport_info("0I8")
         assert info["name"] == "Cynthiana-Harrison County Airport"
         assert airport_info("98KY")["municipality"] == "Corbin"
+
+    def test_full_table_resolves_icao_style_codes(self, lookup):
+        # Central Kentucky Regional has no IATA code; OurAirports knows it
+        # only by its gps code (KRGA), which is what route services answer
+        # with.
+        lookup("airports-full.json")
+        info = airport_info("KRGA")
+        assert info["name"] == "Central Kentucky Regional Airport"
+        assert info["municipality"] == "Richmond"
+        lookup("airports.json")
+        assert airport_info("KRGA") == {}
 
     def test_full_table_keeps_iata_entries(self, lookup):
         lookup("airports-full.json")
