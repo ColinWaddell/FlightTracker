@@ -147,6 +147,22 @@ class TestAirportCommand:
         assert code == 0
         assert payload["airports"][0]["name"] == "Central Kentucky Regional Airport"
 
+    def test_extended_flag_resolves_icao_code(self, capsys, monkeypatch):
+        # --extended flips the table in memory; the saved setting is left
+        # alone (the hint test above proves the default stays airports.json).
+        from utilities import overhead_utilities as oh
+
+        oh.reset_airports_cache()
+        try:
+            code, payload, _ = run(capsys, "lookup", "airport", "KRGA", "--extended")
+        finally:
+            oh.reset_airports_cache()
+        assert code == 0
+        assert payload["table"] == "airports-full.json"
+        assert payload["airports"][0]["name"] == "Central Kentucky Regional Airport"
+        # No hint - the extended table was consulted.
+        assert "hint" not in payload
+
 
 # ---------------------------------------------------------------------------
 # lookup route
@@ -238,6 +254,26 @@ class TestRouteCommand:
         )
         run(capsys, "lookup", "route", "RYR215K", "--provider-route", "fr24")
         assert ("routes", "fr24") in forced
+
+    def test_extended_flag_flips_the_toggle_in_memory(self, capsys, fake_enrich, monkeypatch):
+        from setup.configuration import Config
+        from utilities import overhead_utilities as oh
+
+        class _StubConfig:
+            def __init__(self):
+                self.data = {}
+
+            def set(self, key, value):
+                self.data[key] = value
+
+        stub = _StubConfig()
+        monkeypatch.setattr(Config, "reload", classmethod(lambda cls: stub))
+        oh.reset_airports_cache()
+        try:
+            run(capsys, "lookup", "route", "RYR215K", "--extended")
+        finally:
+            oh.reset_airports_cache()
+        assert stub.data["airport_lookup_full"] is True
 
 
 # ---------------------------------------------------------------------------

@@ -171,6 +171,22 @@ def _config():
     return Config.reload()
 
 
+def _apply_extended_table(cfg, args: argparse.Namespace) -> None:
+    """--extended: use airports-full.json for this lookup (in memory only).
+
+    Flips the ``airport_lookup_full`` setting for the lifetime of the
+    command without saving it, and resets the airport-name cache so the
+    extended table is the one actually loaded.
+    """
+    if not getattr(args, "extended", False):
+        return
+    from utilities import overhead_utilities as oh
+
+    cfg.set("airport_lookup_full", True)
+    oh.reset_airports_cache()
+    logger.debug("airport table: forced to airports-full.json for this lookup")
+
+
 def _print(payload: dict) -> None:
     print(json.dumps(payload, indent=2, default=str))
 
@@ -198,6 +214,7 @@ def _run_location(args: argparse.Namespace) -> int:
     if args.callsign_format is not None:
         cfg.set("callsign_format", args.callsign_format)
     _apply_forcing(args)
+    _apply_extended_table(cfg, args)
 
     # Mirror Overhead.grab_data_impl: same query build, same fetch, same
     # per-aircraft conversion.  The loop is spelled out here (rather than
@@ -262,8 +279,9 @@ def _run_route(args: argparse.Namespace) -> int:
     from utilities.lookups import enrichment
     from utilities.lookups.results import FlightObservation
 
-    Config.reload()
+    cfg = Config.reload()
     _apply_forcing(args)
+    _apply_extended_table(cfg, args)
 
     callsign = args.callsign.strip().upper()
     mode_s = (args.hex or "").strip().lower()
@@ -388,6 +406,7 @@ def _run_airport(args: argparse.Namespace) -> int:
     from utilities.overhead_utilities import airport_info
 
     cfg = Config.reload()
+    _apply_extended_table(cfg, args)
     table = "airports-full.json" if cfg.airport_lookup_full else "airports.json"
     results = []
     for raw in args.codes:
@@ -517,6 +536,15 @@ def _add_loop_flags(sp: argparse.ArgumentParser) -> None:
     sp.add_argument("--limit", type=int, default=None, help="stop after N runs")
 
 
+def _add_extended_flag(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument(
+        "--extended",
+        action="store_true",
+        help="use the extended airport table (FAA local + ICAO/gps codes) "
+        "for this lookup, without saving the airport_lookup_full setting",
+    )
+
+
 def _add_common_flags(sp: argparse.ArgumentParser) -> None:
     sp.add_argument(
         "--fresh",
@@ -553,6 +581,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--callsign-format", choices=["icao", "iata"], help="default: config"
     )
     _add_provider_flags(sp, "flights", "routes", "aircraft")
+    _add_extended_flag(sp)
     _add_common_flags(sp)
     _add_loop_flags(sp)
     sp.set_defaults(handler=_run_location)
@@ -571,6 +600,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sp.add_argument("--lng", type=float, help="live-position hint")
     _add_provider_flags(sp, "routes", "aircraft")
+    _add_extended_flag(sp)
     _add_common_flags(sp)
     _add_loop_flags(sp)
     sp.set_defaults(handler=_run_route)
@@ -594,6 +624,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "airport", help="airport names from the bundled tables (no network)"
     )
     sp.add_argument("codes", nargs="+", metavar="CODE", help="IATA/local/ICAO code")
+    _add_extended_flag(sp)
     _add_common_flags(sp)
     sp.set_defaults(handler=_run_airport)
 
