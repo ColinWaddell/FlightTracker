@@ -127,3 +127,61 @@ class TestLocalCodePass:
         _, full, _ = builder.build_airports([row(local_code="  ab12 ")])
         assert "AB12" in full
         assert "ab12" not in full
+
+
+class TestIcaoGpsPass:
+    """ICAO/gps codes are indexed for airports the IATA table can't name.
+
+    Route services answer with the ICAO-style code for airports without
+    an IATA code (KRGA = Central Kentucky Regional), so the full table
+    must be reachable by that code too.
+    """
+
+    def test_gps_code_keyed_when_no_iata(self):
+        _, full, _ = builder.build_airports([row(gps_code="KRGA", local_code="RGA")])
+        assert "KRGA" in full
+        assert full["KRGA"]["name"] == "Cynthiana-Harrison County Airport"
+
+    def test_icao_code_preferred_over_gps(self):
+        _, full, _ = builder.build_airports(
+            [row(icao_code="KI39", gps_code="KRGA", local_code="")]
+        )
+        assert "KI39" in full
+        assert "KRGA" not in full
+
+    def test_iata_rows_do_not_contribute_icao_keys(self):
+        _, full, _ = builder.build_airports(
+            [row(iata_code="LEX", icao_code="KLEX", gps_code="KLEX", local_code="")]
+        )
+        assert "KLEX" not in full
+
+    def test_closed_airports_skip_gps_keys(self):
+        _, full, _ = builder.build_airports([row(type="closed", local_code="")])
+        assert "K0I8" not in full
+
+    def test_gps_codes_over_four_chars_excluded(self):
+        _, full, _ = builder.build_airports([row(gps_code="SP0002", local_code="")])
+        assert "SP0002" not in full
+        assert "SP00" not in full
+
+    def test_duplicate_gps_code_highest_score_wins(self):
+        _, full, _ = builder.build_airports(
+            [
+                row(name="Low Score Field", gps_code="KRGA", score="10"),
+                row(name="High Score Field", gps_code="KRGA", score="90"),
+            ]
+        )
+        assert full["KRGA"]["name"] == "High Score Field"
+
+    def test_gps_and_local_codes_settle_by_score(self):
+        _, full, _ = builder.build_airports(
+            [
+                row(name="Gps Row", gps_code="KZZZ", local_code="", score="10"),
+                row(name="Local Row", gps_code="", local_code="KZZZ", score="90"),
+            ]
+        )
+        assert full["KZZZ"]["name"] == "Local Row"
+
+    def test_empty_gps_code_not_keyed(self):
+        _, full, _ = builder.build_airports([row(gps_code="", local_code="")])
+        assert full == {}
