@@ -197,7 +197,7 @@ class TestRouteCommand:
         assert code == 0
         assert payload["callsign"] == "RYR215K"  # normalised to upper
         assert payload["route"]["destination"] == "DUB"
-        assert "iata_flight" in payload
+        assert payload["iata_flight"] == "FR215"
         assert fake_enrich["observation"].callsign == "RYR215K"
 
     def test_hex_reaches_the_observation(self, capsys, fake_enrich):
@@ -213,8 +213,9 @@ class TestRouteCommand:
         from utilities.lookups.results import RouteInfo
 
         monkeypatch.setattr(enrichment, "enrich", lambda obs: RouteInfo())
-        code, _, _ = run(capsys, "lookup", "route", "ZZZZZZ")
+        code, payload, _ = run(capsys, "lookup", "route", "ZZZZZZ")
         assert code == 1
+        assert payload["iata_flight"] == ""  # never null
 
     def test_fresh_drops_route_cache(self, capsys, fake_enrich, monkeypatch):
         from utilities.lookups import cache

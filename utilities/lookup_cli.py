@@ -313,7 +313,7 @@ def _run_route(args: argparse.Namespace) -> int:
 
     payload = {
         "callsign": callsign,
-        "iata_flight": icao_flight_to_iata(callsign),
+        "iata_flight": icao_flight_to_iata(callsign) or "",
         "fresh": bool(args.fresh),
         "route": dataclasses.asdict(result),
     }
