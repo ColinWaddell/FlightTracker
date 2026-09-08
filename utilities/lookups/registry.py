@@ -199,6 +199,46 @@ def specs_for_capability(capability: str) -> list[ProviderSpec]:
 
 
 # ---------------------------------------------------------------------------
+# Forced-provider overrides (CLI lookup commands only)
+#
+# Maps capability id -> provider id.  When set, resolve_chain returns an
+# adapter for exactly that provider, bypassing the user's priority list
+# and enabled/configured state: the lookup CLI wants a deterministic
+# single-provider probe, not the display's fallback behaviour.  Never set
+# by the display; the CLI clears the overrides when it exits.  Routes and
+# aircraft share one config list, so capability-keyed overrides are what
+# let the CLI force one without crippling the other.
+# ---------------------------------------------------------------------------
+
+_forced: dict[str, str] = {}
+
+
+def set_forced_provider(capability: str, pid: str) -> None:
+    """Pin *capability*'s provider chain to exactly *pid*.
+
+    Raises ValueError for an unknown provider id, or one that does not
+    implement *capability*, listing the valid ids.
+    """
+    spec = PROVIDERS.get(pid)
+    if spec is None or not spec.implements(capability):
+        valid = ", ".join(s.id for s in specs_for_capability(capability))
+        raise ValueError(
+            f"provider {pid!r} does not support {capability!r} (valid: {valid})"
+        )
+    _forced[capability] = pid
+
+
+def clear_forced_providers() -> None:
+    """Drop every forced-provider override (CLI exit / test teardown)."""
+    _forced.clear()
+
+
+def forced_provider(capability: str) -> str | None:
+    """The provider pinned for *capability*, or None."""
+    return _forced.get(capability)
+
+
+# ---------------------------------------------------------------------------
 # Configuration plumbing (imports Config lazily to avoid cycles)
 # ---------------------------------------------------------------------------
 
@@ -271,6 +311,17 @@ def resolve_chain(cfg, capability: str) -> list[tuple[str, object]]:
     memoised (see :func:`get_adapter`).
     """
     chain: list[tuple[str, object]] = []
+    forced = _forced.get(capability)
+    if forced is not None:
+        # CLI forcing: a single-provider probe.  Enabled/configured state
+        # is deliberately bypassed - an unconfigured forced provider is
+        # informative (its own "not configured" UNAVAILABLE answer), and
+        # the CLI warns about it up front.
+        spec = PROVIDERS[forced]
+        settings = load_config().provider_settings(forced)
+        adapter = get_adapter(capability, forced, settings)
+        return [(forced, adapter)] if adapter is not None else []
+
     for entry in getattr(cfg, _PRIORITY_LIST_ATTR[capability]):
         if not entry.get("enabled"):
             continue

@@ -7,8 +7,8 @@ import time
 from collections.abc import Sequence
 from dataclasses import asdict
 
-from utilities.lookups import cache as routes_cache
 from setup.configuration import CONFIG_PATH, DEFAULTS, Config
+from utilities.lookups import cache as routes_cache
 from utilities.tle_manager import TLE_CACHE_PATH, fetch_tle
 from version import VERSION
 
@@ -401,6 +401,13 @@ def _print_usage() -> None:
     print("  interface disable      Disable the web interface in the config")
     print("  test flights [--provider ID]  Test the flight provider chain")
     print("  test tle               Test TLE satellite lookup")
+    print(
+        "  lookup <target>        Manual lookups via the provider chains "
+        "(location, route,"
+    )
+    print(
+        "                         aircraft, callsign, airport, providers)"
+    )
     print("  help                   Show this help message")
     print("  --version              Print the program version")
     print()
@@ -460,6 +467,14 @@ def dispatch_cli_command(argv: Sequence[str]) -> int:
 
     if command == "config" and len(argv) >= 3 and argv[2].lower() == "set":
         return _config_set(argv[3:])
+
+    if command == "lookup":
+        from utilities import lookup_cli
+
+        if len(argv) == 2:
+            lookup_cli.print_help()
+            return 2
+        return lookup_cli.run(argv[2:])
 
     if command == "test" and len(argv) >= 3:
         target = argv[2].lower()
