@@ -838,6 +838,101 @@ class TestFr24RouteProvider:
         client.record_feed_miss.assert_not_called()
         client.clear_feed_miss.assert_not_called()
 
+    def test_qqq_origin_falls_back_to_icao_code(self, provider, client, monkeypatch):
+        """FR24 stamps QQQ when an airport has no IATA code (N63VG case);
+        the details ICAO (KMQJ) resolves in the bundled database, so the
+        ICAO is kept and the airport name fills from the bundled table."""
+        client.match_in_bubble.return_value = _feed_flight(
+            callsign="N63VG", origin="QQQ", dest="CTY"
+        )
+        client.flight_details.return_value = {
+            "airport": {
+                "origin": {"code": {"iata": "QQQ", "icao": "KMQJ"}},
+                "destination": {"code": {"iata": "CTY", "icao": "KCTY"}},
+            }
+        }
+        # KMQJ lives in the opt-in full airport table (no-IATA rows).
+        from utilities import overhead_utilities as oh
+
+        monkeypatch.setattr(
+            oh, "_selected_airports_filename", lambda: "airports-full.json"
+        )
+        oh.reset_airports_cache()
+        try:
+            result = provider.lookup_route(
+                LookupContext(callsign="N63VG", lat=37.0, lng=-84.7, ground_speed_mps=80)
+            )
+        finally:
+            oh.reset_airports_cache()
+
+        assert result.is_found
+        assert result.value.origin == "KMQJ"
+        assert result.value.origin_name == "Indianapolis Regional Airport"
+        assert result.value.destination == "CTY"
+
+    def test_qqq_falls_back_to_bundled_iata_when_known(self, provider, client):
+        """When the bundled ICAO->IATA table knows the details ICAO, the
+        converted IATA code is preferred over the raw ICAO."""
+        client.match_in_bubble.return_value = _feed_flight(origin="QQQ")
+        client.flight_details.return_value = {
+            "airport": {"origin": {"code": {"iata": "QQQ", "icao": "KCTY"}}}
+        }
+
+        result = provider.lookup_route(
+            LookupContext(callsign="BAW123", lat=55.0, lng=-4.0)
+        )
+
+        assert result.is_found
+        assert result.value.origin == "CTY"
+
+    def test_qqq_without_fallback_is_blanked(self, provider, client):
+        """No resolvable fallback: the filler slot is blanked (the display
+        falls back to journey_blank_filler) while the valid side stays."""
+        client.match_in_bubble.return_value = _feed_flight(origin="QQQ", dest="GLA")
+        client.flight_details.return_value = None
+
+        result = provider.lookup_route(
+            LookupContext(callsign="BAW123", lat=55.0, lng=-4.0)
+        )
+
+        assert result.is_found
+        assert result.value.origin == ""
+        assert result.value.origin_name == ""
+        assert result.value.destination == "GLA"
+
+    def test_qqq_destination_without_fallback_is_blanked(self, provider, client):
+        client.match_in_bubble.return_value = _feed_flight(origin="LHR", dest="QQQ")
+        client.flight_details.return_value = None
+
+        result = provider.lookup_route(
+            LookupContext(callsign="BAW123", lat=55.0, lng=-4.0)
+        )
+
+        assert result.is_found
+        assert result.value.origin == "LHR"
+        assert result.value.destination == ""
+
+    def test_all_qqq_without_fallback_is_not_found(self, provider, client):
+        client.match_in_bubble.return_value = _feed_flight(origin="QQQ", dest="QQQ")
+        client.flight_details.return_value = None
+
+        result = provider.lookup_route(
+            LookupContext(callsign="BAW123", lat=55.0, lng=-4.0)
+        )
+
+        assert result.is_not_found
+
+    def test_no_details_call_without_filler(self, provider, client):
+        """Clean routes must not trigger the (rate-limited) details API."""
+        client.match_in_bubble.return_value = _feed_flight()
+
+        result = provider.lookup_route(
+            LookupContext(callsign="BAW123", lat=55.0, lng=-4.0)
+        )
+
+        assert result.is_found
+        client.flight_details.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # FR24 aircraft provider (client mocked)
