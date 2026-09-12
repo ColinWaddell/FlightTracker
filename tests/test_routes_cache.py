@@ -627,8 +627,8 @@ class TestConfiguredTtl:
 
 class TestTtlForSource:
     def test_route_reads_hours_and_clamps(self, monkeypatch):
-        import utilities.lookups.cache as rc
         import setup.configuration as configuration
+        import utilities.lookups.cache as rc
 
         for hours, expected in ((0, 1), (5, 5), (49, 48)):
             stub = types.SimpleNamespace(cache_route_hours=hours, cache_aircraft_days=7)
@@ -644,8 +644,8 @@ class TestTtlForSource:
             assert rc.ttl_for(rc.KIND_ROUTE) == expected * 3600
 
     def test_aircraft_reads_days_and_clamps(self, monkeypatch):
-        import utilities.lookups.cache as rc
         import setup.configuration as configuration
+        import utilities.lookups.cache as rc
 
         for days, expected in ((0, 1), (7, 7), (55, 30)):
             stub = types.SimpleNamespace(cache_route_hours=2, cache_aircraft_days=days)

@@ -46,8 +46,8 @@ import sqlite3
 import threading
 import time
 
-from utilities.lookups import _sqlite
 from setup.configuration import PLATFORM_DATA_DIR
+from utilities.lookups import _sqlite
 
 logger = logging.getLogger(__name__)
 

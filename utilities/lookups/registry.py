@@ -142,9 +142,7 @@ _FACTORY_CLASS = {
 def _descriptor(pid: str) -> ProviderConfig:
     import importlib
 
-    return importlib.import_module(
-        f"utilities.lookups.providers.{pid}.config"
-    ).PROVIDER
+    return importlib.import_module(f"utilities.lookups.providers.{pid}.config").PROVIDER
 
 
 def _spec(pid: str) -> ProviderSpec:

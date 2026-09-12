@@ -405,9 +405,7 @@ def _print_usage() -> None:
         "  lookup <target>        Manual lookups via the provider chains "
         "(location, route,"
     )
-    print(
-        "                         aircraft, callsign, airport, providers)"
-    )
+    print("                         aircraft, callsign, airport, providers)")
     print("  help                   Show this help message")
     print("  --version              Print the program version")
     print()

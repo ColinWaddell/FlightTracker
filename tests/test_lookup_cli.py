@@ -256,7 +256,9 @@ class TestRouteCommand:
         run(capsys, "lookup", "route", "RYR215K", "--provider-route", "fr24")
         assert ("routes", "fr24") in forced
 
-    def test_extended_flag_flips_the_toggle_in_memory(self, capsys, fake_enrich, monkeypatch):
+    def test_extended_flag_flips_the_toggle_in_memory(
+        self, capsys, fake_enrich, monkeypatch
+    ):
         from setup.configuration import Config
         from utilities import overhead_utilities as oh
 
@@ -414,9 +416,7 @@ def fake_location(monkeypatch):
         state["fresh_keys"].append((list(keys), kind))
         return len(keys)
 
-    monkeypatch.setattr(
-        Config, "reload", classmethod(lambda cls: state["cfg"])
-    )
+    monkeypatch.setattr(Config, "reload", classmethod(lambda cls: state["cfg"]))
     monkeypatch.setattr(flights_module, "fetch_flights", fake_fetch)
     monkeypatch.setattr(Overhead, "_to_flight", fake_to_flight)
     monkeypatch.setattr(cache, "delete", fake_delete)
@@ -462,9 +462,7 @@ class TestLocationCommand:
         from utilities.lookups import flights as flights_module
         from utilities.lookups.flights import FlightFetchOutcome
 
-        monkeypatch.setattr(
-            Config, "reload", classmethod(lambda cls: _FakeConfig())
-        )
+        monkeypatch.setattr(Config, "reload", classmethod(lambda cls: _FakeConfig()))
 
         original = flights_module.fetch_flights
         flights_module.fetch_flights = lambda q: FlightFetchOutcome(

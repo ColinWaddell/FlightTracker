@@ -100,8 +100,8 @@ def _render_celestrack_test(panel, canvas, cfg: Config, y):
 
 
 def _render_data_source_test(panel, canvas, cfg: Config, y):
-    from utilities.lookups.flights import top_flight_provider
     from setup.colours import GREEN, GREY, RED
+    from utilities.lookups.flights import top_flight_provider
 
     pid, _name = top_flight_provider()
     label = {

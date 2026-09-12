@@ -358,7 +358,9 @@ def _run_aircraft(args: argparse.Namespace) -> int:
         want_plane=True,
     )
     info = aircraft_service.lookup_aircraft(ctx)
-    _print({"hex": mode_s, "fresh": bool(args.fresh), "aircraft": dataclasses.asdict(info)})
+    _print(
+        {"hex": mode_s, "fresh": bool(args.fresh), "aircraft": dataclasses.asdict(info)}
+    )
     return EXIT_OK if info else EXIT_NOT_FOUND
 
 
@@ -391,7 +393,9 @@ def _run_callsign(args: argparse.Namespace) -> int:
         "airline_name_known": bool(name),
     }
     _print(payload)
-    return EXIT_OK if (payload["iata_flight"] or iata_airline or name) else EXIT_NOT_FOUND
+    return (
+        EXIT_OK if (payload["iata_flight"] or iata_airline or name) else EXIT_NOT_FOUND
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -472,9 +476,7 @@ def _run_providers(args: argparse.Namespace) -> int:
                     "capability": capability,
                     "enabled": bool(entry.get("enabled")),
                     "implements": bool(spec and spec.implements(capability)),
-                    "configured": bool(
-                        spec and spec.config.is_configured(settings)
-                    ),
+                    "configured": bool(spec and spec.config.is_configured(settings)),
                     "quarantined": QUARANTINE.is_quarantined(pid),
                     "in_chain": pid in chains.get(capability, []),
                     "forced": forced_provider(capability) == pid,
@@ -586,9 +588,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_loop_flags(sp)
     sp.set_defaults(handler=_run_location)
 
-    sp = sub.add_parser(
-        "route", help="route + airline enrichment for one callsign"
-    )
+    sp = sub.add_parser("route", help="route + airline enrichment for one callsign")
     sp.add_argument("callsign", help="ICAO callsign, e.g. RYR215K")
     sp.add_argument(
         "--hex",

@@ -106,9 +106,9 @@ class Overhead:
     # ------------------------------------------------------------------
 
     def grab_data_impl(self):
+        from setup.configuration import Config
         from utilities.lookups import cache, enrichment, flights
         from utilities.lookups.results import FlightQuery
-        from setup.configuration import Config
 
         cfg = Config.instance()
         data = []
