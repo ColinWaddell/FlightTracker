@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2.11.1] - 2026-09-12
 
-- An optional extended list of airport look-ups to help cover small regional airports
+- Tweaks to the extended list
 - CLI tooling to help debug the chain of lookups 
 
 ## [v2.11.0] - 2026-09-05
