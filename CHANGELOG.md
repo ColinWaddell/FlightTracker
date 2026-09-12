@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v2.11.1] - 2026-09-12
+
+- An optional extended list of airport look-ups to help cover small regional airports
+- CLI tooling to help debug the chain of lookups 
+
 ## [v2.11.0] - 2026-09-05
 
 - Interface for a more fine-tuned timing schedule
