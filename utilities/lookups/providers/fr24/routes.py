@@ -15,11 +15,20 @@ from __future__ import annotations
 
 import logging
 
-from utilities.lookups.providers.common.airports import fill_airport_details
+from utilities.lookups.providers.common.airports import (
+    fill_airport_details,
+    icao_to_iata_code,
+)
 from utilities.lookups.providers.fr24.client import get_client
 from utilities.lookups.results import LookupResult, RouteInfo
 
 logger = logging.getLogger(__name__)
+
+# FR24 fills the IATA slot with a "QQQ" placeholder when an airport has no
+# IATA code (e.g. Indianapolis Regional, KMQJ).  Treat it as "no IATA data":
+# fall back to the ICAO side of FR24's flight details, or blank the slot so
+# the display falls back to ``journey_blank_filler``.
+Q_FILLER = "QQQ"
 
 
 class RouteProvider:
@@ -55,6 +64,8 @@ class RouteProvider:
         origin = (getattr(flight, "origin_airport_iata", "") or "").strip()
         destination = (getattr(flight, "destination_airport_iata", "") or "").strip()
 
+        origin, destination = _resolve_q_fillers(client, flight, origin, destination)
+
         if not origin and not destination:
             return LookupResult.not_found("FR24 flight has no route data")
 
@@ -70,3 +81,64 @@ class RouteProvider:
             "FR24 route for %r: %s->%s", callsign, route.origin, route.destination
         )
         return LookupResult.found(route)
+
+
+# ---------------------------------------------------------------------------
+# QQQ filler handling
+# ---------------------------------------------------------------------------
+
+
+def _is_q_filler(code: str) -> bool:
+    """True when FR24 used its "airport has no IATA code" filler."""
+    return (code or "").strip().upper() == Q_FILLER
+
+
+def _resolve_q_fillers(client, flight, origin: str, destination: str):
+    """Replace QQQ filler codes with resolvable fallbacks, else blank them.
+
+    FR24 stamps "QQQ" into the IATA slot for airports without an IATA
+    code.  Its clickhandler details still know the airport's ICAO code,
+    which converts through the bundled ICAO->IATA table when possible and
+    is otherwise used as-is when the bundled airports database can name
+    it.  Anything unresolvable is blanked so the display falls back to
+    ``journey_blank_filler``.  Flights with no filler codes never touch
+    the details API.
+    """
+    if not (_is_q_filler(origin) or _is_q_filler(destination)):
+        return origin, destination
+
+    details = client.flight_details(flight)
+    return _replace_filler(details, "origin", origin), _replace_filler(
+        details, "destination", destination
+    )
+
+
+def _replace_filler(details, side: str, code: str) -> str:
+    """A non-filler code passes through; a filler becomes its fallback."""
+    if not _is_q_filler(code):
+        return code
+    return _fallback_code(details, side)
+
+
+def _fallback_code(details, side: str) -> str:
+    """ICAO-based fallback for one QQQ filler slot, or "" when unresolvable."""
+    if not isinstance(details, dict):
+        return ""
+    airport = details.get("airport") or {}
+    block = airport.get(side) or {}
+    code_block = block.get("code") or {}
+    # A real IATA from the details beats the feed's filler.
+    iata_field = (code_block.get("iata") or "").strip().upper()
+    if iata_field and not _is_q_filler(iata_field):
+        return iata_field
+    icao = (code_block.get("icao") or "").strip().upper()
+    if not icao:
+        return ""
+    iata = icao_to_iata_code(icao)
+    if iata:
+        return iata
+    from utilities.overhead_utilities import airport_info
+
+    # Keep the ICAO only when the bundled database can name it (a bare
+    # K-stripped FAA LID is NOT safe: MQJ is Moma Airport, Russia).
+    return icao if airport_info(icao) else ""
