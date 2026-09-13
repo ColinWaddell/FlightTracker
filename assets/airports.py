@@ -1,12 +1,15 @@
 """Build the bundled airport lookup tables from ourairports.com.
 
-Run from the assets directory; generates three files relative to the
+Run from the assets directory; generates four files relative to the
 current working directory:
 
   airports.json                IATA-keyed lookup (the bundled default)
   airports-full.json           IATA + FAA/local + ICAO/gps codes (opt-in via
                                the ``airport_lookup_full`` config toggle)
   airports_icao_to_iata.json   ICAO -> IATA display-code mapping
+  airports_iata_to_icao.json   IATA -> ICAO display-code mapping (the
+                               reverse of the table above; used by the
+                               ICAO journey-code display option)
 """
 
 import csv
@@ -42,7 +45,7 @@ def _score(row: dict) -> float:
 def build_airports(rows: list[dict]) -> tuple[dict, dict, dict]:
     """Build the airport tables from ourairports CSV rows.
 
-    Returns ``(airports, full, ica0)``:
+    Returns ``(airports, full, ica0, iata0)``:
 
     ``airports``
         IATA-keyed entries - the historic bundled behaviour.
@@ -67,18 +70,25 @@ def build_airports(rows: list[dict]) -> tuple[dict, dict, dict]:
 
     ``ica0``
         ICAO -> IATA mapping for rows that have both codes.
+
+    ``iata0``
+        The reverse: IATA -> ICAO for the same rows.  Powers the
+        optional ICAO journey-code display, which converts the IATA
+        codes route services emit into their 4-letter ICAO form.
     """
     rows = list(rows)
 
     # Pass 1 - IATA-keyed entries (historic behaviour, unchanged).
     airports: dict = {}
     ica0: dict = {}
+    iata0: dict = {}
     for row in rows:
         iata = row["iata_code"].strip()
         if iata and len(iata) == 3:
             icao = row["icao_code"].strip()
             if icao:
                 ica0[icao] = iata
+                iata0[iata] = icao
             airports[iata] = OVERRIDES.get(iata, _entry(row))
 
     # Pass 2 - FAA/local, ICAO and GPS codes for rows the IATA table
@@ -108,7 +118,7 @@ def build_airports(rows: list[dict]) -> tuple[dict, dict, dict]:
     full = dict(airports)
     full.update({code: entry for code, (_, entry) in candidates.items()})
 
-    return airports, full, ica0
+    return airports, full, ica0, iata0
 
 
 def _write(path: str, data: dict) -> None:
@@ -119,10 +129,11 @@ def _write(path: str, data: dict) -> None:
 def main() -> None:
     with urllib.request.urlopen(url) as r:
         rows = list(csv.DictReader(line.decode("utf-8") for line in r))
-    airports, full, ica0 = build_airports(rows)
+    airports, full, ica0, iata0 = build_airports(rows)
     _write("airports.json", airports)
     _write("airports-full.json", full)
     _write("airports_icao_to_iata.json", ica0)
+    _write("airports_iata_to_icao.json", iata0)
 
 
 if __name__ == "__main__":

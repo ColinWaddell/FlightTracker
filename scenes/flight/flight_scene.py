@@ -144,6 +144,7 @@ class FlightScene:
         # Track route changes so the label can reset its scrollers.
         self.last_origin: str | None = None
         self.last_dest: str | None = None
+        self.last_code_format: str | None = None
 
         # Plane details state
         self.details_scroller: Scroller | None = None
@@ -266,6 +267,7 @@ class FlightScene:
         self.callsign_bar.reset()
         self.last_origin = None
         self.last_dest = None
+        self.last_code_format = None
 
         if self.details_scroller is not None:
             self.details_scroller.clear()
@@ -306,11 +308,17 @@ class FlightScene:
         destination = flight.destination
         cfg = Config.instance()
 
-        route_changed = origin != self.last_origin or destination != self.last_dest
+        code_format = cfg.airport_code_format
+        route_changed = (
+            origin != self.last_origin
+            or destination != self.last_dest
+            or code_format != self.last_code_format
+        )
         if route_changed:
             self.journey_label.reset()
             self.last_origin = origin
             self.last_dest = destination
+            self.last_code_format = code_format
         elif cfg.airport_display_style == 0:
             # No need to redraw journey when the route hasn't changed
             return

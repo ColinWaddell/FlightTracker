@@ -95614,6 +95614,11 @@
     "municipality": "New Hanover",
     "name": "New Hanover Airport"
   },
+  "FANI": {
+    "country_name": "South Africa",
+    "municipality": "",
+    "name": "N’tsiri Airstrip"
+  },
   "FANL": {
     "country_name": "South Africa",
     "municipality": "Witbank",
@@ -96024,15 +96029,15 @@
     "municipality": "Worcester",
     "name": "Worcester Glider Airport"
   },
-  "FAWD": {
-    "country_name": "South Africa",
-    "municipality": "Wolmeransstad",
-    "name": "Wolmeransstad Airport"
-  },
   "FAWE": {
     "country_name": "South Africa",
     "municipality": "",
     "name": "Welgevonden Reserve"
+  },
+  "FAWG": {
+    "country_name": "South Africa",
+    "municipality": "Kwelega",
+    "name": "Watts Landing Airport"
   },
   "FAWI": {
     "country_name": "South Africa",
@@ -105462,7 +105467,7 @@
   "HDJ": {
     "country_name": "Mexico",
     "municipality": "Ciudad Juárez",
-    "name": "Hospital Angeles Ciudad Juárez Heliport"
+    "name": "Angeles Hospital Helistop"
   },
   "HDK": {
     "country_name": "Maldives",
@@ -105522,7 +105527,7 @@
   "HDX": {
     "country_name": "Mexico",
     "municipality": "Cuauhtémoc",
-    "name": "Helipuerto Palacio de Hierro -Durango"
+    "name": "Palacio de Hierro Durango Heliport"
   },
   "HDY": {
     "country_name": "Thailand",
@@ -155369,6 +155374,16 @@
     "municipality": "Auorotini",
     "name": "Marutea Airport"
   },
+  "NTHB": {
+    "country_name": "French Polynesia",
+    "municipality": "Pago",
+    "name": "PAGO HELIPAD"
+  },
+  "NTHD": {
+    "country_name": "French Polynesia",
+    "municipality": "TAIOHAE",
+    "name": "TAIOHAE HELIPAD"
+  },
   "NTI": {
     "country_name": "Indonesia",
     "municipality": "Bintuni",
@@ -161361,7 +161376,7 @@
   },
   "ONO": {
     "country_name": "United States",
-    "municipality": "Oregon",
+    "municipality": "Ontario",
     "name": "Ontario Municipal Airport"
   },
   "ONP": {
@@ -194939,11 +194954,6 @@
     "municipality": "Nova Lima",
     "name": "Fazenda Haras RPC Airport"
   },
-  "SJQU": {
-    "country_name": "Brazil",
-    "municipality": "Formosa do Rio Preto",
-    "name": "Fazenda Formosa Airstrip"
-  },
   "SJQV": {
     "country_name": "Brazil",
     "municipality": "Novo Aripuanã",
@@ -198669,15 +198679,20 @@
     "municipality": "Friend",
     "name": "R J C Farms Inc Airport"
   },
+  "SN56": {
+    "country_name": "Brazil",
+    "municipality": "Cumaru do Norte",
+    "name": "Fazenda Sonho Meu Airport"
+  },
   "SN57": {
-    "country_name": "United States",
-    "municipality": "Ottawa",
-    "name": "Witham Airport"
+    "country_name": "Brazil",
+    "municipality": "Água Azul do Norte",
+    "name": "Grupo Barcelona Airport"
   },
   "SN58": {
-    "country_name": "United States",
-    "municipality": "El Dorado",
-    "name": "Foster Field"
+    "country_name": "Brazil",
+    "municipality": "Água Azul do Norte",
+    "name": "Fazenda Sol Nascente Airport"
   },
   "SN59": {
     "country_name": "United States",
@@ -204644,6 +204659,11 @@
     "municipality": "Trinità d'Agultu e Vignola (SS)",
     "name": "Pista Vasa Airfield"
   },
+  "SS1A": {
+    "country_name": "Brazil",
+    "municipality": "Goianorte",
+    "name": "Fazenda Rancho Alegre Airport"
+  },
   "SS1B": {
     "country_name": "Brazil",
     "municipality": "Joaçaba",
@@ -204673,6 +204693,11 @@
     "country_name": "Brazil",
     "municipality": "Formosa do Rio Preto",
     "name": "Fazenda Formosa Principal Airstrip"
+  },
+  "SS1R": {
+    "country_name": "Brazil",
+    "municipality": "Formosa do Rio Preto",
+    "name": "Fazenda Agro Ribeiro Airport"
   },
   "SS1X": {
     "country_name": "Brazil",
@@ -240548,11 +240573,6 @@
     "country_name": "Australia",
     "municipality": "Jamestown",
     "name": "Hubert Wilkins Airstrip"
-  },
-  "YJT": {
-    "country_name": "Canada",
-    "municipality": "Stephenville",
-    "name": "Stephenville Dymond International Airport"
   },
   "YJUK": {
     "country_name": "Australia",

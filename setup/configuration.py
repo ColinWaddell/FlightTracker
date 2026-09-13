@@ -55,6 +55,7 @@ DEFAULT_FLIGHT_OBSERVER_LNG = -4.25
 
 # Airport display
 DEFAULT_AIRPORT_DISPLAY_STYLE = 0  # 0=short code, 1=name, 2=name abbreviated, 3=municipality, 4=municipality+country
+DEFAULT_AIRPORT_CODE_FORMAT = "iata"  # 'iata' = 3-letter codes, 'icao' = 4-letter codes
 DEFAULT_HOME_AIRPORT_CODE = ""
 DEFAULT_JOURNEY_BLANK_FILLER = "???"
 DEFAULT_SHOW_AIRLINE_ICON = (
@@ -210,6 +211,7 @@ DEFAULTS: dict[str, Any] = {
     "flight_observer_lng": DEFAULT_FLIGHT_OBSERVER_LNG,
     # Airport display
     "airport_display_style": DEFAULT_AIRPORT_DISPLAY_STYLE,
+    "airport_code_format": DEFAULT_AIRPORT_CODE_FORMAT,
     "home_airport_code": DEFAULT_HOME_AIRPORT_CODE,
     "journey_blank_filler": DEFAULT_JOURNEY_BLANK_FILLER,
     "show_airline_icon": DEFAULT_SHOW_AIRLINE_ICON,
@@ -937,6 +939,14 @@ class Config:
             )
         except (TypeError, ValueError):
             return DEFAULT_AIRPORT_DISPLAY_STYLE
+
+    @property
+    def airport_code_format(self) -> str:
+        """Which code family the journey labels render: 'iata' or 'icao'."""
+        val = str(
+            self.data_store.get("airport_code_format", DEFAULT_AIRPORT_CODE_FORMAT)
+        ).strip().lower()
+        return val if val in ("icao", "iata") else DEFAULT_AIRPORT_CODE_FORMAT
 
     @property
     def home_airport_code(self) -> str:

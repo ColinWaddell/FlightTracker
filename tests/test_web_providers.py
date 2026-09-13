@@ -199,6 +199,17 @@ class TestParseSettingsFormProviders:
         out = parse_settings_form({}, cfg)
         assert out["airport_lookup_full"] is False
 
+    def test_airport_code_format_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"airport_code_format": "icao"}, cfg)
+        assert out["airport_code_format"] == "icao"
+        out = parse_settings_form({"airport_code_format": "bogus"}, cfg)
+        assert out["airport_code_format"] == "iata"
+        out = parse_settings_form({}, cfg)
+        assert out["airport_code_format"] == "iata"
+
     def test_legacy_data_source_key_not_produced(self):
         from web.app import parse_settings_form
 

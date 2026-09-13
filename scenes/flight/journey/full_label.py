@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from display.scroller import Scroller
 from display.spans import Span, Spans
+from scenes.flight.journey.codes import journey_display_code
 from setup import fonts, screen
 from setup.configuration import Config
 from setup.themes import (
@@ -79,8 +80,10 @@ def build_journey_spans(
     )
 
     font = fonts.small_symbols
-    origin = flight.origin or cfg.journey_blank_filler
-    destination = flight.destination or cfg.journey_blank_filler
+    origin = journey_display_code(flight.origin or cfg.journey_blank_filler, cfg)
+    destination = journey_display_code(
+        flight.destination or cfg.journey_blank_filler, cfg
+    )
 
     if icon_required:
         # The entire [code][arrow][name] line scrolls as one unit.
@@ -242,8 +245,10 @@ class FullNameLabel:
         # Static prefix: draw [code][arrow] at text_x_origin, then scroll
         # only the name in the remaining width.
         font = fonts.small_symbols
-        origin = flight.origin or cfg.journey_blank_filler
-        destination = flight.destination or cfg.journey_blank_filler
+        origin = journey_display_code(flight.origin or cfg.journey_blank_filler, cfg)
+        destination = journey_display_code(
+            flight.destination or cfg.journey_blank_filler, cfg
+        )
 
         origin_x = text_x_origin + self.panel.draw_text(
             canvas,

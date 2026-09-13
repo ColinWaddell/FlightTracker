@@ -522,6 +522,11 @@ def parse_settings_form(form, cfg) -> dict:
         "airport_display_style": max(
             0, min(4, int_val(form.get("airport_display_style"), 0))
         ),
+        "airport_code_format": (
+            "icao"
+            if str_val(form.get("airport_code_format"), "iata").lower() == "icao"
+            else "iata"
+        ),
         "journey_blank_filler": str_val(form.get("journey_blank_filler"), " ? "),
         "show_airline_icon": bool_val(form.get("show_airline_icon")),
         "airport_lookup_full": bool_val(form.get("airport_lookup_full")),

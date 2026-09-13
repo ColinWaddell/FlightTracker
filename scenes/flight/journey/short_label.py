@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from scenes.flight.journey.codes import journey_display_code
 from setup import fonts
 from setup.configuration import Config
 from setup.themes import (
@@ -100,9 +101,12 @@ class ShortCodeLabel:
         self, canvas, flight: Flight, text_x_origin: int, available_width: int
     ) -> None:
         cfg = self.cfg
-        origin = _display_code(flight.origin or cfg.journey_blank_filler)
-        destination = _display_code(flight.destination or cfg.journey_blank_filler)
-        home_code = _display_code(cfg.home_airport_code)
+        filler = cfg.journey_blank_filler
+        origin = _display_code(journey_display_code(flight.origin or filler, cfg))
+        destination = _display_code(
+            journey_display_code(flight.destination or filler, cfg)
+        )
+        home_code = _display_code(journey_display_code(cfg.home_airport_code, cfg))
 
         self.panel.draw_square(
             canvas,
@@ -158,9 +162,12 @@ class ShortCodeLabel:
         self, canvas, flight: Flight, text_x_origin: int, available_width: int
     ) -> None:
         cfg = self.cfg
-        origin = _display_code(flight.origin or cfg.journey_blank_filler)
-        destination = _display_code(flight.destination or cfg.journey_blank_filler)
-        home_code = _display_code(cfg.home_airport_code)
+        filler = cfg.journey_blank_filler
+        origin = _display_code(journey_display_code(flight.origin or filler, cfg))
+        destination = _display_code(
+            journey_display_code(flight.destination or filler, cfg)
+        )
+        home_code = _display_code(journey_display_code(cfg.home_airport_code, cfg))
 
         self.panel.draw_square(
             canvas,

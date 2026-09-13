@@ -1,6 +1,6 @@
 """Tests for scenes/flight/flight_scene.py - pure helper functions."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from display.scroller import EASING_STEPS
 from display.scroller import _tick_offset as tick_to_offset
@@ -583,6 +583,64 @@ class TestShortCodeFontSelection:
             fonts.small,
         ]
 
+    def _draw_with_cfg(
+        self, origin, destination, data, text_x_origin=1, icon_required=False
+    ):
+        from setup.configuration import Config
+
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 24
+        test_cfg = Config.__new__(Config)
+        test_cfg.data_store = data
+        label = ShortCodeLabel(panel, test_cfg)
+        label.draw(
+            canvas,
+            Flight(origin=origin, destination=destination),
+            text_x_origin,
+            63 if text_x_origin == 1 else 47,
+            icon_required=icon_required,
+        )
+        return [(call.args[5], call.args[1]) for call in panel.draw_text.call_args_list]
+
+    def test_icao_format_converts_codes(self):
+        from setup import fonts
+
+        # 4-char ICAO codes always render as the compact pair - the
+        # same rule 4-char FAA/ICAO codes already followed in IATA mode.
+        pairs = self._draw_with_cfg(
+            "GLA", "LHR", {"airport_code_format": "icao"}
+        )
+        assert dict(pairs) == {"EGPF": fonts.regular, "EGLL": fonts.regular}
+
+    def test_iata_format_keeps_codes(self):
+        from setup import fonts
+
+        pairs = self._draw_with_cfg(
+            "GLA", "LHR", {"airport_code_format": "iata"}
+        )
+        assert dict(pairs) == {"GLA": fonts.large, "LHR": fonts.large}
+
+    def test_icao_format_unknown_code_untouched(self):
+        # FR24's QQQ filler is not in the reverse table; it renders as-is.
+        from setup import fonts
+
+        pairs = self._draw_with_cfg(
+            "QQQ", "GLA", {"airport_code_format": "icao"}
+        )
+        assert dict(pairs) == {"QQQ": fonts.regular, "EGPF": fonts.regular}
+
+    def test_iata_format_home_code_bold(self):
+        # Home comparison happens on display codes; the default format
+        # keeps bold-home working exactly as before.
+        from setup import fonts
+
+        pairs = self._draw_with_cfg(
+            "GLA",
+            "LHR",
+            {"airport_code_format": "iata", "home_airport_code": "GLA"},
+        )
+        assert dict(pairs) == {"GLA": fonts.large_bold, "LHR": fonts.large}
+
 
 class TestShortCodeGeometry:
     """Real font metrics: 4-char codes must clear arrow and panel edge.
@@ -908,3 +966,85 @@ class TestAirlineNameOwnerFallback:
 
     def test_empty_when_neither_known(self):
         assert airline_name_from_flight(Flight(icao_callsign="GBSFE")) == ""
+
+
+# ---------------------------------------------------------------------------
+# ICAO journey-code display (airport_code_format)
+# ---------------------------------------------------------------------------
+
+
+class TestJourneyCodeDisplay:
+    def _cfg(self, **overrides):
+        from setup.configuration import Config
+
+        c = Config.__new__(Config)
+        c.data_store = {"airport_code_format": "iata", **overrides}
+        return c
+
+    # -- full-name label prefix spans --
+
+    def test_full_label_spans_convert_prefix(self):
+        from scenes.flight.journey.full_label import build_journey_spans
+
+        cfg = self._cfg(airport_code_format="icao")
+        flight = Flight(
+            origin="GLA",
+            destination="LHR",
+            origin_name="Glasgow Airport",
+            destination_name="Heathrow Airport",
+        )
+        origin_spans, dest_spans = build_journey_spans(cfg, flight, icon_required=True)
+        assert origin_spans[0].text == "EGPF"
+        assert dest_spans[0].text == "EGLL"
+
+    def test_full_label_spans_iata_unchanged(self):
+        from scenes.flight.journey.full_label import build_journey_spans
+
+        cfg = self._cfg()
+        flight = Flight(origin="GLA", destination="LHR")
+        origin_spans, dest_spans = build_journey_spans(cfg, flight, icon_required=True)
+        assert origin_spans[0].text == "GLA"
+        assert dest_spans[0].text == "LHR"
+
+    # -- scene redraw key: flipping the format must reset the label --
+
+    def _scene_with_spy_label(self):
+        from scenes.flight.flight_scene import FlightScene
+        from setup.configuration import Config
+
+        panel, canvas = _make_panel_and_canvas()
+        panel.draw_text.side_effect = lambda *a, **k: 5
+        overhead = MagicMock()
+        overhead.error = None
+        overhead.new_data = False
+        overhead.data = []
+        overhead.processing = False
+        scene = FlightScene(canvas, panel, overhead, refresh_interval=60)
+        scene.journey_label = MagicMock()
+        scene.flights = [Flight(origin="GLA", destination="LHR")]
+        scene.flight_index = 0
+        return scene, Config
+
+    def test_code_format_flip_resets_journey_label(self):
+        scene, Config = self._scene_with_spy_label()
+        cfg = self._cfg(airport_display_style=0)
+
+        with patch.object(Config, "instance", return_value=cfg):
+            scene.draw_journey()
+            assert scene.journey_label.reset.call_count == 1  # first draw
+
+            cfg.data_store["airport_code_format"] = "icao"
+            scene.draw_journey()
+            assert scene.journey_label.reset.call_count == 2  # format flip
+
+            scene.draw_journey()
+            assert scene.journey_label.reset.call_count == 2  # unchanged
+
+    def test_same_format_no_extra_reset(self):
+        scene, Config = self._scene_with_spy_label()
+        cfg = self._cfg(airport_display_style=0)
+
+        with patch.object(Config, "instance", return_value=cfg):
+            scene.draw_journey()
+            scene.draw_journey()
+            assert scene.journey_label.reset.call_count == 1

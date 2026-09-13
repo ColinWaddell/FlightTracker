@@ -145,6 +145,24 @@ export default defineComponent({
         </div>
       </div>
 
+      <h5>Code Format</h5>
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="airport_code_format" id="airport_code_iata"
+                 value="iata" v-model="store.config.airport_code_format" />
+          <label class="form-check-label" for="airport_code_iata">IATA (3-letter, e.g. GLA)</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" name="airport_code_format" id="airport_code_icao"
+                 value="icao" v-model="store.config.airport_code_format" />
+          <label class="form-check-label" for="airport_code_icao">ICAO (4-letter, e.g. EGPF)</label>
+        </div>
+        <div class="form-text text-muted small">
+          Applies to short-code display (and the code prefix of full-name display). Airports without a
+          known ICAO code keep showing their IATA / local code.
+        </div>
+      </div>
+
 
       <div v-show="store.config.airport_display_style === 0" class="mb-3">
         <hr />

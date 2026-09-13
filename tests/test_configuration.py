@@ -974,3 +974,34 @@ class TestIsInDeviceStandbyAdvanced:
         cfg.data_store["screen_schedule_end"] = "00:00"
         cfg.data_store["screen_schedule_brightness"] = 0
         assert cfg.is_in_device_standby() is True
+
+
+# ---------------------------------------------------------------------------
+# airport_code_format
+# ---------------------------------------------------------------------------
+
+
+class TestAirportCodeFormat:
+    def _cfg(self, value):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {} if value is None else {"airport_code_format": value}
+        return cfg
+
+    def test_default_is_iata(self):
+        from setup.configuration import DEFAULT_AIRPORT_CODE_FORMAT
+
+        assert DEFAULT_AIRPORT_CODE_FORMAT == "iata"
+        assert self._cfg(None).airport_code_format == "iata"
+
+    def test_valid_values(self):
+        assert self._cfg("icao").airport_code_format == "icao"
+        assert self._cfg("iata").airport_code_format == "iata"
+
+    def test_normalised(self):
+        assert self._cfg(" ICAO ").airport_code_format == "icao"
+
+    def test_invalid_falls_back_to_default(self):
+        assert self._cfg("4char").airport_code_format == "iata"
+        assert self._cfg("123").airport_code_format == "iata"
