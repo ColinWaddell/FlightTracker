@@ -943,9 +943,11 @@ class Config:
     @property
     def airport_code_format(self) -> str:
         """Which code family the journey labels render: 'iata' or 'icao'."""
-        val = str(
-            self.data_store.get("airport_code_format", DEFAULT_AIRPORT_CODE_FORMAT)
-        ).strip().lower()
+        val = (
+            str(self.data_store.get("airport_code_format", DEFAULT_AIRPORT_CODE_FORMAT))
+            .strip()
+            .lower()
+        )
         return val if val in ("icao", "iata") else DEFAULT_AIRPORT_CODE_FORMAT
 
     @property

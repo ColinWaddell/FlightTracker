@@ -860,7 +860,9 @@ class TestFr24RouteProvider:
         oh.reset_airports_cache()
         try:
             result = provider.lookup_route(
-                LookupContext(callsign="N63VG", lat=37.0, lng=-84.7, ground_speed_mps=80)
+                LookupContext(
+                    callsign="N63VG", lat=37.0, lng=-84.7, ground_speed_mps=80
+                )
             )
         finally:
             oh.reset_airports_cache()

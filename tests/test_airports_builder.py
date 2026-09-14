@@ -218,9 +218,7 @@ class TestIataToIcaoPass:
         airports, _, _, iata0 = builder.build_airports(
             [
                 row(name="First", iata_code="LEX", icao_code="KAAA", local_code=""),
-                row(
-                    name="Second", iata_code="LEX", icao_code="KLEX", local_code=""
-                ),
+                row(name="Second", iata_code="LEX", icao_code="KLEX", local_code=""),
             ]
         )
         assert airports["LEX"]["name"] == "Second"

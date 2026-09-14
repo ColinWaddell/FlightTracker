@@ -607,26 +607,20 @@ class TestShortCodeFontSelection:
 
         # 4-char ICAO codes always render as the compact pair - the
         # same rule 4-char FAA/ICAO codes already followed in IATA mode.
-        pairs = self._draw_with_cfg(
-            "GLA", "LHR", {"airport_code_format": "icao"}
-        )
+        pairs = self._draw_with_cfg("GLA", "LHR", {"airport_code_format": "icao"})
         assert dict(pairs) == {"EGPF": fonts.regular, "EGLL": fonts.regular}
 
     def test_iata_format_keeps_codes(self):
         from setup import fonts
 
-        pairs = self._draw_with_cfg(
-            "GLA", "LHR", {"airport_code_format": "iata"}
-        )
+        pairs = self._draw_with_cfg("GLA", "LHR", {"airport_code_format": "iata"})
         assert dict(pairs) == {"GLA": fonts.large, "LHR": fonts.large}
 
     def test_icao_format_unknown_code_untouched(self):
         # FR24's QQQ filler is not in the reverse table; it renders as-is.
         from setup import fonts
 
-        pairs = self._draw_with_cfg(
-            "QQQ", "GLA", {"airport_code_format": "icao"}
-        )
+        pairs = self._draw_with_cfg("QQQ", "GLA", {"airport_code_format": "icao"})
         assert dict(pairs) == {"QQQ": fonts.regular, "EGPF": fonts.regular}
 
     def test_iata_format_home_code_bold(self):

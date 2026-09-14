@@ -1,7 +1,7 @@
 """Tests for scenes/flight/journey/codes.py (ICAO display conversion)."""
 
-from setup.configuration import Config
 from scenes.flight.journey.codes import journey_display_code
+from setup.configuration import Config
 
 
 def cfg(fmt: str = "iata") -> Config:
@@ -59,11 +59,7 @@ class TestRealBundledTable:
     def test_map_file_exists(self):
         from pathlib import Path
 
-        path = (
-            Path(__file__).parent.parent
-            / "assets"
-            / "airports_iata_to_icao.json"
-        )
+        path = Path(__file__).parent.parent / "assets" / "airports_iata_to_icao.json"
         assert path.exists()
 
     def test_regional_airports_convert(self):
