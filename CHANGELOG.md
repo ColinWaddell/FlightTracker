@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [v2.12.0] - 2026-09-13
+## [v2.11.2] - 2026-09-13
 
 - New "Code Format" option: display airports by their ICAO (4-letter) codes
   (e.g. EGPF) instead of IATA (3-letter) codes (e.g. GLA), applied to the
