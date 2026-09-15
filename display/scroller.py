@@ -11,6 +11,12 @@ EASING_STEPS = (1, 1, 1, 1, 1, 1, 1, 1, 1)
 INITIAL_TICKS = 25
 PAUSE_TICKS = 15
 
+# At or below this much overflow (content wider than the viewport, in pixels)
+# a bounce scroller doesn't bother scrolling: only a couple of pixels of the
+# string are shaved off the right edge, so the text is already legible and
+# the full reveal/pause/retract cycle would be pointless.
+MIN_PIXELS_FOR_SCROLL = 2
+
 # Cache of BDFFont loaded on demand for non-BDFFont span fonts (e.g. the
 # rgbmatrix graphics.Font on Pi 3/4, which exposes CharacterWidth() and
 # DrawText() but no glyph bitmap access).  Keyed by the original font
@@ -171,8 +177,14 @@ class Scroller:
         return max(0, self.content_width - self.width)
 
     def all_looped(self) -> bool:
-        """Whether the complete content has been visible at least once."""
-        return self._looped or (self.bounce and self.scroll_max == 0)
+        """Whether the complete content has been visible at least once.
+
+        Barely-overflowing content (see ``MIN_PIXELS_FOR_SCROLL``) counts as
+        fully visible without ever scrolling.
+        """
+        return self._looped or (
+            self.bounce and self.scroll_max <= MIN_PIXELS_FOR_SCROLL
+        )
 
     def draw(self) -> None:
         """Advance one animation frame and apply only changed pixels."""
@@ -227,10 +239,10 @@ class Scroller:
             self.position += _tick_offset(self.timer)
 
         if old_state == BounceState.INITIAL:
-            if self.scroll_max > 0 and self.timer >= INITIAL_TICKS:
+            if self.scroll_max > MIN_PIXELS_FOR_SCROLL and self.timer >= INITIAL_TICKS:
                 self.state = BounceState.REVEAL
                 self.timer = 0
-            elif self.scroll_max == 0:
+            elif self.scroll_max <= MIN_PIXELS_FOR_SCROLL:
                 self._looped = True
 
         elif old_state == BounceState.REVEAL:
@@ -260,7 +272,7 @@ class Scroller:
 
     def _clamp_after_update(self) -> None:
         if self.bounce:
-            if self.scroll_max == 0:
+            if self.scroll_max <= MIN_PIXELS_FOR_SCROLL:
                 self.position = 0
                 self.state = BounceState.INITIAL
                 self.timer = 0
