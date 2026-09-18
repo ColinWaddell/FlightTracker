@@ -8623,5 +8623,4 @@ icao_to_name = {
     "ZUZ": "Upper Area Control Centre",
     "ZYZ": "Aerodrome Security Services",
     "ZZM": "Agence Nationale des Aerodromes et de la Meteorologie",
-    "ZZZ": "Aircraft In Flight",
 }
