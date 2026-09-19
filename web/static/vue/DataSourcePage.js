@@ -119,7 +119,7 @@ export default defineComponent({
     // checkbox.  (The keys are named here; the renderer below stays
     // descriptor-driven for everything else.)
     function rateLimitActive() {
-      return store.config.api_limit_mode !== "none";
+      return props.store.config.api_limit_mode !== "none";
     }
 
     function providerRateLimitOn(pid) {
