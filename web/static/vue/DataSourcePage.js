@@ -126,6 +126,18 @@ export default defineComponent({
       return !!settingsFor(pid).api_limiting_enabled;
     }
 
+    // The max-calls label mirrors the global mode ("Max daily API calls"
+    // / "Max monthly API calls"); every other field keeps its
+    // descriptor label untouched.
+    function fieldLabel(meta, field) {
+      if (field.key === "api_limit") {
+        const mode = props.store.config.api_limit_mode;
+        if (mode === "daily") return "Max daily API calls";
+        if (mode === "monthly") return "Max monthly API calls";
+      }
+      return field.label;
+    }
+
     function visibleFields(meta) {
       return meta.fields.filter((field) => {
         if (field.key === "api_limiting_enabled") return rateLimitActive();
@@ -176,6 +188,7 @@ export default defineComponent({
       providerName,
       settingsFor,
       visibleFields,
+      fieldLabel,
       providersJson,
       inAnyList,
       providerEnabled,
@@ -307,7 +320,7 @@ export default defineComponent({
               <template v-if="visibleFields(meta).length">
                 <li v-for="field in visibleFields(meta)" :key="field.key" class="list-group-item">
                   <label v-if="field.type !== 'bool'" class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
-                    {{ field.label }}
+                    {{ fieldLabel(meta, field) }}
                     <span v-if="field.required" class="text-danger">*</span>
                   </label>
 
