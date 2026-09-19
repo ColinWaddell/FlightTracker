@@ -164,7 +164,7 @@ def rate_limit_fields() -> tuple[ConfigField, ...]:
     return (
         ConfigField(
             key="api_limiting_enabled",
-            label="Rate limiting enabled",
+            label="Rate limiting",
             type="bool",
             default=False,
         ),
