@@ -281,10 +281,13 @@ export default defineComponent({
           <option value="monthly">Monthly limit per provider</option>
         </select>
         <div class="form-text text-muted small">
-          Caps how many API calls each provider may make per period; a provider
-          at its limit is skipped until the period rolls over (never quarantined).
-          Set "Max API calls" and tick "Rate limiting" in each provider's card
-          below - unticked providers are never limited.
+            Each provider can have a maximum number of API calls configured within its settings.
+        </div>
+        <div class="form-text text-warning small mt-1">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>These limits are provided as a
+          safeguard against excessive API usage, but are not guaranteed to prevent additional
+          charges. You are responsible for monitoring your usage and any costs incurred by
+          your API provider.
         </div>
       </div>
 
