@@ -321,7 +321,8 @@ export default defineComponent({
                          type="number" class="form-control form-control-sm"
                          :id="'providers-' + meta.id + '-' + field.key"
                          :name="'providers.' + meta.id + '.' + field.key"
-                         v-model="settingsFor(meta.id)[field.key]" />
+                         v-model="settingsFor(meta.id)[field.key]"
+                         :placeholder="field.description" />
                   <div v-else-if="field.type === 'bool'" class="form-check">
                     <!-- Unchecked checkboxes post nothing: pair a hidden
                          "false" with the checkbox so the backend always
@@ -347,8 +348,11 @@ export default defineComponent({
                          v-model="settingsFor(meta.id)[field.key]"
                          :placeholder="field.description" autocomplete="off" />
 
+                  <!-- Int fields (like passwords) put their description
+                       inside the control as placeholder text instead of
+                       a help line below it. -->
                   <div class="form-text text-muted small"
-                       v-if="field.description && field.type !== 'password' && field.type !== 'bool'">
+                       v-if="field.description && field.type !== 'password' && field.type !== 'int' && field.type !== 'bool'">
                     {{ field.description }}
                   </div>
                 </li>

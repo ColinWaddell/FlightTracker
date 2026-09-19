@@ -173,6 +173,7 @@ def rate_limit_fields() -> tuple[ConfigField, ...]:
             label="Max API calls",
             type="int",
             default=DEFAULT_API_LIMIT,
+            description="0 = Unlimited calls",
         ),
     )
 
