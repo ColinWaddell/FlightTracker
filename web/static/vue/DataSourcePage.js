@@ -112,6 +112,30 @@ export default defineComponent({
       return providers[pid];
     }
 
+    // Rate-limit fields (api_limiting_enabled / api_limit) ride every
+    // provider's descriptor.  They only matter while the global mode is
+    // daily/monthly: with "none" both controls are hidden, and the
+    // max-calls input is additionally gated on the provider's own
+    // checkbox.  (The keys are named here; the renderer below stays
+    // descriptor-driven for everything else.)
+    function rateLimitActive() {
+      return store.config.api_limit_mode !== "none";
+    }
+
+    function providerRateLimitOn(pid) {
+      return !!settingsFor(pid).api_limiting_enabled;
+    }
+
+    function visibleFields(meta) {
+      return meta.fields.filter((field) => {
+        if (field.key === "api_limiting_enabled") return rateLimitActive();
+        if (field.key === "api_limit") {
+          return rateLimitActive() && providerRateLimitOn(meta.id);
+        }
+        return true;
+      });
+    }
+
     function providersJson(list) {
       return JSON.stringify(list.map((e) => ({ provider: e.provider, enabled: !!e.enabled })));
     }
@@ -151,6 +175,7 @@ export default defineComponent({
       moveList,
       providerName,
       settingsFor,
+      visibleFields,
       providersJson,
       inAnyList,
       providerEnabled,
@@ -279,8 +304,8 @@ export default defineComponent({
             <ul class="list-group list-group-flush">
               <li v-if="meta.description" class="list-group-item small text-muted" v-html="meta.description"></li>
 
-              <template v-if="meta.fields.length">
-                <li v-for="field in meta.fields" :key="field.key" class="list-group-item">
+              <template v-if="visibleFields(meta).length">
+                <li v-for="field in visibleFields(meta)" :key="field.key" class="list-group-item">
                   <label v-if="field.type !== 'bool'" class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
                     {{ field.label }}
                     <span v-if="field.required" class="text-danger">*</span>
@@ -328,6 +353,9 @@ export default defineComponent({
                   </div>
                 </li>
               </template>
+              <li v-else-if="meta.fields.length" class="list-group-item small fst-italic text-muted">
+                No settings to configure while API rate limiting is off.
+              </li>
               <li v-else class="list-group-item small fst-italic text-muted">
                 This provider takes no configuration.
               </li>
