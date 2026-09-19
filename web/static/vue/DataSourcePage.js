@@ -189,6 +189,7 @@ export default defineComponent({
       settingsFor,
       visibleFields,
       fieldLabel,
+      rateLimitActive,
       providersJson,
       inAnyList,
       providerEnabled,
@@ -283,7 +284,7 @@ export default defineComponent({
         <div class="form-text text-muted small">
             Each provider can have a maximum number of API calls configured within its settings.
         </div>
-        <div class="form-text text-warning small mt-1">
+        <div v-if="rateLimitActive()" class="form-text text-warning small mt-1">
           <i class="bi bi-exclamation-triangle-fill me-1"></i>These limits are provided as a
           safeguard against excessive API usage, but are not guaranteed to prevent additional
           charges. You are responsible for monitoring your usage and any costs incurred by
