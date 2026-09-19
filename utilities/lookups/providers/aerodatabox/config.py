@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ConfigField, ProviderConfig
+from utilities.lookups.config import ConfigField, ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="aerodatabox",
@@ -34,5 +34,6 @@ PROVIDER = ProviderConfig(
                 "Your RapidAPI key (X-RapidAPI-Key). Stored securely and never displayed."
             ),
         ),
+        *rate_limit_fields(),
     ),
 )

@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ConfigField, ProviderConfig
+from utilities.lookups.config import ConfigField, ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="tar1090",
@@ -30,5 +30,6 @@ PROVIDER = ProviderConfig(
             sensitive=False,
             description=("e.g. http://192.168.1.x/tar1090/data/aircraft.json"),
         ),
+        *rate_limit_fields(),
     ),
 )

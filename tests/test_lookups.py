@@ -43,6 +43,7 @@ if "FlightRadar24" not in sys.modules:
 def isolated_caches(monkeypatch, tmp_path):
     """Isolate the persistent cache, usage tallies and quarantine per test."""
     import utilities.lookups.cache as rc
+    import utilities.lookups.ratelimit as rr
     import utilities.lookups.usage as ru
 
     monkeypatch.setattr(rc, "DB_PATH", tmp_path / "cache.sqlite3")
@@ -53,6 +54,12 @@ def isolated_caches(monkeypatch, tmp_path):
     monkeypatch.setattr(ru, "_providers_dirty", {})
     monkeypatch.setattr(ru, "_cache_dirty", {})
     monkeypatch.setattr(ru, "_last_flush", 0.0)
+    # Rate limiting defaults to off; gating tests re-patch _config with a
+    # limiting FakeRateLimitConfig.
+    monkeypatch.setattr(rr, "DB_PATH", tmp_path / "ratelimit.sqlite3")
+    monkeypatch.setattr(rr, "_conn", None)
+    monkeypatch.setattr(rr, "_warned", set())
+    monkeypatch.setattr(rr, "_config", lambda: _RateLimitOff())
     yield rc
     if rc._conn is not None:
         rc._conn.close()
@@ -60,6 +67,9 @@ def isolated_caches(monkeypatch, tmp_path):
     if ru._conn is not None:
         ru._conn.close()
         ru._conn = None
+    if rr._conn is not None:
+        rr._conn.close()
+        rr._conn = None
 
 
 @pytest.fixture(autouse=True)
@@ -76,6 +86,26 @@ class StubConfig:
 
     def __init__(self, route_providers=None, settings=None):
         self.route_providers = route_providers or []
+        self._settings = settings or {}
+
+    def provider_settings(self, pid):
+        return dict(self._settings.get(pid, {}))
+
+
+class _RateLimitOff:
+    """Default limiter config: global mode off, no per-provider settings."""
+
+    api_limit_mode = "none"
+
+    def provider_settings(self, pid):
+        return {}
+
+
+class FakeRateLimitConfig:
+    """Config stand-in for the limiter: global mode + provider settings."""
+
+    def __init__(self, mode="daily", settings=None):
+        self.api_limit_mode = mode
         self._settings = settings or {}
 
     def provider_settings(self, pid):
@@ -1713,3 +1743,200 @@ class TestCacheUsageTallies:
             "attempts": 1,
             "no_results": 0,
         }
+
+
+# ---------------------------------------------------------------------------
+# Rate limiting (see utilities/lookups/ratelimit.py)
+#
+# The limiter gates all three lookup pipelines.  Over-limit behaves
+# exactly like a quarantine-skip: fall through to lower-priority
+# providers, no quarantine recorded, never cached as a miss.
+# ---------------------------------------------------------------------------
+
+
+class TestRateLimitGating:
+    def _ctx(self, callsign="BAW123", mode_s="400000"):
+        return LookupContext(callsign=callsign, mode_s=mode_s)
+
+    def _query(self):
+        return FlightQuery(
+            zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+            home=[55.5, -4.0, 6371.0],
+        )
+
+    @staticmethod
+    def _enable(monkeypatch, rr, pids, limit=1, mode="daily"):
+        """Turn daily limiting on for *pids* with one allowed call each."""
+        settings = {
+            pid: {"api_limiting_enabled": True, "api_limit": limit} for pid in pids
+        }
+        monkeypatch.setattr(rr, "_config", lambda: FakeRateLimitConfig(mode, settings))
+
+    # --- routes ------------------------------------------------------------
+
+    def test_route_pipeline_skips_over_limit_provider(self, monkeypatch):
+        import utilities.lookups.ratelimit as rr
+        import utilities.lookups.routes as rs
+
+        self._enable(monkeypatch, rr, ["limited", "healthy"])
+        rr.gate("limited")  # burn the single allowed call
+
+        limited = MagicMock()
+        healthy = MagicMock()
+        healthy.lookup_route.return_value = LookupResult.found(
+            RouteInfo(origin="EDI", destination="MAN")
+        )
+
+        result, answered, hit = rs.run_route_pipeline(
+            self._ctx(), [("limited", limited), ("healthy", healthy)]
+        )
+
+        limited.lookup_route.assert_not_called()
+        assert result.origin == "EDI"
+        assert result.destination == "MAN"
+        assert hit == "healthy"
+
+    def test_route_pipeline_skip_is_not_quarantined(self, monkeypatch):
+        import utilities.lookups.ratelimit as rr
+        import utilities.lookups.routes as rs
+
+        self._enable(monkeypatch, rr, ["limited"])
+        rr.gate("limited")
+
+        limited = MagicMock()
+        result, answered, _hit = rs.run_route_pipeline(
+            self._ctx(), [("limited", limited)]
+        )
+
+        assert result == RouteInfo()
+        assert answered is False
+        limited.lookup_route.assert_not_called()
+        # The limiter's skip never quarantines the provider.
+        from utilities.lookups.quarantine import QUARANTINE
+
+        assert not QUARANTINE.is_quarantined("limited")
+
+    def test_lookup_route_never_cached_as_miss_when_over_limit(self, monkeypatch):
+        """The limiter's silence is not ground truth - no miss entry."""
+        import utilities.lookups.cache as rc
+        import utilities.lookups.ratelimit as rr
+        import utilities.lookups.routes as rs
+
+        self._enable(monkeypatch, rr, ["limited"])
+        rr.gate("limited")
+
+        limited = MagicMock()
+        # Single-provider chain, exactly what a CLI forced-provider
+        # lookup produces - forced lookups are gated too.
+        monkeypatch.setattr(
+            rs, "resolve_chain", lambda cfg, cap: [("limited", limited)]
+        )
+
+        result = rs.lookup_route(self._ctx())
+
+        assert not (result.origin or result.destination)
+        assert rc.get("BAW123", rc.KIND_ROUTE) is None
+
+    def test_lookup_route_still_caches_miss_when_limiting_off(self, monkeypatch):
+        """Sanity: with limiting off the usual all-answered miss rule holds."""
+        import utilities.lookups.cache as rc
+        import utilities.lookups.routes as rs
+
+        empty = MagicMock()
+        empty.lookup_route.return_value = LookupResult.not_found()
+        monkeypatch.setattr(rs, "resolve_chain", lambda cfg, cap: [("e", empty)])
+
+        result = rs.lookup_route(self._ctx())
+
+        assert not (result.origin or result.destination)
+        assert rc.get("BAW123", rc.KIND_ROUTE) == {"miss": True}
+
+    # --- aircraft ----------------------------------------------------------
+
+    def test_aircraft_pipeline_skips_over_limit_provider(self, monkeypatch):
+        import utilities.lookups.aircraft as aircraft_service
+        import utilities.lookups.ratelimit as rr
+
+        self._enable(monkeypatch, rr, ["limited", "healthy"])
+        rr.gate("limited")
+
+        limited = MagicMock()
+        healthy = MagicMock()
+        healthy.lookup_aircraft.return_value = LookupResult.found(
+            AircraftInfo(plane="B738")
+        )
+
+        info, _answered, hit = aircraft_service.run_aircraft_pipeline(
+            self._ctx(), [("limited", limited), ("healthy", healthy)]
+        )
+
+        limited.lookup_aircraft.assert_not_called()
+        assert info.plane == "B738"
+        assert hit == "healthy"
+
+    # --- flights -----------------------------------------------------------
+
+    def test_fetch_flights_skips_over_limit_provider(self, monkeypatch):
+        import utilities.lookups.flights as fs
+        import utilities.lookups.ratelimit as rr
+
+        self._enable(monkeypatch, rr, ["limited", "healthy"])
+        rr.gate("limited")
+
+        limited = MagicMock()
+        healthy = MagicMock()
+        healthy.fetch.return_value = LookupResult.found(
+            [FlightObservation(callsign="BAW123")]
+        )
+        monkeypatch.setattr(
+            fs, "_chain", lambda: [("limited", limited), ("healthy", healthy)]
+        )
+
+        outcome = fs.fetch_flights(self._query())
+
+        limited.fetch.assert_not_called()
+        assert outcome.ok is True
+        assert outcome.provider_id == "healthy"
+
+    def test_fetch_flights_all_over_limit_reports_the_providers(self, monkeypatch):
+        import utilities.lookups.flights as fs
+        import utilities.lookups.ratelimit as rr
+
+        self._enable(monkeypatch, rr, ["limited"])
+        rr.gate("limited")
+
+        limited = MagicMock()
+        monkeypatch.setattr(fs, "_chain", lambda: [("limited", limited)])
+
+        outcome = fs.fetch_flights(self._query())
+
+        assert outcome.ok is False
+        assert any("limit" in err for err in outcome.errors)
+
+    # --- the limiter is bypassed entirely when off -------------------------
+
+    def test_mode_none_costs_nothing(self, monkeypatch):
+        import utilities.lookups.ratelimit as rr
+        import utilities.lookups.routes as rs
+
+        adapter = MagicMock()
+        adapter.lookup_route.return_value = LookupResult.found(RouteInfo(origin="LHR"))
+        rs.run_route_pipeline(self._ctx(), [("a", adapter)])
+
+        # Mode "none": the store was never even opened.
+        assert rr._conn is None
+
+    def test_startup_ping_probe_consumes_no_quota(self, monkeypatch):
+        """Startup reachability probes never pass through the pipelines."""
+        import utilities.lookups.ratelimit as rr
+        import utilities.lookups.routes as rs
+
+        self._enable(monkeypatch, rr, ["probed"])
+        adapter = MagicMock()
+        adapter.ping.return_value = True
+        monkeypatch.setattr(rs, "resolve_chain", lambda cfg, cap: [("probed", adapter)])
+
+        assert rs.check_routing() is True
+        adapter.ping.assert_called_once()
+        # The probe did not count against the provider's limit.
+        assert rr._conn is None

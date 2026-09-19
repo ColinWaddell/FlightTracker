@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ProviderConfig
+from utilities.lookups.config import ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="adsbfi",
@@ -17,5 +17,5 @@ PROVIDER = ProviderConfig(
         "Community-run aggregator (adsb.fi) relaying live aircraft from its feeder network. Free, no key required."
     ),
     capabilities=("flights",),
-    fields=(),
+    fields=rate_limit_fields(),
 )

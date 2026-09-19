@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ProviderConfig
+from utilities.lookups.config import ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="adsbdb",
@@ -17,5 +17,5 @@ PROVIDER = ProviderConfig(
         "Free callsign-route and aircraft database at adsbdb.com. No API key required."
     ),
     capabilities=("routes", "aircraft"),
-    fields=(),
+    fields=rate_limit_fields(),
 )

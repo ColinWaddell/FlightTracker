@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ConfigField, ProviderConfig
+from utilities.lookups.config import ConfigField, ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="fr24api",
@@ -34,5 +34,6 @@ PROVIDER = ProviderConfig(
             sensitive=True,
             description=("Bearer token from your FR24 account's Key Management page."),
         ),
+        *rate_limit_fields(),
     ),
 )

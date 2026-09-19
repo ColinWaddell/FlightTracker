@@ -451,7 +451,14 @@ def _parse_provider_settings(form, cfg) -> dict[str, dict]:
         pid, field_key = parts
         if pid not in PROVIDERS:
             continue
-        collected.setdefault(pid, {})[field_key] = str(form.get(key, ""))
+        # HTML checkboxes only post when ticked, so the Vue bool fields
+        # pair a hidden "false" input with the checkbox; the last posted
+        # value wins (checked -> "on" after "false", unchecked -> just
+        # "false").  Plain dicts (tests) have no getlist - a single
+        # value is all they can hold anyway.
+        getlist = getattr(form, "getlist", None)
+        values = getlist(key) if getlist is not None else [form.get(key, "")]
+        collected.setdefault(pid, {})[field_key] = str(values[-1]) if values else ""
 
     subtree: dict[str, dict] = {}
     for pid, fields in collected.items():
@@ -642,6 +649,13 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         # Provider usage tally (see lookups/usage.py + /api)
         "provider_usage_logging": bool_val(form.get("provider_usage_logging")),
+        # Per-provider API call limiting (see lookups/ratelimit.py)
+        "api_limit_mode": (
+            v
+            if (v := str_val(form.get("api_limit_mode"), "none").lower())
+            in ("none", "daily", "monthly")
+            else "none"
+        ),
         # Hardware
         "gpio_slowdown": max(1, min(4, int_val(form.get("gpio_slowdown"), 1))),
         "hat_pwm_enabled": str_val(form.get("hat_pwm_enabled"), "").lower()
@@ -810,12 +824,14 @@ def _status_page_data() -> dict:
     """
 
     from display import get_overhead_instance
+    from utilities.lookups import ratelimit
     from utilities.lookups.flights import refresh_interval
     from utilities.lookups.quarantine import QUARANTINE
     from utilities.lookups.registry import PROVIDERS, load_config
 
     cfg = load_config()
     hold_offs = QUARANTINE.snapshot()
+    quota = ratelimit.status()
     flight_ids = {e["provider"] for e in cfg.flight_providers if e.get("enabled")}
     route_ids = {e["provider"] for e in cfg.route_providers if e.get("enabled")}
 
@@ -836,6 +852,7 @@ def _status_page_data() -> dict:
                 "configured": spec.config.is_configured(settings),
                 "missing_required": spec.config.missing_required(settings),
                 "hold_off_s": hold_offs.get(spec.id),
+                "quota": quota["providers"].get(spec.id, {}),
             }
         )
 
@@ -852,6 +869,8 @@ def _status_page_data() -> dict:
         }
     return {
         "providers": providers,
+        "api_limit_mode": quota["mode"],
+        "api_limit_period": quota["period"],
         "fetch": {
             "last_updated_fmt": _format_last_updated_value(overhead.last_updated),
             "error": overhead.error,

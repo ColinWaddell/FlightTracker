@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ConfigField, ProviderConfig
+from utilities.lookups.config import ConfigField, ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="opensky",
@@ -39,5 +39,6 @@ PROVIDER = ProviderConfig(
             sensitive=True,
             description=("OAuth2 client secret. Stored securely and never displayed."),
         ),
+        *rate_limit_fields(),
     ),
 )

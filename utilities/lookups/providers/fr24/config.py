@@ -8,12 +8,12 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ProviderConfig
+from utilities.lookups.config import ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="fr24",
     name="Flight Radar 24 (Free)",
     description=("Live flights from the FlightRadar24 feed. Works without an API key"),
     capabilities=("flights", "routes", "aircraft"),
-    fields=(),
+    fields=rate_limit_fields(),
 )

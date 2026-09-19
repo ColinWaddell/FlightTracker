@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ConfigField, ProviderConfig
+from utilities.lookups.config import ConfigField, ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="flightaware",
@@ -33,5 +33,6 @@ PROVIDER = ProviderConfig(
                 "Your AeroAPI v4 key (X-API-Key) from the FlightAware AeroAPI portal."
             ),
         ),
+        *rate_limit_fields(),
     ),
 )

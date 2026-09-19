@@ -34,7 +34,7 @@ import logging
 import threading
 import time
 
-from utilities.lookups import cache, usage
+from utilities.lookups import cache, ratelimit, usage
 from utilities.lookups.providers.common.airports import fill_airport_details
 from utilities.lookups.quarantine import QUARANTINE
 from utilities.lookups.registry import ROUTES, load_config, resolve_chain
@@ -139,6 +139,14 @@ def run_route_pipeline(
 
     for pid, adapter in providers:
         if QUARANTINE.is_quarantined(pid):
+            all_answered = False
+            continue
+
+        if not ratelimit.gate(pid):
+            # Over the provider's API call limit: skip exactly like a
+            # quarantine - fall through, no quarantine recorded, and the
+            # pipeline's silence is not ground truth (never cached as a
+            # miss).  The limiter logs once per period.
             all_answered = False
             continue
 

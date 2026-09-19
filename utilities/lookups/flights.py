@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from utilities.lookups import usage
+from utilities.lookups import ratelimit, usage
 from utilities.lookups.quarantine import QUARANTINE
 from utilities.lookups.registry import (
     FLIGHTS,
@@ -81,10 +81,18 @@ def fetch_flights(query) -> FlightFetchOutcome:
     """
     outcome = FlightFetchOutcome(ok=False)
     attempted_any = False
+    limited: list[str] = []
 
     for pid, adapter in _chain():
         spec = provider_spec(pid)
         if QUARANTINE.is_quarantined(pid):
+            continue
+
+        if not ratelimit.gate(pid):
+            # Over the provider's API call limit: skip exactly like a
+            # quarantine (fall through, no quarantine recorded) - the
+            # limiter logs a single warning per provider per period.
+            limited.append(pid)
             continue
 
         attempted_any = True
@@ -126,7 +134,10 @@ def fetch_flights(query) -> FlightFetchOutcome:
         )
 
     if not attempted_any:
-        outcome.errors.append("no enabled flight providers are configured")
+        if limited:
+            outcome.errors.append("API call limit reached for " + ", ".join(limited))
+        else:
+            outcome.errors.append("no enabled flight providers are configured")
     return outcome
 
 

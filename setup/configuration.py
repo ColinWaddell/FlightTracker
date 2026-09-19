@@ -192,6 +192,9 @@ DEFAULT_SATELLITE_TIMEOUT_SECONDS = (
 # Logging
 DEFAULT_LOG_LEVEL = "INFO"  # DEBUG / INFO / WARNING / ERROR / CRITICAL
 DEFAULT_PROVIDER_USAGE_LOGGING = True  # tally provider lookups into usage.sqlite3
+DEFAULT_API_LIMIT_MODE = (
+    "none"  # per-provider API call limiting: none / daily / monthly
+)
 
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
@@ -310,6 +313,10 @@ DEFAULTS: dict[str, Any] = {
     "log_level": DEFAULT_LOG_LEVEL,
     # Provider usage tally (see utilities/lookups/usage.py + /api)
     "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
+    # Per-provider API call limiting (see utilities/lookups/ratelimit.py;
+    # per-provider api_limiting_enabled / api_limit live in the provider
+    # settings subtree via the shared rate_limit_fields() descriptors)
+    "api_limit_mode": DEFAULT_API_LIMIT_MODE,
 }
 
 
@@ -1584,6 +1591,18 @@ class Config:
             logging.getLevelName(logging.CRITICAL),
         }
         return val if val in valid else DEFAULT_LOG_LEVEL
+
+    @property
+    def api_limit_mode(self) -> str:
+        """Per-provider API call limiting mode ("none" / "daily" / "monthly").
+
+        The per-provider opt-in and limits are descriptor fields
+        (``api_limiting_enabled`` / ``api_limit``, see
+        :func:`utilities.lookups.config.rate_limit_fields`); enforcement
+        lives in :mod:`utilities.lookups.ratelimit`.
+        """
+        val = str(self.data_store.get("api_limit_mode", DEFAULT_API_LIMIT_MODE)).lower()
+        return val if val in ("none", "daily", "monthly") else DEFAULT_API_LIMIT_MODE
 
     @property
     def provider_usage_logging(self) -> bool:

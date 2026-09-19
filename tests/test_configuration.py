@@ -1005,3 +1005,34 @@ class TestAirportCodeFormat:
     def test_invalid_falls_back_to_default(self):
         assert self._cfg("4char").airport_code_format == "iata"
         assert self._cfg("123").airport_code_format == "iata"
+
+
+class TestApiLimitMode:
+    """Config.api_limit_mode - the global per-provider limiting switch."""
+
+    @staticmethod
+    def _cfg(value=None):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {} if value is None else {"api_limit_mode": value}
+        return cfg
+
+    def test_default_is_none(self):
+        cfg = self._cfg()
+        assert cfg.api_limit_mode == "none"
+
+    def test_valid_values_pass_through(self):
+        assert self._cfg("daily").api_limit_mode == "daily"
+        assert self._cfg("monthly").api_limit_mode == "monthly"
+
+    def test_invalid_values_fall_back_to_none(self):
+        assert self._cfg("hourly").api_limit_mode == "none"
+        assert self._cfg(42).api_limit_mode == "none"
+        assert self._cfg(None).api_limit_mode == "none"
+
+    def test_default_declared_in_defaults(self):
+        from setup.configuration import DEFAULT_API_LIMIT_MODE, DEFAULTS
+
+        assert DEFAULTS["api_limit_mode"] == DEFAULT_API_LIMIT_MODE
+        assert DEFAULT_API_LIMIT_MODE == "none"

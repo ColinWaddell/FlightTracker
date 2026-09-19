@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ProviderConfig
+from utilities.lookups.config import ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="adsbim",
@@ -19,5 +19,5 @@ PROVIDER = ProviderConfig(
         "position for the plausibility check."
     ),
     capabilities=("routes",),
-    fields=(),
+    fields=rate_limit_fields(),
 )

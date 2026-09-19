@@ -137,6 +137,54 @@ class ProviderConfig:
 
 
 # ---------------------------------------------------------------------------
+# Shared per-provider rate-limit fields
+# ---------------------------------------------------------------------------
+
+# Default per-provider call limit (values <= 0 mean unlimited).
+DEFAULT_API_LIMIT = 500
+
+
+def rate_limit_fields() -> tuple[ConfigField, ...]:
+    """The shared rate-limit fields appended to every provider descriptor.
+
+    Declared once here and splatted into each ``providers/*/config.py``
+    descriptor, so defaults, persistence, validation and the settings
+    page rendering come for free.  Keys (part of every provider's
+    settings subtree, filled from these defaults on load - no
+    migration needed):
+
+    * ``api_limiting_enabled`` - bool, default False.  Limiting is
+      opt-in per provider; the shared global switch is
+      ``api_limit_mode`` ("none" / "daily" / "monthly", see
+      ``setup/configuration.py``).  Enforcement lives in
+      :mod:`utilities.lookups.ratelimit`.
+    * ``api_limit`` - int, default 500.  Calls allowed per period;
+      ``<= 0`` means unlimited.
+    """
+    return (
+        ConfigField(
+            key="api_limiting_enabled",
+            label="Rate limiting",
+            type="bool",
+            default=False,
+            description=(
+                "Stop calling this provider once its call limit is reached "
+                "(the daily/monthly mode is set at the top of this page)"
+            ),
+        ),
+        ConfigField(
+            key="api_limit",
+            label="Max API calls",
+            type="int",
+            default=DEFAULT_API_LIMIT,
+            description=(
+                "Calls allowed per daily/monthly period (0 or less = unlimited)"
+            ),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Settings validation (field-level, schema-driven)
 # ---------------------------------------------------------------------------
 

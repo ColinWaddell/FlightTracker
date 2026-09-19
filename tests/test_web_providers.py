@@ -101,7 +101,14 @@ class TestParseProviderSettings:
         }
         subtree = _parse_provider_settings(form, cfg)
 
-        assert subtree["opensky"] == {"client_id": "my-id", "client_secret": "S3CR3T"}
+        # Cleaned settings include the descriptor defaults (the shared
+        # rate-limit fields ride every provider descriptor now).
+        assert subtree["opensky"] == {
+            "client_id": "my-id",
+            "client_secret": "S3CR3T",
+            "api_limiting_enabled": False,
+            "api_limit": 500,
+        }
 
     def test_sensitive_empty_string_clears_value(self):
         from web.app import _parse_provider_settings
@@ -134,9 +141,61 @@ class TestParseProviderSettings:
 
         cfg = MagicMock()
         form = {"providers.fr24.nothing": ""}
-        # fr24 has no fields, so nothing collectable
+        # "nothing" is not a fr24 field, so it is dropped and the cleaned
+        # subtree is just the descriptor defaults.
         subtree = _parse_provider_settings(form, cfg)
-        assert "fr24" not in subtree or subtree["fr24"] == {}
+        assert subtree["fr24"] == {"api_limiting_enabled": False, "api_limit": 500}
+
+    # Bool fields ride the hidden-false + checkbox pair the Vue page
+    # submits (DOM order: hidden first, checkbox second) - the last
+    # posted value wins.
+
+    def test_bool_checkbox_checked_after_hidden_false(self):
+        from werkzeug.datastructures import MultiDict
+
+        from web.app import _parse_provider_settings
+
+        cfg = MagicMock()
+        cfg.provider_settings.return_value = {}
+        form = MultiDict(
+            [
+                ("providers.adsbdb.api_limiting_enabled", "false"),
+                ("providers.adsbdb.api_limiting_enabled", "on"),
+            ]
+        )
+        subtree = _parse_provider_settings(form, cfg)
+        assert subtree["adsbdb"]["api_limiting_enabled"] is True
+
+    def test_bool_checkbox_unchecked_posts_hidden_false(self):
+        from werkzeug.datastructures import MultiDict
+
+        from web.app import _parse_provider_settings
+
+        cfg = MagicMock()
+        cfg.provider_settings.return_value = {"api_limiting_enabled": True}
+        form = MultiDict([("providers.adsbdb.api_limiting_enabled", "false")])
+        subtree = _parse_provider_settings(form, cfg)
+        # Unticking must actually clear the stored True.
+        assert subtree["adsbdb"]["api_limiting_enabled"] is False
+
+    def test_bool_absent_keeps_stored_value(self):
+        from web.app import _parse_provider_settings
+
+        cfg = MagicMock()
+        cfg.provider_settings.return_value = {"api_limiting_enabled": True}
+        form = {"providers.adsbdb.api_limit": "900"}
+        subtree = _parse_provider_settings(form, cfg)
+        assert subtree["adsbdb"]["api_limiting_enabled"] is True
+        assert subtree["adsbdb"]["api_limit"] == 900
+
+    def test_api_limit_input_coerced_to_int(self):
+        from web.app import _parse_provider_settings
+
+        cfg = MagicMock()
+        cfg.provider_settings.return_value = {}
+        form = {"providers.adsbdb.api_limit": "1200"}
+        subtree = _parse_provider_settings(form, cfg)
+        assert subtree["adsbdb"]["api_limit"] == 1200
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +248,29 @@ class TestParseSettingsFormProviders:
         assert out["provider_usage_logging"] is True
         out = parse_settings_form({}, cfg)
         assert out["provider_usage_logging"] is False
+
+    def test_api_limit_mode_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        assert (
+            parse_settings_form({"api_limit_mode": "daily"}, cfg)["api_limit_mode"]
+            == "daily"
+        )
+        assert (
+            parse_settings_form({"api_limit_mode": "monthly"}, cfg)["api_limit_mode"]
+            == "monthly"
+        )
+        assert (
+            parse_settings_form({"api_limit_mode": "none"}, cfg)["api_limit_mode"]
+            == "none"
+        )
+        # Invalid (or absent) falls back to "none".
+        assert (
+            parse_settings_form({"api_limit_mode": "hourly"}, cfg)["api_limit_mode"]
+            == "none"
+        )
+        assert parse_settings_form({}, cfg)["api_limit_mode"] == "none"
 
     def test_airport_lookup_full_toggle_parse(self):
         from web.app import parse_settings_form

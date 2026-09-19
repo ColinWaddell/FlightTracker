@@ -8,7 +8,7 @@ adapter wiring and startup probe from these.
 
 from __future__ import annotations
 
-from utilities.lookups.config import ProviderConfig
+from utilities.lookups.config import ProviderConfig, rate_limit_fields
 
 PROVIDER = ProviderConfig(
     id="airplaneslive",
@@ -17,5 +17,5 @@ PROVIDER = ProviderConfig(
         "Free community feeder network aggregator. Please keep request rates low (max 1/second)."
     ),
     capabilities=("flights",),
-    fields=(),
+    fields=rate_limit_fields(),
 )

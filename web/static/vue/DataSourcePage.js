@@ -233,6 +233,24 @@ export default defineComponent({
       </div>
 
       <hr class="my-3" />
+      <h5>API Rate Limiting</h5>
+      <div class="mb-1">
+        <label class="form-label small" for="api_limit_mode">Limit mode</label>
+        <select class="form-select form-select-sm" id="api_limit_mode" name="api_limit_mode"
+                v-model="store.config.api_limit_mode" style="max-width:14rem">
+          <option value="none">None - no limiting</option>
+          <option value="daily">Daily limit per provider</option>
+          <option value="monthly">Monthly limit per provider</option>
+        </select>
+        <div class="form-text text-muted small">
+          Caps how many API calls each provider may make per period; a provider
+          at its limit is skipped until the period rolls over (never quarantined).
+          Set "Max API calls" and tick "Rate limiting" in each provider's card
+          below - unticked providers are never limited.
+        </div>
+      </div>
+
+      <hr class="my-3" />
       <h5>Tracking Limit</h5>
       <div>
         <label class="form-label small" for="max_flight_lookup">Flights to track</label>
@@ -280,6 +298,12 @@ export default defineComponent({
                          :name="'providers.' + meta.id + '.' + field.key"
                          v-model="settingsFor(meta.id)[field.key]" />
                   <div v-else-if="field.type === 'bool'" class="form-check">
+                    <!-- Unchecked checkboxes post nothing: pair a hidden
+                         "false" with the checkbox so the backend always
+                         sees a value (the last posted value wins). -->
+                    <input type="hidden"
+                           :name="'providers.' + meta.id + '.' + field.key"
+                           value="false" />
                     <input type="checkbox" class="form-check-input"
                            :id="'providers-' + meta.id + '-' + field.key"
                            :name="'providers.' + meta.id + '.' + field.key"

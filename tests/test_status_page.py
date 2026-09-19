@@ -114,3 +114,54 @@ class TestProviderCapabilityLanguage:
         """A provider with the capability switched off reads 'disabled'."""
         html = client.get("/status").get_data(as_text=True)
         assert "disabled" in html
+
+
+class TestQuotaColumn:
+    """The Quota column reflects the limiter's state (ratelimit.status())."""
+
+    def test_limiting_off_says_so(self, client, monkeypatch):
+        import utilities.lookups.ratelimit as rr
+
+        monkeypatch.setattr(rr, "_config", lambda: _FakeMode("none"))
+        html = client.get("/status").get_data(as_text=True)
+        assert "limiting off" in html
+
+    def test_active_limit_shows_used_of_limit(self, client, monkeypatch, tmp_path):
+        import utilities.lookups.ratelimit as rr
+
+        monkeypatch.setattr(rr, "DB_PATH", tmp_path / "ratelimit.sqlite3")
+        monkeypatch.setattr(rr, "_conn", None)
+        monkeypatch.setattr(rr, "_warned", set())
+        monkeypatch.setattr(
+            rr,
+            "_config",
+            lambda: _FakeMode(
+                "daily",
+                {"adsbdb": {"api_limiting_enabled": True, "api_limit": 500}},
+            ),
+        )
+        rr.gate("adsbdb")
+        rr.gate("adsbdb")
+        rr.gate("adsbdb")
+        html = client.get("/status").get_data(as_text=True)
+        assert "3 / 500" in html
+        assert "limiting off" not in html
+
+    def test_not_limited_provider_says_off(self, client, monkeypatch, tmp_path):
+        import utilities.lookups.ratelimit as rr
+
+        monkeypatch.setattr(rr, "DB_PATH", tmp_path / "ratelimit.sqlite3")
+        monkeypatch.setattr(rr, "_conn", None)
+        monkeypatch.setattr(rr, "_warned", set())
+        monkeypatch.setattr(rr, "_config", lambda: _FakeMode("daily"))
+        html = client.get("/status").get_data(as_text=True)
+        assert "off" in html
+
+
+class _FakeMode:
+    def __init__(self, mode, settings=None):
+        self.api_limit_mode = mode
+        self._settings = settings or {}
+
+    def provider_settings(self, pid):
+        return dict(self._settings.get(pid, {}))
