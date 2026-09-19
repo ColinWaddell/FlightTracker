@@ -281,7 +281,7 @@ export default defineComponent({
 
               <template v-if="meta.fields.length">
                 <li v-for="field in meta.fields" :key="field.key" class="list-group-item">
-                  <label class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
+                  <label v-if="field.type !== 'bool'" class="form-label small mb-1" :for="'providers-' + meta.id + '-' + field.key">
                     {{ field.label }}
                     <span v-if="field.required" class="text-danger">*</span>
                   </label>
@@ -304,10 +304,16 @@ export default defineComponent({
                     <input type="hidden"
                            :name="'providers.' + meta.id + '.' + field.key"
                            value="false" />
+                    <!-- Bools are self-contained: checkbox + label on one
+                         line, no description block below. -->
                     <input type="checkbox" class="form-check-input"
                            :id="'providers-' + meta.id + '-' + field.key"
                            :name="'providers.' + meta.id + '.' + field.key"
                            v-model="settingsFor(meta.id)[field.key]" />
+                    <label class="form-check-label small" :for="'providers-' + meta.id + '-' + field.key">
+                      {{ field.label }}
+                      <span v-if="field.required" class="text-danger">*</span>
+                    </label>
                   </div>
                   <input v-else
                          type="text" class="form-control form-control-sm"
@@ -316,7 +322,8 @@ export default defineComponent({
                          v-model="settingsFor(meta.id)[field.key]"
                          :placeholder="field.description" autocomplete="off" />
 
-                  <div class="form-text text-muted small" v-if="field.description && field.type !== 'password'">
+                  <div class="form-text text-muted small"
+                       v-if="field.description && field.type !== 'password' && field.type !== 'bool'">
                     {{ field.description }}
                   </div>
                 </li>

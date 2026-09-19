@@ -164,13 +164,9 @@ def rate_limit_fields() -> tuple[ConfigField, ...]:
     return (
         ConfigField(
             key="api_limiting_enabled",
-            label="Rate limiting",
+            label="Rate limiting enabled",
             type="bool",
             default=False,
-            description=(
-                "Stop calling this provider once its call limit is reached "
-                "(the daily/monthly mode is set at the top of this page)"
-            ),
         ),
         ConfigField(
             key="api_limit",
