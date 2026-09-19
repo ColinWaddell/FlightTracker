@@ -353,10 +353,7 @@ export default defineComponent({
                   </div>
                 </li>
               </template>
-              <li v-else-if="meta.fields.length" class="list-group-item small fst-italic text-muted">
-                No settings to configure while API rate limiting is off.
-              </li>
-              <li v-else class="list-group-item small fst-italic text-muted">
+              <li v-else-if="!meta.fields.length" class="list-group-item small fst-italic text-muted">
                 This provider takes no configuration.
               </li>
             </ul>
