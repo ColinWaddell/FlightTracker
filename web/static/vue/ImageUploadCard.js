@@ -136,6 +136,9 @@ export default defineComponent({
 }</code></pre>
         <p class="mb-0">ttl = seconds on screen &middot; one data entry per frame (base64 raw RGB 64x32)
         &middot; loops + frame_delay optional (animation)</p>
+        <p class="mt-2 mb-0"><i class="bi bi-github me-1"></i>Looking for an example?
+        <a href="https://github.com/ColinWaddell/FlightTracker-ImageUploader" target="_blank">FlightTracker-ImageUploader</a>
+        is a ready-made command-line client that pushes images to the screen.</p>
       </div>
     </div>
   `,
