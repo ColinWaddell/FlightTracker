@@ -128,10 +128,14 @@ export default defineComponent({
         <pre class="mb-2" style="font-size:0.75rem"><code>curl -X POST http://&lt;host&gt;:{{ store.config.web_port }}/api/image \\
   -H "X-API-Key: &lt;your key&gt;" -H "Content-Type: application/json" \\
   -d '{"ttl": 300, "data": ["&lt;base64 frame&gt;"]}'</code></pre>
-        <p class="mb-0"><strong>ttl</strong> (seconds, required) is how long the image stays on screen.
-        Send several frames plus <strong>loops</strong> (play-throughs; omit to loop until the TTL expires)
-        and <strong>frame_delay</strong> (ms between frames, default 500) for animation. Images replace
-        whatever is on screen immediately and are held in memory only - they are lost on restart.</p>
+        <pre class="mb-1" style="font-size:0.75rem"><code>{
+  "ttl": 300,
+  "data": ["&lt;base64 frame&gt;"],
+  "loops": 3,
+  "frame_delay": 150
+}</code></pre>
+        <p class="mb-0">ttl = seconds on screen &middot; one data entry per frame (base64 raw RGB 64x32)
+        &middot; loops + frame_delay optional (animation)</p>
       </div>
     </div>
   `,
