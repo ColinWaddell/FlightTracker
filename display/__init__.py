@@ -37,6 +37,7 @@ def build_display_class():
     from display.panel_factory import get_panel
     from scenes.flight.flight_scene import FlightScene
     from scenes.idle.idle_scene import IdleScene
+    from scenes.image.image_scene import ImageScene
     from scenes.satellite.satellite_scene import SatelliteScene
     from setup import frames
     from setup.configuration import Config
@@ -103,7 +104,8 @@ def build_display_class():
             self.scene_manager.register(
                 FlightScene(self.canvas, self.panel, overhead, REFRESH_INTERVAL)
             )
-            logger.info("Registered scenes: Idle, Flight")
+            self.scene_manager.register(ImageScene(self.canvas, self.panel))
+            logger.info("Registered scenes: Idle, Flight, Image")
 
             if cfg.satellite_tracking_enabled:
                 tle_manager = TLEManager()

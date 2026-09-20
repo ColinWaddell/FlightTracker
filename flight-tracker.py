@@ -216,6 +216,11 @@ def flask_load(ready_event: threading.Event, result: dict):
 
         from web.app import FLASK_PORT, app
 
+        # Image Upload API routes - self-contained, registers onto app.
+        from web.image_api import register_image_api
+
+        register_image_api(app)
+
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
         server = make_server("0.0.0.0", FLASK_PORT, app, threaded=True)

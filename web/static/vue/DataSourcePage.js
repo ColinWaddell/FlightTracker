@@ -18,8 +18,11 @@
 
 import { defineComponent, computed, reactive, ref } from "./vendor.js";
 
+import ImageUploadCard from "./ImageUploadCard.js";
+
 export default defineComponent({
   name: "DataSourcePage",
+  components: { ImageUploadCard },
   props: {
     store: { type: Object, required: true },
   },
@@ -435,6 +438,9 @@ export default defineComponent({
         <div class="form-text text-muted small">How often to fetch new weather data (1-120 minutes). Lower values use more API calls.</div>
       </div>
     </div>
+    </div>
+
+    <image-upload-card :store="store" />
     </div>
   `,
 });

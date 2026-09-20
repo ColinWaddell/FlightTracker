@@ -91,6 +91,7 @@ export const SIDEBAR_GROUPS = [
       { section: "group-lookup-priority", icon: "bi-sort-numeric-down", label: "Data Manager" },
       { section: "group-provider-config", icon: "bi-sliders", label: "Provider Settings" },
       { section: "group-weather-data", icon: "bi-cloud-sun", label: "Weather Data" },
+      { section: "group-image-upload", icon: "bi-image", label: "Image Upload API" },
     ],
   },
   {
