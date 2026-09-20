@@ -91,16 +91,19 @@ def register_image_api(app):
             len(submission),
             submission.ttl_seconds,
         )
-        return (
-            jsonify(
-                {
-                    "status": "ok",
-                    "frames": len(submission),
-                    "ttl": submission.ttl_seconds,
-                }
-            ),
-            200,
-        )
+        response = {
+            "status": "ok",
+            "frames": len(submission),
+            "ttl": submission.ttl_seconds,
+        }
+        if len(submission) > 1:
+            from utilities.image_inbox import quantise_frame_delay
+
+            hold, effective_ms = quantise_frame_delay(submission.frame_delay_ms)
+            response["frame_delay_ms"] = submission.frame_delay_ms
+            response["frame_hold"] = hold
+            response["effective_frame_delay_ms"] = effective_ms
+        return (jsonify(response), 200)
 
     # -- key management (web session) --------------------------------------
 

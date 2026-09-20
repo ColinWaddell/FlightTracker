@@ -179,6 +179,22 @@ def test_replacement_submission(client, key):
     assert second.ttl_seconds == 30
 
 
+def test_animation_response_reports_effective_timing(client, key):
+    body = {"ttl": 60, "frame_delay": 150, "data": [FRAME_B64] * 2}
+    resp = _post_image(client, api_key=key, body=body)
+    data = resp.get_json()
+    assert data["frame_delay_ms"] == 150
+    assert data["frame_hold"] == 2  # 150ms / 80ms -> 2 panel frames
+    assert data["effective_frame_delay_ms"] == 160
+
+
+def test_single_frame_response_has_no_timing_fields(client, key):
+    resp = _post_image(client, api_key=key)
+    data = resp.get_json()
+    assert "frame_hold" not in data
+    assert "effective_frame_delay_ms" not in data
+
+
 def test_missing_json_content_type(client, key):
     resp = client.post(
         "/api/image",

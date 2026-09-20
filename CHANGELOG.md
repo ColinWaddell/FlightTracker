@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Data Source page, then POST images to /api/image and the display shows
   them at top priority for the requested TTL. Frames are raw RGB panel
   images (64x32, 6144 bytes) base64-encoded; multiple frames plus optional
-  "loops" and "frame_delay" give animation. Images replace whatever is on
+  "loops" and "frame_delay" give animation. Animation timing is quantised
+  to the panel's render loop and the API response reports the effective
+  delay. Images replace whatever is on
   screen immediately and are held in memory only - they are lost on
   restart. Generating a new key revokes the previous one
 

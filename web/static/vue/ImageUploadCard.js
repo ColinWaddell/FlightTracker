@@ -8,7 +8,7 @@
  * type="button" to avoid submitting the surrounding settings form.
  */
 
-import { defineComponent, ref, onMounted } from "./vendor.js";
+import { defineComponent, computed, ref, onMounted } from "./vendor.js";
 
 export default defineComponent({
   name: "ImageUploadCard",
@@ -22,6 +22,18 @@ export default defineComponent({
     const showKey = ref(false);
     const busy = ref(false);
     const error = ref("");
+
+    // The panel's render loop (setup/frames.py PERIOD = 80ms) is scaled
+    // by the display speed setting; animation is quantised to it.
+    const animationPeriodMs = computed(() => {
+      const factor = { default: 1.0, slower: 2.0, faster: 0.75 }[
+        props.store.config.display_speed
+      ] || 1.0;
+      return Math.round(80 * factor);
+    });
+    const animationFps = computed(() =>
+      (1000 / animationPeriodMs.value).toFixed(1)
+    );
 
     onMounted(loadStatus);
 
@@ -83,7 +95,7 @@ export default defineComponent({
       }
     }
 
-    return { keyStatus, keyValue, showKey, busy, error, generateKey, revokeKey };
+    return { keyStatus, keyValue, showKey, busy, error, animationPeriodMs, animationFps, generateKey, revokeKey };
   },
   template: `
     <div id="group-image-upload" class="card mb-3 p-3">
@@ -132,8 +144,17 @@ export default defineComponent({
   "loops": 3,
   "frame_delay": 150
 }</code></pre>
-        <p class="mb-0">ttl = seconds on screen &middot; one data entry per frame (base64 raw RGB 64x32)
-        &middot; loops + frame_delay optional (animation)</p>
+        <table class="table table-sm table-borderless mb-0" style="font-size:0.75rem">
+          <tbody>
+            <tr><td class="text-nowrap pe-2"><code>ttl</code></td><td>Seconds the image stays on screen (required, 1-86400).</td></tr>
+            <tr><td class="text-nowrap pe-2"><code>data</code></td><td>One base64 frame per entry - raw RGB, 6144 bytes each (1-60 frames).</td></tr>
+            <tr><td class="text-nowrap pe-2"><code>loops</code></td><td>Optional play-throughs. Omit to loop until the TTL expires.</td></tr>
+            <tr><td class="text-nowrap pe-2"><code>frame_delay</code></td><td>Optional ms between animation frames, rounded to whole display frames.</td></tr>
+          </tbody>
+        </table>
+        <p class="mt-2 mb-0">The panel animates at {{ animationFps }} fps ({{ animationPeriodMs }} ms per
+        frame), so <code>frame_delay</code> values are rounded to whole frames - the API response
+        reports the effective timing.</p>
         <p class="mt-2 mb-0"><i class="bi bi-github me-1"></i>Looking for an example?
         <a href="https://github.com/ColinWaddell/FlightTracker-ImageUploader" target="_blank">FlightTracker-ImageUploader</a>
         is a ready-made command-line client that pushes images to the screen.</p>

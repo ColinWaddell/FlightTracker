@@ -182,6 +182,23 @@ INBOX = ImageInbox()
 # ---------------------------------------------------------------------------
 
 
+def quantise_frame_delay(frame_delay_ms: int) -> tuple[int, int]:
+    """Quantise *frame_delay_ms* to whole display frames.
+
+    The panel renders at frames.PERIOD (scaled by the display speed
+    setting), so animation can only change once per render cycle.  ms
+    values are rounded to the nearest whole cycle (minimum 1).
+    Returns ``(hold, effective_ms)`` where effective_ms is what the
+    submission will actually achieve.
+    """
+    from setup import frames
+    from setup.configuration import Config
+
+    period_ms = frames.PERIOD * 1000.0 * Config.instance().display_speed_factor
+    hold = max(1, round(frame_delay_ms / period_ms))
+    return hold, round(hold * period_ms)
+
+
 def _hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 

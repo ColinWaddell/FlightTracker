@@ -15,9 +15,13 @@ A replacement submission - one pushed while an image is already on
 screen - is detected in poll() by comparing submission identity; the
 frame buffers are rebuilt and the animation counters reset with no
 canvas operations, because draw_image repaints every pixel anyway.
-"""
 
-import time
+Animation timing is quantised to the panel's render loop: the display
+runs at a fixed frame period, so a multi-frame submission holds each
+image for a whole number of draw() cycles (frame_delay ms rounded to
+the nearest cycle, minimum one).  Timing never drifts because the
+scene counts actual render cycles instead of wall-clock milliseconds.
+"""
 
 from setup import screen
 
@@ -40,7 +44,8 @@ class ImageScene:
         self._images = []  # PIL images for that submission
         self._frame_index = 0
         self._loops_done = 0
-        self._last_flip = 0.0
+        self._held = 0  # Render cycles the current frame has been shown
+        self._hold = 1  # Cycles to hold each frame (from frame_delay ms)
         self._exhausted = False
 
     # -- scene contract -----------------------------------------------------
@@ -75,22 +80,20 @@ class ImageScene:
             or self.inbox.current() is None
         ):
             return
-        submission = self._shown
-        if len(submission.frames) > 1:
-            now = time.time()
-            if now - self._last_flip >= submission.frame_delay_ms / 1000.0:
-                self._last_flip = now
-                self._frame_index += 1
-                if self._frame_index >= len(submission.frames):
-                    self._frame_index = 0
-                    if submission.loops is not None:
-                        self._loops_done += 1
-                        if self._loops_done >= submission.loops:
-                            self._exhausted = True
-                            return
         self.panel.draw_image(
             self.canvas, 0, 0, self._images[self._frame_index]
         )
+        if len(self._shown.frames) > 1:
+            self._held += 1
+            if self._held >= self._hold:
+                self._held = 0
+                self._frame_index += 1
+                if self._frame_index >= len(self._shown.frames):
+                    self._frame_index = 0
+                    if self._shown.loops is not None:
+                        self._loops_done += 1
+                        if self._loops_done >= self._shown.loops:
+                            self._exhausted = True
 
     # -- internals ------------------------------------------------------------
 
@@ -101,12 +104,18 @@ class ImageScene:
     def _prepare(self, submission):
         from PIL import Image
 
+        from utilities.image_inbox import quantise_frame_delay
+
         self._shown = submission
         self._images = [
             Image.frombytes("RGB", (screen.WIDTH, screen.HEIGHT), frame)
             for frame in submission.frames
         ]
+        if len(submission.frames) > 1:
+            self._hold, _ = quantise_frame_delay(submission.frame_delay_ms)
+        else:
+            self._hold = 1
         self._frame_index = 0
         self._loops_done = 0
-        self._last_flip = time.time()
+        self._held = 0
         self._exhausted = False

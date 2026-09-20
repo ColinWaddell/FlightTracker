@@ -267,3 +267,11 @@ def test_verify_with_corrupt_key_file(key_path):
 def test_generated_keys_unique(key_path):
     keys = {mod.generate_api_key() for _ in range(20)}
     assert len(keys) == 20
+
+
+def test_quantise_frame_delay():
+    # Hermetic test config: default display speed -> 80ms per frame.
+    assert mod.quantise_frame_delay(80) == (1, 80)
+    assert mod.quantise_frame_delay(150) == (2, 160)
+    assert mod.quantise_frame_delay(40) == (1, 80)  # below one cycle
+    assert mod.quantise_frame_delay(5000) == (62, 4960)  # round(62.5) -> 62
