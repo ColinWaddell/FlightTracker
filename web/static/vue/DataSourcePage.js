@@ -312,7 +312,7 @@ export default defineComponent({
                min="0" max="1440" style="width:6rem" />
         <div class="form-text text-muted small">
           Drop a flight from the display once it has been tracked for this many minutes.
-          A value of <code>0</code> disable this feature.
+          A value of <code>0</code> disables this feature.
         </div>
       </div>
     </div>
