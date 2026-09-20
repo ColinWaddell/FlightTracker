@@ -155,9 +155,9 @@ export default defineComponent({
         <p class="mt-2 mb-0">The panel animates at {{ animationFps }} fps ({{ animationPeriodMs }} ms per
         frame), so <code>frame_delay</code> values are rounded to whole frames - the API response
         reports the effective timing.</p>
-        <p class="mt-2 mb-0"><i class="bi bi-github me-1"></i>Looking for an example?
-        <a href="https://github.com/ColinWaddell/FlightTracker-ImageUploader" target="_blank">FlightTracker-ImageUploader</a>
-        is a ready-made command-line client that pushes images to the screen.</p>
+        <p class="mt-2 mb-0"><i class="bi bi-github me-1"></i> See
+        <a href="https://github.com/ColinWaddell/FlightTracker-ImageUploader" target="_blank">FlightTracker-ImageUploader</a>,
+        a ready-made command-line client that pushes images to the screen.</p>
       </div>
     </div>
   `,
