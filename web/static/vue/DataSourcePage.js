@@ -311,9 +311,8 @@ export default defineComponent({
                name="max_flight_track_minutes" v-model.number="store.config.max_flight_track_minutes"
                min="0" max="1440" style="width:6rem" />
         <div class="form-text text-muted small">
-          Drop a flight from the display once it has been tracked for this long -
-          useful for aircraft circling overhead.  0 tracks flights for as long as
-          they stay in range; one that leaves and returns starts fresh.
+          Drop a flight from the display once it has been tracked for this many minutes.
+          A value of <code>0</code> disable this feature.
         </div>
       </div>
     </div>
