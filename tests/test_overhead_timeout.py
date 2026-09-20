@@ -152,7 +152,9 @@ class TestAbsenceResets:
 
     def test_empty_fetch_clears_all_tracking_state(self):
         overhead = Overhead()
-        overhead._apply_track_timeout([_flight(callsign="A"), _flight(callsign="B")], _cfg(30))
+        overhead._apply_track_timeout(
+            [_flight(callsign="A"), _flight(callsign="B")], _cfg(30)
+        )
 
         overhead._apply_track_timeout([], _cfg(30))
 
@@ -162,7 +164,9 @@ class TestAbsenceResets:
 class TestIdentity:
     def test_icao_callsign_preferred_over_display_callsign(self):
         overhead = Overhead()
-        overhead._apply_track_timeout([_flight(icao="400910", callsign="UAL456")], _cfg(30))
+        overhead._apply_track_timeout(
+            [_flight(icao="400910", callsign="UAL456")], _cfg(30)
+        )
 
         assert "400910" in overhead._track_first_seen
 

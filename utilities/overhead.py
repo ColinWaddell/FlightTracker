@@ -66,6 +66,7 @@ class Overhead:
         # Backs the max-flight-track timeout; deliberately not persisted -
         # tracking history restarting on reboot is fine.
         self._track_first_seen: dict[str, float] = {}
+
     # ------------------------------------------------------------------
     # Scene contract (threaded fetch)
     # ------------------------------------------------------------------
