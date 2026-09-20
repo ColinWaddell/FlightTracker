@@ -62,7 +62,10 @@ class Overhead:
         self.last_updated = None
         # Outcome of the last fetch attempt - dict or None (status page).
         self.last_fetch = None
-
+        # In-memory first-sighting timestamps keyed by Flight.track_key.
+        # Backs the max-flight-track timeout; deliberately not persisted -
+        # tracking history restarting on reboot is fine.
+        self._track_first_seen: dict[str, float] = {}
     # ------------------------------------------------------------------
     # Scene contract (threaded fetch)
     # ------------------------------------------------------------------
@@ -146,6 +149,7 @@ class Overhead:
             self._record_failure(e)
             self._set_error(e)
         else:
+            data = self._apply_track_timeout(data, cfg)
             with self.lock:
                 self.data_store = data
                 self.new_data_store = True
@@ -176,6 +180,58 @@ class Overhead:
             heading=int(observation.heading_deg or 0),
             vertical_speed=int(observation.vertical_speed_fpm or 0),
         )
+
+    def _apply_track_timeout(self, flights: list, cfg) -> list:
+        """Drop aircraft that have been sighted for longer than the timeout.
+
+        Keeps aircraft circling overhead from dominating the display.  The
+        clock starts at an aircraft's first sighting and runs while it is
+        continuously present in fetch results.  An aircraft absent from a
+        successful fetch is considered gone - if it reappears it is treated
+        as a new sighting with a fresh clock.
+
+        Disabled when ``cfg.max_flight_track_minutes`` is 0 (default).
+        """
+        max_minutes = cfg.max_flight_track_minutes
+        if max_minutes <= 0:
+            self._track_first_seen.clear()
+            return flights
+
+        now = time.time()
+        max_seconds = max_minutes * 60
+        seen: set[str] = set()
+        kept = []
+        dropped = 0
+
+        for flight in flights:
+            key = flight.flight_id
+            if not key:
+                # Unidentifiable aircraft - nothing to time out.
+                kept.append(flight)
+                continue
+
+            seen.add(key)
+            first_seen = self._track_first_seen.setdefault(key, now)
+            if now - first_seen <= max_seconds:
+                kept.append(flight)
+            else:
+                dropped += 1
+
+        # Forget aircraft missing from this fetch so a later return is
+        # tracked as a new flight.  Runs on successful fetches only, so a
+        # provider outage never wipes tracking state.
+        if seen:
+            self._track_first_seen = {
+                key: ts for key, ts in self._track_first_seen.items() if key in seen
+            }
+        else:
+            self._track_first_seen.clear()
+
+        if dropped:
+            logger.debug(
+                "Track timeout: dropped %d flight(s) over %d min", dropped, max_minutes
+            )
+        return kept
 
     def _record_fetch(self, outcome):
         """Keep the last fetch attempt's outcome for the status page."""

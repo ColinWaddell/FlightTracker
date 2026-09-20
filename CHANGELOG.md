@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+- New "Max Tracking Time" option (minutes): aircraft circling overhead are
+  dropped from the display after the configured time instead of staying on
+  screen indefinitely. A flight that leaves the monitored range and comes
+  back is tracked - and shown - as a new flight. 0 (default) keeps the
+  previous always-track behaviour
+
+
 ## [v2.11.3] - 2026-09-19
 
 - New config option to set daily/monthly API call limits per provider

@@ -295,6 +295,7 @@ This table is for reference if you've disabled the web interface (`web_interface
 | `route_providers` | Ordered route-provider list (aerodatabox, hexdb, adsbdb, fr24) | see defaults |
 | `providers` | Per-provider settings keyed by provider id (e.g. `providers.tar1090.url`) | `{}` |
 | `max_flight_lookup` | Number of nearby flights to track at once | `5` |
+| `max_flight_track_minutes` | Drop a flight after this many minutes in the rotation (0-1440); 0 tracks for as long as it stays in range. A flight that leaves and returns starts fresh | `0` |
 | `callsign_format` | `"icao"` for ICAO callsign (e.g. BAW123), `"iata"` for IATA flight number (e.g. BA123) | `"icao"` |
 | `satellite_tracking_enabled` | Enable satellite pass tracking | `true` |
 | `satellite_norad_ids` | NORAD IDs for tracked satellites | `[25544]` |

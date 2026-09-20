@@ -141,6 +141,11 @@ DEFAULT_DATA_SOURCE = (
 )
 DEFAULT_TAR1090_URL = ""  # only used when data_source == 'tar1090'
 DEFAULT_MAX_FLIGHT_LOOKUP = 5  # how many nearby flights to track at once
+# How long one aircraft may stay in the rotation before it's dropped
+# (aircraft circling overhead would otherwise never leave the screen).
+# 0 disables the timeout.  Measured from first sighting; a return visit
+# after leaving the monitored zone restarts the clock.
+DEFAULT_MAX_FLIGHT_TRACK_MINUTES = 0
 # Lookup cache durations - how long route/aircraft lookups are reused
 # before providers are asked again.  Routes churn fast (turnarounds, GA
 # missions, number reuse) so they're measured in HOURS; aircraft identity
@@ -300,6 +305,7 @@ DEFAULTS: dict[str, Any] = {
     "cache_route_hours": DEFAULT_CACHE_ROUTE_HOURS,
     "cache_aircraft_days": DEFAULT_CACHE_AIRCRAFT_DAYS,
     "max_flight_lookup": DEFAULT_MAX_FLIGHT_LOOKUP,
+    "max_flight_track_minutes": DEFAULT_MAX_FLIGHT_TRACK_MINUTES,
     "callsign_format": DEFAULT_CALLSIGN_FORMAT,
     "info_bar_mode": DEFAULT_INFO_BAR_MODE,
     # Satellite tracking
@@ -1459,6 +1465,19 @@ class Config:
             )
         except (TypeError, ValueError):
             return DEFAULT_MAX_FLIGHT_LOOKUP
+
+    @property
+    def max_flight_track_minutes(self) -> int:
+        """Max minutes to keep a sighted flight in the rotation, 0-1440.
+
+        0 (default) tracks flights for as long as they remain in range.
+        """
+        return self._clamped_int(
+            "max_flight_track_minutes",
+            DEFAULT_MAX_FLIGHT_TRACK_MINUTES,
+            0,
+            1440,
+        )
 
     def _clamped_int(self, key: str, default: int, lo: int, hi: int) -> int:
         try:

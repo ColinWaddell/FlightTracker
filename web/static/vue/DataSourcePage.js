@@ -305,6 +305,17 @@ export default defineComponent({
           higher values risk hitting rate limits.
         </div>
       </div>
+      <div class="mt-2">
+        <label class="form-label small" for="max_flight_track_minutes">Max tracking time (minutes)</label>
+        <input type="number" class="form-control form-control-sm" id="max_flight_track_minutes"
+               name="max_flight_track_minutes" v-model.number="store.config.max_flight_track_minutes"
+               min="0" max="1440" style="width:6rem" />
+        <div class="form-text text-muted small">
+          Drop a flight from the display once it has been tracked for this long -
+          useful for aircraft circling overhead.  0 tracks flights for as long as
+          they stay in range; one that leaves and returns starts fresh.
+        </div>
+      </div>
     </div>
 
     <!-- ====== Provider Settings (generated from descriptors) ====== -->
