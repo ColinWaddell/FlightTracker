@@ -10,8 +10,8 @@ UI's session + CSRF.
 Routes:
 
     POST   /api/image      push image(s)        (X-API-Key header)
-    GET    /api/image-key  is a key configured? (web session)
-    POST   /api/image-key  generate a new key - plaintext shown once
+    GET    /api/image-key  current key + status (web session)
+    POST   /api/image-key  generate a new key
     DELETE /api/image-key  revoke the current key
 
 The key-management endpoints read the same session keys the main app
@@ -108,9 +108,9 @@ def register_image_api(app):
     def api_image_key_status():
         if not _session_authenticated():
             return jsonify({"error": "Not authenticated"}), 401
-        from utilities.image_inbox import api_key_configured
+        from utilities.image_inbox import api_key_configured, get_api_key
 
-        return jsonify({"configured": api_key_configured()})
+        return jsonify({"configured": api_key_configured(), "key": get_api_key()})
 
     @app.route("/api/image-key", methods=["POST"])
     def api_image_key_generate():

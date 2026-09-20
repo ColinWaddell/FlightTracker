@@ -218,8 +218,9 @@ def test_key_generate_and_verify(key_path):
     assert mod.api_key_configured() is True
     assert mod.verify_api_key(key) is True
     assert mod.verify_api_key("wrong-key") is False
-    # Only the hash is persisted - never the plaintext.
-    assert key not in key_path.read_text()
+    # The plaintext key is persisted so the settings UI can display it again.
+    assert key in key_path.read_text()
+    assert mod.get_api_key() == key
 
 
 def test_key_generation_revokes_previous(key_path):
@@ -239,6 +240,22 @@ def test_key_revoke(key_path):
 def test_verify_without_key_file(key_path):
     assert mod.api_key_configured() is False
     assert mod.verify_api_key("anything") is False
+    assert mod.get_api_key() is None
+
+
+def test_legacy_hash_only_key_file(key_path):
+    """Pre-plaintext releases stored only the SHA-256 hash; verify still works."""
+    import hashlib
+    import json
+
+    key = "legacy-key"
+    key_path.write_text(
+        json.dumps({"key_hash": hashlib.sha256(key.encode()).hexdigest()})
+    )
+    assert mod.api_key_configured() is True
+    assert mod.verify_api_key(key) is True
+    assert mod.verify_api_key("other") is False
+    assert mod.get_api_key() is None  # hash-only: not displayable
 
 
 def test_verify_with_corrupt_key_file(key_path):

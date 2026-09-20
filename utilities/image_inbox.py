@@ -13,9 +13,10 @@ Submissions are deliberately not persisted - they are lost on restart.
 
 The API key is *not* stored in config.json.  It lives in its own file
 under PLATFORM_DATA_DIR (like the TLE cache) so it never appears in
-config backups, the /debug-config download, or config imports.  Only
-the SHA-256 hash is stored; the plaintext key is returned once, when
-generated, for the settings UI to display.
+config backups, the /debug-config download, or config imports.  The
+key is stored in plaintext (mode 600) so the settings UI can display
+it again; older hash-only files keep verifying until the key is
+regenerated.
 """
 
 from __future__ import annotations
@@ -192,14 +193,15 @@ def _load_store() -> dict:
 
 
 def generate_api_key() -> str:
-    """Create a new API key, store its hash, and return the plaintext.
+    """Create a new API key, store it, and return it.
 
-    The plaintext is shown to the user exactly once (the settings UI
-    displays it after generation); only the SHA-256 hash is persisted.
-    Generating a new key invalidates the previous one.
+    The key is stored in plaintext in its own file (mode 600) so the
+    settings UI can display it again; it is only ever sent to the API
+    in the X-API-Key header.  Generating a new key invalidates the
+    previous one.
     """
     key = secrets.token_urlsafe(24)
-    store = {"key_hash": _hash_key(key), "created_at": int(time.time())}
+    store = {"key": key, "created_at": int(time.time())}
     tmp_path = KEY_FILE.with_suffix(KEY_FILE.suffix + ".tmp")
     try:
         PLATFORM_DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -226,19 +228,37 @@ def revoke_api_key() -> None:
 
 
 def api_key_configured() -> bool:
-    """True when an API key hash is stored."""
+    """True when an API key (plaintext or legacy hash) is stored."""
     try:
-        return bool(_load_store().get("key_hash"))
+        store = _load_store()
     except (OSError, ValueError):
         return False
+    return bool(store.get("key") or store.get("key_hash"))
+
+
+def get_api_key() -> str | None:
+    """The stored plaintext key, or None (absent, or legacy hash-only)."""
+    try:
+        return _load_store().get("key") or None
+    except (OSError, ValueError):
+        return None
 
 
 def verify_api_key(candidate: str) -> bool:
-    """Constant-time check of *candidate* against the stored hash."""
+    """Constant-time check of *candidate* against the stored key.
+
+    Accepts both the current plaintext format and the older hash-only
+    format, so keys written by earlier versions keep working until the
+    key is next regenerated.
+    """
     try:
-        stored = _load_store().get("key_hash", "")
+        store = _load_store()
     except (OSError, ValueError):
         return False
-    if not stored:
-        return False
-    return hmac.compare_digest(_hash_key(candidate), str(stored))
+    stored_key = store.get("key")
+    if stored_key:
+        return hmac.compare_digest(str(stored_key), candidate)
+    stored_hash = store.get("key_hash", "")
+    if stored_hash:
+        return hmac.compare_digest(_hash_key(candidate), str(stored_hash))
+    return False

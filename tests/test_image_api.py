@@ -202,7 +202,9 @@ def test_key_status_false_by_default(client):
     _login(client)
     resp = client.get("/api/image-key")
     assert resp.status_code == 200
-    assert resp.get_json()["configured"] is False
+    data = resp.get_json()
+    assert data["configured"] is False
+    assert data["key"] is None
 
 
 def test_key_status_true_after_generate(client, key):
@@ -223,12 +225,20 @@ def test_key_generate_wrong_csrf(client):
     assert resp.status_code == 403
 
 
-def test_key_generate_returns_plaintext_once(client):
+def test_key_generate_returns_key(client):
     _login(client)
     resp = client.post("/api/image-key", headers=_headers())
     assert resp.status_code == 200
-    assert len(resp.get_json()["key"]) >= 20
+    key = resp.get_json()["key"]
+    assert len(key) >= 20
     assert mod.api_key_configured() is True
+    assert mod.get_api_key() == key
+
+
+def test_key_status_returns_key(client, key):
+    _login(client)
+    resp = client.get("/api/image-key")
+    assert resp.get_json()["key"] == key
 
 
 def test_key_revoke(client, key):
