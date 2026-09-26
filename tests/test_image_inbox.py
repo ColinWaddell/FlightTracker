@@ -5,7 +5,7 @@ ImageInbox uses an injected clock so TTL expiry is tested deterministically
 (no monkeypatching of stdlib time - same lesson as the overhead timeout
 tests).  The API key is config-backed; key-store tests use the
 fresh_config fixture (tests/conftest.py) so nothing touches the real
-config.json, and repoint LEGACY_KEY_FILE for migration tests.
+config.json.
 """
 
 import base64
@@ -38,13 +38,6 @@ def clock_box():
 @pytest.fixture
 def inbox(clock_box):
     return mod.ImageInbox(clock=lambda: clock_box["now"])
-
-
-@pytest.fixture
-def legacy_path(tmp_path, monkeypatch):
-    path = tmp_path / "image_api_key.json"
-    monkeypatch.setattr(mod, "LEGACY_KEY_FILE", path)
-    return path
 
 
 # ---------------------------------------------------------------------------
@@ -248,37 +241,6 @@ def test_verify_without_key(fresh_config):
 def test_generated_keys_unique(fresh_config):
     keys = {mod.generate_api_key() for _ in range(20)}
     assert len(keys) == 20
-
-
-def test_legacy_plaintext_key_file_is_imported(fresh_config, legacy_path):
-    """Pre-config.json builds stored the key in its own file; it moves
-    into config.json on first use so existing keys keep working."""
-    import json
-
-    legacy_path.write_text(json.dumps({"key": "legacy-key", "created_at": 1}))
-    assert mod.api_key_configured() is True
-    assert fresh_config.get("image_api_key") == "legacy-key"
-    assert mod.verify_api_key("legacy-key") is True
-    assert mod.get_api_key() == "legacy-key"
-
-
-def test_legacy_hash_only_key_file_ignored(fresh_config, legacy_path):
-    """Hash-only files cannot be displayed or re-imported; regenerate."""
-    import hashlib
-    import json
-
-    legacy_path.write_text(
-        json.dumps({"key_hash": hashlib.sha256(b"legacy-key").hexdigest()})
-    )
-    assert mod.api_key_configured() is False
-    assert mod.verify_api_key("legacy-key") is False
-    assert mod.get_api_key() is None
-
-
-def test_legacy_corrupt_key_file_ignored(fresh_config, legacy_path):
-    legacy_path.write_text("not json at all")
-    assert mod.api_key_configured() is False
-    assert mod.verify_api_key("anything") is False
 
 
 def test_quantise_frame_delay():

@@ -13,9 +13,7 @@ Submissions are deliberately not persisted - they are lost on restart.
 
 The API key is stored in config.json like every other setting (key
 ``image_api_key``); the /debug-config download and the settings page
-config snapshot both redact it.  A plaintext key file under
-PLATFORM_DATA_DIR written by earlier builds of this feature is
-imported into the config on first use.
+config snapshot both redact it.
 """
 
 from __future__ import annotations
@@ -23,13 +21,12 @@ from __future__ import annotations
 import base64
 import binascii
 import hmac
-import json
 import secrets
 import threading
 import time
 
 from setup import screen
-from setup.configuration import Config, PLATFORM_DATA_DIR
+from setup.configuration import Config
 
 # One frame is raw RGB bytes: WIDTH * HEIGHT pixels, one byte per channel.
 FRAME_BYTES = screen.WIDTH * screen.HEIGHT * 3
@@ -39,11 +36,6 @@ MAX_TTL_SECONDS = 86400  # 24h
 DEFAULT_FRAME_DELAY_MS = 500
 MIN_FRAME_DELAY_MS = 10
 MAX_FRAME_DELAY_MS = 60000
-
-# Where the API key lived before it moved into config.json.  Kept only so
-# existing deployments keep working after an upgrade (imported on first
-# use, see _stored_key()).
-LEGACY_KEY_FILE = PLATFORM_DATA_DIR / "image_api_key.json"
 
 
 class ImageSubmissionError(ValueError):
@@ -181,32 +173,9 @@ INBOX = ImageInbox()
 # ---------------------------------------------------------------------------
 
 
-def _read_legacy_key_file() -> str | None:
-    """Plaintext key from the pre-config.json key file, if one exists.
-
-    Older builds also supported a hash-only file; those entries are
-    ignored (a hash cannot be shown in the settings UI - regenerate).
-    """
-    try:
-        with open(LEGACY_KEY_FILE, encoding="utf-8") as fh:
-            store = json.load(fh)
-    except (OSError, ValueError):
-        return None
-    if isinstance(store, dict) and store.get("key"):
-        return str(store["key"])
-    return None
-
-
 def _stored_key() -> str:
-    """The configured API key, importing the legacy key file if needed."""
-    key = str(Config.instance().get("image_api_key") or "")
-    if not key:
-        key = _read_legacy_key_file() or ""
-        if key:
-            cfg = Config.instance()
-            cfg.set("image_api_key", key)
-            cfg.save()
-    return key
+    """The configured API key."""
+    return str(Config.instance().get("image_api_key") or "")
 
 
 def quantise_frame_delay(frame_delay_ms: int) -> tuple[int, int]:
