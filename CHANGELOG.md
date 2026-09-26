@@ -5,27 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [v2.12.0] - 2026-09-26
 
-- New "Max Tracking Time" option (minutes): aircraft circling overhead are
-  dropped from the display after the configured time instead of staying on
-  screen indefinitely. A flight that leaves the monitored range and comes
-  back is tracked - and shown - as a new flight. 0 (default) keeps the
-  previous always-track behaviour
-- New "Image Upload API": generate an API key from a new card on the
-  Data Source page, then POST images to /api/image and the display shows
-  them at top priority until the animation completes: frames are held
-  for "frame_ms" ms and the sequence repeats "loops" times (omit
-  "loops" to play once; a single frame with frame_ms 60000 holds the
-  screen for a minute). Frames are raw RGB panel images (64x32, 6144
-  bytes) base64-encoded. Animation timing is quantised to the panel's
-  render loop and the API response reports the effective delay. Images
-  replace whatever is on screen immediately and are held in memory only
-  - they are lost on restart. Generating a new key revokes the previous
-  one. The key is stored in config.json (plaintext, like
-  weatherapi_key) and is redacted from the /debug-config download and
-  the settings page config snapshot
-
+- New "Image Upload API": POST images to /api/image and the display shows
+  them immediately, with options for animations and loops.
+- New "Max Tracking Time" option: aircraft circling overhead can be
+  dropped from the display after the configured time instead.
 
 ## [v2.11.3] - 2026-09-19
 
