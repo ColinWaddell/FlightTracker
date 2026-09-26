@@ -119,18 +119,13 @@ class ImageInbox:
         frames = [decode_frame(raw) for raw in frames_raw]
 
         loops = payload.get("loops")
-        if loops is None:
-            loops = 1  # omitted (or null): play the animation once
-        else:
-            loops = _require_int(loops, "loops", 1, 100000)
+        loops = 1 if loops is None else _require_int(loops, "loops", 1, 100000)
 
         frame_ms = payload.get("frame_ms")
         if frame_ms is None:
             frame_ms = DEFAULT_FRAME_MS
         else:
-            frame_ms = _require_int(
-                frame_ms, "frame_ms", MIN_FRAME_MS, MAX_FRAME_MS
-            )
+            frame_ms = _require_int(frame_ms, "frame_ms", MIN_FRAME_MS, MAX_FRAME_MS)
 
         submission = Submission(
             frames=frames,
