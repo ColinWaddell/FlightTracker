@@ -20,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to the panel's render loop and the API response reports the effective
   delay. Images replace whatever is on
   screen immediately and are held in memory only - they are lost on
-  restart. Generating a new key revokes the previous one
+  restart. Generating a new key revokes the previous one. The key is
+  stored in config.json (plaintext, like weatherapi_key) and is
+  redacted from the /debug-config download and the settings page config
+  snapshot
 
 
 ## [v2.11.3] - 2026-09-19

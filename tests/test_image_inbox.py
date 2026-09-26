@@ -3,8 +3,9 @@ Tests for the image inbox + API key store (utilities/image_inbox.py).
 
 ImageInbox uses an injected clock so TTL expiry is tested deterministically
 (no monkeypatching of stdlib time - same lesson as the overhead timeout
-tests).  The API key store tests repoint the module's KEY_FILE at a
-throwaway path so the real platform data dir is never touched.
+tests).  The API key is config-backed; key-store tests use the
+fresh_config fixture (tests/conftest.py) so nothing touches the real
+config.json, and repoint LEGACY_KEY_FILE for migration tests.
 """
 
 import base64
@@ -40,9 +41,9 @@ def inbox(clock_box):
 
 
 @pytest.fixture
-def key_path(tmp_path, monkeypatch):
+def legacy_path(tmp_path, monkeypatch):
     path = tmp_path / "image_api_key.json"
-    monkeypatch.setattr(mod, "KEY_FILE", path)
+    monkeypatch.setattr(mod, "LEGACY_KEY_FILE", path)
     return path
 
 
@@ -209,64 +210,75 @@ def test_thread_safe_submit_and_read(inbox):
 
 
 # ---------------------------------------------------------------------------
-# API key store
+# API key store (config.json-backed)
 # ---------------------------------------------------------------------------
 
 
-def test_key_generate_and_verify(key_path):
+def test_key_generate_and_verify(fresh_config):
     key = mod.generate_api_key()
     assert mod.api_key_configured() is True
     assert mod.verify_api_key(key) is True
     assert mod.verify_api_key("wrong-key") is False
-    # The plaintext key is persisted so the settings UI can display it again.
-    assert key in key_path.read_text()
+    # The plaintext key is persisted in config.json so the settings UI can
+    # display it again.
+    assert fresh_config.get("image_api_key") == key
     assert mod.get_api_key() == key
 
 
-def test_key_generation_revokes_previous(key_path):
+def test_key_generation_revokes_previous(fresh_config):
     first = mod.generate_api_key()
     second = mod.generate_api_key()
     assert mod.verify_api_key(first) is False
     assert mod.verify_api_key(second) is True
 
 
-def test_key_revoke(key_path):
+def test_key_revoke(fresh_config):
     key = mod.generate_api_key()
     mod.revoke_api_key()
     assert mod.api_key_configured() is False
     assert mod.verify_api_key(key) is False
 
 
-def test_verify_without_key_file(key_path):
+def test_verify_without_key(fresh_config):
     assert mod.api_key_configured() is False
     assert mod.verify_api_key("anything") is False
     assert mod.get_api_key() is None
 
 
-def test_legacy_hash_only_key_file(key_path):
-    """Pre-plaintext releases stored only the SHA-256 hash; verify still works."""
+def test_generated_keys_unique(fresh_config):
+    keys = {mod.generate_api_key() for _ in range(20)}
+    assert len(keys) == 20
+
+
+def test_legacy_plaintext_key_file_is_imported(fresh_config, legacy_path):
+    """Pre-config.json builds stored the key in its own file; it moves
+    into config.json on first use so existing keys keep working."""
+    import json
+
+    legacy_path.write_text(json.dumps({"key": "legacy-key", "created_at": 1}))
+    assert mod.api_key_configured() is True
+    assert fresh_config.get("image_api_key") == "legacy-key"
+    assert mod.verify_api_key("legacy-key") is True
+    assert mod.get_api_key() == "legacy-key"
+
+
+def test_legacy_hash_only_key_file_ignored(fresh_config, legacy_path):
+    """Hash-only files cannot be displayed or re-imported; regenerate."""
     import hashlib
     import json
 
-    key = "legacy-key"
-    key_path.write_text(
-        json.dumps({"key_hash": hashlib.sha256(key.encode()).hexdigest()})
+    legacy_path.write_text(
+        json.dumps({"key_hash": hashlib.sha256(b"legacy-key").hexdigest()})
     )
-    assert mod.api_key_configured() is True
-    assert mod.verify_api_key(key) is True
-    assert mod.verify_api_key("other") is False
-    assert mod.get_api_key() is None  # hash-only: not displayable
+    assert mod.api_key_configured() is False
+    assert mod.verify_api_key("legacy-key") is False
+    assert mod.get_api_key() is None
 
 
-def test_verify_with_corrupt_key_file(key_path):
-    key_path.write_text("not json at all")
+def test_legacy_corrupt_key_file_ignored(fresh_config, legacy_path):
+    legacy_path.write_text("not json at all")
     assert mod.api_key_configured() is False
     assert mod.verify_api_key("anything") is False
-
-
-def test_generated_keys_unique(key_path):
-    keys = {mod.generate_api_key() for _ in range(20)}
-    assert len(keys) == 20
 
 
 def test_quantise_frame_delay():

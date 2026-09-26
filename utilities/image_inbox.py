@@ -11,28 +11,25 @@ display over ``POST /api/image``:
 
 Submissions are deliberately not persisted - they are lost on restart.
 
-The API key is *not* stored in config.json.  It lives in its own file
-under PLATFORM_DATA_DIR (like the TLE cache) so it never appears in
-config backups, the /debug-config download, or config imports.  The
-key is stored in plaintext (mode 600) so the settings UI can display
-it again; older hash-only files keep verifying until the key is
-regenerated.
+The API key is stored in config.json like every other setting (key
+``image_api_key``); the /debug-config download and the settings page
+config snapshot both redact it.  A plaintext key file under
+PLATFORM_DATA_DIR written by earlier builds of this feature is
+imported into the config on first use.
 """
 
 from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
 import hmac
 import json
-import os
 import secrets
 import threading
 import time
 
 from setup import screen
-from setup.configuration import PLATFORM_DATA_DIR
+from setup.configuration import Config, PLATFORM_DATA_DIR
 
 # One frame is raw RGB bytes: WIDTH * HEIGHT pixels, one byte per channel.
 FRAME_BYTES = screen.WIDTH * screen.HEIGHT * 3
@@ -43,8 +40,10 @@ DEFAULT_FRAME_DELAY_MS = 500
 MIN_FRAME_DELAY_MS = 10
 MAX_FRAME_DELAY_MS = 60000
 
-# Where the API key hash lives (never in config.json - see module docstring).
-KEY_FILE = PLATFORM_DATA_DIR / "image_api_key.json"
+# Where the API key lived before it moved into config.json.  Kept only so
+# existing deployments keep working after an upgrade (imported on first
+# use, see _stored_key()).
+LEGACY_KEY_FILE = PLATFORM_DATA_DIR / "image_api_key.json"
 
 
 class ImageSubmissionError(ValueError):
@@ -178,8 +177,36 @@ INBOX = ImageInbox()
 
 
 # ---------------------------------------------------------------------------
-# API key store (separate file, never config.json)
+# API key store (config.json-backed)
 # ---------------------------------------------------------------------------
+
+
+def _read_legacy_key_file() -> str | None:
+    """Plaintext key from the pre-config.json key file, if one exists.
+
+    Older builds also supported a hash-only file; those entries are
+    ignored (a hash cannot be shown in the settings UI - regenerate).
+    """
+    try:
+        with open(LEGACY_KEY_FILE, encoding="utf-8") as fh:
+            store = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if isinstance(store, dict) and store.get("key"):
+        return str(store["key"])
+    return None
+
+
+def _stored_key() -> str:
+    """The configured API key, importing the legacy key file if needed."""
+    key = str(Config.instance().get("image_api_key") or "")
+    if not key:
+        key = _read_legacy_key_file() or ""
+        if key:
+            cfg = Config.instance()
+            cfg.set("image_api_key", key)
+            cfg.save()
+    return key
 
 
 def quantise_frame_delay(frame_delay_ms: int) -> tuple[int, int]:
@@ -199,83 +226,40 @@ def quantise_frame_delay(frame_delay_ms: int) -> tuple[int, int]:
     return hold, round(hold * period_ms)
 
 
-def _hash_key(key: str) -> str:
-    return hashlib.sha256(key.encode()).hexdigest()
-
-
-def _load_store() -> dict:
-    with open(KEY_FILE, encoding="utf-8") as fh:
-        loaded = json.load(fh)
-    return loaded if isinstance(loaded, dict) else {}
-
-
 def generate_api_key() -> str:
-    """Create a new API key, store it, and return it.
+    """Create a new API key, store it in config.json, and return it.
 
-    The key is stored in plaintext in its own file (mode 600) so the
-    settings UI can display it again; it is only ever sent to the API
-    in the X-API-Key header.  Generating a new key invalidates the
-    previous one.
+    The key is stored in plaintext so the settings UI can display it
+    again; it is only ever sent to the API in the X-API-Key header.
+    Generating a new key invalidates the previous one.
     """
     key = secrets.token_urlsafe(24)
-    store = {"key": key, "created_at": int(time.time())}
-    tmp_path = KEY_FILE.with_suffix(KEY_FILE.suffix + ".tmp")
-    try:
-        PLATFORM_DATA_DIR.mkdir(parents=True, exist_ok=True)
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            json.dump(store, fh)
-            fh.flush()
-            os.fsync(fh.fileno())
-        os.replace(tmp_path, KEY_FILE)
-        try:
-            os.chmod(KEY_FILE, 0o600)
-        except OSError:
-            pass
-    except OSError as exc:
-        raise RuntimeError(f"Could not store API key: {exc}") from exc
+    cfg = Config.instance()
+    cfg.set("image_api_key", key)
+    cfg.save()
     return key
 
 
 def revoke_api_key() -> None:
-    """Remove the stored key hash - the API rejects everything afterwards."""
-    try:
-        KEY_FILE.unlink()
-    except OSError:
-        pass
+    """Clear the stored key - the API rejects everything afterwards."""
+    cfg = Config.instance()
+    cfg.set("image_api_key", "")
+    cfg.save()
 
 
 def api_key_configured() -> bool:
-    """True when an API key (plaintext or legacy hash) is stored."""
-    try:
-        store = _load_store()
-    except (OSError, ValueError):
-        return False
-    return bool(store.get("key") or store.get("key_hash"))
+    """True when an API key is configured."""
+    return bool(_stored_key())
 
 
 def get_api_key() -> str | None:
-    """The stored plaintext key, or None (absent, or legacy hash-only)."""
-    try:
-        return _load_store().get("key") or None
-    except (OSError, ValueError):
-        return None
+    """The configured plaintext key, or None."""
+    return _stored_key() or None
 
 
 def verify_api_key(candidate: str) -> bool:
-    """Constant-time check of *candidate* against the stored key.
-
-    Accepts both the current plaintext format and the older hash-only
-    format, so keys written by earlier versions keep working until the
-    key is next regenerated.
-    """
-    try:
-        store = _load_store()
-    except (OSError, ValueError):
+    """Constant-time check of *candidate* against the configured key."""
+    stored = _stored_key()
+    if not stored:
         return False
-    stored_key = store.get("key")
-    if stored_key:
-        return hmac.compare_digest(str(stored_key), candidate)
-    stored_hash = store.get("key_hash", "")
-    if stored_hash:
-        return hmac.compare_digest(_hash_key(candidate), str(stored_hash))
-    return False
+    return hmac.compare_digest(stored.encode(), candidate.encode())

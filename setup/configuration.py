@@ -74,6 +74,7 @@ DEFAULT_DETAILS_CUSTOM_TEMPLATE = (
 
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
+DEFAULT_IMAGE_API_KEY = ""  # empty = image upload disabled
 DEFAULT_WEATHER_MODE = 0  # 0 = off, 1 = temperature only, 2 = temperature + rainfall
 DEFAULT_RAIN_SENSITIVITY = (
     1  # 0 = dry (Egypt/1mm), 1 = moderate (UK/3mm), 2 = wet (Singapore/9mm)
@@ -235,6 +236,8 @@ DEFAULTS: dict[str, Any] = {
     "speed_unit": DEFAULT_SPEED_UNIT,
     "height_unit": DEFAULT_HEIGHT_UNIT,
     "weather_refresh_minutes": DEFAULT_WEATHER_REFRESH_MINUTES,
+    # Image upload API (see utilities/image_inbox.py)
+    "image_api_key": DEFAULT_IMAGE_API_KEY,
     # Display
     "colour_theme": DEFAULT_COLOUR_THEME,
     # Per-theme configuration (nested dict)
@@ -1002,6 +1005,11 @@ class Config:
     @property
     def weatherapi_key(self) -> str:
         return str(self.data_store.get("weatherapi_key", DEFAULT_WEATHERAPI_KEY))
+
+    @property
+    def image_api_key(self) -> str:
+        """Plaintext image upload API key ('' = image upload disabled)."""
+        return str(self.data_store.get("image_api_key", DEFAULT_IMAGE_API_KEY))
 
     @property
     def weather_mode(self) -> int:

@@ -3,8 +3,9 @@ Tests for the Image Upload API routes (web/image_api.py).
 
 Builds a bare Flask app, registers the image API on it and drives it
 with the test client - mirroring the session/CSRF keys the main app
-uses ("authenticated", "csrf_token").  The module-level INBOX and
-KEY_FILE are reset per test so the suite stays hermetic.
+uses ("authenticated", "csrf_token").  The module-level INBOX is reset
+per test and Config is swapped for an in-memory instance (fresh_config)
+so the suite stays hermetic.
 """
 
 import base64
@@ -22,8 +23,7 @@ FRAME_B64 = base64.b64encode(FRAME).decode()
 
 
 @pytest.fixture
-def app(monkeypatch, tmp_path):
-    monkeypatch.setattr(mod, "KEY_FILE", tmp_path / "image_api_key.json")
+def app(fresh_config):
     mod.INBOX.clear()
     instance = Flask(__name__)
     instance.secret_key = "test-secret"

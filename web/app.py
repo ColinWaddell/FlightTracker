@@ -899,7 +899,8 @@ def _provider_ui_data(cfg) -> dict:
     """Build the provider-facing data for the settings page.
 
     The browser never sees a sensitive value: secrets are masked in the
-    config snapshot (the web password hash is excluded entirely), and the
+    config snapshot (the web password hash and image API key are
+    excluded entirely), and the
     per-provider descriptor metadata drives the Data Source page's
     provider settings cards.
     """
@@ -907,7 +908,9 @@ def _provider_ui_data(cfg) -> dict:
     from utilities.lookups.registry import PROVIDERS
 
     cfg_masked = {
-        key: value for key, value in cfg.as_dict().items() if key != "web_password_hash"
+        key: value
+        for key, value in cfg.as_dict().items()
+        if key not in ("web_password_hash", "image_api_key")
     }
 
     providers_meta = []
@@ -1160,6 +1163,7 @@ def airports_json() -> str:
 # settings are redacted schema-driven via their descriptors).
 SENSITIVE_KEYS = {
     "weatherapi_key",
+    "image_api_key",
     "web_password_hash",
 }
 
