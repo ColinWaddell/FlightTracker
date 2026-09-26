@@ -8,6 +8,7 @@ file is imported and its variables are migrated automatically.
 from __future__ import annotations
 
 import contextlib
+import copy
 import importlib.util
 import json
 import math
@@ -394,7 +395,7 @@ def import_legacy(path: Path):
 def migrate_config(mod) -> dict[str, Any]:
     """Map legacy config.py variables onto the new JSON schema."""
 
-    data: dict[str, Any] = dict(DEFAULTS)
+    data: dict[str, Any] = copy.deepcopy(DEFAULTS)
 
     def get(name, default=None):
         return getattr(mod, name, default)
@@ -774,8 +775,13 @@ class Config:
             try:
                 with open(CONFIG_PATH) as fh:
                     loaded = json.load(fh)
-                # Merge over defaults so new keys always have a value
-                self.data_store = {**DEFAULTS, **loaded}
+                # Merge over defaults so new keys always have a value.
+                # Deep-copied: nested subtrees (providers, theme, the
+                # provider lists) must never be shared with the
+                # module-level DEFAULTS - the validation pass below
+                # writes into them in place, which would otherwise
+                # pollute DEFAULTS for the rest of the process.
+                self.data_store = {**copy.deepcopy(DEFAULTS), **loaded}
 
                 # Migrate legacy single-source data-source keys onto the
                 # provider lists/schema, then validate provider settings.
@@ -836,7 +842,7 @@ class Config:
             return
 
         # Fresh install - write defaults
-        self.data_store = dict(DEFAULTS)
+        self.data_store = copy.deepcopy(DEFAULTS)
         _migrate_provider_lists(self.data_store, {})
         self.save()
 
