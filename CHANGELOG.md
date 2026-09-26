@@ -14,16 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   previous always-track behaviour
 - New "Image Upload API": generate an API key from a new card on the
   Data Source page, then POST images to /api/image and the display shows
-  them at top priority for the requested TTL. Frames are raw RGB panel
-  images (64x32, 6144 bytes) base64-encoded; multiple frames plus optional
-  "loops" and "frame_delay" give animation. Animation timing is quantised
-  to the panel's render loop and the API response reports the effective
-  delay. Images replace whatever is on
-  screen immediately and are held in memory only - they are lost on
-  restart. Generating a new key revokes the previous one. The key is
-  stored in config.json (plaintext, like weatherapi_key) and is
-  redacted from the /debug-config download and the settings page config
-  snapshot
+  them at top priority until the animation completes: frames are held
+  for "frame_delay" ms and the sequence repeats "loops" times (omit
+  "loops" to play once; a single frame with frame_delay 60000 holds the
+  screen for a minute). Frames are raw RGB panel images (64x32, 6144
+  bytes) base64-encoded. Animation timing is quantised to the panel's
+  render loop and the API response reports the effective delay. Images
+  replace whatever is on screen immediately and are held in memory only
+  - they are lost on restart. Generating a new key revokes the previous
+  one. The key is stored in config.json (plaintext, like
+  weatherapi_key) and is redacted from the /debug-config download and
+  the settings page config snapshot
 
 
 ## [v2.11.3] - 2026-09-19

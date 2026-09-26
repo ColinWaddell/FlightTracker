@@ -86,24 +86,27 @@ def register_image_api(app):
         except ImageSubmissionError as exc:
             return jsonify({"status": "error", "error": str(exc)}), 400
 
-        logger.info(
-            "Image accepted: %d frame(s), ttl %ds",
-            len(submission),
-            submission.ttl_seconds,
-        )
-        response = {
-            "status": "ok",
-            "frames": len(submission),
-            "ttl": submission.ttl_seconds,
-        }
-        if len(submission) > 1:
-            from utilities.image_inbox import quantise_frame_delay
+        from utilities.image_inbox import quantise_frame_delay
 
-            hold, effective_ms = quantise_frame_delay(submission.frame_delay_ms)
-            response["frame_delay_ms"] = submission.frame_delay_ms
-            response["frame_hold"] = hold
-            response["effective_frame_delay_ms"] = effective_ms
-        return (jsonify(response), 200)
+        hold, effective_ms = quantise_frame_delay(submission.frame_delay_ms)
+        logger.info(
+            "Image accepted: %d frame(s), %dms hold x %s loop(s)",
+            len(submission),
+            effective_ms,
+            submission.loops,
+        )
+        return (
+            jsonify(
+                {
+                    "status": "ok",
+                    "frames": len(submission),
+                    "frame_delay_ms": submission.frame_delay_ms,
+                    "frame_hold": hold,
+                    "effective_frame_delay_ms": effective_ms,
+                }
+            ),
+            200,
+        )
 
     # -- key management (web session) --------------------------------------
 

@@ -25,19 +25,14 @@ def b64(payload=None):
 
 
 def make_payload(**overrides):
-    payload = {"ttl": 60, "data": [b64()]}
+    payload = {"data": [b64()]}
     payload.update(overrides)
     return payload
 
 
 @pytest.fixture
-def clock_box():
-    return {"now": 1000.0}
-
-
-@pytest.fixture
-def inbox(clock_box):
-    return mod.ImageInbox(clock=lambda: clock_box["now"])
+def inbox():
+    return mod.ImageInbox()
 
 
 # ---------------------------------------------------------------------------
@@ -48,13 +43,6 @@ def inbox(clock_box):
 @pytest.mark.parametrize(
     "overrides",
     [
-        {"ttl": 0},
-        {"ttl": -5},
-        {"ttl": 86401},
-        {"ttl": 1.5},
-        {"ttl": True},
-        {"ttl": "60"},
-        {"ttl": None},
         {"data": []},
         {"data": None},
         {"data": "notalist"},
@@ -70,11 +58,6 @@ def inbox(clock_box):
 def test_rejects_bad_overrides(inbox, overrides):
     with pytest.raises(mod.ImageSubmissionError):
         inbox.submit(make_payload(**overrides))
-
-
-def test_ttl_required(inbox):
-    with pytest.raises(mod.ImageSubmissionError, match="ttl"):
-        inbox.submit({"data": [b64()]})
 
 
 def test_rejects_non_object(inbox):
@@ -109,10 +92,9 @@ def test_unknown_keys_ignored(inbox):
 
 def test_upper_bounds_accepted(inbox):
     inbox.submit(
-        make_payload(ttl=86400, loops=100000, frame_delay=60000)
+        make_payload(loops=100000, frame_delay=60000)
     )
     current = inbox.current()
-    assert current.ttl_seconds == 86400
     assert current.loops == 100000
     assert current.frame_delay_ms == 60000
 
@@ -134,43 +116,25 @@ def test_valid_submission_roundtrip(inbox):
 def test_defaults(inbox):
     inbox.submit(make_payload())
     current = inbox.current()
-    assert current.loops is None
+    assert current.loops == 1
     assert current.frame_delay_ms == mod.DEFAULT_FRAME_DELAY_MS
-    assert current.ttl_seconds == 60
-    assert current.expires_at == 1000.0 + 60
 
 
 def test_replacement(inbox):
     inbox.submit(make_payload())
     first = inbox.current()
-    inbox.submit(make_payload(ttl=30))
+    inbox.submit(make_payload(frame_delay=120))
     second = inbox.current()
     assert second is not first
-    assert second.ttl_seconds == 30
+    assert second.frame_delay_ms == 120
 
 
 def test_failed_submit_keeps_previous(inbox):
     inbox.submit(make_payload())
     previous = inbox.current()
     with pytest.raises(mod.ImageSubmissionError):
-        inbox.submit({"ttl": 0, "data": [b64()]})
+        inbox.submit({"frame_delay": 0, "data": [b64()]})
     assert inbox.current() is previous
-
-
-def test_lazy_expiry(inbox, clock_box):
-    inbox.submit(make_payload(ttl=10))
-    clock_box["now"] = 1009.999
-    assert inbox.current() is not None
-    clock_box["now"] = 1010.0
-    assert inbox.current() is None
-
-
-def test_resubmit_after_expiry(inbox, clock_box):
-    inbox.submit(make_payload(ttl=5))
-    clock_box["now"] += 100
-    assert inbox.current() is None
-    inbox.submit(make_payload(ttl=50))
-    assert inbox.current() is not None
 
 
 def test_clear(inbox):

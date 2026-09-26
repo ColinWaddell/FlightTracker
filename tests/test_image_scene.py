@@ -19,7 +19,7 @@ from scenes.image.image_scene import ImageScene
 FRAME = bytes(range(256)) * 24
 
 
-def make_submission(frames=1, loops=None, frame_delay_ms=500, ttl=60, at=1000.0):
+def make_submission(frames=1, loops=1, frame_delay_ms=500):
     # Distinct frames (varying first pixel) so animation tests can tell
     # the panel frames apart; frame 0 stays the reference FRAME.
     distinct = [FRAME if i == 0 else bytes([i, 0, 0]) + FRAME[3:] for i in range(frames)]
@@ -27,8 +27,6 @@ def make_submission(frames=1, loops=None, frame_delay_ms=500, ttl=60, at=1000.0)
         frames=distinct,
         loops=loops,
         frame_delay_ms=frame_delay_ms,
-        ttl_seconds=ttl,
-        received_at=at,
     )
 
 
@@ -129,20 +127,29 @@ def test_draw_blits_full_screen_image(scene, fake_inbox, fake_panel):
     assert image.getpixel((0, 0)) == (0, 1, 2)  # RGB source preserved
 
 
-def test_single_frame_draws_every_cycle(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=1))
+def test_single_frame_holds_for_frame_delay(scene, fake_inbox, fake_panel):
+    # A single frame is a one-frame animation: held round(480/80) = 6
+    # cycles, then the scene yields.
+    fake_inbox.set(make_submission(frames=1, frame_delay_ms=480))
     scene.on_enter()
     for _ in range(5):
         scene.draw()
-    assert len(fake_panel.blits) == 5
     assert scene.has_data() is True
+    scene.draw()  # hold 6/6 -> exhausted
+    assert scene.has_data() is False
+    assert len(fake_panel.blits) == 6
 
 
-def test_single_frame_never_exhausts_with_loops(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=1, loops=1))
+def test_single_frame_honours_frame_delay(scene, fake_inbox, fake_panel):
+    fake_inbox.set(make_submission(frames=1, frame_delay_ms=160))
     scene.on_enter()
-    scene.draw()
-    assert scene.has_data() is True
+    for _ in range(5):
+        scene.draw()
+    # Held for hold=2 cycles (160ms/80ms), then the scene yields: two
+    # blits, the rest are exhausted no-ops.
+    assert len(fake_panel.blits) == 2
+    assert scene._hold == 2
+    assert scene.has_data() is False
 
 
 def test_animation_holds_frames_for_the_quantised_cycles(scene, fake_inbox, fake_panel):
@@ -176,8 +183,8 @@ def test_loops_exhaustion_yields(scene, fake_inbox, fake_panel):
     assert blitted_frames(fake_panel) == [0, 1]
 
 
-def test_infinite_loops_never_exhaust(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=1, loops=None))
+def test_long_loops_keep_cycling(scene, fake_inbox, fake_panel):
+    fake_inbox.set(make_submission(frames=1, loops=100000))
     scene.on_enter()
     for _ in range(20):
         scene.draw()
@@ -215,11 +222,11 @@ def test_replacement_while_exhausted_revives(scene, fake_inbox):
     assert scene.has_data() is True
 
 
-def test_expiry_yields(scene, fake_inbox, fake_panel):
+def test_current_none_draws_nothing(scene, fake_inbox, fake_panel):
     fake_inbox.set(make_submission())
     scene.on_enter()
     assert scene.has_data() is True
-    fake_inbox.set(None)  # inbox expired the submission
+    fake_inbox.set(None)  # inbox cleared / nothing current
     assert scene.has_data() is False
     scene.draw()  # no-op, no crash
     assert len(fake_panel.blits) == 0
@@ -229,7 +236,7 @@ def test_poll_adopts_new_submission_without_canvas_ops(scene, fake_inbox, fake_p
     fake_inbox.set(make_submission())
     scene.on_enter()
     blits_before = len(fake_panel.blits)
-    fake_inbox.set(make_submission(ttl=10))
+    fake_inbox.set(make_submission(frame_delay_ms=160))
     scene.poll()
     assert scene._shown is fake_inbox.submission
     assert len(fake_panel.blits) == blits_before
@@ -238,7 +245,7 @@ def test_poll_adopts_new_submission_without_canvas_ops(scene, fake_inbox, fake_p
 def test_reset_adopts_replacement(scene, fake_inbox):
     fake_inbox.set(make_submission())
     scene.on_enter()
-    fake_inbox.set(make_submission(ttl=5))
+    fake_inbox.set(make_submission(frame_delay_ms=320))
     scene.reset()
     assert scene._shown is fake_inbox.submission
     assert scene.has_data() is True

@@ -6,8 +6,8 @@ display over ``POST /api/image``:
 
 - ``submit()`` validates the payload and stores it, replacing whatever
   was there before (a new upload always takes the screen immediately).
-- ``current()`` returns the active submission, or ``None`` once its TTL
-  has elapsed (lazily expired, so no background timer is needed).
+- ``current()`` returns the newest submission, or ``None`` before the
+  first upload (there is no TTL - submissions live until replaced).
 
 Submissions are deliberately not persisted - they are lost on restart.
 
@@ -32,7 +32,6 @@ from setup.configuration import Config
 FRAME_BYTES = screen.WIDTH * screen.HEIGHT * 3
 
 MAX_FRAMES = 60
-MAX_TTL_SECONDS = 86400  # 24h
 DEFAULT_FRAME_DELAY_MS = 500
 MIN_FRAME_DELAY_MS = 10
 MAX_FRAME_DELAY_MS = 60000
@@ -73,23 +72,24 @@ def decode_frame(raw) -> bytes:
 
 
 class Submission:
-    """One accepted image submission."""
+    """One accepted image submission.
 
-    __slots__ = ("frames", "loops", "frame_delay_ms", "expires_at", "ttl_seconds")
+    The display lifetime is the animation: ``frames`` images each held
+    ``frame_delay_ms`` (quantised to render cycles), repeated ``loops``
+    times, after which the scene yields back to the normal display.
+    """
+
+    __slots__ = ("frames", "loops", "frame_delay_ms")
 
     def __init__(
         self,
         frames: list[bytes],
-        loops: int | None,
+        loops: int,
         frame_delay_ms: int,
-        ttl_seconds: int,
-        received_at: float,
     ):
         self.frames = frames
         self.loops = loops
         self.frame_delay_ms = frame_delay_ms
-        self.ttl_seconds = ttl_seconds
-        self.expires_at = received_at + ttl_seconds
 
     def __len__(self) -> int:
         return len(self.frames)
@@ -98,10 +98,9 @@ class Submission:
 class ImageInbox:
     """Holds the newest accepted submission; thread-safe."""
 
-    def __init__(self, clock=time.time):
+    def __init__(self):
         self._lock = threading.Lock()
         self._submission: Submission | None = None
-        self._clock = clock
 
     def submit(self, payload) -> Submission:
         """Validate *payload* and install it as the current submission.
@@ -113,10 +112,6 @@ class ImageInbox:
         if not isinstance(payload, dict):
             raise ImageSubmissionError("body must be a JSON object")
 
-        if "ttl" not in payload:
-            raise ImageSubmissionError("'ttl' is required")
-        ttl = _require_int(payload["ttl"], "ttl", 1, MAX_TTL_SECONDS)
-
         frames_raw = payload.get("data")
         if not isinstance(frames_raw, list) or not frames_raw:
             raise ImageSubmissionError("'data' must be a non-empty list of frames")
@@ -125,7 +120,9 @@ class ImageInbox:
         frames = [decode_frame(raw) for raw in frames_raw]
 
         loops = payload.get("loops")
-        if loops is not None:
+        if loops is None:
+            loops = 1  # omitted (or null): play the animation once
+        else:
             loops = _require_int(loops, "loops", 1, 100000)
 
         frame_delay_ms = payload.get("frame_delay")
@@ -140,8 +137,6 @@ class ImageInbox:
             frames=frames,
             loops=loops,
             frame_delay_ms=frame_delay_ms,
-            ttl_seconds=ttl,
-            received_at=self._clock(),
         )
 
         with self._lock:
@@ -149,13 +144,9 @@ class ImageInbox:
         return submission
 
     def current(self) -> Submission | None:
-        """The active submission, or None once its TTL has elapsed."""
+        """The newest accepted submission, or None."""
         with self._lock:
-            submission = self._submission
-            if submission is not None and self._clock() >= submission.expires_at:
-                self._submission = None
-                submission = None
-            return submission
+            return self._submission
 
     def clear(self) -> None:
         """Drop the current submission immediately."""

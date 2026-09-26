@@ -53,7 +53,7 @@ def _headers(csrf="test-csrf", api_key=None):
 
 
 def _post_image(client, api_key, body=None):
-    payload = {"ttl": 60, "data": [FRAME_B64]} if body is None else body
+    payload = {"data": [FRAME_B64]} if body is None else body
     return client.post(
         "/api/image",
         json=payload,
@@ -100,7 +100,6 @@ def test_accepted_with_valid_key(client, key):
     data = resp.get_json()
     assert data["status"] == "ok"
     assert data["frames"] == 1
-    assert data["ttl"] == 60
     assert mod.INBOX.current() is not None
 
 
@@ -126,15 +125,9 @@ def test_new_key_invalidates_old(client):
 # ---------------------------------------------------------------------------
 
 
-def test_rejected_missing_ttl(client, key):
-    resp = _post_image(client, api_key=key, body={"data": [FRAME_B64]})
-    assert resp.status_code == 400
-    assert "ttl" in resp.get_json()["error"]
-
-
 def test_rejected_bad_frame_length(client, key):
     short = base64.b64encode(FRAME[:-3]).decode()
-    resp = _post_image(client, api_key=key, body={"ttl": 60, "data": [short]})
+    resp = _post_image(client, api_key=key, body={"data": [short]})
     assert resp.status_code == 400
     assert "6144" in resp.get_json()["error"]
 
@@ -156,15 +149,15 @@ def test_rejected_invalid_json(client, key):
 
 
 def test_validation_error_names_the_problem(client, key):
-    resp = _post_image(client, api_key=key, body={"ttl": 0, "data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_delay": 0, "data": [FRAME_B64]})
     assert resp.status_code == 400
-    assert "between 1 and" in resp.get_json()["error"]
+    assert "between 10 and" in resp.get_json()["error"]
 
 
 def test_failed_submit_does_not_disturb_current(client, key):
     _post_image(client, api_key=key)
     current = mod.INBOX.current()
-    resp = _post_image(client, api_key=key, body={"data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_delay": 0, "data": [FRAME_B64]})
     assert resp.status_code == 400
     assert mod.INBOX.current() is current
 
@@ -172,15 +165,15 @@ def test_failed_submit_does_not_disturb_current(client, key):
 def test_replacement_submission(client, key):
     _post_image(client, api_key=key)
     first = mod.INBOX.current()
-    resp = _post_image(client, api_key=key, body={"ttl": 30, "data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_delay": 300, "data": [FRAME_B64]})
     assert resp.status_code == 200
     second = mod.INBOX.current()
     assert second is not first
-    assert second.ttl_seconds == 30
+    assert second.frame_delay_ms == 300
 
 
 def test_animation_response_reports_effective_timing(client, key):
-    body = {"ttl": 60, "frame_delay": 150, "data": [FRAME_B64] * 2}
+    body = {"frame_delay": 150, "data": [FRAME_B64] * 2}
     resp = _post_image(client, api_key=key, body=body)
     data = resp.get_json()
     assert data["frame_delay_ms"] == 150
@@ -188,11 +181,12 @@ def test_animation_response_reports_effective_timing(client, key):
     assert data["effective_frame_delay_ms"] == 160
 
 
-def test_single_frame_response_has_no_timing_fields(client, key):
+def test_single_frame_response_reports_timing(client, key):
     resp = _post_image(client, api_key=key)
     data = resp.get_json()
-    assert "frame_hold" not in data
-    assert "effective_frame_delay_ms" not in data
+    assert data["frame_delay_ms"] == 500
+    assert data["frame_hold"] == 6  # 500ms / 80ms -> 6 panel frames
+    assert data["effective_frame_delay_ms"] == 480
 
 
 def test_missing_json_content_type(client, key):
