@@ -165,24 +165,24 @@ def test_replacement_submission(client, key):
     assert resp.status_code == 200
     second = mod.INBOX.current()
     assert second is not first
-    assert second.frame_ms_ms == 300
+    assert second.frame_ms == 300
 
 
 def test_animation_response_reports_effective_timing(client, key):
     body = {"frame_ms": 150, "data": [FRAME_B64] * 2}
     resp = _post_image(client, api_key=key, body=body)
     data = resp.get_json()
-    assert data["frame_ms_ms"] == 150
+    assert data["frame_ms"] == 150
     assert data["frame_hold"] == 2  # 150ms / 80ms -> 2 panel frames
-    assert data["effective_frame_ms_ms"] == 160
+    assert data["effective_frame_ms"] == 160
 
 
 def test_single_frame_response_reports_timing(client, key):
     resp = _post_image(client, api_key=key)
     data = resp.get_json()
-    assert data["frame_ms_ms"] == 500
+    assert data["frame_ms"] == 500
     assert data["frame_hold"] == 6  # 500ms / 80ms -> 6 panel frames
-    assert data["effective_frame_ms_ms"] == 480
+    assert data["effective_frame_ms"] == 480
 
 
 def test_missing_json_content_type(client, key):

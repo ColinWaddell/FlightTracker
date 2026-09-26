@@ -93,7 +93,7 @@ def test_upper_bounds_accepted(inbox):
     inbox.submit(make_payload(loops=100000, frame_ms=60000))
     current = inbox.current()
     assert current.loops == 100000
-    assert current.frame_ms_ms == 60000
+    assert current.frame_ms == 60000
 
 
 # ---------------------------------------------------------------------------
@@ -107,14 +107,14 @@ def test_valid_submission_roundtrip(inbox):
     assert current is submission
     assert current.frames == [FRAME]
     assert current.loops == 3
-    assert current.frame_ms_ms == 250
+    assert current.frame_ms == 250
 
 
 def test_defaults(inbox):
     inbox.submit(make_payload())
     current = inbox.current()
     assert current.loops == 1
-    assert current.frame_ms_ms == mod.DEFAULT_frame_ms_MS
+    assert current.frame_ms == mod.DEFAULT_FRAME_MS
 
 
 def test_replacement(inbox):
@@ -123,7 +123,7 @@ def test_replacement(inbox):
     inbox.submit(make_payload(frame_ms=120))
     second = inbox.current()
     assert second is not first
-    assert second.frame_ms_ms == 120
+    assert second.frame_ms == 120
 
 
 def test_failed_submit_keeps_previous(inbox):

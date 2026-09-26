@@ -110,7 +110,7 @@ class ImageScene:
             Image.frombytes("RGB", (screen.WIDTH, screen.HEIGHT), frame)
             for frame in submission.frames
         ]
-        self._hold, _ = quantise_frame_ms(submission.frame_ms_ms)
+        self._hold, _ = quantise_frame_ms(submission.frame_ms)
         self._frame_index = 0
         self._loops_done = 0
         self._held = 0

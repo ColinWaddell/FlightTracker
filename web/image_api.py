@@ -88,7 +88,7 @@ def register_image_api(app):
 
         from utilities.image_inbox import quantise_frame_ms
 
-        hold, effective_ms = quantise_frame_ms(submission.frame_ms_ms)
+        hold, effective_ms = quantise_frame_ms(submission.frame_ms)
         logger.info(
             "Image accepted: %d frame(s), %dms hold x %s loop(s)",
             len(submission),
@@ -100,9 +100,9 @@ def register_image_api(app):
                 {
                     "status": "ok",
                     "frames": len(submission),
-                    "frame_ms_ms": submission.frame_ms_ms,
+                    "frame_ms": submission.frame_ms,
                     "frame_hold": hold,
-                    "effective_frame_ms_ms": effective_ms,
+                    "effective_frame_ms": effective_ms,
                 }
             ),
             200,

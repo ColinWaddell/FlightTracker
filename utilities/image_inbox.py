@@ -31,9 +31,9 @@ from setup.configuration import Config
 FRAME_BYTES = screen.WIDTH * screen.HEIGHT * 3
 
 MAX_FRAMES = 60
-DEFAULT_frame_ms_MS = 500
-MIN_frame_ms_MS = 10
-MAX_frame_ms_MS = 60000
+DEFAULT_FRAME_MS = 500
+MIN_FRAME_MS = 10
+MAX_FRAME_MS = 60000
 
 
 class ImageSubmissionError(ValueError):
@@ -74,21 +74,21 @@ class Submission:
     """One accepted image submission.
 
     The display lifetime is the animation: ``frames`` images each held
-    ``frame_ms_ms`` (quantised to render cycles), repeated ``loops``
+    ``frame_ms`` (quantised to render cycles), repeated ``loops``
     times, after which the scene yields back to the normal display.
     """
 
-    __slots__ = ("frames", "loops", "frame_ms_ms")
+    __slots__ = ("frames", "loops", "frame_ms")
 
     def __init__(
         self,
         frames: list[bytes],
         loops: int,
-        frame_ms_ms: int,
+        frame_ms: int,
     ):
         self.frames = frames
         self.loops = loops
-        self.frame_ms_ms = frame_ms_ms
+        self.frame_ms = frame_ms
 
     def __len__(self) -> int:
         return len(self.frames)
@@ -124,18 +124,18 @@ class ImageInbox:
         else:
             loops = _require_int(loops, "loops", 1, 100000)
 
-        frame_ms_ms = payload.get("frame_ms")
-        if frame_ms_ms is None:
-            frame_ms_ms = DEFAULT_frame_ms_MS
+        frame_ms = payload.get("frame_ms")
+        if frame_ms is None:
+            frame_ms = DEFAULT_FRAME_MS
         else:
-            frame_ms_ms = _require_int(
-                frame_ms_ms, "frame_ms", MIN_frame_ms_MS, MAX_frame_ms_MS
+            frame_ms = _require_int(
+                frame_ms, "frame_ms", MIN_FRAME_MS, MAX_FRAME_MS
             )
 
         submission = Submission(
             frames=frames,
             loops=loops,
-            frame_ms_ms=frame_ms_ms,
+            frame_ms=frame_ms,
         )
 
         with self._lock:
@@ -168,8 +168,8 @@ def _stored_key() -> str:
     return str(Config.instance().get("image_api_key") or "")
 
 
-def quantise_frame_ms(frame_ms_ms: int) -> tuple[int, int]:
-    """Quantise *frame_ms_ms* to whole display frames.
+def quantise_frame_ms(frame_ms: int) -> tuple[int, int]:
+    """Quantise *frame_ms* to whole display frames.
 
     The panel renders at frames.PERIOD (scaled by the display speed
     setting), so animation can only change once per render cycle.  ms
@@ -181,7 +181,7 @@ def quantise_frame_ms(frame_ms_ms: int) -> tuple[int, int]:
     from setup.configuration import Config
 
     period_ms = frames.PERIOD * 1000.0 * Config.instance().display_speed_factor
-    hold = max(1, round(frame_ms_ms / period_ms))
+    hold = max(1, round(frame_ms / period_ms))
     return hold, round(hold * period_ms)
 
 
