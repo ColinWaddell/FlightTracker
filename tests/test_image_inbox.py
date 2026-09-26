@@ -15,7 +15,6 @@ import pytest
 
 from utilities import image_inbox as mod
 
-
 # A valid frame: 6144 raw RGB bytes.
 FRAME = bytes(range(256)) * 24
 
@@ -50,9 +49,9 @@ def inbox():
         {"loops": -1},
         {"loops": True},
         {"loops": 2.5},
-        {"frame_delay": 5},
-        {"frame_delay": 60001},
-        {"frame_delay": "500"},
+        {"frame_ms": 5},
+        {"frame_ms": 60001},
+        {"frame_ms": "500"},
     ],
 )
 def test_rejects_bad_overrides(inbox, overrides):
@@ -91,12 +90,10 @@ def test_unknown_keys_ignored(inbox):
 
 
 def test_upper_bounds_accepted(inbox):
-    inbox.submit(
-        make_payload(loops=100000, frame_delay=60000)
-    )
+    inbox.submit(make_payload(loops=100000, frame_ms=60000))
     current = inbox.current()
     assert current.loops == 100000
-    assert current.frame_delay_ms == 60000
+    assert current.frame_ms_ms == 60000
 
 
 # ---------------------------------------------------------------------------
@@ -105,35 +102,35 @@ def test_upper_bounds_accepted(inbox):
 
 
 def test_valid_submission_roundtrip(inbox):
-    submission = inbox.submit(make_payload(loops=3, frame_delay=250))
+    submission = inbox.submit(make_payload(loops=3, frame_ms=250))
     current = inbox.current()
     assert current is submission
     assert current.frames == [FRAME]
     assert current.loops == 3
-    assert current.frame_delay_ms == 250
+    assert current.frame_ms_ms == 250
 
 
 def test_defaults(inbox):
     inbox.submit(make_payload())
     current = inbox.current()
     assert current.loops == 1
-    assert current.frame_delay_ms == mod.DEFAULT_FRAME_DELAY_MS
+    assert current.frame_ms_ms == mod.DEFAULT_frame_ms_MS
 
 
 def test_replacement(inbox):
     inbox.submit(make_payload())
     first = inbox.current()
-    inbox.submit(make_payload(frame_delay=120))
+    inbox.submit(make_payload(frame_ms=120))
     second = inbox.current()
     assert second is not first
-    assert second.frame_delay_ms == 120
+    assert second.frame_ms_ms == 120
 
 
 def test_failed_submit_keeps_previous(inbox):
     inbox.submit(make_payload())
     previous = inbox.current()
     with pytest.raises(mod.ImageSubmissionError):
-        inbox.submit({"frame_delay": 0, "data": [b64()]})
+        inbox.submit({"frame_ms": 0, "data": [b64()]})
     assert inbox.current() is previous
 
 
@@ -207,9 +204,9 @@ def test_generated_keys_unique(fresh_config):
     assert len(keys) == 20
 
 
-def test_quantise_frame_delay():
+def test_quantise_frame_ms():
     # Hermetic test config: default display speed -> 80ms per frame.
-    assert mod.quantise_frame_delay(80) == (1, 80)
-    assert mod.quantise_frame_delay(150) == (2, 160)
-    assert mod.quantise_frame_delay(40) == (1, 80)  # below one cycle
-    assert mod.quantise_frame_delay(5000) == (62, 4960)  # round(62.5) -> 62
+    assert mod.quantise_frame_ms(80) == (1, 80)
+    assert mod.quantise_frame_ms(150) == (2, 160)
+    assert mod.quantise_frame_ms(40) == (1, 80)  # below one cycle
+    assert mod.quantise_frame_ms(5000) == (62, 4960)  # round(62.5) -> 62

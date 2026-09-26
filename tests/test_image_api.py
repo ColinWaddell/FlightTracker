@@ -11,12 +11,10 @@ so the suite stays hermetic.
 import base64
 
 import pytest
-
 from flask import Flask
 
-from web.image_api import register_image_api
 from utilities import image_inbox as mod
-
+from web.image_api import register_image_api
 
 FRAME = bytes(range(256)) * 24
 FRAME_B64 = base64.b64encode(FRAME).decode()
@@ -133,9 +131,7 @@ def test_rejected_bad_frame_length(client, key):
 
 
 def test_rejected_non_object_body(client, key):
-    resp = client.post(
-        "/api/image", json=[1, 2], headers=_headers(api_key=key)
-    )
+    resp = client.post("/api/image", json=[1, 2], headers=_headers(api_key=key))
     assert resp.status_code == 400
 
 
@@ -149,7 +145,7 @@ def test_rejected_invalid_json(client, key):
 
 
 def test_validation_error_names_the_problem(client, key):
-    resp = _post_image(client, api_key=key, body={"frame_delay": 0, "data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_ms": 0, "data": [FRAME_B64]})
     assert resp.status_code == 400
     assert "between 10 and" in resp.get_json()["error"]
 
@@ -157,7 +153,7 @@ def test_validation_error_names_the_problem(client, key):
 def test_failed_submit_does_not_disturb_current(client, key):
     _post_image(client, api_key=key)
     current = mod.INBOX.current()
-    resp = _post_image(client, api_key=key, body={"frame_delay": 0, "data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_ms": 0, "data": [FRAME_B64]})
     assert resp.status_code == 400
     assert mod.INBOX.current() is current
 
@@ -165,28 +161,28 @@ def test_failed_submit_does_not_disturb_current(client, key):
 def test_replacement_submission(client, key):
     _post_image(client, api_key=key)
     first = mod.INBOX.current()
-    resp = _post_image(client, api_key=key, body={"frame_delay": 300, "data": [FRAME_B64]})
+    resp = _post_image(client, api_key=key, body={"frame_ms": 300, "data": [FRAME_B64]})
     assert resp.status_code == 200
     second = mod.INBOX.current()
     assert second is not first
-    assert second.frame_delay_ms == 300
+    assert second.frame_ms_ms == 300
 
 
 def test_animation_response_reports_effective_timing(client, key):
-    body = {"frame_delay": 150, "data": [FRAME_B64] * 2}
+    body = {"frame_ms": 150, "data": [FRAME_B64] * 2}
     resp = _post_image(client, api_key=key, body=body)
     data = resp.get_json()
-    assert data["frame_delay_ms"] == 150
+    assert data["frame_ms_ms"] == 150
     assert data["frame_hold"] == 2  # 150ms / 80ms -> 2 panel frames
-    assert data["effective_frame_delay_ms"] == 160
+    assert data["effective_frame_ms_ms"] == 160
 
 
 def test_single_frame_response_reports_timing(client, key):
     resp = _post_image(client, api_key=key)
     data = resp.get_json()
-    assert data["frame_delay_ms"] == 500
+    assert data["frame_ms_ms"] == 500
     assert data["frame_hold"] == 6  # 500ms / 80ms -> 6 panel frames
-    assert data["effective_frame_delay_ms"] == 480
+    assert data["effective_frame_ms_ms"] == 480
 
 
 def test_missing_json_content_type(client, key):

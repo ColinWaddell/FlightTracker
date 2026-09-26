@@ -3,30 +3,30 @@ Tests for ImageScene (scenes/image/image_scene.py).
 
 Animation timing is counted in render cycles (draw calls), not
 wall-clock: each animation frame is held for `hold` cycles, derived
-from frame_delay ms quantised to the panel's frame period (80ms at
+from frame_ms ms quantised to the panel's frame period (80ms at
 default display speed in the hermetic test config).  The panel driver
 is faked (records draw_image/clear), the inbox is a stub the tests
 control directly.
 """
 
 import pytest
-from PIL import Image
 
-from utilities import image_inbox as mod
 from scenes.image.image_scene import ImageScene
-
+from utilities import image_inbox as mod
 
 FRAME = bytes(range(256)) * 24
 
 
-def make_submission(frames=1, loops=1, frame_delay_ms=500):
+def make_submission(frames=1, loops=1, frame_ms_ms=500):
     # Distinct frames (varying first pixel) so animation tests can tell
     # the panel frames apart; frame 0 stays the reference FRAME.
-    distinct = [FRAME if i == 0 else bytes([i, 0, 0]) + FRAME[3:] for i in range(frames)]
+    distinct = [
+        FRAME if i == 0 else bytes([i, 0, 0]) + FRAME[3:] for i in range(frames)
+    ]
     return mod.Submission(
         frames=distinct,
         loops=loops,
-        frame_delay_ms=frame_delay_ms,
+        frame_ms_ms=frame_ms_ms,
     )
 
 
@@ -127,10 +127,10 @@ def test_draw_blits_full_screen_image(scene, fake_inbox, fake_panel):
     assert image.getpixel((0, 0)) == (0, 1, 2)  # RGB source preserved
 
 
-def test_single_frame_holds_for_frame_delay(scene, fake_inbox, fake_panel):
+def test_single_frame_holds_for_frame_ms(scene, fake_inbox, fake_panel):
     # A single frame is a one-frame animation: held round(480/80) = 6
     # cycles, then the scene yields.
-    fake_inbox.set(make_submission(frames=1, frame_delay_ms=480))
+    fake_inbox.set(make_submission(frames=1, frame_ms_ms=480))
     scene.on_enter()
     for _ in range(5):
         scene.draw()
@@ -140,8 +140,8 @@ def test_single_frame_holds_for_frame_delay(scene, fake_inbox, fake_panel):
     assert len(fake_panel.blits) == 6
 
 
-def test_single_frame_honours_frame_delay(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=1, frame_delay_ms=160))
+def test_single_frame_honours_frame_ms(scene, fake_inbox, fake_panel):
+    fake_inbox.set(make_submission(frames=1, frame_ms_ms=160))
     scene.on_enter()
     for _ in range(5):
         scene.draw()
@@ -154,7 +154,7 @@ def test_single_frame_honours_frame_delay(scene, fake_inbox, fake_panel):
 
 def test_animation_holds_frames_for_the_quantised_cycles(scene, fake_inbox, fake_panel):
     # hold = round(160ms / 80ms) = 2 cycles per animation frame
-    fake_inbox.set(make_submission(frames=3, frame_delay_ms=160))
+    fake_inbox.set(make_submission(frames=3, frame_ms_ms=160))
     scene.on_enter()
     for _ in range(5):
         scene.draw()
@@ -163,7 +163,7 @@ def test_animation_holds_frames_for_the_quantised_cycles(scene, fake_inbox, fake
 
 def test_short_delay_collapses_to_one_cycle(scene, fake_inbox, fake_panel):
     # 40ms -> hold 1: a new animation frame every draw
-    fake_inbox.set(make_submission(frames=3, frame_delay_ms=40))
+    fake_inbox.set(make_submission(frames=3, frame_ms_ms=40))
     scene.on_enter()
     for _ in range(3):
         scene.draw()
@@ -171,7 +171,7 @@ def test_short_delay_collapses_to_one_cycle(scene, fake_inbox, fake_panel):
 
 
 def test_loops_exhaustion_yields(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=2, loops=1, frame_delay_ms=80))
+    fake_inbox.set(make_submission(frames=2, loops=1, frame_ms_ms=80))
     scene.on_enter()
     scene.draw()  # blit frame 0, advance to frame 1
     assert scene.has_data() is True
@@ -197,12 +197,12 @@ def test_long_loops_keep_cycling(scene, fake_inbox, fake_panel):
 
 
 def test_replacement_resets_animation(scene, fake_inbox, fake_panel):
-    fake_inbox.set(make_submission(frames=2, frame_delay_ms=160))
+    fake_inbox.set(make_submission(frames=2, frame_ms_ms=160))
     scene.on_enter()
     scene.draw()  # blit frame 0, held 1/2
     assert blitted_frames(fake_panel) == [0]
 
-    fake_inbox.set(make_submission(frames=3, frame_delay_ms=160))
+    fake_inbox.set(make_submission(frames=3, frame_ms_ms=160))
     scene.poll()
     scene.draw()
     # Fresh submission: its frame 0 is on screen
@@ -211,7 +211,7 @@ def test_replacement_resets_animation(scene, fake_inbox, fake_panel):
 
 
 def test_replacement_while_exhausted_revives(scene, fake_inbox):
-    fake_inbox.set(make_submission(frames=2, loops=1, frame_delay_ms=80))
+    fake_inbox.set(make_submission(frames=2, loops=1, frame_ms_ms=80))
     scene.on_enter()
     scene.draw()
     scene.draw()  # exhausted after one play-through
@@ -236,7 +236,7 @@ def test_poll_adopts_new_submission_without_canvas_ops(scene, fake_inbox, fake_p
     fake_inbox.set(make_submission())
     scene.on_enter()
     blits_before = len(fake_panel.blits)
-    fake_inbox.set(make_submission(frame_delay_ms=160))
+    fake_inbox.set(make_submission(frame_ms_ms=160))
     scene.poll()
     assert scene._shown is fake_inbox.submission
     assert len(fake_panel.blits) == blits_before
@@ -245,7 +245,7 @@ def test_poll_adopts_new_submission_without_canvas_ops(scene, fake_inbox, fake_p
 def test_reset_adopts_replacement(scene, fake_inbox):
     fake_inbox.set(make_submission())
     scene.on_enter()
-    fake_inbox.set(make_submission(frame_delay_ms=320))
+    fake_inbox.set(make_submission(frame_ms_ms=320))
     scene.reset()
     assert scene._shown is fake_inbox.submission
     assert scene.has_data() is True

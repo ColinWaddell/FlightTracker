@@ -7,10 +7,10 @@ animation completes (SceneManager falls back automatically once
 has_data() goes False).
 
 Frames arrive as raw RGB bytes (see utilities/image_inbox.py).  Every
-submission is an animation: each frame is held for frame_delay
+submission is an animation: each frame is held for frame_ms
 (quantised to whole render cycles) and the sequence repeats `loops`
 times before the scene yields back to the normal display.  A single
-frame is a one-frame animation, so its frame_delay sets how long it
+frame is a one-frame animation, so its frame_ms sets how long it
 stays on screen.
 
 A replacement submission - one pushed while an image is already on
@@ -20,7 +20,7 @@ canvas operations, because draw_image repaints every pixel anyway.
 
 Animation timing is quantised to the panel's render loop: the display
 runs at a fixed frame period, so a multi-frame submission holds each
-image for a whole number of draw() cycles (frame_delay ms rounded to
+image for a whole number of draw() cycles (frame_ms ms rounded to
 the nearest cycle, minimum one).  Timing never drifts because the
 scene counts actual render cycles instead of wall-clock milliseconds.
 """
@@ -47,7 +47,7 @@ class ImageScene:
         self._frame_index = 0
         self._loops_done = 0
         self._held = 0  # Render cycles the current frame has been shown
-        self._hold = 1  # Cycles to hold each frame (from frame_delay ms)
+        self._hold = 1  # Cycles to hold each frame (from frame_ms ms)
         self._exhausted = False
 
     # -- scene contract -----------------------------------------------------
@@ -76,15 +76,9 @@ class ImageScene:
         self.poll()
 
     def draw(self):
-        if (
-            self._shown is None
-            or self._exhausted
-            or self.inbox.current() is None
-        ):
+        if self._shown is None or self._exhausted or self.inbox.current() is None:
             return
-        self.panel.draw_image(
-            self.canvas, 0, 0, self._images[self._frame_index]
-        )
+        self.panel.draw_image(self.canvas, 0, 0, self._images[self._frame_index])
         self._held += 1
         if self._held >= self._hold:
             self._held = 0
@@ -109,14 +103,14 @@ class ImageScene:
     def _prepare(self, submission):
         from PIL import Image
 
-        from utilities.image_inbox import quantise_frame_delay
+        from utilities.image_inbox import quantise_frame_ms
 
         self._shown = submission
         self._images = [
             Image.frombytes("RGB", (screen.WIDTH, screen.HEIGHT), frame)
             for frame in submission.frames
         ]
-        self._hold, _ = quantise_frame_delay(submission.frame_delay_ms)
+        self._hold, _ = quantise_frame_ms(submission.frame_ms_ms)
         self._frame_index = 0
         self._loops_done = 0
         self._held = 0

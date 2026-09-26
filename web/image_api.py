@@ -86,9 +86,9 @@ def register_image_api(app):
         except ImageSubmissionError as exc:
             return jsonify({"status": "error", "error": str(exc)}), 400
 
-        from utilities.image_inbox import quantise_frame_delay
+        from utilities.image_inbox import quantise_frame_ms
 
-        hold, effective_ms = quantise_frame_delay(submission.frame_delay_ms)
+        hold, effective_ms = quantise_frame_ms(submission.frame_ms_ms)
         logger.info(
             "Image accepted: %d frame(s), %dms hold x %s loop(s)",
             len(submission),
@@ -100,9 +100,9 @@ def register_image_api(app):
                 {
                     "status": "ok",
                     "frames": len(submission),
-                    "frame_delay_ms": submission.frame_delay_ms,
+                    "frame_ms_ms": submission.frame_ms_ms,
                     "frame_hold": hold,
-                    "effective_frame_delay_ms": effective_ms,
+                    "effective_frame_ms_ms": effective_ms,
                 }
             ),
             200,

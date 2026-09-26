@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New "Image Upload API": generate an API key from a new card on the
   Data Source page, then POST images to /api/image and the display shows
   them at top priority until the animation completes: frames are held
-  for "frame_delay" ms and the sequence repeats "loops" times (omit
-  "loops" to play once; a single frame with frame_delay 60000 holds the
+  for "frame_ms" ms and the sequence repeats "loops" times (omit
+  "loops" to play once; a single frame with frame_ms 60000 holds the
   screen for a minute). Frames are raw RGB panel images (64x32, 6144
   bytes) base64-encoded. Animation timing is quantised to the panel's
   render loop and the API response reports the effective delay. Images

@@ -135,24 +135,24 @@ export default defineComponent({
       <div class="form-text text-muted small">
         <p class="mb-1">Push images to the display with an HTTP POST. Each frame is the raw RGB
         panel image (64x32, 6144 bytes) base64-encoded. The image stays up for
-        frames &times; frame_delay &times; loops, then the normal display returns:</p>
+        frames &times; frame_ms &times; loops, then the normal display returns:</p>
         <pre class="mb-2" style="font-size:0.75rem"><code>curl -X POST http://&lt;host&gt;:{{ store.config.web_port }}/api/image \\
   -H "X-API-Key: ***;your key&gt;" -H "Content-Type: application/json" \\
-  -d '{"data": ["&lt;base64 frame&gt;"], "frame_delay": 60000}'</code></pre>
+  -d '{"data": ["&lt;base64 frame&gt;"], "frame_ms": 60000}'</code></pre>
         <pre class="mb-1" style="font-size:0.75rem"><code>{
   "data": ["&lt;base64 frame&gt;"],
   "loops": 3,
-  "frame_delay": 150
+  "frame_ms": 150
 }</code></pre>
         <table class="table table-sm table-borderless mb-0" style="font-size:0.75rem">
           <tbody>
             <tr><td class="text-nowrap pe-2"><code>data</code></td><td>One base64 frame per entry - raw RGB, 6144 bytes each (1-60 frames).</td></tr>
             <tr><td class="text-nowrap pe-2"><code>loops</code></td><td>Optional play-throughs (default 1).</td></tr>
-            <tr><td class="text-nowrap pe-2"><code>frame_delay</code></td><td>Optional ms each frame is held (default 500, 10-60000), rounded to whole display frames.</td></tr>
+            <tr><td class="text-nowrap pe-2"><code>frame_ms</code></td><td>Optional ms each frame is held (default 500, 10-60000), rounded to whole display frames.</td></tr>
           </tbody>
         </table>
         <p class="mt-2 mb-0">The panel animates at {{ animationFps }} fps ({{ animationPeriodMs }} ms per
-        frame), so <code>frame_delay</code> values are rounded to whole frames - the API response
+        frame), so <code>frame_ms</code> values are rounded to whole frames - the API response
         reports the effective timing.</p>
         <p class="mt-2 mb-0"><i class="bi bi-github me-1"></i> See
         <a href="https://github.com/ColinWaddell/FlightTracker-ImageUploader" target="_blank">FlightTracker-ImageUploader</a>,
