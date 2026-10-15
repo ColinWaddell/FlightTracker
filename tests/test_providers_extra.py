@@ -506,6 +506,19 @@ class TestFr24ApiFlights:
         assert captured["params"]["bounds"] == "56.0,55.0,-5.0,-3.0"
         assert captured["token"] == "TOK"
 
+    def test_sorted_by_distance_from_home(self, monkeypatch):
+        result, _ = self._fetch(
+            monkeypatch,
+            data=[
+                _fr24_record(hex="far", lat=55.05, lon=-3.1),
+                _fr24_record(hex="near", lat=55.5, lon=-4.0),
+            ],
+        )
+        assert result.is_found
+        # Observer is at (55.5, -4.0): the overhead flight sorts first even
+        # though the feed listed it second.
+        assert [o.icao for o in result.value] == ["near", "far"]
+
     def test_no_token_is_unavailable(self):
         import utilities.lookups.providers.fr24api.flights as fr24api
 

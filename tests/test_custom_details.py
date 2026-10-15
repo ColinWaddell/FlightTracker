@@ -174,6 +174,20 @@ class TestParseTemplate:
         assert isinstance(tokens[0], FieldToken)
         assert tokens[0].unit == "kph"
 
+    def test_distance_field_tag(self):
+        tokens = parse_template("{distance_to_home}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], FieldToken)
+        assert tokens[0].field == "distance_to_home"
+        assert tokens[0].unit is None
+
+    def test_distance_with_unit(self):
+        tokens = parse_template("{distance_to_home:nm}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], FieldToken)
+        assert tokens[0].field == "distance_to_home"
+        assert tokens[0].unit == "nm"
+
 
 # ---------------------------------------------------------------------------
 # build_custom_spans - span construction
@@ -331,6 +345,95 @@ class TestBuildCustomSpans:
         # 500 fpm * 0.00508 = 2.54 -> int = 2
         assert "2" in texts
         assert "ms" in texts
+
+    def test_distance_default_km(self):
+        # Bare tag has no config default - resolves to km
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "12" in texts
+        assert "km" in texts
+
+    def test_distance_m(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:m}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 12.5 km * 1000 = 12500 m
+        assert "12500" in texts
+        assert "m" in texts
+
+    def test_distance_ft(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:ft}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 12.5 km * 3280.84 = 41010.5 -> 41010 ft
+        assert "41010" in texts
+        assert "ft" in texts
+
+    def test_distance_miles(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:miles}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 12.5 km * 0.621371 = 7.77 -> 7 mi
+        assert "7" in texts
+        assert "mi" in texts
+
+    def test_distance_mi_alias(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:mi}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "7" in texts
+        assert "mi" in texts
+
+    def test_distance_nm(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:nm}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 12.5 km * 0.539957 = 6.75 -> 6 nm
+        assert "6" in texts
+        assert "nm" in texts
+
+    def test_distance_knots_alias(self):
+        # "knots" is accepted as a nautical-mile alias, suffix normalised to nm
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:knots}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "6" in texts
+        assert "nm" in texts
+
+    def test_distance_knts_alias(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:knts}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "6" in texts
+        assert "nm" in texts
+
+    def test_distance_zero_renders_zero(self):
+        # 0 = unknown, but renders like the other telemetry fields do
+        flight = make_flight(distance_to_home=0)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home}", flight, cfg)
+        texts = [s.text for s in spans]
+        assert "0" in texts
+        assert "km" in texts
+
+    def test_distance_custom_colour(self):
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg()
+        spans = build_custom_spans("{distance_to_home:km:#FF8800}", flight, cfg)
+        from display.rgbpanel import Colour
+
+        for s in spans:
+            if s.text.isdigit() or s.text == "km":
+                assert s.colour == Colour(255, 136, 0)
 
     def test_symbol_span(self):
         flight = make_flight()
@@ -579,6 +682,17 @@ class TestValidateTemplate:
         for field, (units, _, _) in TELEMETRY_FIELDS.items():
             for unit in units:
                 assert validate_template("{" + field + ":" + unit + "}") == []
+
+    def test_valid_distance_units(self):
+        for unit in ("km", "m", "ft", "miles", "mi", "nm", "knots", "knts"):
+            assert validate_template("{distance_to_home:" + unit + "}") == []
+
+    def test_invalid_distance_unit(self):
+        # "kts" is a speed unit, not a distance one
+        errors = validate_template("{distance_to_home:kts}")
+        assert len(errors) == 1
+        assert "kts" in errors[0]
+        assert "distance_to_home" in errors[0]
 
 
 # ---------------------------------------------------------------------------

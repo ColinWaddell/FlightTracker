@@ -53,6 +53,11 @@ export const TEMPLATE_FIELDS = [
   { name: "ground_speed", label: "Ground speed", units: "knots/kts, kmh/kph, mph" },
   { name: "heading", label: "Heading (degrees)", units: "- (use {symbol:degree} for °)" },
   { name: "vertical_speed", label: "Vertical speed", units: "fpm, ms" },
+  {
+    name: "distance_to_home",
+    label: "Distance from observer",
+    units: "km, m, ft, miles/mi, nautical miles: nm (aliases: knots, knts)",
+  },
 ];
 
 export const TEMPLATE_SYMBOLS = [

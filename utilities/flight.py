@@ -60,6 +60,8 @@ class Flight:
     ground_speed: int = 0
     heading: int = 0
     vertical_speed: int = 0
+    # km from the observer, computed at fetch time; 0 = unknown
+    distance_to_home: float = 0
 
     # -- Identity -----------------------------------------------------------
 
