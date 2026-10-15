@@ -20,6 +20,7 @@ PROVIDER = ProviderConfig(
         "registered account is sufficient for 30-second polling."
     ),
     capabilities=("flights",),
+    live_fields=("squawk",),
     fields=(
         ConfigField(
             key="client_id",

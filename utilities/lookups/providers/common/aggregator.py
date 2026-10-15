@@ -63,6 +63,10 @@ def observation_from_record(ac: dict) -> FlightObservation:
         # enrichment, so it outranks remote lookups.
         plane=clean_field(ac.get("desc")),
         registration=clean_field(ac.get("r")),
+        # Standard readsb field - present whenever the aircraft
+        # transmits Mode A.  Some forks report it as an int; clean_field
+        # normalises both to text.
+        squawk=clean_field(ac.get("squawk")),
     )
 
 

@@ -259,6 +259,11 @@ class FlightObservation:
     origin: str = ""
     destination: str = ""
     airline_icao: str = ""
+    # Live transponder Mode-A code (4 octal digits) when the feed carries
+    # it.  Per-poll live data, never part of flight identity - codes are
+    # ATC-assigned, may change en route and are absent for non-
+    # transponding traffic, so treat blanks like any other live field.
+    squawk: str = ""
 
 
 @dataclass

@@ -68,6 +68,7 @@ TEXT_FIELDS: frozenset[str] = frozenset(
         "destination_municipality",
         "origin_country",
         "destination_country",
+        "squawk",
     }
 )
 

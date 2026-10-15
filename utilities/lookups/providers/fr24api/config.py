@@ -24,6 +24,7 @@ PROVIDER = ProviderConfig(
         "continuous polling to the free providers."
     ),
     capabilities=("flights", "routes", "aircraft"),
+    live_fields=("squawk",),
     fields=(
         ConfigField(
             key="api_key",

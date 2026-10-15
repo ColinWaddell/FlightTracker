@@ -17,5 +17,6 @@ PROVIDER = ProviderConfig(
         "Free community feeder network aggregator. Please keep request rates low (max 1/second)."
     ),
     capabilities=("flights",),
+    live_fields=("squawk",),
     fields=rate_limit_fields(),
 )

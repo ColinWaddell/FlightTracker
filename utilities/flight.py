@@ -60,6 +60,10 @@ class Flight:
     ground_speed: int = 0
     heading: int = 0
     vertical_speed: int = 0
+    # Live transponder Mode-A code (e.g. "7700").  Text, often blank -
+    # per-poll live data, not identity and not route info; the custom
+    # scroller omits it when empty.
+    squawk: str = ""
 
     # -- Identity -----------------------------------------------------------
 

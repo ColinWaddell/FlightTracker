@@ -180,6 +180,7 @@ class Overhead:
             ground_speed=int(observation.ground_speed_kt or 0),
             heading=int(observation.heading_deg or 0),
             vertical_speed=int(observation.vertical_speed_fpm or 0),
+            squawk=observation.squawk,
         )
 
     def _apply_track_timeout(self, flights: list, cfg) -> list:

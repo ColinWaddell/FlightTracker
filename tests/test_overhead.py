@@ -182,6 +182,7 @@ class TestTar1090ObservationParsing:
                 "baro_rate": 0,
                 "desc": "A320",
                 "r": "G-EUUA",
+                "squawk": "6072",
             }
         )
         assert obs.icao == "400f5a"
@@ -192,6 +193,14 @@ class TestTar1090ObservationParsing:
         assert obs.vertical_speed_fpm == 0
         assert obs.plane == "A320"
         assert obs.registration == "G-EUUA"
+        assert obs.squawk == "6072"
+
+    def test_squawk_normalisation(self):
+        """Missing squawk degrades to ''; integer values become text."""
+        obs = _to_observation({"hex": "c", "alt_baro": 10000, "squawk": 1200})
+        assert obs.squawk == "1200"
+        obs = _to_observation({"hex": "c", "alt_baro": 10000})
+        assert obs.squawk == ""
 
     def test_dump1090_field_names(self):
         """dump1090-style altitude/speed/vert_rate parse correctly (issue #90)."""

@@ -15,5 +15,6 @@ PROVIDER = ProviderConfig(
     name="Flight Radar 24 (Free)",
     description=("Live flights from the FlightRadar24 feed. Works without an API key"),
     capabilities=("flights", "routes", "aircraft"),
+    live_fields=("squawk",),
     fields=rate_limit_fields(),
 )

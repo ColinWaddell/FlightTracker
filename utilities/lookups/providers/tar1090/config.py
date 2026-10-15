@@ -20,6 +20,7 @@ PROVIDER = ProviderConfig(
         'noreferrer">ADSB.im</a>.'
     ),
     capabilities=("flights",),
+    live_fields=("squawk",),
     fields=(
         ConfigField(
             key="url",

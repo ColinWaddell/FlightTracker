@@ -922,6 +922,7 @@ def _provider_ui_data(cfg) -> dict:
                 "name": spec.name,
                 "description": spec.description,
                 "capabilities": sorted(spec.capabilities),
+                "live_fields": sorted(spec.config.live_fields),
                 "configured": spec.config.is_configured(settings),
                 "missing_required": spec.config.missing_required(settings),
                 "fields": [field.as_dict_view() for field in spec.config.fields],

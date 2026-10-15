@@ -223,6 +223,13 @@ class TestBuildCustomSpans:
         assert len(spans) == 1
         assert spans[0].text == "G-ZBKA"
 
+    def test_squawk_span(self):
+        flight = make_flight(squawk="7700")
+        cfg = make_cfg()
+        spans = build_custom_spans("{squawk}", flight, cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "7700"
+
     def test_origin_destination_spans(self):
         flight = make_flight()
         cfg = make_cfg()
@@ -401,6 +408,14 @@ class TestBuildCustomSpans:
         # plane is empty (skipped), space literal, callsign present
         assert "BAW123" in texts
 
+    def test_empty_squawk_dropped(self):
+        """Non-transponding aircraft omit the field from the bar."""
+        flight = make_flight(callsign="BAW123", squawk="")
+        cfg = make_cfg()
+        spans = build_custom_spans("{callsign} | {squawk}", flight, cfg)
+        texts = [s.text for s in spans if s.text]
+        assert texts == ["BAW123", " | "]
+
     def test_custom_colour_applied(self):
         flight = make_flight()
         cfg = make_cfg()
@@ -426,6 +441,15 @@ class TestBuildCustomSpans:
         from display.rgbpanel import Colour
 
         assert spans[0].colour == Colour(0, 0, 255)
+
+    def test_squawk_custom_colour(self):
+        flight = make_flight(squawk="7700")
+        cfg = make_cfg()
+        spans = build_custom_spans("{squawk:#FF0000}", flight, cfg)
+        from display.rgbpanel import Colour
+
+        assert spans[0].colour == Colour(255, 0, 0)
+        assert spans[0].text == "7700"
 
     def test_custom_colour_with_unit(self):
         flight = make_flight(altitude=38000)

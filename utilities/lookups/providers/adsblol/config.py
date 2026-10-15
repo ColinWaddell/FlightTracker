@@ -17,5 +17,6 @@ PROVIDER = ProviderConfig(
         "Community-run ADS-B aggregator (donation funded). Free, no key required."
     ),
     capabilities=("flights",),
+    live_fields=("squawk",),
     fields=rate_limit_fields(),
 )

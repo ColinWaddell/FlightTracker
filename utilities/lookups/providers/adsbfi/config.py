@@ -17,5 +17,6 @@ PROVIDER = ProviderConfig(
         "Community-run aggregator (adsb.fi) relaying live aircraft from its feeder network. Free, no key required."
     ),
     capabilities=("flights",),
+    live_fields=("squawk",),
     fields=rate_limit_fields(),
 )

@@ -26,6 +26,7 @@ def _record(**fields):
         "baro_rate": -512,
         "lat": 55.5,
         "lon": -4.0,
+        "squawk": "6721",
     }
     record.update(fields)
     return record
@@ -83,6 +84,7 @@ class TestFlightAggregators:
         assert obs.altitude_ft == 6000
         assert obs.plane == "De Havilland DHC-6 Twin Otter"
         assert obs.registration == "G-SGTS"
+        assert obs.squawk == "6721"
 
     def test_filters_outliers_and_orders_by_distance(self, module_name, envelope):
         payload = {
@@ -188,8 +190,98 @@ class TestAdsbImRoutes:
         assert result.is_unavailable
 
 
+# ---------------------------------------------------------------------------
+# FR24 free-feed - squawk via the FlightRadarAPI Flight attribute
+# ---------------------------------------------------------------------------
+
+
+class TestFr24FreeFeedSquawk:
+    def _obs(self, **flight_attrs):
+        from types import SimpleNamespace
+
+        from utilities.lookups.providers.fr24.flights import _to_observation
+
+        flight = SimpleNamespace(
+            icao_24bit="406DF5",
+            callsign="BAW1AB  ",
+            number="BA1AB",
+            latitude=55.5,
+            longitude=-4.0,
+            altitude=12000,
+            ground_speed=400,
+            heading=90,
+            vertical_speed=-64,
+            origin_airport_iata="LHR",
+            destination_airport_iata="DOH",
+            airline_icao="BAW",
+            **flight_attrs,
+        )
+        return _to_observation(flight)
+
+    def test_squawk_mapped(self):
+        assert self._obs(squawk="1000").squawk == "1000"
+
+    def test_missing_attribute_degrades_to_empty(self):
+        """Older FlightRadarAPI builds without Flight.squawk stay healthy."""
+        assert self._obs().squawk == ""
+
+
 def _context(callsign="BAW123", lat=55.5, lng=-4.0):
     return LookupContext(callsign=callsign, lat=lat, lng=lng)
+
+
+# ---------------------------------------------------------------------------
+# OpenSky state vector - squawk (index 14)
+# ---------------------------------------------------------------------------
+
+
+class TestOpenSkySquawk:
+    def _sv(self, overrides=None):
+        """A minimal-but-real OpenSky state vector (indices 0-16)."""
+        sv = [
+            "406df5",  # 0  icao24
+            "BAW1AB  ",  # 1  callsign
+            "United Kingdom",  # 2 origin_country
+            1700000000,  # 3 time_position
+            1700000010,  # 4 last_contact
+            -4.0,  # 5 longitude
+            55.5,  # 6 latitude
+            3657.6,  # 7 baro_altitude (m)
+            False,  # 8 on_ground
+            205.0,  # 9 velocity (m/s)
+            90.0,  # 10 true_track
+            0.0,  # 11 vertical_rate (m/s)
+            [],  # 12 sensors
+            3657.6,  # 13 geo_altitude
+            "7700",  # 14 squawk
+            False,  # 15 spi
+            0,  # 16 position_source
+        ]
+        for index, value in (overrides or {}).items():
+            sv[index] = value
+        return sv
+
+    def _obs(self, overrides=None):
+        from utilities.lookups.providers.opensky.flights import (
+            _sv_to_observation,
+        )
+
+        return _sv_to_observation(self._sv(overrides))
+
+    def test_squawk_mapped(self):
+        assert self._obs().squawk == "7700"
+
+    def test_null_squawk_is_empty(self):
+        assert self._obs(overrides={14: None}).squawk == ""
+
+    def test_short_vector_is_empty(self):
+        """Partial vectors the feed occasionally yields don't raise."""
+        sv = self._sv()[:12]
+        from utilities.lookups.providers.opensky.flights import (
+            _sv_to_observation,
+        )
+
+        assert _sv_to_observation(sv).squawk == ""
 
 
 # ---------------------------------------------------------------------------
@@ -436,6 +528,7 @@ def _fr24_record(**fields):
         "painted_as": "BAW",
         "type": "A35K",
         "reg": "G-XWBA",
+        "sqr": "1000",
     }
     record.update(fields)
     return record
@@ -501,6 +594,7 @@ class TestFr24ApiFlights:
         assert obs.origin == "LHR"
         assert obs.destination == "DOH"
         assert obs.airline_icao == "BAW"
+        assert obs.squawk == "1000"
         # Bounds use the zone corners, north-south-west-east order.
         assert captured["path"] == "/api/live/flight-positions/full"
         assert captured["params"]["bounds"] == "56.0,55.0,-5.0,-3.0"

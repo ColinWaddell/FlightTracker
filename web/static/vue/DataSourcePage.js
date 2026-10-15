@@ -401,6 +401,8 @@ export default defineComponent({
                 missing {{ meta.missing_required.join(', ') }}
               </span>
               <span class="badge me-1 text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
+              <span v-for="lf in meta.live_fields" :key="lf" class="badge me-1 text-bg-light text-secondary"
+                    :title="'Provided free by this feed - usable as {'+lf+'} in the custom scroller'">{{ lf }}</span>
             </div>
           </div>
         </div>

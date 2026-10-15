@@ -133,6 +133,9 @@ def _to_observation(flight) -> FlightObservation | None:
         origin=clean_field(flight.origin_airport_iata),
         destination=clean_field(flight.destination_airport_iata),
         airline_icao=clean_field(flight.airline_icao),
+        # FlightRadarAPI already parses Flight.squawk from the feed.
+        # getattr defensive: the attribute exists from 1.5.1 onward.
+        squawk=clean_field(getattr(flight, "squawk", "")),
     )
 
 

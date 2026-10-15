@@ -190,6 +190,10 @@ def _sv_to_observation(sv: list) -> FlightObservation:
         except (TypeError, ValueError):
             heading = 0
 
+    # Index 14 is the transponder Mode-A code; NULLs are common and the
+    # feed occasionally yields shorter vectors, so guard the index.
+    squawk = clean_field(sv[14] if len(sv) > 14 else None)
+
     return FlightObservation(
         icao=(sv[0] or "").strip().lower(),
         callsign=clean_field(sv[1]),
@@ -199,6 +203,7 @@ def _sv_to_observation(sv: list) -> FlightObservation:
         ground_speed_kt=ms_to_knots(sv[9]),
         heading_deg=heading,
         vertical_speed_fpm=ms_to_fpm(sv[11]),
+        squawk=squawk,
     )
 
 

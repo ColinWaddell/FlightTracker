@@ -106,6 +106,11 @@ class ProviderConfig:
     # Capability ids served by this provider ("flights", "routes", "aircraft").
     capabilities: tuple[str, ...] = ()
     fields: tuple[ConfigField, ...] = ()
+    # Field names the provider's live feed carries for free (e.g.
+    # "squawk").  Informational only - it drives the provider-card badge
+    # in the web UI.  Deliberately NOT part of capabilities, which
+    # declares interface classes for registry wiring.
+    live_fields: tuple[str, ...] = ()
 
     def field(self, key: str) -> ConfigField | None:
         for f in self.fields:

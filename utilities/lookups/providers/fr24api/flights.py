@@ -60,6 +60,7 @@ def _to_observation(record: dict) -> FlightObservation | None:
         origin=clean_field(record.get("orig_iata")),
         destination=clean_field(record.get("dest_iata")),
         airline_icao=clean_field(record.get("painted_as")),
+        squawk=clean_field(record.get("sqr")),
     )
 
 
