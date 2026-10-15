@@ -118,7 +118,10 @@ class FlightProvider:
 
         candidates.sort(
             key=lambda obs: distance_from_home(
-                home, obs.latitude or 0.0, obs.longitude or 0.0, obs.altitude_ft or 0
+                obs.latitude or 0.0,
+                obs.longitude or 0.0,
+                obs.altitude_ft or 0,
+                home,
             )
         )
         selected = candidates[: query.max_results]

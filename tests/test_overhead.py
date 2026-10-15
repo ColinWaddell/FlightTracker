@@ -1,5 +1,6 @@
 """Tests for the shared overhead helpers and the tar1090 flight adapter."""
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -57,6 +58,46 @@ class TestDistanceFromHome:
         home = [55.0, -4.0, 6371.0]
         dist = distance_from_home(60.0, 10.0, 30000, home)
         assert dist > 500.0  # many hundreds of km
+
+    def test_ground_track_matches_haversine(self):
+        # 1 degree of longitude at 55N ~ 63.8 km of great-circle ground track
+        home = [55.0, -4.0, 6371.0]
+        dist = distance_from_home(55.0, -3.0, 0, home)
+        assert dist == pytest.approx(63.8, abs=0.5)
+
+    def test_altitude_is_the_vertical_leg(self):
+        # 10000 ft directly overhead -> 3.048 km straight up
+        home = [55.0, -4.0, 6371.0]
+        dist = distance_from_home(55.0, -4.0, 10000, home)
+        assert dist == pytest.approx(3.048, abs=0.01)
+
+    def test_observer_above_sea_level(self):
+        # home radius 1 km above EARTH_RADIUS_KM, aircraft at ground level
+        home = [55.0, -4.0, 6371.0 + 1.0]
+        dist = distance_from_home(55.0, -4.0, 0, home)
+        assert dist == pytest.approx(1.0, abs=0.01)
+
+    def test_malformed_home_sorts_last(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            assert distance_from_home(55.0, -4.0, 10000, None) == 1e6
+            assert distance_from_home(55.0, -4.0, 10000, [55.0]) == 1e6
+            assert distance_from_home(55.0, -4.0, 10000, [55.0, -4.0]) == 1e6
+        assert "malformed home" in caplog.text
+
+    def test_non_numeric_position_sorts_last(self, caplog):
+        home = [55.0, -4.0, 6371.0]
+        with caplog.at_level(logging.WARNING):
+            assert distance_from_home("55.0", -4.0, 10000, home) == 1e6
+            assert distance_from_home(55.0, -4.0, None, home) == 1e6
+            assert distance_from_home(55.0, -4.0, 10000, [None, -4.0, 6371.0]) == 1e6
+        assert "non-numeric" in caplog.text
+
+    def test_nan_inf_and_bool_sort_last(self):
+        home = [55.0, -4.0, 6371.0]
+        assert distance_from_home(float("nan"), -4.0, 10000, home) == 1e6
+        assert distance_from_home(55.0, float("inf"), 10000, home) == 1e6
+        assert distance_from_home(True, -4.0, 10000, home) == 1e6
+        assert distance_from_home(55.0, -4.0, float("nan"), home) == 1e6
 
 
 class TestAirportInfo:
@@ -339,3 +380,90 @@ class TestTar1090Fetch:
         provider._session.get = MagicMock(return_value=self._mock_response(aircraft))
         result = provider.fetch(query)
         assert len(result.value) == 2
+
+
+# ---------------------------------------------------------------------------
+# Overhead._to_flight - distance_to_home computation
+# ---------------------------------------------------------------------------
+
+
+class TestToFlightDistance:
+    """The custom scroller's {distance_to_home} is computed at fetch time."""
+
+    HOME = [55.5, -4.0, 6371.0]
+
+    @pytest.fixture(autouse=True)
+    def _cfg(self, monkeypatch):
+        # _to_flight resolves the display callsign via Config.instance();
+        # stub it so tests never touch the real config store.
+        from setup.configuration import Config
+
+        monkeypatch.setattr(
+            Config,
+            "instance",
+            classmethod(lambda cls: MagicMock(callsign_format="icao")),
+        )
+
+    @staticmethod
+    def _observation(**kwargs):
+        from utilities.lookups.results import FlightObservation
+
+        defaults = dict(
+            icao="400f5a",
+            callsign="BAW123",
+            latitude=55.5,
+            longitude=-4.0,
+            altitude_ft=10000,
+        )
+        defaults.update(kwargs)
+        return FlightObservation(**defaults)
+
+    @staticmethod
+    def _enrichment():
+        from utilities.lookups.results import RouteInfo
+
+        enrichment = MagicMock()
+        enrichment.enrich.return_value = RouteInfo()
+        return enrichment
+
+    def test_distance_computed(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=self.HOME
+        )
+        # Directly overhead at 10000 ft -> ~3.048 km straight up
+        assert flight.distance_to_home == pytest.approx(3.048, abs=0.05)
+
+    def test_distance_unknown_without_position(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(latitude=None, longitude=None),
+            self._enrichment(),
+            home=self.HOME,
+        )
+        assert flight.distance_to_home == 0
+
+    def test_distance_unknown_without_home(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=None
+        )
+        assert flight.distance_to_home == 0
+
+    def test_distance_sentinel_becomes_unknown(self):
+        from utilities.overhead import Overhead
+
+        # Malformed home -> sentinel -> displayed as unknown (0)
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=[55.5]
+        )
+        assert flight.distance_to_home == 0
+
+    def test_legacy_call_without_home_kwarg(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(self._observation(), self._enrichment())
+        assert flight.distance_to_home == 0

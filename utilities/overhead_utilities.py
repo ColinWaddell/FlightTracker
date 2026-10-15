@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 EARTH_RADIUS_KM = 6371
+EARTH_RADIUS_M = EARTH_RADIUS_KM * 1000.0
 BLANK_FIELDS = {"", "N/A", "NONE"}
 
 # ---------------------------------------------------------------------------
@@ -66,40 +67,88 @@ def in_zone(lat, lon, zone) -> bool:
     return zone["br_y"] <= lat <= zone["tl_y"] and zone["tl_x"] <= lon <= zone["br_x"]
 
 
+# Returned for invalid input so distance-based sorting still works: bad
+# entries sort last instead of the sort raising or the order going random.
+# Public: display-side callers (Overhead._to_flight) use it to recognise
+# "unknown" results rather than rendering a million-kilometre aircraft.
+DISTANCE_SENTINEL_KM = 1e6
+
+
+def _is_finite_number(value) -> bool:
+    """True for real ints/floats - bools, NaN/inf and overflow excluded."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
 def distance_from_home(lat, lon, alt_ft, home) -> float:
-    """Great-circle-plus-altitude distance from a point to *home*.
+    """Distance from an aircraft to the observer, in km.
+
+    Haversine ground track plus the altitude difference as the vertical
+    leg - the slant-range approximation used by ADS-B tooling.
 
     Parameters
     ----------
     lat, lon : float
         Position of the aircraft in decimal degrees.
     alt_ft : float
-        Altitude in feet.
+        Aircraft altitude in feet.
     home : sequence of [lat, lon, radius_km]
-        Observer location (radius_km is typically EARTH_RADIUS_KM).
+        Observer location.  ``radius_km`` is the observer's distance from
+        the Earth's centre, so the legacy ``EARTH_RADIUS_KM`` value means
+        the observer sits at sea level.
 
     Returns
     -------
     float
-        Straight-line distance in km.  Returns 1e6 on invalid input so
-        sorting always works.
+        Distance in km.  Invalid input (malformed *home*, non-numeric or
+        non-finite coordinates) is logged and returns
+        ``DISTANCE_SENTINEL_KM`` so sorting always works and bad entries
+        sort last rather than failing silently.
     """
-
-    def polar_to_cartesian(lat, lon, alt):
-        deg2rad = math.pi / 180
-        return [
-            alt * math.cos(deg2rad * lat) * math.sin(deg2rad * lon),
-            alt * math.sin(deg2rad * lat),
-            alt * math.cos(deg2rad * lat) * math.cos(deg2rad * lon),
-        ]
-
-    altitude_km = 0.0003048 * alt_ft + EARTH_RADIUS_KM
     try:
-        x0, y0, z0 = polar_to_cartesian(lat, lon, altitude_km)
-        x1, y1, z1 = polar_to_cartesian(*home)
-        return math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2 + (z1 - z0) ** 2)
+        home_lat, home_lon, home_radius_km = home
     except (TypeError, ValueError):
-        return 1e6
+        logger.warning("distance_from_home: malformed home %r", home)
+        return DISTANCE_SENTINEL_KM
+
+    values = (lat, lon, alt_ft, home_lat, home_lon, home_radius_km)
+    if not all(_is_finite_number(v) for v in values):
+        logger.warning(
+            "distance_from_home: non-numeric position "
+            "(lat=%r, lon=%r, alt_ft=%r, home=%r)",
+            lat,
+            lon,
+            alt_ft,
+            home,
+        )
+        return DISTANCE_SENTINEL_KM
+
+    # home carries the distance from the Earth's centre, so sea level is
+    # EARTH_RADIUS_KM and the observer's altitude is the difference.
+    observer_alt_m = (home_radius_km - EARTH_RADIUS_KM) * 1000.0
+    aircraft_alt_m = alt_ft * 0.3048
+
+    lat1 = math.radians(lat)
+    lat2 = math.radians(home_lat)
+    dlat = lat2 - lat1
+    dlon = math.radians(home_lon - lon)
+
+    # Haversine central angle.  h is clamped to [0, 1] - floating-point
+    # rounding can nudge it just past 1 for near-antipodal points, which
+    # would turn sqrt(1 - h) into a domain error.
+    sin_dlat = math.sin(dlat / 2) ** 2
+    sin_dlon = math.sin(dlon / 2) ** 2
+    h = sin_dlat + math.cos(lat1) * math.cos(lat2) * sin_dlon
+    h = min(1.0, max(0.0, h))
+    horizontal_m = 2.0 * EARTH_RADIUS_M * math.atan2(math.sqrt(h), math.sqrt(1.0 - h))
+
+    vertical_m = aircraft_alt_m - observer_alt_m
+    # hypot is the overflow-safe form of sqrt(horizontal**2 + vertical**2).
+    return math.hypot(horizontal_m, vertical_m) / 1000.0
 
 
 # ---------------------------------------------------------------------------

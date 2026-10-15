@@ -260,7 +260,7 @@ def _run_location(args: argparse.Namespace) -> int:
     out_flights: list[dict] = []
     for observation in outcome.observations:
         try:
-            flight = glue._to_flight(observation, enrichment)
+            flight = glue._to_flight(observation, enrichment, home=query.home)
         except (KeyError, AttributeError, TypeError):
             continue
         out_flights.append(dataclasses.asdict(flight))

@@ -140,7 +140,9 @@ class Overhead:
 
             for observation in outcome.observations:
                 try:
-                    data.append(self._to_flight(observation, enrichment))
+                    data.append(
+                        self._to_flight(observation, enrichment, home=query.home)
+                    )
                 except (KeyError, AttributeError, TypeError):
                     continue
 
@@ -161,15 +163,42 @@ class Overhead:
         finally:
             self._finish_cycle(cache)
 
-    def _to_flight(self, observation, enrichment):
-        """Enrich one live observation into a display Flight."""
+    def _to_flight(self, observation, enrichment, home=None):
+        """Enrich one live observation into a display Flight.
+
+        *home* is the observer position ``[lat, lng, radius_km]`` from the
+        fetch query; when supplied (and the feed reported a position) the
+        observer distance is computed for the custom scroller's
+        ``{distance_to_home}`` field.
+        """
         from utilities.flight import Flight
+        from utilities.overhead_utilities import (
+            DISTANCE_SENTINEL_KM,
+            distance_from_home,
+        )
 
         route = enrichment.enrich(observation)
 
         # A local receiver's own aircraft-type database (or the feed's free
         # model text) outranks the lookup pipelines.
         plane = observation.plane or route.plane
+
+        distance_to_home = 0.0
+        if (
+            home is not None
+            and observation.latitude is not None
+            and observation.longitude is not None
+        ):
+            distance_km = distance_from_home(
+                observation.latitude,
+                observation.longitude,
+                observation.altitude_ft or 0,
+                home,
+            )
+            # The sentinel marks invalid input - display that as unknown
+            # (0) rather than a million-kilometre aircraft.
+            if distance_km < DISTANCE_SENTINEL_KM:
+                distance_to_home = distance_km
 
         return Flight.from_route(
             route,
@@ -181,6 +210,7 @@ class Overhead:
             heading=int(observation.heading_deg or 0),
             vertical_speed=int(observation.vertical_speed_fpm or 0),
             squawk=observation.squawk,
+            distance_to_home=distance_to_home,
         )
 
     def _apply_track_timeout(self, flights: list, cfg) -> list:

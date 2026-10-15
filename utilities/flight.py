@@ -64,6 +64,8 @@ class Flight:
     # per-poll live data, not identity and not route info; the custom
     # scroller omits it when empty.
     squawk: str = ""
+    # km from the observer, computed at fetch time; 0 = unknown
+    distance_to_home: float = 0
 
     # -- Identity -----------------------------------------------------------
 

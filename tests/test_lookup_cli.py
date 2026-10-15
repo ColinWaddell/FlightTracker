@@ -409,7 +409,7 @@ def fake_location(monkeypatch):
             source_name="tar1090",
         )
 
-    def fake_to_flight(self, observation, enrichment):
+    def fake_to_flight(self, observation, enrichment, home=None):
         return Flight(callsign="RYR215K", origin="STN", destination="DUB")
 
     def fake_delete(keys, kind):
