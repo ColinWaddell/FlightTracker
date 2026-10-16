@@ -12,10 +12,10 @@ INITIAL_TICKS = 25
 PAUSE_TICKS = 15
 
 # At or below this much overflow (content wider than the viewport, in pixels)
-# a bounce scroller doesn't bother scrolling: only a couple of pixels of the
+# a bounce scroller doesn't bother scrolling: only a few pixels of the
 # string are shaved off the right edge, so the text is already legible and
 # the full reveal/pause/retract cycle would be pointless.
-MIN_PIXELS_FOR_SCROLL = 2
+MIN_PIXELS_FOR_SCROLL = 3
 
 # Cache of BDFFont loaded on demand for non-BDFFont span fonts (e.g. the
 # rgbmatrix graphics.Font on Pi 3/4, which exposes CharacterWidth() and

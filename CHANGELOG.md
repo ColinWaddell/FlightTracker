@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2.12.4] - 2026-10-16
 - Squawk codes show ---- (dash placeholder) when the feed doesn't supply
   one instead of being omitted from the scroller
+- Barely-overflowing bounce scrollers (callsign bar, journey labels) stay
+  static when their content overflows by 3 pixels or less instead of
+  scrolling for a couple of characters' worth of movement
 
 ## [v2.12.2] - 2026-09-26
 - Last patch broken the save mechanism in the settings. This fixes it.
