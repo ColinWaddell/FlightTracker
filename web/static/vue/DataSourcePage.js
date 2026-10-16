@@ -325,14 +325,27 @@ export default defineComponent({
 
       <h3 class="fs-4 fw-semibold my-3"><i class="bi bi-sliders me-2"></i>Provider Settings</h3>
 
-      <p class="text-muted mb-3">
-        <ul>
-            <li><span class="badge text-bg-light text-secondary">flights</span> - Live flight positions</li>
-            <li><span class="badge text-bg-light text-secondary">aircraft</span> - Aircraft details</li>
-            <li><span class="badge text-bg-light text-secondary">routes</span> - Origin/destination airports</li>
-            <li><span class="badge text-bg-light text-secondary">squawk</span> - Squawk codes</li>
-        </ul>
-      </p>
+      <table class="mb-3">
+        <tr>
+            <th colspan="2" class="text-muted ps-1">Provider capabilities</th>
+        </tr>
+        <tr>
+            <td><span class="badge text-bg-light text-secondary">flights</span></td>
+            <td>Live flight positions</td>
+        </tr>
+        <tr>
+            <td><span class="badge text-bg-light text-secondary">aircraft</span></td>
+            <td>Aircraft details</td>
+        </tr>
+        <tr>
+            <td><span class="badge text-bg-light text-secondary">routes</span></td>
+            <td>Origin/destination airports</td>
+        </tr>
+        <tr>
+            <td><span class="badge text-bg-light text-secondary">squawk</span></td>
+            <td>Squawk codes</td>
+        </tr>
+      </table>
 
       <div class="row g-3">
         <div v-for="meta in sortedProvidersMeta" :key="meta.id" class="col-12 col-lg-6">
