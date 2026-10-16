@@ -512,12 +512,29 @@ class TestBuildCustomSpans:
         assert "BAW123" in texts
 
     def test_empty_squawk_dropped(self):
-        """Non-transponding aircraft omit the field from the bar."""
+        """Non-transponding aircraft show the squawk placeholder."""
         flight = make_flight(callsign="BAW123", squawk="")
         cfg = make_cfg()
         spans = build_custom_spans("{callsign} | {squawk}", flight, cfg)
         texts = [s.text for s in spans if s.text]
+        assert texts == ["BAW123", " | ", "----"]
+
+    def test_empty_field_without_placeholder_dropped(self):
+        """Empty text fields without a placeholder are still omitted."""
+        flight = make_flight(callsign="BAW123", registration="")
+        cfg = make_cfg()
+        spans = build_custom_spans("{callsign} | {registration}", flight, cfg)
+        texts = [s.text for s in spans if s.text]
         assert texts == ["BAW123", " | "]
+
+    def test_squawk_placeholder_colour(self):
+        flight = make_flight(squawk="")
+        cfg = make_cfg()
+        spans = build_custom_spans("{squawk:#FF0000}", flight, cfg)
+        from display.rgbpanel import Colour
+
+        assert spans[0].colour == Colour(255, 0, 0)
+        assert spans[0].text == "----"
 
     def test_custom_colour_applied(self):
         flight = make_flight()

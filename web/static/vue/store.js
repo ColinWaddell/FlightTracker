@@ -49,7 +49,7 @@ export const TEMPLATE_FIELDS = [
   { name: "destination_municipality", label: "Destination city", units: null },
   { name: "origin_country", label: "Origin country", units: null },
   { name: "destination_country", label: "Destination country", units: null },
-  { name: "squawk", label: "Transponder squawk code (provider-dependent - omitted when the feed doesn't supply it)", units: null },
+  { name: "squawk", label: "Transponder squawk code (provider-dependent - shows ---- when the feed doesn't supply it)", units: null },
   { name: "altitude", label: "Altitude", units: "ft, m" },
   { name: "ground_speed", label: "Ground speed", units: "knots/kts, kmh/kph, mph" },
   { name: "heading", label: "Heading (degrees)", units: "- (use {symbol:degree} for °)" },

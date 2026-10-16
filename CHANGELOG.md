@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2.12.3] - 2026-10-15
 - Added 09-26distance_to_home to the custom scroller fields
+- Added the {squawk} transponder code field to the custom scroller
+
+## [v2.12.4] - 2026-10-16
+- Squawk codes show ---- (dash placeholder) when the feed doesn't supply
+  one instead of being omitted from the scroller
 
 ## [v2.12.2] - 2026-09-26
 - Last patch broken the save mechanism in the settings. This fixes it.

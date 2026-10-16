@@ -72,6 +72,11 @@ TEXT_FIELDS: frozenset[str] = frozenset(
     }
 )
 
+# Text fields that show a placeholder instead of being omitted when the
+# flight has no value.  A Mode-A squawk is always four digits on real
+# radar displays, so dashes keep the width and read as "no code".
+FIELD_PLACEHOLDERS: dict[str, str] = {"squawk": "----"}
+
 # Telemetry fields - rendered with fonts.small_symbols, colour THEME_PLANE_TLM.
 # Each maps to a set of valid unit strings and a conversion function.
 # Conversion functions take (raw_value, unit) and return (value_str, unit_str).
@@ -505,7 +510,7 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
 
     # Text fields - simple value span.
     if token.field in TEXT_FIELDS:
-        text = str(raw_value) if raw_value else ""
+        text = str(raw_value) if raw_value else FIELD_PLACEHOLDERS.get(token.field, "")
         if not text:
             return []
         colour = _resolve_colour(token.colour, THEME_PLANE)
