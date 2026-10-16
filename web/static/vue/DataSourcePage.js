@@ -332,17 +332,13 @@ export default defineComponent({
         <tr>
             <td><span class="badge text-bg-light text-secondary">flights</span></td>
             <td>Live flight positions</td>
-        </tr>
-        <tr>
-            <td><span class="badge text-bg-light text-secondary">aircraft</span></td>
+            <td><span class="badge text-bg-light text-secondary ms-3">aircraft</span></td>
             <td>Aircraft details</td>
         </tr>
         <tr>
             <td><span class="badge text-bg-light text-secondary">routes</span></td>
             <td>Origin/destination airports</td>
-        </tr>
-        <tr>
-            <td><span class="badge text-bg-light text-secondary">squawk</span></td>
+            <td><span class="badge text-bg-light text-secondary ms-3">squawk</span></td>
             <td>Squawk codes</td>
         </tr>
       </table>
