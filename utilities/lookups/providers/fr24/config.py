@@ -15,6 +15,10 @@ PROVIDER = ProviderConfig(
     name="Flight Radar 24 (Free)",
     description=("Live flights from the FlightRadar24 feed. Works without an API key"),
     capabilities=("flights", "routes", "aircraft"),
-    live_fields=("squawk",),
+    # No squawk here: FR24's free feed stopped populating the squawk slot
+    # (feed index 6 is '' for every aircraft as of Oct 2026 - verified
+    # against 1,200+ live aircraft across two FlightRadarAPI versions).
+    # Squawk is only available from FR24's paid api (the "fr24api"
+    # provider, which maps the response's "sqr" field).
     fields=rate_limit_fields(),
 )

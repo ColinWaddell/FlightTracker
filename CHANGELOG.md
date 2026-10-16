@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Barely-overflowing bounce scrollers (callsign bar, journey labels) stay
   static when their content overflows by 3 pixels or less instead of
   scrolling for a couple of characters' worth of movement
+- Data-source page no longer advertises live squawk for the FR24 free
+  feed - FR24 no longer includes squawk codes in the free feed (the
+  mapper keeps extracting it in case that changes), so FR24 flights
+  show the ---- squawk placeholder like the other providers
 
 ## [v2.12.2] - 2026-09-26
 - Last patch broken the save mechanism in the settings. This fixes it.
