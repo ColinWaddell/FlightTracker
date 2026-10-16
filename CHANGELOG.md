@@ -16,10 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scrolling for a couple of characters' worth of movement
 - Data-source page no longer advertises live squawk for the FR24 free
   feed - FR24 no longer includes squawk codes in the free feed (the
-  mapper keeps extracting it in case that changes), so FR24 flights
-  show the ---- squawk placeholder like the other providers
-- Same treatment for FR24 (Paid): live-squawk badge removed until the
-  API can be verified with a real token
+  mapper keeps extracting it in case that changes), so FR24 free-feed
+  flights show the ---- squawk placeholder like the other free
+  providers
 
 ## [v2.12.2] - 2026-09-26
 - Last patch broken the save mechanism in the settings. This fixes it.

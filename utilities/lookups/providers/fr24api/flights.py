@@ -61,10 +61,8 @@ def _to_observation(record: dict) -> FlightObservation | None:
         destination=clean_field(record.get("dest_iata")),
         airline_icao=clean_field(record.get("painted_as")),
         # Docs document "sqr" for the /full endpoint (with a "squawks"
-        # filter param), but no token exists here to verify it live - the
-        # badge is deliberately not advertised (see fr24api/config.py).
-        # Extracted anyway so squawk flows whenever a token is configured
-        # and FR24 sends it.
+        # filter param).  No token exists here to verify hands-on, but
+        # squawk is extracted whenever a configured token returns it.
         squawk=clean_field(record.get("sqr")),
     )
 

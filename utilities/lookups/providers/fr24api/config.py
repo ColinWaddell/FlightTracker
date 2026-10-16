@@ -24,12 +24,13 @@ PROVIDER = ProviderConfig(
         "continuous polling to the free providers."
     ),
     capabilities=("flights", "routes", "aircraft"),
-    # No squawk badge here: the API docs document "sqr" for
+    # Squawk badge kept: the API docs document "sqr" for
     # /api/live/flight-positions/full (plus a "squawks" filter param),
-    # but we've never exercised the paid tier (no token on this
-    # deployment) and the free feed's squawk already proved to rot
-    # silently - see fr24/config.py.  The mapper still reads "sqr" when
-    # a configured token returns it.
+    # so unlike the free feed (see fr24/config.py) squawk is part of
+    # the product spec here.  No token exists on this deployment to
+    # verify it hands-on - if the paid tier ever stops sending it
+    # anyway, users will complain quickly enough.
+    live_fields=("squawk",),
     fields=(
         ConfigField(
             key="api_key",
