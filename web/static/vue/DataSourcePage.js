@@ -325,16 +325,13 @@ export default defineComponent({
 
       <h3 class="fs-4 fw-semibold my-3"><i class="bi bi-sliders me-2"></i>Provider Settings</h3>
 
-      <p class="small text-muted mb-3">
-        The tag line on each card - e.g.
-        <span class="badge text-bg-light text-secondary">aircraft / flights / routes / squawk</span>
-        - lists the provider's capabilities: <strong>aircraft</strong> = aircraft details
-        (model, registration), <strong>flights</strong> = live positions in your zone,
-        <strong>routes</strong> = origin/destination airports. A trailing value like
-        <strong>squawk</strong> is a live field: per-aircraft data the feed reports that
-        works in the custom scroller, e.g. <strong>{squawk:#FF8800}</strong>. Other
-        badges: <strong>enabled/disabled</strong> = whether the provider is active,
-        <strong>configured/missing</strong> = whether its required settings are filled in.
+      <p class="text-muted mb-3">
+        <ul>
+            <li><span class="badge text-bg-light text-secondary">flights</span> - Live flight positions</li>
+            <li><span class="badge text-bg-light text-secondary">aircraft</span> - Aircraft details</li>
+            <li><span class="badge text-bg-light text-secondary">routes</span> - Origin/destination airports</li>
+            <li><span class="badge text-bg-light text-secondary">squawk</span> - Squawk codes</li>
+        </ul>
       </p>
 
       <div class="row g-3">
