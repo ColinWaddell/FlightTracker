@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v2.12.3] - 2026-10-15
-- Added 09-26distance_to_home to the custom scroller fields
+- Added squawk codes to the custom scroller fields
+
+## [v2.12.3] - 2026-10-15
+- Added distance_to_home to the custom scroller fields
 
 ## [v2.12.2] - 2026-09-26
 - Last patch broken the save mechanism in the settings. This fixes it.
