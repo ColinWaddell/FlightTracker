@@ -400,9 +400,12 @@ export default defineComponent({
               <span v-else-if="meta.missing_required.length" class="badge me-1 text-bg-warning">
                 missing {{ meta.missing_required.join(', ') }}
               </span>
-              <span class="badge me-1 text-bg-light text-secondary">{{ meta.capabilities.join(' / ') }}</span>
-              <span v-for="lf in meta.live_fields" :key="lf" class="badge me-1 text-bg-light text-secondary"
-                    :title="'Provided free by this feed - usable as {'+lf+'} in the custom scroller'">{{ lf }}</span>
+              <span class="badge me-1 text-bg-light text-secondary">
+                <template v-for="(term, ti) in [...meta.capabilities, ...meta.live_fields]" :key="term"
+                ><span v-if="ti > 0"> / </span><span
+                    :title="meta.live_fields.includes(term) ? 'Provided live by this feed - usable as {'+term+'} in the custom scroller' : undefined"
+                  >{{ term }}</span></template>
+              </span>
             </div>
           </div>
         </div>
