@@ -1,11 +1,13 @@
 /*
- * Self-hosted Ko-fi support widget.
+ * Self-hosted Ko-fi badge.
  *
- * A local re-implementation of Ko-fi's "floating-chat" overlay widget
- * (geometry mirrors https://storage.ko-fi.com/cdn/scripts/floating-chat-*.css)
- * so no third-party scripts, styles or fonts ever load with the page.
- * The Ko-fi page itself is only fetched, inside an iframe, the first time
- * the visitor opens the popup.
+ * A plain <a> styled like Ko-fi's "floating-chat" pill (geometry mirrors
+ * https://storage.ko-fi.com/cdn/scripts/floating-chat-*.css) so the page
+ * loads no third-party scripts, styles or fonts.  The badge simply links
+ * to the Ko-fi donations page in a new tab: it floats over the page
+ * bottom-left on desktop, and on mobile it sits in the document flow
+ * below the footer (the widget include comes after the footer include on
+ * every page except the login screen) at half the normal size.
  */
 
 .kofi-wrap {
@@ -14,7 +16,7 @@
   position: fixed;
   bottom: 16px;
   left: 16px;
-  /* Keep the (sized) wrapper from eating clicks around the button. */
+  /* Keep the (sized) wrapper from eating clicks around the badge. */
   pointer-events: none;
   z-index: 99999999;
   font-family: var(--kofi-font);
@@ -27,7 +29,6 @@
   width: max-content;
   height: 46px;
   padding: 0 20px;
-  border: 0;
   border-radius: 100px;
   background-color: #f45d22;
   color: #fff;
@@ -35,6 +36,7 @@
   font-variant-ligatures: no-common-ligatures;
   font-size: 16px;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
@@ -61,115 +63,10 @@
   margin-left: 8px;
 }
 
-/*
- * Popup panel above the button.  Opens/closes by animating height +
- * opacity, exactly like the original widget.  No overflow: hidden here -
- * the closer intentionally pokes past the popup's top-right corner.
- */
-.kofi-popup {
-  --kofi-width: 325px;
-  position: fixed;
-  bottom: 75px;
-  left: 16px;
-  width: var(--kofi-width);
-  height: 0;
-  opacity: 0;
-  visibility: hidden;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 8px 30px 10px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(0, 0, 0, 0.25);
-  z-index: 99999999;
-  font-family: var(--kofi-font);
-  transition: height 0.5s ease, opacity 0.3s linear,
-    visibility 0s linear 0.4s;
-}
-
-.kofi-popup.open {
-  opacity: 1;
-  visibility: visible;
-  /* Drop the visibility transition delay while opening. */
-  transition: height 0.5s ease, opacity 0.3s linear;
-}
-
-.kofi-popup-closer {
-  position: absolute;
-  top: -7px;
-  right: -9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 25px;
-  height: 25px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 4px 20px #bdbdbd;
-  cursor: pointer;
-  line-height: 0;
-}
-
-.kofi-popup-closer .kofi-x {
-  stroke: #000;
-  stroke-width: 3;
-}
-
-.kofi-popup-closer:focus-visible {
-  outline: 3px solid #434b57;
-  outline-offset: 2px;
-}
-
-.kofi-popup-iframe-container {
-  position: relative;
-  height: 100%;
-}
-
-.kofi-popup-iframe-container iframe {
-  display: block;
-  width: 100%;
-  height: 98%;
-  border: 0;
-  border-radius: 16px;
-  background: #fff;
-}
-
-.kofi-popup-notice {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: none;
-  padding: 8px 0;
-  background-color: #fff;
-  border-top: 1px #e0e4e6 solid;
-  border-bottom-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  font-size: 14px;
-  line-height: 30px;
-  text-align: center;
-}
-
-.kofi-popup.open .kofi-popup-notice {
-  display: block;
-}
-
-.kofi-popup-notice a {
-  color: rgba(67, 75, 87, 1);
-  text-decoration: underline;
-  text-decoration-color: rgba(67, 75, 87, 0);
-  transition: all ease-in 0.1s;
-}
-
-.kofi-popup-notice a:hover,
-.kofi-popup-notice a:focus {
-  text-decoration-color: rgba(67, 75, 87, 1);
-}
-
-/* Narrow screens: the badge is parked in-flow below the footer (see
-   .kofi-wrap above) at half its normal size, like the original widget's
-   compact mobile style.  Text is 10px rather than a literal 50% of 16px,
-   which would be too small to read.
-*/
+/* Narrow screens: park the badge in-flow below the footer (position:
+   static works because the widget include lives after the footer include
+   on every page) at half the normal desktop size.  Text is 10px rather
+   than a literal 50% of 16px, which would be too small to read. */
 @media only screen and (max-width: 750px) {
   .kofi-wrap {
     position: static;
@@ -190,29 +87,10 @@
     font-size: 10px;
     margin-left: 5px;
   }
-
-  .kofi-popup-closer {
-    top: -19px;
-    right: -10px;
-    width: 30px;
-    height: 30px;
-  }
-
-  .kofi-popup-closer svg {
-    transform: scale(1.2);
-  }
-}
-
-@media only screen and (max-width: 350px) {
-  .kofi-popup {
-    --kofi-width: 288px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kofi-donate-button,
-  .kofi-popup,
-  .kofi-popup-notice a {
+  .kofi-donate-button {
     transition: none;
   }
 }

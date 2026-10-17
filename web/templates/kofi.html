@@ -1,34 +1,17 @@
-{# Self-hosted Ko-fi support widget.
+{# Self-hosted Ko-fi badge.
 
-   No third-party scripts, styles, fonts or trackers are loaded with the
-   page: the button, popup, stylesheet, script and badge image all live in
-   this repo.  The ko-fi.com page itself is only fetched, inside an iframe,
-   the first time the visitor opens the popup (see web/static/kofi/).
-
-   Included by every page template, including the login screen. #}
+   A plain styled link to the Ko-fi donations page (the look of Ko-fi's
+   floating-chat pill, re-implemented locally) — the page loads no
+   third-party scripts, styles, fonts or trackers.  Floats bottom-left on
+   desktop; on mobile it sits in the document flow just below the footer
+   at half size (the include comes after the footer include on every
+   page except the login screen, where there is no badge at all). #}
 <link rel="stylesheet" href="{{ url_for('static', filename='kofi/kofi.css') }}" />
 <div class="kofi-wrap">
-  <button id="kofi-donate-button" class="kofi-donate-button" type="button"
-          aria-haspopup="dialog" aria-expanded="false" aria-controls="kofi-popup">
+  <a class="kofi-donate-button" href="https://ko-fi.com/flighttracker"
+     target="_blank" rel="noopener">
     <img class="kofi-img" src="{{ url_for('static', filename='kofi/logomark.png') }}"
          alt="" width="39" height="31" />
     <span class="kofi-text">Support Me</span>
-  </button>
+  </a>
 </div>
-<div id="kofi-popup" class="kofi-popup" role="dialog"
-     aria-label="Support FlightTracker on Ko-fi" aria-hidden="true">
-  <button id="kofi-popup-closer" class="kofi-popup-closer" type="button"
-          aria-label="Close support panel">
-    <svg width="15" height="20" viewBox="0 0 15 20" aria-hidden="true">
-      <line x1="2" y1="8" x2="13" y2="18" class="kofi-x" />
-      <line x1="13" y1="8" x2="2" y2="18" class="kofi-x" />
-    </svg>
-  </button>
-  <div id="kofi-popup-iframe-container" class="kofi-popup-iframe-container"></div>
-  <div class="kofi-popup-notice">
-    <a href="https://ko-fi.com/flighttracker" target="_blank" rel="noopener">
-      ko-fi.com/flighttracker
-    </a>
-  </div>
-</div>
-<script src="{{ url_for('static', filename='kofi/kofi.js') }}" defer></script>

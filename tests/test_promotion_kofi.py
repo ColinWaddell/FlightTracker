@@ -1,8 +1,9 @@
-"""Tests for the self-hosted Ko-fi support widget.
+"""Tests for the self-hosted Ko-fi badge.
 
-The widget (web/templates/kofi.html + web/static/kofi/) must be rendered
-on every page of the web UI - including the login screen - and must not
-pull in any third-party scripts, styles or fonts.
+The badge (web/templates/kofi.html + web/static/kofi/) is a plain styled
+link to the Ko-fi donations page.  It must appear on every page of the
+web UI - except the login screen - and must not pull in any third-party
+assets or load any JavaScript of its own.
 """
 
 from __future__ import annotations
@@ -41,6 +42,8 @@ PAGE_TEMPLATES = [
     "update.html",
 ]
 
+KOFI_DONATIONS_URL = "https://ko-fi.com/flighttracker"
+
 
 @pytest.fixture
 def client():
@@ -59,9 +62,9 @@ def anonymous_client():
     return app.test_client()
 
 
-class TestWidgetOnEveryPage:
+class TestBadgeOnEveryPage:
     def test_login_page_excludes_widget(self, anonymous_client):
-        """The login screen carries no widget at all (footer.html is also
+        """The login screen carries no badge at all (footer.html is also
         skipped there, so an in-flow badge would have nothing to sit under).
         """
         resp = anonymous_client.get("/login")
@@ -69,16 +72,15 @@ class TestWidgetOnEveryPage:
         html = resp.data.decode()
         assert "kofi-donate-button" not in html
         assert "static/kofi/kofi.css" not in html
-        assert "static/kofi/kofi.js" not in html
 
     @pytest.mark.parametrize("page", HERMETIC_PAGES)
-    def test_page_includes_widget(self, client, page):
+    def test_page_includes_badge_link(self, client, page):
         resp = client.get(page)
         assert resp.status_code == 200
         html = resp.data.decode()
         assert "kofi-donate-button" in html
         assert "static/kofi/kofi.css" in html
-        assert "static/kofi/kofi.js" in html
+        assert f'href="{KOFI_DONATIONS_URL}"' in html
 
     def test_every_page_template_but_login_includes_widget(self):
         """Contract check: every page template except the login screen
@@ -93,30 +95,37 @@ class TestWidgetOnEveryPage:
         assert '{% include "kofi.html" %}' not in source
 
 
-class TestWidgetAssets:
-    @pytest.mark.parametrize(
-        "asset", ["kofi/kofi.css", "kofi/kofi.js", "kofi/logomark.png"]
-    )
+class TestBadgeIsAPlainLink:
+    def test_badge_template_has_no_script_or_iframe(self):
+        """The badge is just a link - no popup, no iframe, no JavaScript."""
+        source = (TEMPLATE_DIR / "kofi.html").read_text().lower()
+        assert "<script" not in source
+        assert "<iframe" not in source
+
+    def test_no_javascript_asset_shipped(self):
+        assert not (KOFI_CSS.parent / "kofi.js").exists()
+
+
+class TestBadgeAssets:
+    @pytest.mark.parametrize("asset", ["kofi/kofi.css", "kofi/logomark.png"])
     def test_assets_served(self, client, asset):
         resp = client.get(f"/static/{asset}")
         assert resp.status_code == 200
 
 
 class TestNoThirdPartyAssets:
-    def test_widget_does_not_reference_kofi_cdn(self, client):
+    def test_badge_does_not_reference_kofi_cdn(self, client):
         """The original widget loads overlay-widget.js, fonts and images from
-        storage.ko-fi.com; the self-hosted version must not.  Checked on a
-        page that carries the widget (/status; login has none at all)."""
+        storage.ko-fi.com; the self-hosted badge must not.  Checked on a
+        page that carries the badge (/status; login has none at all)."""
         html = client.get("/status").data.decode()
         assert "storage.ko-fi.com" not in html
         assert "overlay-widget" not in html
-        # ko-fi.com appears only in the popup-notice link, twice: once in
-        # its href and once in the visible link text.  The iframe URL lives
-        # inside the self-hosted kofi.js, never in the page itself.
-        assert html.count("ko-fi.com") == 2
+        # ko-fi.com appears exactly once: the badge link href.
+        assert html.count("ko-fi.com") == 1
 
 
-class TestWidgetPlacement:
+class TestBadgePlacement:
     def test_mobile_badge_sits_in_flow_below_footer(self):
         """On mobile the badge must not float: it has to sit just below the
         footer.  The widget include comes after the footer include on every
