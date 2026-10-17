@@ -165,11 +165,10 @@
   text-decoration-color: rgba(67, 75, 87, 1);
 }
 
-/* Narrow screens: tighten the button and enlarge the closer, like the
-   original widget's mobile styles.  On mobile the badge is not floated:
-   it sits in the document flow just below the footer (the widget include
-   comes after the footer include on every page, so plain static
-   positioning is all that is needed).
+/* Narrow screens: the badge is parked in-flow below the footer (see
+   .kofi-wrap above) at half its normal size, like the original widget's
+   compact mobile style.  Text is 10px rather than a literal 50% of 16px,
+   which would be too small to read.
 */
 @media only screen and (max-width: 750px) {
   .kofi-wrap {
@@ -179,11 +178,17 @@
   }
 
   .kofi-donate-button {
-    padding: 0 18px;
+    height: 24px;
+    padding: 0 10px;
   }
 
   .kofi-donate-button .kofi-img {
-    width: 35px;
+    width: 18px;
+  }
+
+  .kofi-donate-button .kofi-text {
+    font-size: 10px;
+    margin-left: 5px;
   }
 
   .kofi-popup-closer {

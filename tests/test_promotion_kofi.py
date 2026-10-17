@@ -27,12 +27,12 @@ HERMETIC_PAGES = [
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
 KOFI_CSS = Path(__file__).resolve().parent.parent / "web" / "static" / "kofi" / "kofi.css"
+# Templates that carry the widget include (login.html deliberately does not).
 PAGE_TEMPLATES = [
     "api_usage.html",
     "cached_data.html",
     "clear_cache.html",
     "live_data.html",
-    "login.html",
     "logs.html",
     "restarting.html",
     "restore.html",
@@ -60,12 +60,16 @@ def anonymous_client():
 
 
 class TestWidgetOnEveryPage:
-    def test_login_page_includes_widget(self, anonymous_client):
+    def test_login_page_excludes_widget(self, anonymous_client):
+        """The login screen carries no widget at all (footer.html is also
+        skipped there, so an in-flow badge would have nothing to sit under).
+        """
         resp = anonymous_client.get("/login")
         assert resp.status_code == 200
         html = resp.data.decode()
-        assert "kofi-donate-button" in html
-        assert "Support Me" in html
+        assert "kofi-donate-button" not in html
+        assert "static/kofi/kofi.css" not in html
+        assert "static/kofi/kofi.js" not in html
 
     @pytest.mark.parametrize("page", HERMETIC_PAGES)
     def test_page_includes_widget(self, client, page):
@@ -76,12 +80,17 @@ class TestWidgetOnEveryPage:
         assert "static/kofi/kofi.css" in html
         assert "static/kofi/kofi.js" in html
 
-    def test_every_page_template_includes_widget(self):
-        """Contract check: all page templates carry the include, so pages
-        that this suite cannot render hermetically are covered too."""
+    def test_every_page_template_but_login_includes_widget(self):
+        """Contract check: every page template except the login screen
+        carries the include, so pages this suite cannot render hermetically
+        are covered too."""
         for name in PAGE_TEMPLATES:
             source = (TEMPLATE_DIR / name).read_text()
             assert '{% include "kofi.html" %}' in source, f"{name} missing kofi include"
+
+    def test_login_template_has_no_include(self):
+        source = (TEMPLATE_DIR / "login.html").read_text()
+        assert '{% include "kofi.html" %}' not in source
 
 
 class TestWidgetAssets:
@@ -94,10 +103,11 @@ class TestWidgetAssets:
 
 
 class TestNoThirdPartyAssets:
-    def test_widget_does_not_reference_kofi_cdn(self, anonymous_client):
+    def test_widget_does_not_reference_kofi_cdn(self, client):
         """The original widget loads overlay-widget.js, fonts and images from
-        storage.ko-fi.com; the self-hosted version must not."""
-        html = anonymous_client.get("/login").data.decode()
+        storage.ko-fi.com; the self-hosted version must not.  Checked on a
+        page that carries the widget (/status; login has none at all)."""
+        html = client.get("/status").data.decode()
         assert "storage.ko-fi.com" not in html
         assert "overlay-widget" not in html
         # ko-fi.com appears only in the popup-notice link, twice: once in
@@ -120,3 +130,14 @@ class TestWidgetPlacement:
         mobile_block = match.group(0)
         assert ".kofi-wrap" in mobile_block, "kofi-wrap not styled on mobile"
         assert "position: static" in mobile_block, "badge still floats on mobile"
+
+    def test_mobile_badge_is_half_size(self):
+        """Colin: badge at half size on mobile (46px pill -> 24px)."""
+        css = KOFI_CSS.read_text()
+        match = re.search(
+            r"@media only screen and \(max-width: 750px\) \{.*?\n\}", css, re.S
+        )
+        assert match, "max-width: 750px media query missing from kofi.css"
+        mobile_block = match.group(0)
+        assert "height: 24px" in mobile_block
+        assert "width: 18px" in mobile_block  # logomark
