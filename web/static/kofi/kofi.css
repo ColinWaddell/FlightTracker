@@ -166,8 +166,18 @@
 }
 
 /* Narrow screens: tighten the button and enlarge the closer, like the
-   original widget's mobile styles. */
+   original widget's mobile styles.  On mobile the badge is not floated:
+   it sits in the document flow just below the footer (the widget include
+   comes after the footer include on every page, so plain static
+   positioning is all that is needed).
+*/
 @media only screen and (max-width: 750px) {
+  .kofi-wrap {
+    position: static;
+    z-index: auto;
+    padding: 12px 0 16px 16px;
+  }
+
   .kofi-donate-button {
     padding: 0 18px;
   }

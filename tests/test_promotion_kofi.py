@@ -7,6 +7,7 @@ pull in any third-party scripts, styles or fonts.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -25,6 +26,7 @@ HERMETIC_PAGES = [
 ]
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
+KOFI_CSS = Path(__file__).resolve().parent.parent / "web" / "static" / "kofi" / "kofi.css"
 PAGE_TEMPLATES = [
     "api_usage.html",
     "cached_data.html",
@@ -102,3 +104,19 @@ class TestNoThirdPartyAssets:
         # its href and once in the visible link text.  The iframe URL lives
         # inside the self-hosted kofi.js, never in the page itself.
         assert html.count("ko-fi.com") == 2
+
+
+class TestWidgetPlacement:
+    def test_mobile_badge_sits_in_flow_below_footer(self):
+        """On mobile the badge must not float: it has to sit just below the
+        footer.  The widget include comes after the footer include on every
+        page, so static in-flow positioning inside the 750px media query is
+        what guarantees that placement."""
+        css = KOFI_CSS.read_text()
+        match = re.search(
+            r"@media only screen and \(max-width: 750px\) \{.*?\n\}", css, re.S
+        )
+        assert match, "max-width: 750px media query missing from kofi.css"
+        mobile_block = match.group(0)
+        assert ".kofi-wrap" in mobile_block, "kofi-wrap not styled on mobile"
+        assert "position: static" in mobile_block, "badge still floats on mobile"
