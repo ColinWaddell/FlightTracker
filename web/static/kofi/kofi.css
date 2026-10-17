@@ -1,0 +1,203 @@
+/*
+ * Self-hosted Ko-fi support widget.
+ *
+ * A local re-implementation of Ko-fi's "floating-chat" overlay widget
+ * (geometry mirrors https://storage.ko-fi.com/cdn/scripts/floating-chat-*.css)
+ * so no third-party scripts, styles or fonts ever load with the page.
+ * The Ko-fi page itself is only fetched, inside an iframe, the first time
+ * the visitor opens the popup.
+ */
+
+.kofi-wrap {
+  --kofi-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  /* Keep the (sized) wrapper from eating clicks around the button. */
+  pointer-events: none;
+  z-index: 99999999;
+  font-family: var(--kofi-font);
+}
+
+.kofi-donate-button {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 100px;
+  background-color: #f45d22;
+  color: #fff;
+  font-family: inherit;
+  font-variant-ligatures: no-common-ligatures;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.kofi-donate-button:hover {
+  background-color: #ff6b32;
+}
+
+.kofi-donate-button:active {
+  transform: scale(0.98);
+}
+
+.kofi-donate-button:focus-visible {
+  outline: 3px solid #434b57;
+  outline-offset: 3px;
+}
+
+.kofi-donate-button .kofi-img {
+  width: 39px;
+  height: auto;
+}
+
+.kofi-donate-button .kofi-text {
+  margin-left: 8px;
+}
+
+/*
+ * Popup panel above the button.  Opens/closes by animating height +
+ * opacity, exactly like the original widget.  No overflow: hidden here -
+ * the closer intentionally pokes past the popup's top-right corner.
+ */
+.kofi-popup {
+  --kofi-width: 325px;
+  position: fixed;
+  bottom: 75px;
+  left: 16px;
+  width: var(--kofi-width);
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px 10px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(0, 0, 0, 0.25);
+  z-index: 99999999;
+  font-family: var(--kofi-font);
+  transition: height 0.5s ease, opacity 0.3s linear,
+    visibility 0s linear 0.4s;
+}
+
+.kofi-popup.open {
+  opacity: 1;
+  visibility: visible;
+  /* Drop the visibility transition delay while opening. */
+  transition: height 0.5s ease, opacity 0.3s linear;
+}
+
+.kofi-popup-closer {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 20px #bdbdbd;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.kofi-popup-closer .kofi-x {
+  stroke: #000;
+  stroke-width: 3;
+}
+
+.kofi-popup-closer:focus-visible {
+  outline: 3px solid #434b57;
+  outline-offset: 2px;
+}
+
+.kofi-popup-iframe-container {
+  position: relative;
+  height: 100%;
+}
+
+.kofi-popup-iframe-container iframe {
+  display: block;
+  width: 100%;
+  height: 98%;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.kofi-popup-notice {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  padding: 8px 0;
+  background-color: #fff;
+  border-top: 1px #e0e4e6 solid;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  font-size: 14px;
+  line-height: 30px;
+  text-align: center;
+}
+
+.kofi-popup.open .kofi-popup-notice {
+  display: block;
+}
+
+.kofi-popup-notice a {
+  color: rgba(67, 75, 87, 1);
+  text-decoration: underline;
+  text-decoration-color: rgba(67, 75, 87, 0);
+  transition: all ease-in 0.1s;
+}
+
+.kofi-popup-notice a:hover,
+.kofi-popup-notice a:focus {
+  text-decoration-color: rgba(67, 75, 87, 1);
+}
+
+/* Narrow screens: tighten the button and enlarge the closer, like the
+   original widget's mobile styles. */
+@media only screen and (max-width: 750px) {
+  .kofi-donate-button {
+    padding: 0 18px;
+  }
+
+  .kofi-donate-button .kofi-img {
+    width: 35px;
+  }
+
+  .kofi-popup-closer {
+    top: -19px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .kofi-popup-closer svg {
+    transform: scale(1.2);
+  }
+}
+
+@media only screen and (max-width: 350px) {
+  .kofi-popup {
+    --kofi-width: 288px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kofi-donate-button,
+  .kofi-popup,
+  .kofi-popup-notice a {
+    transition: none;
+  }
+}

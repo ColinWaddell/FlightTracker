@@ -1,0 +1,34 @@
+{# Self-hosted Ko-fi support widget.
+
+   No third-party scripts, styles, fonts or trackers are loaded with the
+   page: the button, popup, stylesheet, script and badge image all live in
+   this repo.  The ko-fi.com page itself is only fetched, inside an iframe,
+   the first time the visitor opens the popup (see web/static/kofi/).
+
+   Included by every page template, including the login screen. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='kofi/kofi.css') }}" />
+<div class="kofi-wrap">
+  <button id="kofi-donate-button" class="kofi-donate-button" type="button"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="kofi-popup">
+    <img class="kofi-img" src="{{ url_for('static', filename='kofi/logomark.png') }}"
+         alt="" width="39" height="31" />
+    <span class="kofi-text">Support Me</span>
+  </button>
+</div>
+<div id="kofi-popup" class="kofi-popup" role="dialog"
+     aria-label="Support FlightTracker on Ko-fi" aria-hidden="true">
+  <button id="kofi-popup-closer" class="kofi-popup-closer" type="button"
+          aria-label="Close support panel">
+    <svg width="15" height="20" viewBox="0 0 15 20" aria-hidden="true">
+      <line x1="2" y1="8" x2="13" y2="18" class="kofi-x" />
+      <line x1="13" y1="8" x2="2" y2="18" class="kofi-x" />
+    </svg>
+  </button>
+  <div id="kofi-popup-iframe-container" class="kofi-popup-iframe-container"></div>
+  <div class="kofi-popup-notice">
+    <a href="https://ko-fi.com/flighttracker" target="_blank" rel="noopener">
+      ko-fi.com/flighttracker
+    </a>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='kofi/kofi.js') }}" defer></script>
