@@ -1,7 +1,8 @@
 """Tests for the Ko-fi badge.
 
-The badge is a plain ``a > img`` link to the Ko-fi donations page that
-lives inside the shared page footer (web/templates/footer.html).  The
+The badge is a plain anchor inside the shared page footer
+(web/templates/footer.html) holding the self-hosted logomark and a
+"Support Me" label, and linking to the Ko-fi donations page.  The
 footer is included on every page of the web UI - except the login screen,
 which therefore carries no badge either.  No third-party assets, no
 JavaScript, no stylesheet of its own.
@@ -87,6 +88,7 @@ class TestBadgeInFooter:
         html = resp.data.decode()
         assert f'href="{KOFI_DONATIONS_URL}"' in html
         assert "static/kofi/logomark.png" in html
+        assert "Support Me" in html
 
     def test_badge_lives_in_shared_footer(self):
         source = (TEMPLATE_DIR / "footer.html").read_text()
@@ -115,18 +117,18 @@ class TestBadgeInFooter:
 
 
 class TestBadgeIsAPlainLink:
-    def test_badge_is_nothing_but_an_anchor_and_an_image(self):
-        """Colin: "just an `a > img` will be enough" - the anchor contains
-        no script, no iframe, no text/span, nothing but the image."""
+    def test_badge_is_label_and_image_only(self):
+        """The anchor contains exactly the visible "Support Me" text and
+        the logomark image - no script, no iframe, nothing else."""
         badge = badge_anchor_from_footer().lower()
         assert "<script" not in badge
         assert "<iframe" not in badge
         assert "<img" in badge
-        # Strip the opening/closing anchor tags and the img; nothing but
-        # whitespace remains.
+        # Strip the opening/closing anchor tags and the img; only the
+        # "Support Me" label remains.
         inner = re.sub(r"<img[^>]*/?>", "", badge)
         inner = re.sub(r"^<a[^>]*>", "", inner).replace("</a>", "")
-        assert inner.strip() == ""
+        assert inner.split() == ["support", "me"]
 
     def test_no_javascript_asset_shipped(self):
         assert not (STATIC_KOFI_DIR / "kofi.js").exists()
