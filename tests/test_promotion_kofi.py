@@ -130,6 +130,17 @@ class TestBadgeIsAPlainLink:
         inner = re.sub(r"^<a[^>]*>", "", inner).replace("</a>", "")
         assert inner.split() == ["support", "me"]
 
+    def test_label_separated_by_padding_not_a_space_char(self):
+        """Colin: no space character between badge and label - a bit of
+        padding (Bootstrap pe-1 on the img) separates them instead."""
+        badge = badge_anchor_from_footer()
+        match = re.search(r"<img[^>]*>", badge)
+        assert match, "badge img tag missing"
+        assert "pe-1" in match.group(0)
+        # The img tag is immediately followed by the label: no space char.
+        tail = badge[match.end() : match.end() + 1]
+        assert tail and not tail.isspace()
+
     def test_no_javascript_asset_shipped(self):
         assert not (STATIC_KOFI_DIR / "kofi.js").exists()
 
