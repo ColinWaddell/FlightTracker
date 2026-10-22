@@ -1,9 +1,10 @@
-"""Tests for the self-hosted Ko-fi badge.
+"""Tests for the Ko-fi badge.
 
-The badge (web/templates/kofi.html + web/static/kofi/) is a plain styled
-link to the Ko-fi donations page.  It must appear on every page of the
-web UI - except the login screen - and must not pull in any third-party
-assets or load any JavaScript of its own.
+The badge is a plain ``a > img`` link to the Ko-fi donations page that
+lives inside the shared page footer (web/templates/footer.html).  The
+footer is included on every page of the web UI - except the login screen,
+which therefore carries no badge either.  No third-party assets, no
+JavaScript, no stylesheet of its own.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import pytest
 
 # Pages the test-suite can render hermetically (no network / hardware).
 # The remaining pages (live-data, update, restarting) get the identical
-# Jinja include - covered by the template-source test below.
+# footer include - covered by the template-source test below.
 HERMETIC_PAGES = [
     "/status",
     "/settings",
@@ -27,8 +28,8 @@ HERMETIC_PAGES = [
 ]
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
-KOFI_CSS = Path(__file__).resolve().parent.parent / "web" / "static" / "kofi" / "kofi.css"
-# Templates that carry the widget include (login.html deliberately does not).
+STATIC_KOFI_DIR = Path(__file__).resolve().parent.parent / "web" / "static" / "kofi"
+# Templates that carry the footer (login.html deliberately does not).
 PAGE_TEMPLATES = [
     "api_usage.html",
     "cached_data.html",
@@ -62,54 +63,92 @@ def anonymous_client():
     return app.test_client()
 
 
-class TestBadgeOnEveryPage:
-    def test_login_page_excludes_widget(self, anonymous_client):
-        """The login screen carries no badge at all (footer.html is also
-        skipped there, so an in-flow badge would have nothing to sit under).
-        """
+def badge_anchor_from_footer() -> str:
+    """Return the badge <a>...</a> block from the shared footer."""
+    source = (TEMPLATE_DIR / "footer.html").read_text()
+    match = re.search(r"<a [^>]*ko-fi\.com[^>]*>.*?</a>", source, re.S)
+    assert match, "ko-fi badge anchor missing from footer.html"
+    return match.group(0)
+
+
+class TestBadgeInFooter:
+    def test_login_page_excludes_badge(self, anonymous_client):
+        """The login screen carries no footer and therefore no badge."""
         resp = anonymous_client.get("/login")
         assert resp.status_code == 200
         html = resp.data.decode()
-        assert "kofi-donate-button" not in html
-        assert "static/kofi/kofi.css" not in html
+        assert "ko-fi.com" not in html
+        assert "static/kofi/logomark.png" not in html
 
     @pytest.mark.parametrize("page", HERMETIC_PAGES)
-    def test_page_includes_badge_link(self, client, page):
+    def test_page_footer_carries_badge_link(self, client, page):
         resp = client.get(page)
         assert resp.status_code == 200
         html = resp.data.decode()
-        assert "kofi-donate-button" in html
-        assert "static/kofi/kofi.css" in html
         assert f'href="{KOFI_DONATIONS_URL}"' in html
+        assert "static/kofi/logomark.png" in html
 
-    def test_every_page_template_but_login_includes_widget(self):
+    def test_badge_lives_in_shared_footer(self):
+        source = (TEMPLATE_DIR / "footer.html").read_text()
+        assert f'href="{KOFI_DONATIONS_URL}"' in source
+        assert "kofi/logomark.png" in source
+
+    def test_every_page_template_but_login_includes_footer(self):
         """Contract check: every page template except the login screen
-        carries the include, so pages this suite cannot render hermetically
-        are covered too."""
+        includes the shared footer, so pages this suite cannot render
+        hermetically are covered too."""
         for name in PAGE_TEMPLATES:
             source = (TEMPLATE_DIR / name).read_text()
-            assert '{% include "kofi.html" %}' in source, f"{name} missing kofi include"
+            assert (
+                '{% include "footer.html" %}' in source
+            ), f"{name} missing footer include"
 
-    def test_login_template_has_no_include(self):
+    def test_login_template_has_no_footer_include(self):
         source = (TEMPLATE_DIR / "login.html").read_text()
-        assert '{% include "kofi.html" %}' not in source
+        assert '{% include "footer.html" %}' not in source
+
+    def test_old_standalone_widget_is_gone(self):
+        """The floating widget (template + stylesheet) has been removed;
+        the badge now lives in the footer."""
+        assert not (TEMPLATE_DIR / "kofi.html").exists()
+        assert not (STATIC_KOFI_DIR / "kofi.css").exists()
 
 
 class TestBadgeIsAPlainLink:
-    def test_badge_template_has_no_script_or_iframe(self):
-        """The badge is just a link - no popup, no iframe, no JavaScript."""
-        source = (TEMPLATE_DIR / "kofi.html").read_text().lower()
-        assert "<script" not in source
-        assert "<iframe" not in source
+    def test_badge_is_nothing_but_an_anchor_and_an_image(self):
+        """Colin: "just an `a > img` will be enough" - the anchor contains
+        no script, no iframe, no text/span, nothing but the image."""
+        badge = badge_anchor_from_footer().lower()
+        assert "<script" not in badge
+        assert "<iframe" not in badge
+        assert "<img" in badge
+        # Strip the opening/closing anchor tags and the img; nothing but
+        # whitespace remains.
+        inner = re.sub(r"<img[^>]*/?>", "", badge)
+        inner = re.sub(r"^<a[^>]*>", "", inner).replace("</a>", "")
+        assert inner.strip() == ""
 
     def test_no_javascript_asset_shipped(self):
-        assert not (KOFI_CSS.parent / "kofi.js").exists()
+        assert not (STATIC_KOFI_DIR / "kofi.js").exists()
+
+    def test_no_kofi_stylesheet_shipped(self):
+        assert not (STATIC_KOFI_DIR / "kofi.css").exists()
+
+
+class TestBadgeSize:
+    def test_badge_is_half_its_previous_size(self):
+        """Colin: badge at 50% of its previous size (39px logomark -> 20px)."""
+        badge = badge_anchor_from_footer()
+        match = re.search(r"<img[^>]*>", badge)
+        assert match, "badge img tag missing"
+        img = match.group(0)
+        assert 'width="20"' in img
+        assert 'height="16"' in img
 
 
 class TestBadgeAssets:
-    @pytest.mark.parametrize("asset", ["kofi/kofi.css", "kofi/logomark.png"])
-    def test_assets_served(self, client, asset):
-        resp = client.get(f"/static/{asset}")
+    def test_logomark_served(self, client):
+        resp = client.get("/static/kofi/logomark.png")
         assert resp.status_code == 200
 
 
@@ -123,30 +162,3 @@ class TestNoThirdPartyAssets:
         assert "overlay-widget" not in html
         # ko-fi.com appears exactly once: the badge link href.
         assert html.count("ko-fi.com") == 1
-
-
-class TestBadgePlacement:
-    def test_mobile_badge_sits_in_flow_below_footer(self):
-        """On mobile the badge must not float: it has to sit just below the
-        footer.  The widget include comes after the footer include on every
-        page, so static in-flow positioning inside the 750px media query is
-        what guarantees that placement."""
-        css = KOFI_CSS.read_text()
-        match = re.search(
-            r"@media only screen and \(max-width: 750px\) \{.*?\n\}", css, re.S
-        )
-        assert match, "max-width: 750px media query missing from kofi.css"
-        mobile_block = match.group(0)
-        assert ".kofi-wrap" in mobile_block, "kofi-wrap not styled on mobile"
-        assert "position: static" in mobile_block, "badge still floats on mobile"
-
-    def test_mobile_badge_is_half_size(self):
-        """Colin: badge at half size on mobile (46px pill -> 24px)."""
-        css = KOFI_CSS.read_text()
-        match = re.search(
-            r"@media only screen and \(max-width: 750px\) \{.*?\n\}", css, re.S
-        )
-        assert match, "max-width: 750px media query missing from kofi.css"
-        mobile_block = match.group(0)
-        assert "height: 24px" in mobile_block
-        assert "width: 18px" in mobile_block  # logomark
