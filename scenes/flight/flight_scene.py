@@ -89,7 +89,7 @@ PLANE_DETAILS_HEIGHT = 8
 # the darker phase is expressed as a fraction of the theme colour (no
 # second theme key - the theme colour is darkened at render time).
 SQUAWK_BLINK_PERIOD_S = 1.0
-SQUAWK_BLINK_DARKEN = 0.5
+SQUAWK_BLINK_DARKEN = 0.85
 
 
 def emergency_squawk_code(flight, cfg) -> str:

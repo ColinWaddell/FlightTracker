@@ -1247,6 +1247,8 @@ class TestEmergencySquawkBlink:
     def test_blink_flips_to_darkened_copy(self):
         import time
 
+        from scenes.flight.flight_scene import SQUAWK_BLINK_DARKEN
+
         scene = self._make_scene([Flight(squawk="7700")])
         cfg = self._cfg(details=0)
         self._draw(scene, cfg)
@@ -1257,9 +1259,10 @@ class TestEmergencySquawkBlink:
 
         dark = scene.squawk_scroller._spans[0].colour
         assert scene.squawk_blink_dark is True
-        assert dark.red == bright.red // 2
-        assert dark.green == bright.green // 2
-        assert dark.blue == bright.blue // 2
+        assert dark.red == int(bright.red * SQUAWK_BLINK_DARKEN)
+        assert dark.green == int(bright.green * SQUAWK_BLINK_DARKEN)
+        assert dark.blue == int(bright.blue * SQUAWK_BLINK_DARKEN)
+        assert dark != bright
         assert scene.squawk_blink_at > time.time()
 
     def test_blink_flips_back_to_theme_colour(self):
@@ -1289,9 +1292,14 @@ class TestEmergencySquawkBlink:
 
     def test_blink_colour_darkens_any_theme_shade(self):
         from display.rgbpanel import Colour
-        from scenes.flight.flight_scene import squawk_blink_colour
+        from scenes.flight.flight_scene import SQUAWK_BLINK_DARKEN, squawk_blink_colour
 
         colour = Colour(200, 100, 50)
         dark = squawk_blink_colour(colour, True)
-        assert (dark.red, dark.green, dark.blue) == (100, 50, 25)
+        assert (dark.red, dark.green, dark.blue) == (
+            int(colour.red * SQUAWK_BLINK_DARKEN),
+            int(colour.green * SQUAWK_BLINK_DARKEN),
+            int(colour.blue * SQUAWK_BLINK_DARKEN),
+        )
+        assert dark != colour
         assert squawk_blink_colour(colour, False) is colour
