@@ -6,21 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.12.5]
 
-- Fixed the Support Me badge in the shared page footer: on narrow pages
-  (the restarting screen, small windows, phones) it now centres beneath
-  the attribution line instead of being squeezed alongside it
-- New "Plane Info Row" option (off by default) to highlight an aircraft
+- New "Plane Info Row" option to highlight an aircraft
   squawking an emergency: the squawk code (7500 hijack, 7600 radio failure,
-  7700 general emergency) is pinned flush to the left of the scrolling plane
-  details bar in a dedicated theme colour (`SQUAWK_EMERGENCY` - orange in
-  the default theme), pulsing between it and a darker shade
+  7700 general emergency)
 - Added the aircraft's ICAO type code to the custom scroller fields as
-  `{icao_type}` (e.g. `A20N` for an Airbus A320-251N). Sourced from the
-  live feed and lookup providers where available; templates keep the
-  previous long model name via `{plane}` (#127)
+  `{icao_type}` (e.g. `A20N` for an Airbus A320-251N).
 - The airplanes.live card in the Data Source settings now explains that its
-  API is contributor-only: requests answer 403 unless the calling IP address
-  is already feeding airplanes.live (#123)
+  API is contributor-only
 
 ## [v2.12.4] - 2026-10-16
 - Added squawk codes to the custom scroller fields
