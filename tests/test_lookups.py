@@ -167,6 +167,18 @@ class TestParseAircraftType:
         assert parse_aircraft_type({}) == ""
 
 
+class TestHexdbParseIcaoType:
+    def test_type_code(self):
+        from utilities.lookups.providers.hexdb.aircraft import parse_icao_type
+
+        assert parse_icao_type({"ICAOTypeCode": "A20N"}) == "A20N"
+
+    def test_missing_field(self):
+        from utilities.lookups.providers.hexdb.aircraft import parse_icao_type
+
+        assert parse_icao_type({}) == ""
+
+
 class TestHexdbParseOperatorIcao:
     def test_operator_flag_code(self):
         from utilities.lookups.providers.hexdb.aircraft import parse_operator_icao
@@ -750,6 +762,41 @@ class TestAircraftPipeline:
         adapter.lookup_aircraft.assert_not_called()
         assert info.plane == "A320"
 
+    def test_cached_type_code_round_tripped(self, install_providers):
+        import utilities.lookups.aircraft as ac
+        import utilities.lookups.cache as rc
+
+        rc.put(
+            "40772f",
+            {"plane": "Airbus A20N", "icao_type": "A20N", "registration": "G-UZHZ"},
+            kind=rc.KIND_AIRCRAFT,
+        )
+        adapter = MagicMock()
+        install_providers([("hexdb", adapter)])
+
+        ctx = LookupContext(callsign="", mode_s="40772f")
+        info = ac.lookup_aircraft(ctx)
+
+        assert info.icao_type == "A20N"
+
+    def test_cached_entry_without_type_code_reads_back_blank(self, install_providers):
+        """Entries written before the icao_type field existed degrade to blank."""
+        import utilities.lookups.aircraft as ac
+        import utilities.lookups.cache as rc
+
+        rc.put(
+            "400f5b",
+            {"plane": "A320", "registration": "G-EUXM"},  # no icao_type key
+            kind=rc.KIND_AIRCRAFT,
+        )
+        adapter = MagicMock()
+        install_providers([("hexdb", adapter)])
+
+        ctx = LookupContext(callsign="", mode_s="400f5b")
+        info = ac.lookup_aircraft(ctx)
+
+        assert info.icao_type == ""
+
     def test_stale_reused_with_fresh_identity(self, install_providers, monkeypatch):
         import utilities.lookups.aircraft as ac
         import utilities.lookups.cache as rc
@@ -1277,7 +1324,12 @@ class TestEnrichment:
 
         aircraft_adapter = MagicMock()
         aircraft_adapter.lookup_aircraft.return_value = LookupResult.found(
-            AircraftInfo(plane="A320", registration="G-XLEH", operator_icao="BAW")
+            AircraftInfo(
+                plane="A320",
+                icao_type="A20N",
+                registration="G-XLEH",
+                operator_icao="BAW",
+            )
         )
         monkeypatch.setattr(
             ac,
@@ -1288,7 +1340,37 @@ class TestEnrichment:
         obs = FlightObservation(callsign="BAW123", icao="400f5a")
         route = enrich(obs)
         assert route.plane == "A320"
+        assert route.icao_type == "A20N"
         assert route.operator_icao == "BAW"
+
+    def test_prefill_type_code_beats_providers(self, monkeypatch):
+        """A feed's own type designator is the final answer for the airframe."""
+        import utilities.lookups.aircraft as ac
+        import utilities.lookups.routes as rs
+        from utilities.lookups.enrichment import enrich
+
+        route_adapter = MagicMock()
+        route_adapter.lookup_route.return_value = LookupResult.unavailable("none")
+
+        monkeypatch.setattr(
+            rs,
+            "resolve_route_providers",
+            lambda cfg=None: [("routeprov", route_adapter)],
+        )
+
+        aircraft_adapter = MagicMock()
+        aircraft_adapter.lookup_aircraft.return_value = LookupResult.found(
+            AircraftInfo(plane="A320", icao_type="A320", registration="G-EUXM")
+        )
+        monkeypatch.setattr(
+            ac,
+            "resolve_aircraft_providers",
+            lambda cfg=None: [("aircraftprov", aircraft_adapter)],
+        )
+
+        obs = FlightObservation(callsign="BAW123", icao="400f5a", icao_type="A20N")
+        route = enrich(obs)
+        assert route.icao_type == "A20N"
 
     def test_no_callsign_still_enriches_airframe(self, monkeypatch):
         """GA aircraft without a callsign still get their type resolved."""

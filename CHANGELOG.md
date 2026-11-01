@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added the aircraft's ICAO type code to the custom scroller fields as
+  `{icao_type}` (e.g. `A20N` for an Airbus A320-251N). Sourced from the
+  live feed and lookup providers where available; templates keep the
+  previous long model name via `{plane}` (#127)
 - The airplanes.live card in the Data Source settings now explains that its
   API is contributor-only: requests answer 403 unless the calling IP address
   is already feeding airplanes.live (#123)

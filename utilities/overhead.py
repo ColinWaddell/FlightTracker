@@ -203,6 +203,7 @@ class Overhead:
         return Flight.from_route(
             route,
             plane=plane,
+            icao_type=observation.icao_type or route.icao_type,
             callsign=_iata_callsign(observation),
             icao_callsign=observation.callsign,
             altitude=observation.altitude_ft or 0,

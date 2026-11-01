@@ -111,6 +111,7 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
     if cached is not None:
         return AircraftInfo(
             plane=cached.get("plane", ""),
+            icao_type=cached.get("icao_type", ""),
             registration=cached.get("registration", ""),
             operator_icao=cached.get("operator_icao", ""),
             owner=cached.get("owner", ""),
@@ -131,6 +132,7 @@ def lookup_aircraft(ctx: LookupContext, cfg=None) -> AircraftInfo:
     if stale is not None and (stale.get("plane") or stale.get("registration")):
         stale_info = AircraftInfo(
             plane=stale.get("plane", ""),
+            icao_type=stale.get("icao_type", ""),
             registration=stale.get("registration", ""),
             operator_icao=info.operator_icao or stale.get("operator_icao", ""),
             owner=info.owner or stale.get("owner", ""),
@@ -160,6 +162,7 @@ def _aircraft_cache_entry(info: AircraftInfo) -> dict:
     """Serialise an :class:`AircraftInfo` for the mode-s cache key."""
     return {
         "plane": info.plane,
+        "icao_type": info.icao_type,
         "registration": info.registration,
         "operator_icao": info.operator_icao,
         "owner": info.owner,

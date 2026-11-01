@@ -237,6 +237,22 @@ class TestBuildCustomSpans:
         assert len(spans) == 1
         assert spans[0].text == "G-ZBKA"
 
+    def test_icao_type_span(self):
+        flight = make_flight(icao_type="A20N")
+        cfg = make_cfg()
+        spans = build_custom_spans("{icao_type}", flight, cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "A20N"
+
+    def test_icao_type_omitted_when_unknown(self):
+        """The {reg} - {icao_type} pattern degrades to just the reg."""
+        flight = make_flight(icao_type="")
+        cfg = make_cfg()
+        spans = build_custom_spans("{registration} - {icao_type}", flight, cfg)
+        texts = [s.text for s in spans if s.text]
+        # The empty field is dropped; template literals render as usual.
+        assert texts == ["G-ZBKA", " - "]
+
     def test_squawk_span(self):
         flight = make_flight(squawk="7700")
         cfg = make_cfg()

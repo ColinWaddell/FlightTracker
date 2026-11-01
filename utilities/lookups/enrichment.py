@@ -53,6 +53,7 @@ def build_prefill(observation: FlightObservation) -> RouteInfo:
     """Route-seeded values from the observation's own prefill fields."""
     return RouteInfo(
         plane=observation.plane,
+        icao_type=observation.icao_type,
         registration=observation.registration,
         airline_icao=observation.airline_icao,
         origin=observation.origin,
@@ -87,6 +88,8 @@ def enrich(observation: FlightObservation) -> RouteInfo:
         info = aircraft_service.lookup_aircraft(ctx)
         if not result.plane:
             result.plane = info.plane
+        if not result.icao_type:
+            result.icao_type = info.icao_type
         if not result.registration:
             result.registration = info.registration
         result.operator_icao = info.operator_icao

@@ -320,6 +320,7 @@ export default defineComponent({
           <li><code>{symbol:altitude} {altitude} {symbol:speed} {ground_speed} {symbol:heading} {heading}{symbol:degree}</code> - full telemetry with icons</li>
           <li><code>{callsign} | {origin} -> {destination} | {altitude:ft:#FF8800}</code> - callsign, route, orange altitude</li>
           <li><code>{plane} ({registration}) {symbol:altitude} {altitude:m} {symbol:speed} {speed:knots}</code> - model, reg, metric altitude, knots</li>
+          <li><code>{registration} - {icao_type}</code> - reg and the short ICAO type code (e.g. G-UZHZ - A20N)</li>
           <li><code>{heading}{symbol:degree} {heading_arrow}</code> - heading value with directional arrow</li>
           <li><code>{heading}{symbol:degree} {heading_direction} {heading_arrow}</code> - heading value, cardinal direction text, and directional arrow</li>
         </ul>

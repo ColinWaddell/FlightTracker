@@ -42,6 +42,7 @@ class AircraftProvider:
 
         info = AircraftInfo(
             plane=parse_aircraft_type(data),
+            icao_type=parse_icao_type(data),
             registration=parse_registration(data),
             operator_icao=parse_operator_icao(data),
             owner=parse_owner(data),
@@ -64,6 +65,11 @@ def parse_aircraft_type(data: dict) -> str:
     if manufacturer and type_code:
         return f"{manufacturer} {type_code}"
     return type_code or manufacturer
+
+
+def parse_icao_type(data: dict) -> str:
+    """Return the ICAO type designator (e.g. ``A20N``) from a hexdb response."""
+    return (data.get("ICAOTypeCode") or "").strip()
 
 
 def parse_registration(data: dict) -> str:

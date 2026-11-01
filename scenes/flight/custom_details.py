@@ -59,6 +59,7 @@ TEXT_FIELDS: frozenset[str] = frozenset(
         "operator_icao",
         "owner",
         "plane",
+        "icao_type",
         "registration",
         "origin",
         "destination",
@@ -514,9 +515,10 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
         if not text:
             return []
         colour = _resolve_colour(token.colour, THEME_PLANE)
-        # Text fields use regular font; plane model is uppercased to match
-        # the existing model_spans() behaviour.
-        if token.field == "plane":
+        # Text fields use regular font; plane model and its ICAO type
+        # designator are uppercased to match the existing model_spans()
+        # behaviour.
+        if token.field in ("plane", "icao_type"):
             text = text.upper()
         return [Span(colour, fonts.regular, text)]
 

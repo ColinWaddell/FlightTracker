@@ -45,6 +45,7 @@ class Flight:
 
     # Route info
     plane: str = ""
+    icao_type: str = ""  # ICAO type designator (e.g. "A20N"), when known
     registration: str = ""
     origin: str = ""
     destination: str = ""

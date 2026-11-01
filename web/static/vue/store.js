@@ -40,6 +40,7 @@ export const TEMPLATE_FIELDS = [
   { name: "operator_icao", label: "Registered operator ICAO code (from Mode S hex)", units: null },
   { name: "owner", label: "Registered owner name (e.g. for private/training aircraft)", units: null },
   { name: "plane", label: "Aircraft make & model", units: null },
+  { name: "icao_type", label: "ICAO type code (e.g. A20N for an Airbus A320-251N) - provider-dependent, omitted when unknown", units: null },
   { name: "registration", label: "Aircraft registration", units: null },
   { name: "origin", label: "Origin airport code", units: null },
   { name: "destination", label: "Destination airport code", units: null },

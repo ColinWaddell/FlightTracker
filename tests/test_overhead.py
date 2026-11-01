@@ -467,3 +467,67 @@ class TestToFlightDistance:
 
         flight = Overhead()._to_flight(self._observation(), self._enrichment())
         assert flight.distance_to_home == 0
+
+
+# ---------------------------------------------------------------------------
+# Overhead._to_flight - ICAO type designator precedence
+# ---------------------------------------------------------------------------
+
+
+class TestToFlightIcaoType:
+    """The custom scroller's {icao_type} - feed prefill beats lookups."""
+
+    @pytest.fixture(autouse=True)
+    def _cfg(self, monkeypatch):
+        from setup.configuration import Config
+
+        monkeypatch.setattr(
+            Config,
+            "instance",
+            classmethod(lambda cls: MagicMock(callsign_format="icao")),
+        )
+
+    @staticmethod
+    def _observation(**kwargs):
+        from utilities.lookups.results import FlightObservation
+
+        defaults = dict(icao="40772f", callsign="EZY3128")
+        defaults.update(kwargs)
+        return FlightObservation(**defaults)
+
+    @staticmethod
+    def _enrichment(route):
+        enrichment = MagicMock()
+        enrichment.enrich.return_value = route
+        return enrichment
+
+    @staticmethod
+    def _route(icao_type="A20N"):
+        from utilities.lookups.results import RouteInfo
+
+        return RouteInfo(plane="Airbus A20N", icao_type=icao_type)
+
+    def test_observation_outranks_lookup(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(icao_type="A20N"),
+            self._enrichment(self._route("B738")),
+        )
+        assert flight.icao_type == "A20N"
+
+    def test_lookup_fills_blank_observation(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(self._route())
+        )
+        assert flight.icao_type == "A20N"
+
+    def test_missing_everywhere_stays_blank(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(self._route(""))
+        )
+        assert flight.icao_type == ""

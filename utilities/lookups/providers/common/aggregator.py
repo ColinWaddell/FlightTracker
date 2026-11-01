@@ -62,6 +62,9 @@ def observation_from_record(ac: dict) -> FlightObservation:
         # aggregators carry the same field.  It rides along as pre-filled
         # enrichment, so it outranks remote lookups.
         plane=clean_field(ac.get("desc")),
+        # readsb feeds add the ICAO type designator (e.g. "A20N") from the
+        # same local database row that fills desc - free airframe identity.
+        icao_type=clean_field(ac.get("t")),
         registration=clean_field(ac.get("r")),
         # Standard readsb field - present whenever the aircraft
         # transmits Mode A.  Some forks report it as an int; clean_field

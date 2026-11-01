@@ -87,6 +87,9 @@ def _to_aircraft(record: dict) -> AircraftInfo | None:
         return None
     return AircraftInfo(
         plane=plane,
+        # FR24's "type" is already the ICAO type designator, so the short
+        # code and the display name are the same string here.
+        icao_type=plane,
         registration=registration,
         operator_icao=operator,
     )

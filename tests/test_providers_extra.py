@@ -19,6 +19,7 @@ def _record(**fields):
         "hex": "406df5",
         "flight": "GSGTS  ",
         "r": "G-SGTS",
+        "t": "DHC6",
         "desc": "De Havilland DHC-6 Twin Otter",
         "alt_baro": 6000,
         "gs": 161.1,
@@ -83,6 +84,7 @@ class TestFlightAggregators:
         assert obs.callsign == "GSGTS"
         assert obs.altitude_ft == 6000
         assert obs.plane == "De Havilland DHC-6 Twin Otter"
+        assert obs.icao_type == "DHC6"
         assert obs.registration == "G-SGTS"
         assert obs.squawk == "6721"
 
@@ -731,6 +733,8 @@ class TestFr24ApiAircraft:
         assert result.is_found
         assert result.value.registration == "G-XWBA"
         assert result.value.plane == "A35K"
+        # FR24's "type" doubles as the ICAO type code.
+        assert result.value.icao_type == "A35K"
         assert result.value.operator_icao == "BAW"
 
     def test_unknown_callsign_is_not_found(self, monkeypatch):
@@ -916,6 +920,64 @@ class TestAdsbDbRejectedIdent:
                 LookupContext(callsign="", mode_s="zz zz")
             )
         assert result.is_not_found
+
+
+class TestAdsbDbAircraftType:
+    """adsbdb carries the ICAO type designator alongside its full model."""
+
+    _RESPONSE = {
+        "response": {
+            "aircraft": {
+                "type": "A320 251NSL",
+                "icao_type": "A20N",
+                "manufacturer": "Airbus",
+                "mode_s": "40772F",
+                "registration": "G-UZHZ",
+                "registered_owner_operator_flag_code": "EZY",
+                "registered_owner": "easyJet Airline",
+            }
+        }
+    }
+
+    def test_parse_keeps_short_code(self):
+        import utilities.lookups.providers.adsbdb.aircraft as adsbdb_aircraft
+
+        info = adsbdb_aircraft.parse_aircraft(self._RESPONSE)
+
+        assert info.plane == "Airbus A20N"
+        assert info.icao_type == "A20N"
+
+    def test_parse_without_short_code(self):
+        import utilities.lookups.providers.adsbdb.aircraft as adsbdb_aircraft
+
+        data = {
+            "response": {
+                "aircraft": {
+                    "type": "A320 251NSL",
+                    "icao_type": "",
+                    "manufacturer": "Airbus",
+                    "registration": "G-UZHZ",
+                }
+            }
+        }
+        info = adsbdb_aircraft.parse_aircraft(data)
+
+        assert info.plane == "A320 251NSL"
+        assert info.icao_type == ""
+
+    def test_provider_found_passes_short_code_through(self):
+        import utilities.lookups.providers.adsbdb.aircraft as adsbdb_aircraft
+
+        provider = adsbdb_aircraft.AircraftProvider({})
+        with mock.patch.object(
+            adsbdb_aircraft, "_get", return_value=_response(self._RESPONSE)
+        ):
+            result = provider.lookup_aircraft(
+                LookupContext(callsign="", mode_s="40772f")
+            )
+
+        assert result.is_found
+        assert result.value.icao_type == "A20N"
 
 
 class TestAeroDataBoxRejectedParams:

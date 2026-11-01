@@ -88,6 +88,7 @@ def parse_aircraft(data: dict) -> AircraftInfo | None:
     # adsbdb's equivalents of hexdb's OperatorFlagCode / RegisteredOwners.
     return AircraftInfo(
         plane=plane,
+        icao_type=icao_type,
         registration=registration,
         operator_icao=clean_operator_code(
             ac.get("registered_owner_operator_flag_code")
