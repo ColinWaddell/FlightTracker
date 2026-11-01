@@ -676,9 +676,17 @@ def parse_settings_form(form, cfg) -> dict:
         "providers": _parse_provider_settings(form, cfg),
         "max_flight_lookup": max(1, int_val(form.get("max_flight_lookup"), 5)),
         # Max minutes to keep a sighted flight in the rotation (0 = no
-        # timeout); clamped here and in Config
+        # timeout; decimals allowed, 0.5 = 30 seconds); clamped here and
+        # in Config
         "max_flight_track_minutes": max(
-            0, min(1440, int_val(form.get("max_flight_track_minutes"), 0))
+            0,
+            min(
+                1440,
+                round(
+                    float_val(form.get("max_flight_track_minutes"), 0.0),
+                    2,
+                ),
+            ),
         ),
         # Lookup cache durations (route in hours, aircraft in days; clamped
         # here and in Config)

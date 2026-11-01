@@ -210,3 +210,19 @@ class TestConfigProperty:
 
         cfg.data_store["max_flight_track_minutes"] = "nonsense"
         assert cfg.max_flight_track_minutes == 0
+
+    def test_accepts_decimal_minutes(self):
+        from setup.configuration import Config
+
+        cfg = Config()
+        cfg.data_store["max_flight_track_minutes"] = 0.5
+        assert cfg.max_flight_track_minutes == 0.5
+
+        cfg.data_store["max_flight_track_minutes"] = "0.75"
+        assert cfg.max_flight_track_minutes == 0.75
+
+        cfg.data_store["max_flight_track_minutes"] = 0.751234
+        assert cfg.max_flight_track_minutes == 0.75
+
+        cfg.data_store["max_flight_track_minutes"] = 9999.5
+        assert cfg.max_flight_track_minutes == 1440

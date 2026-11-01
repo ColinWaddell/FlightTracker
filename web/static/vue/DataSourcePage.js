@@ -312,9 +312,10 @@ export default defineComponent({
         <label class="form-label small" for="max_flight_track_minutes">Max tracking time (minutes)</label>
         <input type="number" class="form-control form-control-sm" id="max_flight_track_minutes"
                name="max_flight_track_minutes" v-model.number="store.config.max_flight_track_minutes"
-               min="0" max="1440" style="width:6rem" />
+               min="0" max="1440" step="any" style="width:6rem" />
         <div class="form-text text-muted small">
           Drop a flight from the display once it has been tracked for this many minutes.
+          Decimal values are allowed (<code>0.5</code> = 30 seconds).
           A value of <code>0</code> disables this feature.
         </div>
       </div>

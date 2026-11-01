@@ -1481,12 +1481,14 @@ class Config:
             return DEFAULT_MAX_FLIGHT_LOOKUP
 
     @property
-    def max_flight_track_minutes(self) -> int:
+    def max_flight_track_minutes(self) -> float:
         """Max minutes to keep a sighted flight in the rotation, 0-1440.
 
         0 (default) tracks flights for as long as they remain in range.
+        Decimal values are allowed (0.5 = 30 seconds); seconds granularity
+        is 0.01 minutes of rounding.
         """
-        return self._clamped_int(
+        return self._clamped_float(
             "max_flight_track_minutes",
             DEFAULT_MAX_FLIGHT_TRACK_MINUTES,
             0,
@@ -1496,6 +1498,12 @@ class Config:
     def _clamped_int(self, key: str, default: int, lo: int, hi: int) -> int:
         try:
             return max(lo, min(hi, int(self.data_store.get(key, default))))
+        except (TypeError, ValueError):
+            return default
+
+    def _clamped_float(self, key: str, default: float, lo: float, hi: float) -> float:
+        try:
+            return round(max(lo, min(hi, float(self.data_store.get(key, default)))), 2)
         except (TypeError, ValueError):
             return default
 
