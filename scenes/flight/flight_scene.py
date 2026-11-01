@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import time
 
-from display.scroller import Scroller
+from display.scroller import Scroller, spans_width
 from display.spans import Span, Spans
 from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
 from scenes.flight.callsign_bar import make_callsign_bar
@@ -37,8 +37,9 @@ from setup.themes import (
     THEME_PLANE,
     THEME_PLANE_TLM,
     THEME_PLANE_TLM_UNITS,
+    THEME_SQUAWK_EMERGENCY,
 )
-from utilities.flight import TELEMETRY_FIELDS
+from utilities.flight import EMERGENCY_SQUAWKS, TELEMETRY_FIELDS
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,25 @@ def telemetry_changed(old: list, new: list) -> bool:
 
 PLANE_DETAILS_Y = 30
 PLANE_DETAILS_HEIGHT = 8
+
+# Gap columns between the fixed emergency-squawk prefix and the scrolling
+# details viewport.
+PLANE_DETAILS_PREFIX_GAP = 1
+
+
+def emergency_squawk_code(flight, cfg) -> str:
+    """Return the flight's squawk when it signals an emergency, else "".
+
+    The code is only reported when the feature is enabled
+    (``cfg.show_emergency_squawk``) and the transponder Mode-A code matches
+    one of the internationally agreed emergency codes (7500 hijack,
+    7600 radio failure, 7700 general emergency - see ``EMERGENCY_SQUAWKS``).
+    """
+    if not cfg.show_emergency_squawk:
+        return ""
+    squawk = (flight.squawk or "").strip()
+    return squawk if squawk in EMERGENCY_SQUAWKS else ""
+
 
 # ---------------------------------------------------------------------------
 # Journey widget
@@ -150,6 +170,13 @@ class FlightScene:
         self.details_scroller: Scroller | None = None
         self.details_spans: Spans | None = None
         self.last_details_mode: int | None = None
+        # Fixed emergency-squawk prefix at the left of the details bar.
+        self.squawk_scroller: Scroller | None = None
+        # (squawk, details mode) the prefix was built for - mode can swap
+        # the prefix font.
+        self.last_squawk_state: tuple[str, int] | None = None
+        # (x, width) of the details scroller viewport.
+        self.details_viewport: tuple[int, int] | None = None
 
         # Error backoff - log once, hold off before retrying
         self.error_logged: bool = False
@@ -274,6 +301,11 @@ class FlightScene:
         self.details_scroller = None
         self.details_spans = None
         self.last_details_mode = None
+        if self.squawk_scroller is not None:
+            self.squawk_scroller.clear()
+        self.squawk_scroller = None
+        self.last_squawk_state = None
+        self.details_viewport = None
 
     def draw(self) -> None:
         # Consume the deferred background clear from reset().  This only
@@ -400,26 +432,76 @@ class FlightScene:
             Span(ico, f, "*"),
         ]
 
+    def _make_squawk_scroller(self, squawk: str, cfg) -> Scroller | None:
+        """Build the fixed emergency-squawk prefix, or None when absent.
+
+        The prefix is a bounce Scroller whose viewport width exactly equals
+        its content width: scroll_max stays 0 so it renders statically,
+        while clear() blanks precisely the pixels it drew (a rectangle
+        wipe would eat into the callsign bar above).
+        """
+        if not squawk:
+            return None
+        # Match the details scroller's font size: telemetry glyphs use the
+        # small symbol font; model and custom templates use the regular font.
+        font = fonts.small_symbols if cfg.details == 1 else fonts.regular
+        spans: Spans = [Span(TC(THEME_SQUAWK_EMERGENCY), font, squawk)]
+        return Scroller(
+            self.panel,
+            self.canvas,
+            0,
+            PLANE_DETAILS_Y,
+            spans_width(spans),
+            spans,
+            bounce=True,
+        )
+
     def draw_plane_details(self) -> None:
         cfg = Config.instance()
         current_mode = cfg.details
+        flight = self.flights[self.flight_index]
         spans = self.build_spans(cfg)
 
-        if self.details_scroller is None or current_mode != self.last_details_mode:
+        # Emergency squawk prefix: rebuild when the code or mode changed.
+        squawk = emergency_squawk_code(flight, cfg)
+        squawk_state = (squawk, current_mode)
+        if squawk_state != self.last_squawk_state:
+            if self.squawk_scroller is not None:
+                self.squawk_scroller.clear()
+            self.squawk_scroller = self._make_squawk_scroller(squawk, cfg)
+            self.last_squawk_state = squawk_state
+
+        # The details viewport starts after the fixed prefix (+1 gap
+        # column) and runs to the right edge of the display.
+        prefix_width = (
+            self.squawk_scroller.content_width + PLANE_DETAILS_PREFIX_GAP
+            if self.squawk_scroller is not None
+            else 0
+        )
+        details_x = prefix_width
+        details_width = max(1, screen.WIDTH - details_x)
+        viewport = (details_x, details_width)
+
+        if (
+            self.details_scroller is None
+            or current_mode != self.last_details_mode
+            or viewport != self.details_viewport
+        ):
             if self.details_scroller is not None:
                 self.details_scroller.clear()
 
             self.details_scroller = Scroller(
                 self.panel,
                 self.canvas,
-                0,
+                details_x,
                 PLANE_DETAILS_Y,
-                screen.WIDTH,
+                details_width,
                 spans,
                 bounce=False,
             )
             self.details_spans = spans
             self.last_details_mode = current_mode
+            self.details_viewport = viewport
 
         elif spans != self.details_spans:
             # Telemetry/model changes retain the current scroll position.
@@ -428,6 +510,8 @@ class FlightScene:
 
         previous_loop_count = self.details_scroller.loop_count
         self.details_scroller.draw()
+        if self.squawk_scroller is not None:
+            self.squawk_scroller.draw()
 
         if (
             self.details_scroller.loop_count > previous_loop_count

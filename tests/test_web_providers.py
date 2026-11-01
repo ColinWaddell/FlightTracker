@@ -249,6 +249,15 @@ class TestParseSettingsFormProviders:
         out = parse_settings_form({}, cfg)
         assert out["provider_usage_logging"] is False
 
+    def test_show_emergency_squawk_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"show_emergency_squawk": "on"}, cfg)
+        assert out["show_emergency_squawk"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["show_emergency_squawk"] is False
+
     def test_api_limit_mode_parse(self):
         from web.app import parse_settings_form
 

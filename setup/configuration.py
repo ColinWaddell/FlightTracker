@@ -72,6 +72,9 @@ DEFAULT_DETAILS_CUSTOM_TEMPLATE = (
     "{plane} | {symbol:altitude} {altitude} {symbol:speed} {ground_speed} "
     "{symbol:heading} {heading}{symbol:degree}"
 )
+DEFAULT_SHOW_EMERGENCY_SQUAWK = (
+    False  # pin a 7500/7600/7700 squawk to the left of the details scroller
+)
 
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
@@ -229,6 +232,7 @@ DEFAULTS: dict[str, Any] = {
     # Plane info row
     "details": DEFAULT_DETAILS,
     "details_custom_template": DEFAULT_DETAILS_CUSTOM_TEMPLATE,
+    "show_emergency_squawk": DEFAULT_SHOW_EMERGENCY_SQUAWK,
     # Weather
     "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
     "weather_mode": DEFAULT_WEATHER_MODE,
@@ -1006,6 +1010,13 @@ class Config:
             self.data_store.get(
                 "details_custom_template", DEFAULT_DETAILS_CUSTOM_TEMPLATE
             )
+        )
+
+    @property
+    def show_emergency_squawk(self) -> bool:
+        """Pin a 7500/7600/7700 squawk to the left of the details scroller."""
+        return bool(
+            self.data_store.get("show_emergency_squawk", DEFAULT_SHOW_EMERGENCY_SQUAWK)
         )
 
     @property

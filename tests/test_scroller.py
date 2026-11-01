@@ -13,6 +13,7 @@ from display.scroller import (
     MIN_PIXELS_FOR_SCROLL,
     BounceState,
     Scroller,
+    spans_width,
 )
 
 
@@ -88,3 +89,52 @@ def test_continuous_still_scrolls_barely_overflowing_content(monkeypatch):
 
     assert scroller.position < 30  # it moved
     assert not scroller.all_looped()
+
+
+# ---------------------------------------------------------------------------
+# spans_width + static prefix (viewport width == content width)
+# ---------------------------------------------------------------------------
+
+
+def test_spans_width_returns_rendered_length(monkeypatch):
+    monkeypatch.setattr(
+        scroller_module, "_render_spans", lambda spans: [{} for _ in range(41)]
+    )
+    assert spans_width([MagicMock()]) == 41
+
+
+def test_bounce_viewport_equal_to_content_renders_statically(monkeypatch):
+    """A bounce scroller whose viewport equals its content width - as used
+    for the fixed emergency-squawk prefix - never scrolls, never counts a
+    loop, and reports its content as looped."""
+    scroller = _make_scroller(monkeypatch, content_width=24, width=24, bounce=True)
+    for _ in range(200):  # far past INITIAL_TICKS + a full cycle
+        scroller.draw()
+
+    assert scroller.position == 0
+    assert scroller.state == BounceState.INITIAL
+    assert scroller.loop_count == 0
+    assert scroller.all_looped()
+
+
+def test_static_scroller_clear_blanks_exactly_drawn_pixels(monkeypatch):
+    """clear() undoes only the pixels the scroller drew - not a rectangle."""
+    from setup import colours
+
+    panel, canvas = MagicMock(), MagicMock()
+    monkeypatch.setattr(
+        scroller_module,
+        "_render_spans",
+        lambda spans: [{3: colours.RED}, {}, {5: colours.RED}],
+    )
+    scroller = Scroller(panel, canvas, 10, 0, 3, [MagicMock()], bounce=True)
+    scroller.draw()
+    assert panel.set_pixel.call_count == 2
+
+    panel.reset_mock()
+    scroller.clear()
+    assert panel.set_pixel.call_count == 2
+    for call in panel.set_pixel.call_args_list:
+        assert call.args[3:] == (0, 0, 0)  # blanked, not overwritten
+    blanked_x = {call.args[1] for call in panel.set_pixel.call_args_list}
+    assert blanked_x == {10, 12}

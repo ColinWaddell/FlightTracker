@@ -52,3 +52,28 @@ class TestThemeColours:
         with contextlib.suppress(IndexError, ValueError):
             theme_set(999)
         theme_set(original)
+
+
+class TestSquawkEmergencyColour:
+    """Every theme must define an emergency squawk (7500/7600/7700) colour."""
+
+    def test_all_themes_define_key(self):
+        from setup.themes import THEME_SQUAWK_EMERGENCY, THEMES
+
+        for theme in THEMES:
+            assert THEME_SQUAWK_EMERGENCY in theme
+
+    def test_per_theme_colour_choices(self):
+        from setup import colours
+        from setup.themes import (
+            THEME_CLASSIC,
+            THEME_DEFAULT,
+            THEME_MONOCHROME,
+            THEME_PASTEL,
+            THEME_SQUAWK_EMERGENCY,
+        )
+
+        assert THEME_DEFAULT[THEME_SQUAWK_EMERGENCY] == colours.ORANGE
+        assert THEME_MONOCHROME[THEME_SQUAWK_EMERGENCY] == colours.WHITE
+        assert THEME_PASTEL[THEME_SQUAWK_EMERGENCY] == colours.PEACH_RED
+        assert THEME_CLASSIC[THEME_SQUAWK_EMERGENCY] == colours.ORANGE_RED

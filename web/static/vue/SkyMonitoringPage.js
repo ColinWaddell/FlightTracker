@@ -291,6 +291,19 @@ export default defineComponent({
       </div>
 
       <template-editor v-if="store.config.details === 2" :store="store" />
+
+      <h5 class="mt-3">Emergency Squawk</h5>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="show_emergency_squawk"
+               name="show_emergency_squawk" v-model="store.config.show_emergency_squawk" />
+        <label class="form-check-label" for="show_emergency_squawk">
+          Highlight emergency squawk (7500 / 7600 / 7700)
+        </label>
+      </div>
+      <div class="form-text text-muted small">
+        When an aircraft squawks an emergency code it is pinned to the left of the scrolling bar in
+        an alert colour.
+      </div>
     </div>
 
     <!-- ====== Satellite Tracking ====== -->

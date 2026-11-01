@@ -27,6 +27,10 @@ from utilities.lookups.results import AircraftInfo, RouteInfo  # noqa: E402,F401
 # Telemetry fields compared by telemetry_changed()
 TELEMETRY_FIELDS = ("altitude", "ground_speed", "heading")
 
+# Transponder Mode-A codes that signal an in-flight emergency:
+# 7500 hijack, 7600 radio failure, 7700 general emergency.
+EMERGENCY_SQUAWKS = frozenset(("7500", "7600", "7700"))
+
 
 @dataclass
 class Flight:

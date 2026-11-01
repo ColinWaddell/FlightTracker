@@ -130,6 +130,16 @@ def _render_spans(spans: Spans) -> RenderedPixels:
     return rendered
 
 
+def spans_width(spans: Spans) -> int:
+    """Return the total advance width of *spans* when rendered.
+
+    Useful for sizing a viewport around content before constructing a
+    :class:`Scroller` (e.g. a fixed static label whose viewport must
+    exactly equal its content width).
+    """
+    return len(_render_spans(spans))
+
+
 class Scroller:
     """Render and horizontally scroll coloured text spans in a viewport.
 

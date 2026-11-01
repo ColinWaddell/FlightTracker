@@ -744,6 +744,39 @@ class TestDetailsCustomTemplate:
         assert DEFAULTS["details_custom_template"] == DEFAULT_DETAILS_CUSTOM_TEMPLATE
 
 
+class TestShowEmergencySquawk:
+    def test_default_value(self):
+        from setup.configuration import DEFAULT_SHOW_EMERGENCY_SQUAWK, Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.show_emergency_squawk == DEFAULT_SHOW_EMERGENCY_SQUAWK
+        assert cfg.show_emergency_squawk is False  # shipped default is off
+
+    def test_stored_value(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"show_emergency_squawk": True}
+        assert cfg.show_emergency_squawk is True
+
+    def test_default_in_defaults_dict(self):
+        from setup.configuration import DEFAULT_SHOW_EMERGENCY_SQUAWK, DEFAULTS
+
+        assert DEFAULTS["show_emergency_squawk"] == DEFAULT_SHOW_EMERGENCY_SQUAWK
+
+    def test_key_present_after_defaults_merge(self):
+        """A config.json written before this option existed still exposes
+        the key: load() merges DEFAULTS under the stored values."""
+        import copy
+
+        from setup.configuration import DEFAULTS, Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = copy.deepcopy(DEFAULTS)  # mimics load()'s merge
+        assert "show_emergency_squawk" in cfg.as_dict()
+
+
 # ---------------------------------------------------------------------------
 # screen_schedule_advanced property + normalisation
 # ---------------------------------------------------------------------------

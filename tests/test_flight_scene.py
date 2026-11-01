@@ -15,7 +15,11 @@ from scenes.flight.callsign_bar import (
     airline_name_from_flight,
     make_callsign_bar,
 )
-from scenes.flight.flight_scene import callsigns_match, telemetry_changed
+from scenes.flight.flight_scene import (
+    callsigns_match,
+    emergency_squawk_code,
+    telemetry_changed,
+)
 from scenes.flight.journey import make_label
 from scenes.flight.journey.full_label import FullNameLabel, abbreviate
 from scenes.flight.journey.short_label import (
@@ -1042,3 +1046,160 @@ class TestJourneyCodeDisplay:
             scene.draw_journey()
             scene.draw_journey()
             assert scene.journey_label.reset.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Emergency squawk prefix (7500 / 7600 / 7700)
+# ---------------------------------------------------------------------------
+
+
+class TestEmergencySquawkCode:
+    """Pure detection: which squawks count as an emergency."""
+
+    def _cfg(self, show=True):
+        from setup.configuration import Config
+
+        c = Config.__new__(Config)
+        c.data_store = {"show_emergency_squawk": show}
+        return c
+
+    def test_emergency_codes_detected(self):
+        cfg = self._cfg()
+        for code in ("7500", "7600", "7700"):
+            assert emergency_squawk_code(Flight(squawk=code), cfg) == code
+
+    def test_non_emergency_squawk_ignored(self):
+        assert emergency_squawk_code(Flight(squawk="1000"), self._cfg()) == ""
+
+    def test_empty_squawk_ignored(self):
+        assert emergency_squawk_code(Flight(), self._cfg()) == ""
+
+    def test_disabled_by_config(self):
+        cfg = self._cfg(show=False)
+        assert emergency_squawk_code(Flight(squawk="7700"), cfg) == ""
+
+    def test_whitespace_stripped(self):
+        assert emergency_squawk_code(Flight(squawk=" 7700 "), self._cfg()) == "7700"
+
+
+class TestEmergencySquawkPrefix:
+    """draw_plane_details() pins the code to the left of the scroller."""
+
+    # 4 digits at 6px (fonts.regular) / 5px (fonts.small_symbols) width,
+    # plus the 1px gap column between prefix and scrolling viewport.
+    REGULAR_DIGIT_WIDTH = 6
+    SMALL_DIGIT_WIDTH = 5
+    PREFIX_GAP = 1
+
+    def _make_scene(self, flights):
+        from scenes.flight.flight_scene import FlightScene
+
+        panel, canvas = _make_panel_and_canvas()
+        overhead = MagicMock()
+        overhead.error = None
+        overhead.new_data = False
+        overhead.data = []
+        overhead.processing = False
+        scene = FlightScene(canvas, panel, overhead, refresh_interval=60)
+        scene.flights = flights
+        return scene
+
+    def _cfg(self, **overrides):
+        from setup.configuration import Config
+
+        c = Config.__new__(Config)
+        c.data_store = {"show_emergency_squawk": True, **overrides}
+        return c
+
+    def _draw(self, scene, cfg):
+        from setup.configuration import Config
+
+        with patch.object(Config, "instance", return_value=cfg):
+            scene.draw_plane_details()
+
+    def test_prefix_scroller_and_narrowed_viewport(self):
+        from setup import fonts
+
+        squawk = "7700"
+        prefix = len(squawk) * self.REGULAR_DIGIT_WIDTH
+        scene = self._make_scene([Flight(plane="Boeing 787", squawk=squawk)])
+
+        self._draw(scene, self._cfg(details=0))
+
+        assert scene.squawk_scroller is not None
+        assert scene.squawk_scroller.x == 0
+        assert scene.squawk_scroller.content_width == prefix
+        # Scroll position starts right after the prefix (+ gap) - the
+        # prefix itself has its viewport equal to its content width.
+        assert scene.squawk_scroller.width == prefix
+        assert scene.details_scroller.x == prefix + self.PREFIX_GAP
+        assert scene.details_scroller.width == 64 - (prefix + self.PREFIX_GAP)
+        assert scene.squawk_scroller._spans[0].font is fonts.regular
+        assert scene.squawk_scroller._spans[0].text == squawk
+
+    def test_prefix_uses_emergency_theme_colour(self):
+        from setup.themes import TC, THEME_SQUAWK_EMERGENCY
+
+        scene = self._make_scene([Flight(squawk="7600")])
+        self._draw(scene, self._cfg(details=0))
+
+        assert scene.squawk_scroller._spans[0].colour == TC(THEME_SQUAWK_EMERGENCY)
+
+    def test_feature_off_keeps_full_width_viewport(self):
+        scene = self._make_scene([Flight(plane="Boeing 787", squawk="7700")])
+
+        self._draw(scene, self._cfg(show_emergency_squawk=False, details=0))
+
+        assert scene.squawk_scroller is None
+        assert scene.details_scroller.x == 0
+        assert scene.details_scroller.width == 64
+
+    def test_transition_to_non_emergency_restores_viewport(self):
+        scene = self._make_scene([Flight(squawk="7700")])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        assert scene.squawk_scroller is not None
+        assert scene.details_scroller.x > 0
+
+        scene.flights = [Flight(squawk="1000")]
+        self._draw(scene, cfg)
+
+        assert scene.squawk_scroller is None
+        assert scene.details_scroller.x == 0
+        assert scene.details_scroller.width == 64
+
+    def test_mode_switch_rebuilds_prefix_with_small_font(self):
+        from setup import fonts
+
+        squawk = "7700"
+        scene = self._make_scene([Flight(squawk=squawk)])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        assert scene.squawk_scroller._spans[0].font is fonts.regular
+
+        cfg.data_store["details"] = 1
+        self._draw(scene, cfg)
+
+        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
+        prefix = len(squawk) * self.SMALL_DIGIT_WIDTH
+        assert scene.squawk_scroller.content_width == prefix
+        assert scene.details_scroller.x == prefix + self.PREFIX_GAP
+
+    def test_prefix_steady_state_does_not_rebuild(self):
+        scene = self._make_scene([Flight(squawk="7700")])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        prefix, details = scene.squawk_scroller, scene.details_scroller
+
+        self._draw(scene, cfg)
+
+        assert scene.squawk_scroller is prefix
+        assert scene.details_scroller is details
+
+    def test_telemetry_mode_draws_prefix_before_scrolling(self):
+        # Smoke: telemetry mode (small_symbols font) draws without error.
+        scene = self._make_scene([Flight(squawk="7700")])
+        self._draw(scene, self._cfg(details=1))
+
+        assert scene.squawk_scroller is not None
+        assert scene.squawk_scroller.content_width == 4 * self.SMALL_DIGIT_WIDTH
