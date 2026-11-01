@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New "Plane Info Row" option (off by default) to highlight an aircraft
   squawking an emergency: the squawk code (7500 hijack, 7600 radio failure,
-  7700 general emergency) is pinned to the left of the scrolling plane
+  7700 general emergency) is pinned flush to the left of the scrolling plane
   details bar in a dedicated theme colour (`SQUAWK_EMERGENCY` - orange in
-  the default theme)
+  the default theme), pulsing between it and a darker shade
 - Added the aircraft's ICAO type code to the custom scroller fields as
   `{icao_type}` (e.g. `A20N` for an Airbus A320-251N). Sourced from the
   live feed and lookup providers where available; templates keep the

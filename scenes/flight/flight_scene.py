@@ -29,7 +29,7 @@ from scenes.flight.airline_logo import AirlineLogoWidget, NullWidget
 from scenes.flight.callsign_bar import make_callsign_bar
 from scenes.flight.custom_details import build_custom_spans, format_number
 from scenes.flight.journey import make_label
-from setup import fonts, screen
+from setup import colours, fonts, screen
 from setup.configuration import Config
 from setup.themes import (
     TC,
@@ -85,9 +85,11 @@ def telemetry_changed(old: list, new: list) -> bool:
 PLANE_DETAILS_Y = 30
 PLANE_DETAILS_HEIGHT = 8
 
-# Gap columns between the fixed emergency-squawk prefix and the scrolling
-# details viewport.
-PLANE_DETAILS_PREFIX_GAP = 1
+# Emergency-squawk prefix blink: seconds per colour phase, and how bright
+# the darker phase is expressed as a fraction of the theme colour (no
+# second theme key - the theme colour is darkened at render time).
+SQUAWK_BLINK_PERIOD_S = 1.0
+SQUAWK_BLINK_DARKEN = 0.5
 
 
 def emergency_squawk_code(flight, cfg) -> str:
@@ -102,6 +104,21 @@ def emergency_squawk_code(flight, cfg) -> str:
         return ""
     squawk = (flight.squawk or "").strip()
     return squawk if squawk in EMERGENCY_SQUAWKS else ""
+
+
+def squawk_blink_colour(colour, dark: bool):
+    """Emergency-squawk prefix colour for the current blink phase.
+
+    The dark phase is a proportionally dimmed copy of the theme colour so
+    the code pulses between its theme shade and a slightly darker one.
+    """
+    if not dark:
+        return colour
+    return colours.Colour(
+        int(colour.red * SQUAWK_BLINK_DARKEN),
+        int(colour.green * SQUAWK_BLINK_DARKEN),
+        int(colour.blue * SQUAWK_BLINK_DARKEN),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +194,9 @@ class FlightScene:
         self.last_squawk_state: tuple[str, int] | None = None
         # (x, width) of the details scroller viewport.
         self.details_viewport: tuple[int, int] | None = None
+        # Prefix blink state: current phase and when the next flip is due.
+        self.squawk_blink_dark: bool = False
+        self.squawk_blink_at: float = 0.0
 
         # Error backoff - log once, hold off before retrying
         self.error_logged: bool = False
@@ -306,6 +326,8 @@ class FlightScene:
         self.squawk_scroller = None
         self.last_squawk_state = None
         self.details_viewport = None
+        self.squawk_blink_dark = False
+        self.squawk_blink_at = 0.0
 
     def draw(self) -> None:
         # Consume the deferred background clear from reset().  This only
@@ -432,6 +454,20 @@ class FlightScene:
             Span(ico, f, "*"),
         ]
 
+    def _squawk_span(self, squawk: str, cfg, dark: bool) -> Span:
+        """Prefix span for the given blink phase, in the mode's font.
+
+        The prefix font matches the details scroller's font size: telemetry
+        glyphs use the small symbol font; model and custom templates use the
+        regular font.
+        """
+        font = fonts.small_symbols if cfg.details == 1 else fonts.regular
+        return Span(
+            squawk_blink_colour(TC(THEME_SQUAWK_EMERGENCY), dark),
+            font,
+            squawk,
+        )
+
     def _make_squawk_scroller(self, squawk: str, cfg) -> Scroller | None:
         """Build the fixed emergency-squawk prefix, or None when absent.
 
@@ -442,10 +478,7 @@ class FlightScene:
         """
         if not squawk:
             return None
-        # Match the details scroller's font size: telemetry glyphs use the
-        # small symbol font; model and custom templates use the regular font.
-        font = fonts.small_symbols if cfg.details == 1 else fonts.regular
-        spans: Spans = [Span(TC(THEME_SQUAWK_EMERGENCY), font, squawk)]
+        spans: Spans = [self._squawk_span(squawk, cfg, self.squawk_blink_dark)]
         return Scroller(
             self.panel,
             self.canvas,
@@ -470,11 +503,23 @@ class FlightScene:
                 self.squawk_scroller.clear()
             self.squawk_scroller = self._make_squawk_scroller(squawk, cfg)
             self.last_squawk_state = squawk_state
+            # Fresh appearance: hold the bright phase for a full period.
+            self.squawk_blink_at = time.time() + SQUAWK_BLINK_PERIOD_S
 
-        # The details viewport starts after the fixed prefix (+1 gap
-        # column) and runs to the right edge of the display.
+        # Blink: swap the prefix colour between the theme shade and a
+        # darkened copy.  update() keeps the static scroll position and
+        # only repaints the glyphs whose pixels changed.
+        if self.squawk_scroller is not None and time.time() >= self.squawk_blink_at:
+            self.squawk_blink_dark = not self.squawk_blink_dark
+            self.squawk_blink_at = time.time() + SQUAWK_BLINK_PERIOD_S
+            self.squawk_scroller.update(
+                [self._squawk_span(squawk, cfg, self.squawk_blink_dark)]
+            )
+
+        # The details viewport starts immediately after the fixed prefix
+        # and runs to the right edge of the display.
         prefix_width = (
-            self.squawk_scroller.content_width + PLANE_DETAILS_PREFIX_GAP
+            self.squawk_scroller.content_width
             if self.squawk_scroller is not None
             else 0
         )

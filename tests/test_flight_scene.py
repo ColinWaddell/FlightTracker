@@ -1085,11 +1085,9 @@ class TestEmergencySquawkCode:
 class TestEmergencySquawkPrefix:
     """draw_plane_details() pins the code to the left of the scroller."""
 
-    # 4 digits at 6px (fonts.regular) / 5px (fonts.small_symbols) width,
-    # plus the 1px gap column between prefix and scrolling viewport.
+    # 4 digits at 6px (fonts.regular) / 5px (fonts.small_symbols) width.
     REGULAR_DIGIT_WIDTH = 6
     SMALL_DIGIT_WIDTH = 5
-    PREFIX_GAP = 1
 
     def _make_scene(self, flights):
         from scenes.flight.flight_scene import FlightScene
@@ -1129,11 +1127,11 @@ class TestEmergencySquawkPrefix:
         assert scene.squawk_scroller is not None
         assert scene.squawk_scroller.x == 0
         assert scene.squawk_scroller.content_width == prefix
-        # Scroll position starts right after the prefix (+ gap) - the
-        # prefix itself has its viewport equal to its content width.
+        # The prefix has its viewport equal to its content width and the
+        # scrolling viewport starts flush after it (no gap column).
         assert scene.squawk_scroller.width == prefix
-        assert scene.details_scroller.x == prefix + self.PREFIX_GAP
-        assert scene.details_scroller.width == 64 - (prefix + self.PREFIX_GAP)
+        assert scene.details_scroller.x == prefix
+        assert scene.details_scroller.width == 64 - prefix
         assert scene.squawk_scroller._spans[0].font is fonts.regular
         assert scene.squawk_scroller._spans[0].text == squawk
 
@@ -1183,7 +1181,7 @@ class TestEmergencySquawkPrefix:
         assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
         prefix = len(squawk) * self.SMALL_DIGIT_WIDTH
         assert scene.squawk_scroller.content_width == prefix
-        assert scene.details_scroller.x == prefix + self.PREFIX_GAP
+        assert scene.details_scroller.x == prefix
 
     def test_prefix_steady_state_does_not_rebuild(self):
         scene = self._make_scene([Flight(squawk="7700")])
@@ -1203,3 +1201,97 @@ class TestEmergencySquawkPrefix:
 
         assert scene.squawk_scroller is not None
         assert scene.squawk_scroller.content_width == 4 * self.SMALL_DIGIT_WIDTH
+
+
+class TestEmergencySquawkBlink:
+    """The prefix pulses between the theme colour and a darkened copy."""
+
+    def _make_scene(self, flights):
+        from scenes.flight.flight_scene import FlightScene
+
+        panel, canvas = _make_panel_and_canvas()
+        overhead = MagicMock()
+        overhead.error = None
+        overhead.new_data = False
+        overhead.data = []
+        overhead.processing = False
+        scene = FlightScene(canvas, panel, overhead, refresh_interval=60)
+        scene.flights = flights
+        return scene
+
+    def _cfg(self, **overrides):
+        from setup.configuration import Config
+
+        c = Config.__new__(Config)
+        c.data_store = {"show_emergency_squawk": True, **overrides}
+        return c
+
+    def _draw(self, scene, cfg):
+        from setup.configuration import Config
+
+        with patch.object(Config, "instance", return_value=cfg):
+            scene.draw_plane_details()
+
+    def test_appearance_holds_bright_phase(self):
+        import time
+
+        from setup.themes import TC, THEME_SQUAWK_EMERGENCY
+
+        scene = self._make_scene([Flight(squawk="7700")])
+        self._draw(scene, self._cfg(details=0))
+
+        assert scene.squawk_blink_dark is False
+        assert scene.squawk_blink_at > time.time()
+        assert scene.squawk_scroller._spans[0].colour == TC(THEME_SQUAWK_EMERGENCY)
+
+    def test_blink_flips_to_darkened_copy(self):
+        import time
+
+        scene = self._make_scene([Flight(squawk="7700")])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        bright = scene.squawk_scroller._spans[0].colour
+
+        scene.squawk_blink_at = 0.0  # phase due now
+        self._draw(scene, cfg)
+
+        dark = scene.squawk_scroller._spans[0].colour
+        assert scene.squawk_blink_dark is True
+        assert dark.red == bright.red // 2
+        assert dark.green == bright.green // 2
+        assert dark.blue == bright.blue // 2
+        assert scene.squawk_blink_at > time.time()
+
+    def test_blink_flips_back_to_theme_colour(self):
+        from setup.themes import TC, THEME_SQUAWK_EMERGENCY
+
+        scene = self._make_scene([Flight(squawk="7700")])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        scene.squawk_blink_at = 0.0
+        self._draw(scene, cfg)  # -> dark
+        scene.squawk_blink_at = 0.0
+        self._draw(scene, cfg)  # -> bright again
+
+        assert scene.squawk_blink_dark is False
+        assert scene.squawk_scroller._spans[0].colour == TC(THEME_SQUAWK_EMERGENCY)
+
+    def test_colour_does_not_flip_within_period(self):
+        scene = self._make_scene([Flight(squawk="7700")])
+        cfg = self._cfg(details=0)
+        self._draw(scene, cfg)
+        colour = scene.squawk_scroller._spans[0].colour
+
+        self._draw(scene, cfg)
+
+        assert scene.squawk_blink_dark is False
+        assert scene.squawk_scroller._spans[0].colour == colour
+
+    def test_blink_colour_darkens_any_theme_shade(self):
+        from display.rgbpanel import Colour
+        from scenes.flight.flight_scene import squawk_blink_colour
+
+        colour = Colour(200, 100, 50)
+        dark = squawk_blink_colour(colour, True)
+        assert (dark.red, dark.green, dark.blue) == (100, 50, 25)
+        assert squawk_blink_colour(colour, False) is colour
