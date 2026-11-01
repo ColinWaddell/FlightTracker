@@ -10,7 +10,9 @@ class FlightProvider(AggregatorFlightProvider):
 
     Same ADSBExchange-style v2 dialect as ADSB.lol.  The service asks for
     at most one request per second - the tracker's poll interval keeps us
-    comfortably inside that.
+    comfortably inside that.  Since September 2026 the API only answers
+    callers whose IP address is already feeding airplanes.live; anything
+    else gets a 403 (and the tracker falls through to the next provider).
     """
 
     endpoint = "https://api.airplanes.live/v2/point/{lat}/{lon}/{radius}"

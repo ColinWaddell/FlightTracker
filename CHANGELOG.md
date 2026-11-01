@@ -4,6 +4,12 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- The airplanes.live card in the Data Source settings now explains that its
+  API is contributor-only: requests answer 403 unless the calling IP address
+  is already feeding airplanes.live (#123)
+
 ## [v2.12.4] - 2026-10-16
 - Added squawk codes to the custom scroller fields
 

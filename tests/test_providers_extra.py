@@ -863,6 +863,19 @@ class TestFr24ApiCatalogue:
         assert "free providers" in text
 
 
+class TestAirplanesLiveCard:
+    def test_contributor_limitation_surfaces_for_users(self):
+        """The card must explain api.airplanes.live only answers callers
+        already feeding the network (#123)."""
+        from utilities.lookups.registry import PROVIDERS
+
+        spec = PROVIDERS["airplaneslive"]
+        text = spec.description  # description is a plain str
+        assert "contributor" in text.lower()
+        assert "403" in text
+        assert "how-to-feed" in text
+
+
 # ---------------------------------------------------------------------------
 # 4xx ident-rejection semantics (#101 family): providers must treat
 # parameter/format rejections as NOT_FOUND and never quarantine.
