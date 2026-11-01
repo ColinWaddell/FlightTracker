@@ -301,8 +301,7 @@ export default defineComponent({
         </label>
       </div>
       <div class="form-text text-muted small">
-        When an aircraft squawks an emergency code it is pinned to the left of the scrolling bar
-        and pulses in an alert colour.
+        When an aircraft squawks an emergency code it gets flashed alongside the flight details
       </div>
     </div>
 
