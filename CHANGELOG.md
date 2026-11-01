@@ -4,7 +4,7 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.12.5]
 
 - Added the aircraft's ICAO type code to the custom scroller fields as
   `{icao_type}` (e.g. `A20N` for an Airbus A320-251N). Sourced from the
