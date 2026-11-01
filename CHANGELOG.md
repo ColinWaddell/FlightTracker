@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fixed the Support Me badge in the shared page footer: on narrow pages
+  (the restarting screen, small windows, phones) it now centres beneath
+  the attribution line instead of being squeezed alongside it
 - Added the aircraft's ICAO type code to the custom scroller fields as
   `{icao_type}` (e.g. `A20N` for an Airbus A320-251N). Sourced from the
   live feed and lookup providers where available; templates keep the
