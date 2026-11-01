@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fixed the Support Me badge in the shared page footer: on narrow pages
+  (the restarting screen, small windows, phones) it now centres beneath
+  the attribution line instead of being squeezed alongside it
 - New "Plane Info Row" option (off by default) to highlight an aircraft
   squawking an emergency: the squawk code (7500 hijack, 7600 radio failure,
   7700 general emergency) is pinned flush to the left of the scrolling plane
