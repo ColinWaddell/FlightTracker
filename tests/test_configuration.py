@@ -459,6 +459,35 @@ class TestThemeConditions:
         cfg.data_store = {"theme": "not a dict"}
         assert cfg.theme_conditions["disable_description_scroll"] is False
 
+    def test_default_wind_arrow_mode(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {}
+        assert cfg.theme_conditions["wind_arrow_mode"] == "from"
+
+    def test_valid_wind_arrow_modes(self):
+        from setup.configuration import Config
+
+        for mode in ("from", "to"):
+            cfg = Config.__new__(Config)
+            cfg.data_store = {"theme": {"conditions": {"wind_arrow_mode": mode}}}
+            assert cfg.theme_conditions["wind_arrow_mode"] == mode
+
+    def test_invalid_wind_arrow_mode_falls_back(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {"conditions": {"wind_arrow_mode": "bogus"}}}
+        assert cfg.theme_conditions["wind_arrow_mode"] == "from"
+
+    def test_missing_wind_arrow_mode_key(self):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {"theme": {}}
+        assert cfg.theme_conditions["wind_arrow_mode"] == "from"
+
 
 class TestColourTheme:
     def test_default_value(self):

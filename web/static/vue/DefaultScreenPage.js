@@ -30,6 +30,16 @@ export default defineComponent({
         this.store.config.theme.conditions.disable_description_scroll = val;
       },
     },
+    windArrowMode: {
+      get() {
+        return this.store.config.theme?.conditions?.wind_arrow_mode || "from";
+      },
+      set(val) {
+        if (!this.store.config.theme) this.store.config.theme = {};
+        if (!this.store.config.theme.conditions) this.store.config.theme.conditions = {};
+        this.store.config.theme.conditions.wind_arrow_mode = val;
+      },
+    },
   },
   template: `
     <div>
@@ -164,6 +174,22 @@ export default defineComponent({
           <input type="checkbox" class="form-check-input" name="theme_conditions_disable_scroll"
                  id="theme_conditions_disable_scroll" v-model="conditionsDisableScroll" />
           <label class="form-check-label" for="theme_conditions_disable_scroll">Disable scrolling weather description</label>
+        </div>
+      </div>
+      <div class="card mb-3 p-3">
+        <p class="section-heading"><i class="bi bi-wind me-2"></i>Wind</p>
+        <div class="mb-2">
+          <h5>Direction Arrow</h5>
+          <select class="form-select form-select-sm" name="theme_conditions_wind_arrow_mode"
+                  id="theme_conditions_wind_arrow_mode" style="max-width:300px" v-model="windArrowMode">
+            <option value="from">Points where the wind is coming from (weather vane)</option>
+            <option value="to">Points where the wind is blowing towards</option>
+          </select>
+          <div class="form-text text-muted small">
+            Choose which way the arrow beside the wind speed points. Weather
+            forecasts normally show the direction the wind blows from; use the
+            second option if you'd rather it follow the wind on its way.
+          </div>
         </div>
       </div>
     </div>

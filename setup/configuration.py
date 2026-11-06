@@ -99,7 +99,14 @@ DEFAULT_DISPLAY_SCAN_RATE = 16  # 1:16 or 1:32 multiplexing
 # Per-theme configuration (nested dict under "theme" in config.json)
 DEFAULT_FORECAST_DURATION = "3hour"  # 3hour / 12hour / 3day
 DEFAULT_THEME_FORECAST = {"duration": DEFAULT_FORECAST_DURATION}
-DEFAULT_THEME_CONDITIONS = {"disable_description_scroll": False}
+# Wind arrow on the conditions scene: "from" points the arrow toward the
+# bearing the wind blows from (weather-vane style, the original
+# behaviour); "to" points it toward the direction the wind is travelling.
+DEFAULT_WIND_ARROW_MODE = "from"  # from / to
+DEFAULT_THEME_CONDITIONS = {
+    "disable_description_scroll": False,
+    "wind_arrow_mode": DEFAULT_WIND_ARROW_MODE,
+}
 DEFAULT_THEME = {
     "forecast": DEFAULT_THEME_FORECAST,
     "conditions": DEFAULT_THEME_CONDITIONS,
@@ -1131,6 +1138,8 @@ class Config:
         merged["disable_description_scroll"] = bool(
             merged.get("disable_description_scroll", False)
         )
+        if merged.get("wind_arrow_mode") not in ("from", "to"):
+            merged["wind_arrow_mode"] = DEFAULT_WIND_ARROW_MODE
         return merged
 
     @property

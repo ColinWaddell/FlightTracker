@@ -494,10 +494,14 @@ class ConditionsIdleTheme(BaseIdleScene):
             wind_unit = "k"
         wind_str = f"{round(wind_val)}{wind_unit}"
 
-        # Determine cardinal direction from wind_degrees.
+        # Determine which way the arrow points: toward the bearing the
+        # wind blows from ("from", weather-vane style and the original
+        # behaviour) or toward the direction it blows toward ("to").
         wind_degrees = weather.get("wind_degree")
         cardinal = (
-            self._degrees_to_cardinal(wind_degrees)
+            self._wind_arrow_cardinal(
+                wind_degrees, cfg.theme_conditions["wind_arrow_mode"]
+            )
             if wind_degrees is not None
             else None
         )
@@ -554,6 +558,19 @@ class ConditionsIdleTheme(BaseIdleScene):
         # results at the .5 boundaries (e.g. 22.5° should be NE, not N).
         index = int(math.floor(degrees / 45.0 + 0.5)) % 8
         return _CARDINAL_DIRECTIONS[index]
+
+    @classmethod
+    def _wind_arrow_cardinal(cls, wind_degrees: float, mode: str) -> str:
+        """Cardinal direction for the wind arrow icon.
+
+        ``from`` (the default) points the arrow toward the bearing the
+        wind blows from - weather-vane style, matching the original
+        behaviour.  ``to`` points it toward the direction the wind is
+        travelling, i.e. the reciprocal bearing.
+        """
+        if mode == "to":
+            wind_degrees = (wind_degrees + 180.0) % 360.0
+        return cls._degrees_to_cardinal(wind_degrees)
 
     def _erase_image(self, image, position: list[int]) -> None:
         """Erase a previously drawn image by setting its pixels to background."""

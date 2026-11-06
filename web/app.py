@@ -599,6 +599,16 @@ def parse_settings_form(form, cfg) -> dict:
                 "disable_description_scroll": bool_val(
                     form.get("theme_conditions_disable_scroll")
                 ),
+                "wind_arrow_mode": (
+                    v
+                    if (
+                        v := str_val(
+                            form.get("theme_conditions_wind_arrow_mode"), "from"
+                        ).lower()
+                    )
+                    in ("from", "to")
+                    else "from"
+                ),
             },
         },
         "brightness_mode": (
