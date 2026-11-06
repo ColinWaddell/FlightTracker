@@ -190,11 +190,6 @@ export default defineComponent({
                    id="theme_conditions_wind_arrow_to" value="to" v-model="windArrowMode" />
             <label class="form-check-label" for="theme_conditions_wind_arrow_to">Points where the wind is blowing towards</label>
           </div>
-          <div class="form-text text-muted small">
-            Choose which way the arrow beside the wind speed points. Weather
-            forecasts normally show the direction the wind blows from; use the
-            second option if you'd rather it follow the wind on its way.
-          </div>
         </div>
       </div>
     </div>
