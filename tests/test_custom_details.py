@@ -765,90 +765,90 @@ class TestHeadingArrow:
             "{heading_arrow}", make_flight(heading=0), make_cfg()
         )
         assert len(spans) == 1
-        assert spans[0].text == chr(128)  # N
+        assert spans[0].text == chr(129)  # N
 
     def test_north_360(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=360), make_cfg()
         )
-        assert spans[0].text == chr(128)  # N
+        assert spans[0].text == chr(129)  # N
 
     def test_northeast_45(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=45), make_cfg()
         )
-        assert spans[0].text == chr(129)  # NE
+        assert spans[0].text == chr(130)  # NE
 
     def test_east_90(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=90), make_cfg()
         )
-        assert spans[0].text == chr(130)  # E
+        assert spans[0].text == chr(131)  # E
 
     def test_southeast_135(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=135), make_cfg()
         )
-        assert spans[0].text == chr(131)  # SE
+        assert spans[0].text == chr(132)  # SE
 
     def test_south_180(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=180), make_cfg()
         )
-        assert spans[0].text == chr(132)  # S
+        assert spans[0].text == chr(133)  # S
 
     def test_southwest_225(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=225), make_cfg()
         )
-        assert spans[0].text == chr(133)  # SW
+        assert spans[0].text == chr(134)  # SW
 
     def test_west_270(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=270), make_cfg()
         )
-        assert spans[0].text == chr(134)  # W
+        assert spans[0].text == chr(135)  # W
 
     def test_northwest_315(self):
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=315), make_cfg()
         )
-        assert spans[0].text == chr(135)  # NW
+        assert spans[0].text == chr(136)  # NW
 
     def test_boundary_22_rounds_to_ne(self):
         # 22 / 45 = 0.49 -> round = 0 -> N
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=22), make_cfg()
         )
-        assert spans[0].text == chr(128)  # N
+        assert spans[0].text == chr(129)  # N
 
     def test_boundary_23_rounds_to_ne(self):
         # 23 / 45 = 0.51 -> round = 1 -> NE
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=23), make_cfg()
         )
-        assert spans[0].text == chr(129)  # NE
+        assert spans[0].text == chr(130)  # NE
 
     def test_boundary_337_rounds_to_nw(self):
         # 337 / 45 = 7.49 -> round = 7 -> NW
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=337), make_cfg()
         )
-        assert spans[0].text == chr(135)  # NW
+        assert spans[0].text == chr(136)  # NW
 
     def test_boundary_338_rounds_to_n(self):
         # 338 / 45 = 7.51 -> round = 8 -> 8 % 8 = 0 -> N
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=338), make_cfg()
         )
-        assert spans[0].text == chr(128)  # N
+        assert spans[0].text == chr(129)  # N
 
     def test_heading_zero_default(self):
         # heading=0 (falsy) should still produce N
         spans = build_custom_spans(
             "{heading_arrow}", make_flight(heading=0), make_cfg()
         )
-        assert spans[0].text == chr(128)
+        assert spans[0].text == chr(129)
 
     def test_custom_colour(self):
         spans = build_custom_spans(
@@ -867,7 +867,7 @@ class TestHeadingArrow:
         texts = [s.text for s in spans]
         assert "270" in texts
         assert "*" in texts  # degree symbol
-        assert chr(134) in texts  # W arrow
+        assert chr(135) in texts  # W arrow
 
     def test_validate_heading_arrow_valid(self):
         assert validate_template("{heading_arrow}") == []
