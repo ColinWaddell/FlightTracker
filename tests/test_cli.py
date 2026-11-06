@@ -211,6 +211,16 @@ class TestConfigSet:
         captured = capsys.readouterr()
         assert "Unknown config key" in captured.err
 
+    def test_config_set_startup_tests_disabled_bool(self, mock_config):
+        """The sticky --disable-tests key is settable via the CLI."""
+        config_path, MockConfig = mock_config
+        config_path.write_text('{"existing": true}')
+        dispatch_cli_command(
+            ["flight-tracker.py", "config", "set", "startup_tests_disabled", "true"]
+        )
+        cfg = MockConfig.instance.return_value
+        cfg.set.assert_called_with("startup_tests_disabled", True)
+
     def test_config_set_no_args_usage(self, mock_config, capsys):
         config_path, _ = mock_config
         config_path.write_text('{"existing": true}')

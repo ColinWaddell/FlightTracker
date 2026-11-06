@@ -206,6 +206,14 @@ DEFAULT_API_LIMIT_MODE = (
     "none"  # per-provider API call limiting: none / daily / monthly
 )
 
+# Boot
+#
+# When True the start-up connectivity tests (data source / TLE / routing
+# checks rendered before the splash screen) are skipped.  Set by running
+# with the ``--disable-tests`` flag - it is persisted here so the choice
+# survives reboots and web-driven restarts.
+DEFAULT_STARTUP_TESTS_DISABLED = False
+
 DEFAULTS: dict[str, Any] = {
     # Location / flight zone
     "flight_location_mode": DEFAULT_FLIGHT_LOCATION_MODE,
@@ -327,6 +335,8 @@ DEFAULTS: dict[str, Any] = {
     "log_level": DEFAULT_LOG_LEVEL,
     # Provider usage tally (see utilities/lookups/usage.py + /api)
     "provider_usage_logging": DEFAULT_PROVIDER_USAGE_LOGGING,
+    # Boot: sticky state of the --disable-tests command-line flag
+    "startup_tests_disabled": DEFAULT_STARTUP_TESTS_DISABLED,
     # Per-provider API call limiting (see utilities/lookups/ratelimit.py;
     # per-provider api_limiting_enabled / api_limit live in the provider
     # settings subtree via the shared rate_limit_fields() descriptors)
@@ -1662,6 +1672,20 @@ class Config:
         return bool(
             self.data_store.get(
                 "provider_usage_logging", DEFAULT_PROVIDER_USAGE_LOGGING
+            )
+        )
+
+    @property
+    def startup_tests_disabled(self) -> bool:
+        """Sticky state of the ``--disable-tests`` boot flag.
+
+        True skips the start-up connectivity tests on every boot, machine
+        reboot included.  Persisted by :mod:`flight-tracker` when the flag
+        is passed on the command line.
+        """
+        return bool(
+            self.data_store.get(
+                "startup_tests_disabled", DEFAULT_STARTUP_TESTS_DISABLED
             )
         )
 

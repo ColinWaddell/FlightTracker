@@ -410,7 +410,13 @@ def _print_usage() -> None:
     print("  --version              Print the program version")
     print()
     print("Options (can be combined with any command):")
-    print("  --disable-tests        Skip start-up connectivity tests")
+    print(
+        "  --disable-tests        Skip start-up connectivity tests (sticky: remembered"
+    )
+    print(
+        "                         across reboots; undo with "
+        "'config set startup_tests_disabled false'"
+    )
     print()
     print("Test commands accept --parameters and --interval/--limit for repeated runs.")
     print("Run 'python flight-tracker.py test <target> --help' for details.")

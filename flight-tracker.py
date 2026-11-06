@@ -462,6 +462,21 @@ def cleanup_successful_import() -> None:
         in_progress.unlink()
 
 
+def _apply_sticky_disable_tests(cfg: Config, disable_tests: bool) -> bool:
+    """Merge the ``--disable-tests`` CLI flag with its sticky config state.
+
+    When the flag is passed it is written back to the config so the choice
+    survives machine reboots and web-driven restarts (systemd's ExecStart
+    never carries the flag).  Returns True when the start-up tests should
+    be skipped this boot.
+    """
+    if disable_tests and not cfg.startup_tests_disabled:
+        cfg.set("startup_tests_disabled", True)
+        cfg.save()
+        logging.getLogger("startup").info("--disable-tests persisted to config")
+    return bool(disable_tests or cfg.startup_tests_disabled)
+
+
 def run_flight_tracker(disable_tests: bool = False):
     # Apply any staged config import before anything else initialises.
     apply_pending_config_update()
@@ -472,6 +487,8 @@ def run_flight_tracker(disable_tests: bool = False):
     _warn_if_root()
 
     cfg = Config.instance()
+    disable_tests = _apply_sticky_disable_tests(cfg, disable_tests)
+
     logger.info("FlightTracker starting (log level: %s)", cfg.log_level)
 
     # Initialise matrix once with full config values
