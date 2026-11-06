@@ -199,14 +199,14 @@ SYMBOL_MAP: dict[str, str] = {
 # Index = floor(heading / 45 + 0.5) % 8 (round half up, matching the
 # cardinal-direction logic from conditions_idle_theme._degrees_to_cardinal()).
 HEADING_ARROW_GLYPHS: tuple[str, ...] = (
-    chr(128),  # 0 = N
-    chr(129),  # 1 = NE
-    chr(130),  # 2 = E
-    chr(131),  # 3 = SE
-    chr(132),  # 4 = S
-    chr(133),  # 5 = SW
-    chr(134),  # 6 = W
-    chr(135),  # 7 = NW
+    chr(129),  # 0 = N
+    chr(130),  # 1 = NE
+    chr(131),  # 2 = E
+    chr(132),  # 3 = SE
+    chr(133),  # 4 = S
+    chr(134),  # 5 = SW
+    chr(135),  # 6 = W
+    chr(136),  # 7 = NW
 )
 
 # Cardinal direction names for heading_arrow (used for error messages).
