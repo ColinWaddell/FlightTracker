@@ -4,6 +4,13 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.7]
+
+- New custom scroller field showing the bearing from the observer:
+  `{bearing_from_home}` (degrees clockwise from north),
+  `{bearing_from_home_direction}` (cardinal direction text) and
+  `{bearing_from_home_arrow}` (arrow pointing where to look)
+
 ## [2.12.6]
 
 - Plane direction arrow lookup fixed
