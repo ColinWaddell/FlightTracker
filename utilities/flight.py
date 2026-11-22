@@ -71,6 +71,11 @@ class Flight:
     squawk: str = ""
     # km from the observer, computed at fetch time; 0 = unknown
     distance_to_home: float = 0
+    # Degrees clockwise from true north, measured at the observer and
+    # pointing toward the aircraft, computed at fetch time.  None = unknown:
+    # 0 is a real bearing (due north) so it cannot double as the "no data"
+    # marker the way distance_to_home uses 0.
+    bearing_from_home: float | None = None
 
     # -- Identity -----------------------------------------------------------
 

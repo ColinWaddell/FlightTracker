@@ -147,6 +147,11 @@ def _convert_distance(distance_km: float, unit: str) -> tuple[str, str]:
     return str(int(distance_km * 0.539957)), "nm"
 
 
+def _convert_bearing(bearing_deg: float, unit: str) -> tuple[str, str]:
+    """Bearing has no unit options - always whole degrees, like heading."""
+    return str(int(bearing_deg)), ""
+
+
 # Map telemetry field -> (valid units, conversion function, config default key).
 TELEMETRY_FIELDS: dict[str, tuple[frozenset[str], Callable, str | None]] = {
     "altitude": (frozenset({"ft", "m"}), _convert_altitude, "height_unit"),
@@ -165,6 +170,11 @@ TELEMETRY_FIELDS: dict[str, tuple[frozenset[str], Callable, str | None]] = {
         _convert_distance,
         None,
     ),
+    # Initial bearing from the observer to the aircraft, computed at fetch
+    # time (degrees clockwise from true north).  Like heading: no units and
+    # no config default - add {symbol:degree} for the degree glyph.  The
+    # value is None (field omitted) when no usable position was reported.
+    "bearing_from_home": (frozenset(), _convert_bearing, None),
 }
 
 # All available fields (for validation / UI reference).
@@ -196,8 +206,8 @@ SYMBOL_MAP: dict[str, str] = {
 }
 
 # 8 directional arrow glyphs (encodings 128-135 in 5x8-custom.bdf).
-# Index = floor(heading / 45 + 0.5) % 8 (round half up, matching the
-# cardinal-direction logic from conditions_idle_theme._degrees_to_cardinal()).
+# Index = the result of _direction_index() - shared by the heading and
+# bearing dynamic tags.
 HEADING_ARROW_GLYPHS: tuple[str, ...] = (
     chr(129),  # 0 = N
     chr(130),  # 1 = NE
@@ -209,8 +219,34 @@ HEADING_ARROW_GLYPHS: tuple[str, ...] = (
     chr(136),  # 7 = NW
 )
 
-# Cardinal direction names for heading_arrow (used for error messages).
+# Cardinal direction names, indexed like HEADING_ARROW_GLYPHS.
 HEADING_ARROW_DIRECTIONS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+
+# Dynamic direction tags.  Their output is selected at render time from the
+# flight's angles, so they are neither static SYMBOL_MAP glyphs (hence
+# "{symbol:<name>}" is rejected) nor fields.  The heading pair reacts to
+# where the aircraft's nose points; the bearing pair points from the
+# observer toward the aircraft - the direction to look.
+DYNAMIC_DIRECTION_TAGS: frozenset[str] = frozenset(
+    {
+        "heading_arrow",
+        "heading_direction",
+        "bearing_from_home_arrow",
+        "bearing_from_home_direction",
+    }
+)
+
+
+def _direction_index(degrees: float) -> int:
+    """Index into the 8-point direction tables for degrees clockwise from north.
+
+    Shared by the heading and bearing dynamic tags.  Uses floor(x + 0.5)
+    instead of round() because Python's round() uses banker's rounding
+    (round half to even), which gives wrong results at the .5 boundaries
+    (e.g. 22.5° should be NE, not N).
+    """
+    return int(math.floor(degrees / 45.0 + 0.5)) % 8
+
 
 # ---------------------------------------------------------------------------
 # Token types
@@ -299,33 +335,18 @@ def _parse_tag(inner: str) -> Token | None:
     if not inner:
         return None
 
-    # Dynamic symbol tag: {heading_arrow} or {heading_arrow:#colour}
-    # (not prefixed with "symbol:" because it's not a static glyph).
-    if inner == "heading_arrow" or inner.startswith("heading_arrow:"):
-        rest = inner[len("heading_arrow") :]
-        if rest:
-            # Strip leading ":" and parse colour
-            if rest.startswith(":"):
-                colour = rest[1:]
+    # Dynamic direction tags ({heading_arrow}, {heading_direction} and the
+    # bearing_from_home pair): {tag} or {tag:#colour} - not prefixed with
+    # "symbol:" because they are not static glyphs, and not fields because
+    # a unit makes no sense on them.
+    for name in sorted(DYNAMIC_DIRECTION_TAGS):
+        if inner == name or inner.startswith(name + ":"):
+            colour = None
+            if len(inner) > len(name):
+                colour = inner[len(name) + 1 :]
                 if not _is_valid_colour(colour):
                     return None
-                return SymbolToken(name="heading_arrow", colour=colour)
-            return None
-        return SymbolToken(name="heading_arrow", colour=None)
-
-    # Dynamic text tag: {heading_direction} or {heading_direction:#colour}
-    # Outputs the cardinal direction (N, NE, E, ...) as text rather than a
-    # glyph.  Not in SYMBOL_MAP so {symbol:heading_direction} is rejected.
-    if inner == "heading_direction" or inner.startswith("heading_direction:"):
-        rest = inner[len("heading_direction") :]
-        if rest:
-            if rest.startswith(":"):
-                colour = rest[1:]
-                if not _is_valid_colour(colour):
-                    return None
-                return SymbolToken(name="heading_direction", colour=colour)
-            return None
-        return SymbolToken(name="heading_direction", colour=None)
+            return SymbolToken(name=name, colour=colour)
 
     # Symbol tag: {symbol:name} or {symbol:name:#colour}
     if inner.startswith("symbol:"):
@@ -473,25 +494,39 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
         elif isinstance(token, SymbolToken):
             if token.name == "heading_arrow":
                 # Dynamic symbol: select glyph based on flight heading.
-                # Use floor(x + 0.5) instead of round() because Python's
-                # round() uses banker's rounding (round half to even),
-                # which gives wrong results at the .5 boundaries
-                # (e.g. 22.5° should be NE, not N).
                 heading = flight.heading or 0
-                index = int(math.floor(heading / 45.0 + 0.5)) % 8
+                index = _direction_index(heading)
                 glyph = HEADING_ARROW_GLYPHS[index]
                 if glyph:
                     colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
                     spans.append(Span(colour, fonts.small_symbols, glyph))
             elif token.name == "heading_direction":
                 # Dynamic text tag: select cardinal direction text (N, NE,
-                # E, ...) based on flight heading.  Same rounding math as
-                # heading_arrow to avoid banker's rounding at .5 boundaries.
+                # E, ...) based on flight heading.
                 heading = flight.heading or 0
-                index = int(math.floor(heading / 45.0 + 0.5)) % 8
+                index = _direction_index(heading)
                 text = HEADING_ARROW_DIRECTIONS[index]
                 colour = _resolve_colour(token.colour, THEME_PLANE)
                 spans.append(Span(colour, fonts.regular, text))
+            elif token.name == "bearing_from_home_arrow":
+                # Dynamic symbol: the arrow points from the observer toward
+                # the aircraft - the direction to look.  Nothing renders
+                # while the bearing is unknown (None); 0 is a real bearing
+                # (due north) and still renders.
+                if flight.bearing_from_home is not None:
+                    index = _direction_index(flight.bearing_from_home)
+                    glyph = HEADING_ARROW_GLYPHS[index]
+                    if glyph:
+                        colour = _resolve_colour(token.colour, THEME_PLANE_TLM_UNITS)
+                        spans.append(Span(colour, fonts.small_symbols, glyph))
+            elif token.name == "bearing_from_home_direction":
+                # Dynamic text tag: cardinal direction from the observer
+                # toward the aircraft.
+                if flight.bearing_from_home is not None:
+                    index = _direction_index(flight.bearing_from_home)
+                    text = HEADING_ARROW_DIRECTIONS[index]
+                    colour = _resolve_colour(token.colour, THEME_PLANE)
+                    spans.append(Span(colour, fonts.regular, text))
             else:
                 glyph = SYMBOL_MAP.get(token.name, "")
                 if glyph:
@@ -524,6 +559,11 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
 
     # Telemetry fields - value + optional unit suffix.
     if token.field in TELEMETRY_FIELDS:
+        # None means no data at this fetch (an unknown bearing) - omit the
+        # field entirely rather than rendering a default 0.
+        if raw_value is None:
+            return []
+
         valid_units, convert, _ = TELEMETRY_FIELDS[token.field]
         unit = _resolve_unit(token.field, token.unit, cfg)
 
@@ -586,20 +626,15 @@ def validate_template(template: str) -> list[str]:
             errors.append("Empty tag '{}' is not allowed.")
             continue
 
-        # Dynamic heading_arrow tag: {heading_arrow} or {heading_arrow:#colour}
-        if inner == "heading_arrow" or inner.startswith("heading_arrow:"):
-            if ":" in inner:
-                colour_part = inner.split(":", 1)[1]
-                if not _is_valid_colour(colour_part):
-                    errors.append(
-                        f"Invalid colour '{colour_part}' in tag '{inner}'. "
-                        f"Use #RRGGBB format (e.g. #FF8800)."
-                    )
-            continue
+        # Dynamic direction tags ({heading_arrow}, {heading_direction} and
+        # the bearing_from_home pair): only a colour may follow the name.
+        dynamic_name = None
+        for name in DYNAMIC_DIRECTION_TAGS:
+            if inner == name or inner.startswith(name + ":"):
+                dynamic_name = name
+                break
 
-        # Dynamic heading_direction tag: {heading_direction} or
-        # {heading_direction:#colour} - cardinal direction text (N, NE, ...).
-        if inner == "heading_direction" or inner.startswith("heading_direction:"):
+        if dynamic_name is not None:
             if ":" in inner:
                 colour_part = inner.split(":", 1)[1]
                 if not _is_valid_colour(colour_part):

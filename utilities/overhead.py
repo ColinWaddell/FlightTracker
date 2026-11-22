@@ -168,12 +168,13 @@ class Overhead:
 
         *home* is the observer position ``[lat, lng, radius_km]`` from the
         fetch query; when supplied (and the feed reported a position) the
-        observer distance is computed for the custom scroller's
-        ``{distance_to_home}`` field.
+        observer distance and bearing are computed for the custom scroller's
+        ``{distance_to_home}`` and ``{bearing_from_home}`` fields.
         """
         from utilities.flight import Flight
         from utilities.overhead_utilities import (
             DISTANCE_SENTINEL_KM,
+            bearing_from_home,
             distance_from_home,
         )
 
@@ -184,6 +185,7 @@ class Overhead:
         plane = observation.plane or route.plane
 
         distance_to_home = 0.0
+        bearing_deg = None
         if (
             home is not None
             and observation.latitude is not None
@@ -200,6 +202,17 @@ class Overhead:
             if distance_km < DISTANCE_SENTINEL_KM:
                 distance_to_home = distance_km
 
+            bearing_deg = bearing_from_home(
+                observation.latitude,
+                observation.longitude,
+                home,
+            )
+            # The sentinel marks invalid input - display that as unknown
+            # rather than a bogus "due north" (0 degrees is a real
+            # bearing, so None carries the unknown state).
+            if bearing_deg < 0:
+                bearing_deg = None
+
         return Flight.from_route(
             route,
             plane=plane,
@@ -212,6 +225,7 @@ class Overhead:
             vertical_speed=int(observation.vertical_speed_fpm or 0),
             squawk=observation.squawk,
             distance_to_home=distance_to_home,
+            bearing_from_home=bearing_deg,
         )
 
     def _apply_track_timeout(self, flights: list, cfg) -> list:
