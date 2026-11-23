@@ -369,10 +369,20 @@ class TestBuildCustomSpans:
         assert "2" in texts
         assert "ms" in texts
 
-    def test_distance_default_km(self):
-        # Bare tag has no config default - resolves to km
+    def test_distance_default_follows_height_unit_imperial(self):
+        # Bare tag follows the "Height and Distance" setting
         flight = make_flight(distance_to_home=12.5)
-        cfg = make_cfg()
+        cfg = make_cfg(height_unit="ft")
+        spans = build_custom_spans("{distance_to_home}", flight, cfg)
+        texts = [s.text for s in spans]
+        # 12.5 km * 3280.84 = 41010.5 -> 41010 ft
+        assert "41010" in texts
+        assert "ft" in texts
+
+    def test_distance_default_metric_is_km(self):
+        # Metric setting keeps the km convention for long distances
+        flight = make_flight(distance_to_home=12.5)
+        cfg = make_cfg(height_unit="m")
         spans = build_custom_spans("{distance_to_home}", flight, cfg)
         texts = [s.text for s in spans]
         assert "12" in texts
@@ -442,7 +452,7 @@ class TestBuildCustomSpans:
     def test_distance_zero_renders_zero(self):
         # 0 = unknown, but renders like the other telemetry fields do
         flight = make_flight(distance_to_home=0)
-        cfg = make_cfg()
+        cfg = make_cfg(height_unit="m")
         spans = build_custom_spans("{distance_to_home}", flight, cfg)
         texts = [s.text for s in spans]
         assert "0" in texts
