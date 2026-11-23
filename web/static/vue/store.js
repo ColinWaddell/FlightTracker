@@ -58,7 +58,7 @@ export const TEMPLATE_FIELDS = [
   {
     name: "distance_to_home",
     label: "Distance from observer",
-    units: "km, m, ft, miles/mi, nautical miles: nm (aliases: knots, knts)",
+    units: "km, m, ft, miles/mi, nautical miles: nm (aliases: knots, knts) - default: Height and Distance setting (m -> km, ft -> ft)",
   },
 ];
 

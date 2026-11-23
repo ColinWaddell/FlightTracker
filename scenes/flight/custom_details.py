@@ -132,8 +132,8 @@ def _convert_distance(distance_km: float, unit: str) -> tuple[str, str]:
     """Convert distance (stored in km) to the requested unit.
 
     ``knots``/``knts`` are accepted as aliases for nautical miles (nm) -
-    the distance unit behind the knot.  An empty unit (bare tag, no
-    config default) resolves to km.
+    the distance unit behind the knot.  An empty unit (unresolvable
+    config preference) falls back to km.
     """
     if unit in ("", "km"):
         return str(int(distance_km)), "km"
@@ -158,12 +158,13 @@ TELEMETRY_FIELDS: dict[str, tuple[frozenset[str], Callable, str | None]] = {
     "heading": (frozenset(), _convert_heading, None),
     "vertical_speed": (frozenset({"fpm", "ms"}), _convert_vertical_speed, None),
     # Distance from the observer, computed at fetch time (km canonical).
-    # No config default - a bare tag resolves to km.  "knots"/"knts" are
+    # A bare tag follows the Height and Distance preference via
+    # _DISTANCE_UNIT_MAP (metres -> km, feet -> ft).  "knots"/"knts" are
     # aliases for nautical miles.
     "distance_to_home": (
         frozenset({"km", "m", "ft", "miles", "mi", "nm", "knots", "knts"}),
         _convert_distance,
-        None,
+        "height_unit",
     ),
 }
 
@@ -175,6 +176,12 @@ _HEIGHT_UNIT_MAP = {"ft": "ft", "m": "m"}
 
 # Config unit -> canonical unit string for ground speed.
 _SPEED_UNIT_MAP = {"kts": "kts", "kmh": "kmh", "mph": "mph"}
+
+# Height and Distance config unit -> distance unit for the bare
+# {distance_to_home} tag.  The metres preference keeps km - a horizontal
+# distance in metres is unreadable - while the feet preference is
+# honoured literally.
+_DISTANCE_UNIT_MAP = {"m": "km", "ft": "ft"}
 
 # ---------------------------------------------------------------------------
 # Symbol metadata
@@ -441,6 +448,8 @@ def _resolve_unit(field: str, requested_unit: str | None, cfg: Config) -> str:
         return _HEIGHT_UNIT_MAP.get(config_val, "ft")
     if field == "ground_speed":
         return _SPEED_UNIT_MAP.get(config_val, "kmh")
+    if field == "distance_to_home":
+        return _DISTANCE_UNIT_MAP.get(config_val, "km")
     return config_val
 
 

@@ -395,7 +395,7 @@ export default defineComponent({
           <option value="m">Metres (m)</option>
           <option value="ft">Feet (ft)</option>
         </select>
-        <div class="form-text text-muted small">How aircraft and satellite altitudes are shown.</div>
+        <div class="form-text text-muted small">How aircraft and satellite altitudes, and custom template distances, are shown.</div>
       </div>
 
       <div class="mb-3">
