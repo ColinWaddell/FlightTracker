@@ -73,6 +73,12 @@ def in_zone(lat, lon, zone) -> bool:
 # "unknown" results rather than rendering a million-kilometre aircraft.
 DISTANCE_SENTINEL_KM = 1e6
 
+# Bearing counterpart: 0 degrees (due north) is a real bearing, so the
+# invalid-input marker sits outside the valid [0, 360) range instead.
+# Public: display-side callers (Overhead._to_flight) use it to recognise
+# "unknown" results rather than rendering a bogus due north.
+BEARING_SENTINEL_DEG = -1.0
+
 
 def _is_finite_number(value) -> bool:
     """True for real ints/floats - bools, NaN/inf and overflow excluded."""
@@ -149,6 +155,63 @@ def distance_from_home(lat, lon, alt_ft, home) -> float:
     vertical_m = aircraft_alt_m - observer_alt_m
     # hypot is the overflow-safe form of sqrt(horizontal**2 + vertical**2).
     return math.hypot(horizontal_m, vertical_m) / 1000.0
+
+
+def bearing_from_home(lat, lon, home) -> float:
+    """Initial great-circle bearing from the observer to an aircraft.
+
+    Degrees clockwise from true north: 0 = north, 90 = east, 180 = south,
+    270 = west.  This is the direction to look from the observer's position
+    toward the aircraft - the complement of ``distance_from_home`` for
+    spotting the aircraft outside.
+
+    Parameters
+    ----------
+    lat, lon : float
+        Position of the aircraft in decimal degrees.
+    home : sequence of [lat, lon, radius_km]
+        Observer location.  ``radius_km`` takes no part in the bearing but
+        is part of the shared ``home`` shape and is validated like
+        ``distance_from_home``.
+
+    Returns
+    -------
+    float
+        Bearing in degrees in ``[0, 360)``.  Invalid input (malformed
+        *home*, non-numeric or non-finite coordinates) is logged and
+        returns ``BEARING_SENTINEL_DEG`` so callers can tell "unknown"
+        from a genuine 0-degree (due north) fix.
+    """
+    try:
+        home_lat, home_lon, home_radius_km = home
+    except (TypeError, ValueError):
+        logger.warning("bearing_from_home: malformed home %r", home)
+        return BEARING_SENTINEL_DEG
+
+    values = (lat, lon, home_lat, home_lon, home_radius_km)
+    if not all(_is_finite_number(v) for v in values):
+        logger.warning(
+            "bearing_from_home: non-numeric position (lat=%r, lon=%r, home=%r)",
+            lat,
+            lon,
+            home,
+        )
+        return BEARING_SENTINEL_DEG
+
+    # Initial bearing of the great circle from the observer (phi1, lambda1)
+    # to the aircraft (phi2, lambda2) - the standard navigation formula.
+    phi1 = math.radians(home_lat)
+    phi2 = math.radians(lat)
+    dlon = math.radians(lon - home_lon)
+
+    y = math.sin(dlon) * math.cos(phi2)
+    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(
+        dlon
+    )
+
+    # Wrap to [0, 360): atan2 answers negatives for westerly bearings and
+    # 359.7 degrees must stay 359.7, not -0.3.
+    return (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
 
 
 # ---------------------------------------------------------------------------

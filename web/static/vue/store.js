@@ -60,6 +60,11 @@ export const TEMPLATE_FIELDS = [
     label: "Distance from observer",
     units: "km, m, ft, miles/mi, nautical miles: nm (aliases: knots, knts) - default: Height and Distance setting (m -> km, ft -> ft)",
   },
+  {
+    name: "bearing_from_home",
+    label: "Bearing from observer, degrees clockwise from north",
+    units: "- (like heading; add {symbol:degree} for °)",
+  },
 ];
 
 export const TEMPLATE_SYMBOLS = [
@@ -71,6 +76,8 @@ export const TEMPLATE_SYMBOLS = [
   { tag: "{symbol:dest_arrow}", label: "Destination direction arrow" },
   { tag: "{heading_arrow}", label: "Arrow pointing in the plane's heading direction (N, NE, E, SE, S, SW, W, NW)" },
   { tag: "{heading_direction}", label: "Cardinal direction text (N, NE, E, SE, S, SW, W, NW) based on the plane's heading" },
+  { tag: "{bearing_from_home_arrow}", label: "Arrow pointing from the observer toward the plane (the direction to look)" },
+  { tag: "{bearing_from_home_direction}", label: "Cardinal direction text (N, NE, E, SE, S, SW, W, NW) from the observer toward the plane" },
 ];
 
 // ---------------------------------------------------------------------------

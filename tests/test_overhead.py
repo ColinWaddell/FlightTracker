@@ -15,6 +15,7 @@ from utilities.lookups.providers.tar1090.flights import _to_observation
 from utilities.overhead_utilities import (
     airport_info,
     airport_name,
+    bearing_from_home,
     clean_field,
     distance_from_home,
     in_zone,
@@ -98,6 +99,64 @@ class TestDistanceFromHome:
         assert distance_from_home(55.0, float("inf"), 10000, home) == 1e6
         assert distance_from_home(True, -4.0, 10000, home) == 1e6
         assert distance_from_home(55.0, -4.0, float("nan"), home) == 1e6
+
+
+class TestBearingFromHome:
+    """Initial bearing from the observer toward the aircraft."""
+
+    HOME = [55.5, -4.0, 6371.0]
+
+    def test_due_north(self):
+        # Meridians are great circles - the bearing is exact.
+        bearing = bearing_from_home(55.6, -4.0, self.HOME)
+        assert bearing == pytest.approx(0.0, abs=0.5)
+
+    def test_due_south(self):
+        bearing = bearing_from_home(55.4, -4.0, self.HOME)
+        assert bearing == pytest.approx(180.0, abs=0.5)
+
+    def test_due_east(self):
+        # East along a parallel is not a great circle: the initial bearing
+        # leans a fraction north of due east at this latitude.
+        bearing = bearing_from_home(55.5, -3.9, self.HOME)
+        assert 88.0 < bearing < 92.0
+
+    def test_due_west(self):
+        bearing = bearing_from_home(55.5, -4.1, self.HOME)
+        assert 268.0 < bearing < 272.0
+
+    def test_wraps_into_half_open_range(self):
+        # North and a hair west stays near 360 - never negative.
+        bearing = bearing_from_home(55.6, -4.001, self.HOME)
+        assert 0.0 <= bearing < 360.0
+        assert bearing > 350.0
+
+    def test_directly_overhead_stays_in_range(self):
+        # Zero distance: the azimuth is degenerate, any in-range value is
+        # acceptable but it must not crash or go negative.
+        bearing = bearing_from_home(55.5, -4.0, self.HOME)
+        assert 0.0 <= bearing < 360.0
+
+    def test_malformed_home_returns_sentinel(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            assert bearing_from_home(55.0, -4.0, None) == -1.0
+            assert bearing_from_home(55.0, -4.0, [55.0]) == -1.0
+            assert bearing_from_home(55.0, -4.0, [55.0, -4.0]) == -1.0
+        assert "malformed home" in caplog.text
+
+    def test_non_numeric_position_returns_sentinel(self, caplog):
+        home = [55.0, -4.0, 6371.0]
+        with caplog.at_level(logging.WARNING):
+            assert bearing_from_home("55.0", -4.0, home) == -1.0
+            assert bearing_from_home(55.0, None, home) == -1.0
+            assert bearing_from_home(55.0, -4.0, [None, -4.0, 6371.0]) == -1.0
+        assert "non-numeric" in caplog.text
+
+    def test_nan_inf_and_bool_return_sentinel(self):
+        home = [55.0, -4.0, 6371.0]
+        assert bearing_from_home(float("nan"), -4.0, home) == -1.0
+        assert bearing_from_home(55.0, float("inf"), home) == -1.0
+        assert bearing_from_home(True, -4.0, home) == -1.0
 
 
 class TestAirportInfo:
@@ -467,6 +526,97 @@ class TestToFlightDistance:
 
         flight = Overhead()._to_flight(self._observation(), self._enrichment())
         assert flight.distance_to_home == 0
+
+
+# ---------------------------------------------------------------------------
+# Overhead._to_flight - bearing_from_home computation
+# ---------------------------------------------------------------------------
+
+
+class TestToFlightBearing:
+    """The custom scroller's {bearing_from_home} is computed at fetch time.
+
+    Unknown bearing is None, not 0 - due north is a real bearing.
+    """
+
+    HOME = [55.5, -4.0, 6371.0]
+
+    @pytest.fixture(autouse=True)
+    def _cfg(self, monkeypatch):
+        # _to_flight resolves the display callsign via Config.instance();
+        # stub it so tests never touch the real config store.
+        from setup.configuration import Config
+
+        monkeypatch.setattr(
+            Config,
+            "instance",
+            classmethod(lambda cls: MagicMock(callsign_format="icao")),
+        )
+
+    @staticmethod
+    def _observation(**kwargs):
+        from utilities.lookups.results import FlightObservation
+
+        defaults = dict(
+            icao="400f5a",
+            callsign="BAW123",
+            latitude=55.5,
+            longitude=-3.9,  # due east of home
+            altitude_ft=10000,
+        )
+        defaults.update(kwargs)
+        return FlightObservation(**defaults)
+
+    @staticmethod
+    def _enrichment():
+        from utilities.lookups.results import RouteInfo
+
+        enrichment = MagicMock()
+        enrichment.enrich.return_value = RouteInfo()
+        return enrichment
+
+    def test_bearing_computed(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=self.HOME
+        )
+        # Due east of home at this latitude reads just shy of 90.
+        assert flight.bearing_from_home == pytest.approx(89.96, abs=2.0)
+        assert 0.0 <= flight.bearing_from_home < 360.0
+
+    def test_bearing_unknown_without_position(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(latitude=None, longitude=None),
+            self._enrichment(),
+            home=self.HOME,
+        )
+        assert flight.bearing_from_home is None
+
+    def test_bearing_unknown_without_home(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=None
+        )
+        assert flight.bearing_from_home is None
+
+    def test_bearing_sentinel_becomes_unknown(self):
+        from utilities.overhead import Overhead
+
+        # Malformed home -> sentinel -> displayed as unknown (None)
+        flight = Overhead()._to_flight(
+            self._observation(), self._enrichment(), home=[55.5]
+        )
+        assert flight.bearing_from_home is None
+
+    def test_legacy_call_without_home_kwarg(self):
+        from utilities.overhead import Overhead
+
+        flight = Overhead()._to_flight(self._observation(), self._enrichment())
+        assert flight.bearing_from_home is None
 
 
 # ---------------------------------------------------------------------------

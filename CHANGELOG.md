@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Height and Distance unit preference (metres -> km, feet -> ft)
   instead of always showing kilometres
 
+## [2.12.7]
+
+- New custom scroller field showing the bearing from the observer:
+  `{bearing_from_home}` (degrees clockwise from north),
+  `{bearing_from_home_direction}` (cardinal direction text) and
+  `{bearing_from_home_arrow}` (arrow pointing where to look)
+
 ## [2.12.6]
 
 - Plane direction arrow lookup fixed

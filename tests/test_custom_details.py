@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from display.spans import Span
 from scenes.flight.custom_details import (
     AVAILABLE_FIELDS,
@@ -187,6 +189,32 @@ class TestParseTemplate:
         assert isinstance(tokens[0], FieldToken)
         assert tokens[0].field == "distance_to_home"
         assert tokens[0].unit == "nm"
+
+    def test_bearing_field_tag(self):
+        tokens = parse_template("{bearing_from_home}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], FieldToken)
+        assert tokens[0].field == "bearing_from_home"
+        assert tokens[0].unit is None
+
+    def test_bearing_direction_tag(self):
+        tokens = parse_template("{bearing_from_home_direction}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], SymbolToken)
+        assert tokens[0].name == "bearing_from_home_direction"
+        assert tokens[0].colour is None
+
+    def test_bearing_arrow_tag_with_colour(self):
+        tokens = parse_template("{bearing_from_home_arrow:#00FF00}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], SymbolToken)
+        assert tokens[0].name == "bearing_from_home_arrow"
+        assert tokens[0].colour == "#00FF00"
+
+    def test_invalid_bearing_tag_colour_becomes_literal(self):
+        tokens = parse_template("{bearing_from_home_arrow:#XYZ}")
+        assert len(tokens) == 1
+        assert isinstance(tokens[0], LiteralToken)
 
 
 # ---------------------------------------------------------------------------
@@ -467,6 +495,30 @@ class TestBuildCustomSpans:
         for s in spans:
             if s.text.isdigit() or s.text == "km":
                 assert s.colour == Colour(255, 136, 0)
+
+    def test_bearing_degrees_span(self):
+        # Like heading: a bare number, no unit suffix
+        flight = make_flight(bearing_from_home=233.7)
+        cfg = make_cfg()
+        spans = build_custom_spans("{bearing_from_home}", flight, cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "233"
+
+    def test_bearing_zero_is_due_north(self):
+        # 0 is a real bearing - it must render, not read as "no data"
+        flight = make_flight(bearing_from_home=0.0)
+        cfg = make_cfg()
+        spans = build_custom_spans("{bearing_from_home}", flight, cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "0"
+
+    def test_bearing_unknown_omitted(self):
+        # None = no usable position - the field vanishes while the rest of
+        # the template still renders.
+        flight = make_flight(bearing_from_home=None)
+        cfg = make_cfg()
+        spans = build_custom_spans("{bearing_from_home}{symbol:degree}", flight, cfg)
+        assert [s.text for s in spans] == ["*"]
 
     def test_symbol_span(self):
         flight = make_flight()
@@ -1022,5 +1074,192 @@ class TestHeadingDirection:
         # {symbol:heading_direction} should be rejected because
         # heading_direction is NOT in SYMBOL_MAP.
         errors = validate_template("{symbol:heading_direction}")
+        assert len(errors) == 1
+        assert "Unknown symbol" in errors[0]
+
+
+# ---------------------------------------------------------------------------
+# bearing_from_home - degrees field pointing from the observer to the plane
+# ---------------------------------------------------------------------------
+
+
+class TestBearingFromHomeValidate:
+    def test_validate_bearing_field_valid(self):
+        assert validate_template("{bearing_from_home}") == []
+
+    def test_validate_bearing_in_mixed_template(self):
+        template = (
+            "{distance_to_home}km {bearing_from_home}{symbol:degree} "
+            "{bearing_from_home_direction}"
+        )
+        assert validate_template(template) == []
+
+
+# ---------------------------------------------------------------------------
+# bearing_from_home_arrow - dynamic where-to-look arrow
+# ---------------------------------------------------------------------------
+
+
+class TestBearingFromHomeArrow:
+    """Verify {bearing_from_home_arrow} points from the observer to the plane."""
+
+    @pytest.mark.parametrize(
+        "bearing,glyph",
+        [
+            (0, chr(129)),  # N
+            (45, chr(130)),  # NE
+            (90, chr(131)),  # E
+            (135, chr(132)),  # SE
+            (180, chr(133)),  # S
+            (225, chr(134)),  # SW
+            (270, chr(135)),  # W
+            (315, chr(136)),  # NW
+            (22, chr(129)),  # 22 / 45 = 0.49 -> N
+            (23, chr(130)),  # 23 / 45 = 0.51 -> NE
+            (337, chr(136)),  # 337 / 45 = 7.49 -> NW
+            (338, chr(129)),  # 338 / 45 = 7.51 -> wraps to N
+            (359.9, chr(129)),  # near-360 wraps to N
+        ],
+    )
+    def test_glyph_per_bearing(self, bearing, glyph):
+        spans = build_custom_spans(
+            "{bearing_from_home_arrow}",
+            make_flight(bearing_from_home=bearing),
+            make_cfg(),
+        )
+        assert len(spans) == 1
+        assert spans[0].text == glyph
+
+    def test_unknown_bearing_renders_nothing(self):
+        spans = build_custom_spans(
+            "A{bearing_from_home_arrow}B",
+            make_flight(bearing_from_home=None),
+            make_cfg(),
+        )
+        assert [s.text for s in spans] == ["A", "B"]
+
+    def test_custom_colour(self):
+        spans = build_custom_spans(
+            "{bearing_from_home_arrow:#00FF00}",
+            make_flight(bearing_from_home=90),
+            make_cfg(),
+        )
+        from display.rgbpanel import Colour
+
+        assert spans[0].colour == Colour(0, 255, 0)
+
+    def test_combined_with_bearing_value(self):
+        flight = make_flight(bearing_from_home=225)
+        cfg = make_cfg()
+        spans = build_custom_spans(
+            "{bearing_from_home}{symbol:degree} {bearing_from_home_arrow}",
+            flight,
+            cfg,
+        )
+        texts = [s.text for s in spans]
+        assert "225" in texts
+        assert "*" in texts  # degree symbol
+        assert chr(134) in texts  # SW arrow
+
+    def test_validate_valid(self):
+        assert validate_template("{bearing_from_home_arrow}") == []
+        assert validate_template("{bearing_from_home_arrow:#FF0000}") == []
+
+    def test_validate_in_mixed_template(self):
+        template = (
+            "{callsign} {bearing_from_home}{symbol:degree} {bearing_from_home_arrow}"
+        )
+        assert validate_template(template) == []
+
+    def test_symbol_form_rejected(self):
+        # {symbol:bearing_from_home_arrow} should be rejected because
+        # bearing_from_home_arrow is NOT in SYMBOL_MAP.
+        errors = validate_template("{symbol:bearing_from_home_arrow}")
+        assert len(errors) == 1
+        assert "Unknown symbol" in errors[0]
+
+
+# ---------------------------------------------------------------------------
+# bearing_from_home_direction - dynamic cardinal-direction text tag
+# ---------------------------------------------------------------------------
+
+
+class TestBearingFromHomeDirection:
+    """Verify {bearing_from_home_direction} names the way to look."""
+
+    @pytest.mark.parametrize(
+        "bearing,text",
+        [
+            (0, "N"),
+            (45, "NE"),
+            (90, "E"),
+            (135, "SE"),
+            (180, "S"),
+            (225, "SW"),
+            (270, "W"),
+            (315, "NW"),
+            (22, "N"),
+            (23, "NE"),
+            (337, "NW"),
+            (338, "N"),
+            (359.9, "N"),
+        ],
+    )
+    def test_direction_per_bearing(self, bearing, text):
+        spans = build_custom_spans(
+            "{bearing_from_home_direction}",
+            make_flight(bearing_from_home=bearing),
+            make_cfg(),
+        )
+        assert len(spans) == 1
+        assert spans[0].text == text
+
+    def test_unknown_bearing_renders_nothing(self):
+        spans = build_custom_spans(
+            "A{bearing_from_home_direction}B",
+            make_flight(bearing_from_home=None),
+            make_cfg(),
+        )
+        assert [s.text for s in spans] == ["A", "B"]
+
+    def test_custom_colour(self):
+        spans = build_custom_spans(
+            "{bearing_from_home_direction:#00FF00}",
+            make_flight(bearing_from_home=90),
+            make_cfg(),
+        )
+        from display.rgbpanel import Colour
+
+        assert spans[0].text == "E"
+        assert spans[0].colour == Colour(0, 255, 0)
+
+    def test_combined_with_bearing_value(self):
+        flight = make_flight(bearing_from_home=225)
+        cfg = make_cfg()
+        spans = build_custom_spans(
+            "{bearing_from_home}{symbol:degree} {bearing_from_home_direction}",
+            flight,
+            cfg,
+        )
+        texts = [s.text for s in spans]
+        assert "225" in texts
+        assert "*" in texts  # degree symbol
+        assert "SW" in texts  # cardinal direction
+
+    def test_validate_valid(self):
+        assert validate_template("{bearing_from_home_direction}") == []
+        assert validate_template("{bearing_from_home_direction:#FF0000}") == []
+
+    def test_validate_in_mixed_template(self):
+        template = (
+            "{callsign} {bearing_from_home}{symbol:degree} "
+            "{bearing_from_home_direction}"
+        )
+        assert validate_template(template) == []
+
+    def test_symbol_form_rejected(self):
+        # {symbol:bearing_from_home_direction} should be rejected because
+        # bearing_from_home_direction is NOT in SYMBOL_MAP.
+        errors = validate_template("{symbol:bearing_from_home_direction}")
         assert len(errors) == 1
         assert "Unknown symbol" in errors[0]
