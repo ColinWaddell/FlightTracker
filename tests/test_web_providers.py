@@ -226,6 +226,7 @@ class TestParseSettingsFormProviders:
             weather_refresh_minutes=15,
             weatherapi_key="",
             web_port=8000,
+            image_gamma=2.6,
             providers_subtree={},
             provider_settings=lambda pid: {},
             flight_providers=[{"provider": "fr24", "enabled": True}],
@@ -257,6 +258,27 @@ class TestParseSettingsFormProviders:
         assert out["show_emergency_squawk"] is True
         out = parse_settings_form({}, cfg)
         assert out["show_emergency_squawk"] is False
+
+    def test_gamma_correction_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"gamma_correction": "on"}, cfg)
+        assert out["gamma_correction"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["gamma_correction"] is False
+
+    def test_image_gamma_clamped_and_defaulted(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        assert parse_settings_form({"image_gamma": "2.5"}, cfg)["image_gamma"] == 2.5
+        # Out of range clamps to the 0.1-3.0 bounds.
+        assert parse_settings_form({"image_gamma": "9"}, cfg)["image_gamma"] == 3.0
+        assert parse_settings_form({"image_gamma": "0"}, cfg)["image_gamma"] == 0.1
+        # Junk (or absent) falls back to the configured value.
+        assert parse_settings_form({"image_gamma": "junk"}, cfg)["image_gamma"] == 2.6
+        assert parse_settings_form({}, cfg)["image_gamma"] == 2.6
 
     def test_api_limit_mode_parse(self):
         from web.app import parse_settings_form

@@ -678,6 +678,11 @@ def parse_settings_form(form, cfg) -> dict:
         "panel_colour_order": (lambda v: v if v in PANEL_COLOUR_ORDERS else "RGB")(
             str_val(form.get("panel_colour_order"), "RGB").upper()
         ),
+        # Gamma-corrected raster images (see utilities/image_gamma.py)
+        "gamma_correction": bool_val(form.get("gamma_correction")),
+        "image_gamma": max(
+            0.1, min(3.0, float_val(form.get("image_gamma"), cfg.image_gamma))
+        ),
         # Lookup provider priority lists (reorderable, submitted as JSON)
         **_parse_provider_form(form, cfg),
         # Advanced brightness schedule (submitted as JSON)

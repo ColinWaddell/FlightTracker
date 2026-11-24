@@ -4,6 +4,15 @@ All notable changes to FlightTracker are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## New
+
+- New Hardware option "Gamma Correction" (on by default): airline logos,
+  weather icons and the splash screen are gamma-corrected before display so
+  they don't look washed out on the RGB matrix panel. Includes an adjustable
+  gamma exponent (0.1-3.0, default 2.6 following Adafruit's guidance).
+  Applied when images load at start-up, so it takes effect after the
+  automatic restart that follows saving settings.
+
 ## [2.12.7]
 
 - New custom scroller field showing the bearing from the observer:

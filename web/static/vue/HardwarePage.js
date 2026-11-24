@@ -336,6 +336,29 @@ export default defineComponent({
           alternative orders until the colours look right.
         </div>
       </div>
+
+      <hr class="my-3" />
+
+      <div class="mb-2 form-check">
+        <input type="checkbox" class="form-check-input" name="gamma_correction"
+               id="gamma_correction" v-model="store.config.gamma_correction" />
+        <label class="form-check-label" for="gamma_correction">Gamma Correction</label>
+        <div class="form-text text-muted small">
+          Corrects the colours of images (airline logos, weather icons and the splash screen) so they
+          don't look washed out on the LED panel. Applied when images are loaded at startup &mdash;
+          restart required. FlightTracker restarts automatically when settings are saved.
+        </div>
+      </div>
+
+      <div v-show="store.config.gamma_correction">
+        <label class="form-label small mt-2" for="image_gamma">Gamma exponent (0.1&ndash;3.0)</label>
+        <input type="number" min="0.1" max="3" step="0.1" class="form-control form-control-sm"
+               name="image_gamma" id="image_gamma" v-model.number="store.config.image_gamma"
+               style="max-width:80px" />
+        <div class="form-text text-muted small">
+          Higher values darken mid-tones (Adafruit recommends 2.6); <code>1</code> disables correction.
+        </div>
+      </div>
     </div>
 
     <!-- ====== Web-Interface ====== -->
