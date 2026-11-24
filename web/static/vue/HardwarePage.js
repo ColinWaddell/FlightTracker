@@ -344,9 +344,7 @@ export default defineComponent({
                id="gamma_correction" v-model="store.config.gamma_correction" />
         <label class="form-check-label" for="gamma_correction">Gamma Correction</label>
         <div class="form-text text-muted small">
-          Corrects the colours of images (airline logos, weather icons and the splash screen) so they
-          don't look washed out on the LED panel. Applied when images are loaded at startup &mdash;
-          restart required. FlightTracker restarts automatically when settings are saved.
+          Corrects the colours of images so they don't look washed out on the LED panel.
         </div>
       </div>
 
