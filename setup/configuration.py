@@ -146,6 +146,9 @@ DEFAULT_HAT_PWM_ENABLED = True
 DEFAULT_PANEL_COLOUR_ORDER = "RGB"  # panel LED wiring order: permutation of "RGB"
 DEFAULT_LOADING_INDICATOR = "pixel"  # none / pixel / gpio
 DEFAULT_LOADING_LED_GPIO_PIN = ""
+# Gamma correction for raster images (see utilities/image_gamma.py)
+DEFAULT_GAMMA_CORRECTION = True
+DEFAULT_IMAGE_GAMMA = 2.6  # curve exponent; Adafruit's converter value
 
 # Data source (legacy single-source keys; migrated to provider lists on load)
 DEFAULT_DATA_SOURCE = (
@@ -291,6 +294,8 @@ DEFAULTS: dict[str, Any] = {
     "panel_colour_order": DEFAULT_PANEL_COLOUR_ORDER,
     "loading_indicator": DEFAULT_LOADING_INDICATOR,
     "loading_led_gpio_pin": DEFAULT_LOADING_LED_GPIO_PIN,
+    "gamma_correction": DEFAULT_GAMMA_CORRECTION,
+    "image_gamma": DEFAULT_IMAGE_GAMMA,
     # Lookup providers - priority lists + per-provider settings subtree
     "flight_providers": [
         {"provider": "tar1090", "enabled": False},
@@ -1179,6 +1184,17 @@ class Config:
         if sorted(order) != ["B", "G", "R"]:
             return DEFAULT_PANEL_COLOUR_ORDER
         return order
+
+    @property
+    def gamma_correction(self) -> bool:
+        """Gamma-correct raster images for the matrix (see image_gamma)."""
+        return bool(self.data_store.get("gamma_correction", DEFAULT_GAMMA_CORRECTION))
+
+    @property
+    def image_gamma(self) -> float:
+        """Gamma exponent applied to loaded images, clamped to 0.1-3.0."""
+        gamma = float(self.data_store.get("image_gamma", DEFAULT_IMAGE_GAMMA))
+        return max(0.1, min(3.0, gamma))
 
     @property
     def screen_rotate(self) -> bool:

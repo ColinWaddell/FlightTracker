@@ -164,9 +164,12 @@ def render_splash(
     """
     Render the splash BMP to canvas and swap it onto the display.
     """
-    # Read raw bytes and set pixels manually (works on both Pi 3/4 and Pi 5).
+    # Gamma-correct the sRGB splash for the matrix, then read raw bytes and
+    # set pixels manually (works on both Pi 3/4 and Pi 5).
     splash_path = os.path.join(os.path.dirname(__file__), "assets", "splash.bmp")
-    splash = Image.open(splash_path)
+    from utilities.image_gamma import apply as apply_gamma
+
+    splash = apply_gamma(Image.open(splash_path).convert("RGB"))
     pixels = splash.tobytes()
     for y in range(32):
         for x in range(64):

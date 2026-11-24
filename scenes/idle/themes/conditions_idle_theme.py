@@ -52,6 +52,7 @@ from setup.themes import (
     THEME_CONDITIONS_WIND,
     THEME_PLANE_TLM_UNITS,
 )
+from utilities.image_gamma import apply as apply_gamma
 from utilities.sun_times import is_daytime
 
 _DIRECTIONS_DIR = Path(__file__).parent / "icons" / "directions"
@@ -70,7 +71,7 @@ def _load_direction_icon(name: str) -> Image.Image | None:
         if not path.exists():
             return None
         with Image.open(path) as img:
-            _direction_cache[name] = img.convert("RGBA")
+            _direction_cache[name] = apply_gamma(img.convert("RGBA"))
     return _direction_cache[name]
 
 
@@ -100,7 +101,7 @@ def _load_moon_icon(name: str) -> Image.Image | None:
         if not path.exists():
             return None
         with Image.open(path) as img:
-            _moon_cache[name] = img.convert("RGBA")
+            _moon_cache[name] = apply_gamma(img.convert("RGBA"))
     return _moon_cache[name]
 
 

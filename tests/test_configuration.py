@@ -1098,3 +1098,35 @@ class TestApiLimitMode:
 
         assert DEFAULTS["api_limit_mode"] == DEFAULT_API_LIMIT_MODE
         assert DEFAULT_API_LIMIT_MODE == "none"
+
+
+class TestGammaCorrection:
+    """Config.gamma_correction / Config.image_gamma (see image_gamma.py)."""
+
+    @staticmethod
+    def _cfg(store=None):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = store or {}
+        return cfg
+
+    def test_defaults_on_with_adafruit_exponent(self):
+        from setup.configuration import DEFAULTS
+
+        assert self._cfg().gamma_correction is True
+        assert self._cfg().image_gamma == 2.6
+        assert DEFAULTS["gamma_correction"] is True
+        assert DEFAULTS["image_gamma"] == 2.6
+
+    def test_toggle_off(self):
+        assert self._cfg({"gamma_correction": False}).gamma_correction is False
+
+    def test_exponent_clamped(self):
+        assert self._cfg({"image_gamma": 9.0}).image_gamma == 3.0
+        assert self._cfg({"image_gamma": -1}).image_gamma == 0.1
+
+    def test_exponent_declared_in_defaults(self):
+        from setup.configuration import DEFAULT_IMAGE_GAMMA
+
+        assert DEFAULT_IMAGE_GAMMA == 2.6

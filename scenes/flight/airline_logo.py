@@ -36,6 +36,7 @@ from assets.airlines.lookups import (
 )
 from display.rgbpanel import Colour, RGBPanel
 from utilities.flight import Flight
+from utilities.image_gamma import apply as apply_gamma
 
 logger = logging.getLogger(__name__)
 
@@ -59,19 +60,23 @@ _image_cache: dict[str, Image.Image | None] = {}
 def _load_airline_icon(lookup: str) -> Image.Image | None:
     """Load an airline icon PNG, caching the result for reuse.
 
-    Searches both the ``ica0`` and ``iata`` subdirectories.  Returns
-    ``None`` if the prefix is empty or the PNG doesn't exist in either.
+    Searches both the ``ica0`` and ``iata`` subdirectories.  Images are
+    normalised to RGBA and gamma-corrected for the matrix panel (see
+    ``utilities.image_gamma``).  Returns ``None`` if the prefix is empty
+    or the PNG doesn't exist in either.
     """
     if not lookup:
         return None
     if lookup not in _image_cache:
         try:
             path = icao_to_png(lookup)
-            _image_cache[lookup] = Image.open(path)
+            with Image.open(path) as img:
+                _image_cache[lookup] = apply_gamma(img.convert("RGBA"))
         except AirlineLogoNotFound:
             try:
                 path = iata_to_png(lookup)
-                _image_cache[lookup] = Image.open(path)
+                with Image.open(path) as img:
+                    _image_cache[lookup] = apply_gamma(img.convert("RGBA"))
             except AirlineLogoNotFound:
                 _image_cache[lookup] = None
     return _image_cache[lookup]

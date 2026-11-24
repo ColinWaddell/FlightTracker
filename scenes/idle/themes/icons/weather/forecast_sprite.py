@@ -26,6 +26,7 @@ from PIL import Image
 from display.rgbpanel import RGBPanel
 from scenes.idle.themes.icons.weather.animations.base import BaseAnimation
 from scenes.idle.themes.icons.weather.animations.registry import get_animation_class
+from utilities.image_gamma import apply as apply_gamma
 
 # -----------------------------------------------------------------------
 # Dimensions
@@ -58,7 +59,7 @@ def _load_icon(filename: str) -> Image.Image | None:
         if not path.exists():
             return None
         with Image.open(path) as img:
-            _image_cache[filename] = img.convert("RGBA")
+            _image_cache[filename] = apply_gamma(img.convert("RGBA"))
     return _image_cache[filename]
 
 
