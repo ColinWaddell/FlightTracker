@@ -561,8 +561,9 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
         colour = _resolve_colour(token.colour, THEME_PLANE)
         # Text fields use regular font; plane model and its ICAO type
         # designator are uppercased to match the existing model_spans()
-        # behaviour.
-        if token.field in ("plane", "icao_type"):
+        # behaviour, unless the "preserve case" setting keeps whatever the
+        # data source provided.
+        if token.field in ("plane", "icao_type") and not cfg.details_preserve_case:
             text = text.upper()
         return [Span(colour, fonts.regular, text)]
 

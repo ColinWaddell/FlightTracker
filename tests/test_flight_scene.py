@@ -859,9 +859,19 @@ class TestBuildSpans:
         scene = self._make_scene([Flight(plane="Boeing 787")])
         cfg = MagicMock()
         cfg.details = 0
+        cfg.details_preserve_case = False
         spans = scene.build_spans(cfg)
         assert len(spans) == 1
         assert spans[0].text == "BOEING 787"
+
+    def test_mode_0_preserves_case_when_enabled(self):
+        scene = self._make_scene([Flight(plane="Boeing 787")])
+        cfg = MagicMock()
+        cfg.details = 0
+        cfg.details_preserve_case = True
+        spans = scene.build_spans(cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "Boeing 787"
 
     def test_mode_1_returns_telemetry_spans(self):
         scene = self._make_scene(
@@ -881,6 +891,7 @@ class TestBuildSpans:
         scene = self._make_scene([Flight(plane="Boeing 787", callsign="BAW123")])
         cfg = MagicMock()
         cfg.details = 2
+        cfg.details_preserve_case = False
         cfg.details_custom_template = "{callsign} | {plane}"
         cfg.height_unit = "ft"
         cfg.speed_unit = "kts"

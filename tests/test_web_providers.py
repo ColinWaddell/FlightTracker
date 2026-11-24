@@ -259,6 +259,15 @@ class TestParseSettingsFormProviders:
         out = parse_settings_form({}, cfg)
         assert out["show_emergency_squawk"] is False
 
+    def test_details_preserve_case_toggle_parse(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+        out = parse_settings_form({"details_preserve_case": "on"}, cfg)
+        assert out["details_preserve_case"] is True
+        out = parse_settings_form({}, cfg)
+        assert out["details_preserve_case"] is False
+
     def test_gamma_correction_toggle_parse(self):
         from web.app import parse_settings_form
 

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
+- New Plane Info Row option "Preserve Case" (off by default): when enabled
+  the aircraft make & model is shown exactly as the data source provides it,
+  e.g. "Boeing 737-800", instead of being upper-cased to "BOEING 737-800".
+  Applies to both the default make & model row and the custom template's
+  `{plane}` field.
+
 ## [2.12.8]
 
 - New Hardware option "Gamma Correction" (on by default) for images

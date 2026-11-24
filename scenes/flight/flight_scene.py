@@ -406,11 +406,15 @@ class FlightScene:
                 self.flights[self.flight_index],
                 cfg,
             )
-        return self.model_spans()
+        return self.model_spans(cfg)
 
-    def model_spans(self) -> Spans:
+    def model_spans(self, cfg) -> Spans:
         text = self.flights[self.flight_index].plane
-        return [Span(TC(THEME_PLANE), fonts.regular, text.upper())]
+        # Upper-cased by default to match the historical look; the
+        # "preserve case" setting keeps the source's mixed case.
+        if not cfg.details_preserve_case:
+            text = text.upper()
+        return [Span(TC(THEME_PLANE), fonts.regular, text)]
 
     def telemetry_spans(self, cfg) -> Spans:
         flight = self.flights[self.flight_index]

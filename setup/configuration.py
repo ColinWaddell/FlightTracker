@@ -75,6 +75,9 @@ DEFAULT_DETAILS_CUSTOM_TEMPLATE = (
 DEFAULT_SHOW_EMERGENCY_SQUAWK = (
     False  # pin a 7500/7600/7700 squawk to the left of the details scroller
 )
+DEFAULT_DETAILS_PRESERVE_CASE = (
+    False  # show the plane make/model as supplied rather than in all caps
+)
 
 # Weather
 DEFAULT_WEATHERAPI_KEY = ""  # empty = weather disabled
@@ -250,6 +253,7 @@ DEFAULTS: dict[str, Any] = {
     # Plane info row
     "details": DEFAULT_DETAILS,
     "details_custom_template": DEFAULT_DETAILS_CUSTOM_TEMPLATE,
+    "details_preserve_case": DEFAULT_DETAILS_PRESERVE_CASE,
     "show_emergency_squawk": DEFAULT_SHOW_EMERGENCY_SQUAWK,
     # Weather
     "weatherapi_key": DEFAULT_WEATHERAPI_KEY,
@@ -1032,6 +1036,13 @@ class Config:
             self.data_store.get(
                 "details_custom_template", DEFAULT_DETAILS_CUSTOM_TEMPLATE
             )
+        )
+
+    @property
+    def details_preserve_case(self) -> bool:
+        """Show the plane make/model as supplied, not upper-cased."""
+        return bool(
+            self.data_store.get("details_preserve_case", DEFAULT_DETAILS_PRESERVE_CASE)
         )
 
     @property

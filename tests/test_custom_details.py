@@ -54,6 +54,7 @@ def make_cfg(**kwargs):
     cfg.height_unit = kwargs.get("height_unit", "ft")
     cfg.speed_unit = kwargs.get("speed_unit", "kts")
     cfg.number_separator = kwargs.get("number_separator", "none")
+    cfg.details_preserve_case = kwargs.get("details_preserve_case", False)
     return cfg
 
 
@@ -250,6 +251,23 @@ class TestBuildCustomSpans:
         spans = build_custom_spans("{plane}", flight, cfg)
         assert len(spans) == 1
         assert spans[0].text == "BOEING 787-9"  # uppercased like model_spans
+
+    def test_text_field_span_preserve_case(self):
+        flight = make_flight()
+        cfg = make_cfg(details_preserve_case=True)
+        spans = build_custom_spans("{plane}", flight, cfg)
+        assert len(spans) == 1
+        assert spans[0].text == "Boeing 787-9"
+
+    def test_other_text_fields_ignore_preserve_case(self):
+        """The setting only changes how the plane model renders."""
+        flight = make_flight(origin_country="United Kingdom")
+        cfg_preserve = make_cfg(details_preserve_case=True)
+        spans = build_custom_spans("{origin_country}", flight, cfg_preserve)
+        assert spans[0].text == "United Kingdom"
+        cfg_upper = make_cfg(details_preserve_case=False)
+        spans = build_custom_spans("{origin_country}", flight, cfg_upper)
+        assert spans[0].text == "United Kingdom"
 
     def test_callsign_span(self):
         flight = make_flight()

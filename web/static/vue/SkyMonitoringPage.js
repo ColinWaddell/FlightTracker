@@ -290,6 +290,21 @@ export default defineComponent({
         Shown in the scrolling bar at the bottom of the display while a flight is overhead.
       </div>
 
+      <h5 class="mt-3">Preserve Case</h5>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="details_preserve_case"
+               name="details_preserve_case" v-model="store.config.details_preserve_case" />
+        <label class="form-check-label" for="details_preserve_case">
+          Show the aircraft make &amp; model in normal case
+        </label>
+      </div>
+      <div class="form-text text-muted small">
+        Applies to both the make &amp; model row and the custom template's
+        <code>{plane}</code> field. Off (default): shown in capitals, e.g.
+        BOEING 737-800. On: shown exactly as the data source provides it,
+        e.g. Boeing 737-800.
+      </div>
+
       <template-editor v-if="store.config.details === 2" :store="store" />
 
       <h5 class="mt-3">Emergency Squawk</h5>

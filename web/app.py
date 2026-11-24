@@ -542,6 +542,7 @@ def parse_settings_form(form, cfg) -> dict:
         "details_custom_template": str_val(
             form.get("details_custom_template"), cfg.details_custom_template
         ),
+        "details_preserve_case": bool_val(form.get("details_preserve_case")),
         "show_emergency_squawk": bool_val(form.get("show_emergency_squawk")),
         # Weather
         "weatherapi_key": str_val(form.get("weatherapi_key"), cfg.weatherapi_key),
