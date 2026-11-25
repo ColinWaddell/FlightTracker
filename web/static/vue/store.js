@@ -421,7 +421,7 @@ export function createStore(initialConfig, pageData) {
     ["b", "Business jets", "Gulfstream, Cessna Citation"],
     ["g", "Light & general aviation", "Cessna 172, Cirrus SR22"],
     ["h", "Rotorcraft", "Robinson R44, Bell 206"],
-    ["m", "Military", "Spitfire, C-17, F-16"],
+    ["m", "Military", "Airbus A400M, C-17, F-16"],
     ["u", "Unknown", "Not in the lookup table (gliders, balloons)"],
   ];
 
