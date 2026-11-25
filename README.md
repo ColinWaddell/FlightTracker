@@ -343,7 +343,9 @@ Thanks to the people who maintain those sources:
   class. Built by [`assets/aircraft_types.py`](assets/aircraft_types.py) from
   the [aircraft_models](https://github.com/George88000/aircraft_models) mirror
   of ICAO Doc 8643 (MIT), with newer entries filled in from
-  [OpenAircraftType](https://github.com/atoff/OpenAircraftType).
+  [OpenAircraftType](https://github.com/atoff/OpenAircraftType) and a
+  fills-only pass over the FAA 7340.2 designator [decode
+  list](https://www.faa.gov/air_traffic/publications/atpubs/CNT/5-2-A.htm).
 
 ---
 

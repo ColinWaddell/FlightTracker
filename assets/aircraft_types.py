@@ -14,6 +14,11 @@ Designator sources (merged, DOC 8643 mirror preferred):
 * ``atoff/OpenAircraftType`` - fills 75 codes newer than the mirror and
   contributes the CLASS column (helicopter / gyrocopter / tiltrotor) for
   codes absent from the mirror.
+* ``FAA JO 7340.2E`` decode pages (public domain, 5-2-A..Z under
+  faa.gov/air_traffic/publications/atpubs/CNT/) - fills-only third source.
+  Its type/wake class suffix is FAA legacy wording, so only engine type and
+  the rotor kinds are merged; 40-plus codes neither sibling source carries
+  (F18, NIM, BA46, VC10, the DC-8/9/727 "Q" hushkits, ...).
 
 Class tokens (the buckets of the body-type filter):
 
@@ -34,10 +39,12 @@ unknown, never as excluded.
 import csv
 import glob
 import json
+import re
 import sys
 
 MIRROR_CSV = "/tmp/opencode/aircraft_model_list.csv"  # aircraft_model_list.csv
 OAT_GLOB = "/tmp/opencode/oat/src/**/*.txt"
+FAA_GLOB = "/tmp/opencode/faa/5-2-*.htm"  # FAA JO 7340.2E decode pages (5-2-A..Z)
 OUT_PATH = sys.argv[3] if len(sys.argv) > 3 else "assets/aircraft_types.json"
 
 # Wake H jets that are actually narrow-body airliners.
@@ -155,7 +162,14 @@ BIZJET_CODES = {
 
 # Military: tactical, transports, trainers, warbirds, historic jets.
 # Deliberately partial - anything missed falls through to its fuselage or
-# engine bucket, which is wrong only for show-off rare traffic.
+# engine bucket, which is wrong only for show-off rare traffic.  The
+# 2026-11-25 additions pin UK/EU in-service types that fell through:
+# EUFI (Eurofighter Typhoon), VF35 (F-35B, the RAF variant), RFAL
+# (Rafale), Q9 (MQ-9 Reaper), Q4 (RQ-4 Global Hawk), E390 (C-390
+# Millennium; OAT also carries KC39 under the same airframe, already
+# curated), MIR4 (Mirage IV), F18 (legacy Hornet designator) and NIM
+# (Nimrod).  Deliberately NOT here: P8, a 737 airframe kept narrow-body
+# by the fuselage rule.
 MILITARY_CODES = {
     # Fighters / attack / bombers
     "F4",
@@ -172,9 +186,13 @@ MILITARY_CODES = {
     "F35",
     "VF35",
     "EUFI",
+    "MIR4",
+    "MIR2",
+    "RFAL",
+    "Q9",
+    "Q4",
     "F104",
     "A10",
-    "MIR2",
     "A7",
     "F111",
     "SR71",
@@ -195,8 +213,11 @@ MILITARY_CODES = {
     "C141",
     "C133",
     "KC39",
+    "E390",
     "IL76",
     "A124",
+    "F18",
+    "NIM",
     # Eastern / other historic jets
     "SB37",
     "SB39",
@@ -245,6 +266,16 @@ TOKENS = {
     "ga": "g",
     "ro": "h",
     "mil": "m",
+}
+
+# Wake M jets that all three sources omit (checked 2026-11-25).  Already
+# members of REGIONAL, so the fill classifies them as regional jets.
+CURATED_FILLS = {
+    "E140": ("M", "Jet"),
+    "ER3": ("M", "Jet"),
+    "ER4": ("M", "Jet"),
+    "ER5": ("M", "Jet"),
+    "RRJ": ("M", "Jet"),
 }
 
 
@@ -322,11 +353,68 @@ def load_code_wake_engine_rotor():
             continue
         merged[code] = ((wake, engine), rotor)
         filled += 1
-    return merged, filled
+
+    # FAA JO 7340.2E decode pages: fills only.  Its "Type/Wt Class" suffix is
+    # FAA legacy wake wording (S/L/H/M), not the ICAO categories, so only the
+    # engine type and the rotor kinds (H/G/T) are trusted here; such codes
+    # classify jets via the no-wake rule unless curated.
+    faa = load_faa()
+    faa_fills = 0
+    for code, (engine, rotor) in faa.items():
+        if code in merged:
+            (wake_now, engine_now), rotor_now = merged[code]
+            if engine_now != engine or rotor_now != rotor:
+                print(
+                    f"FAA disagreement for {code}: existing "
+                    f"(engine={engine_now}, rotor={rotor_now}) vs "
+                    f"(engine={engine}, rotor={rotor})"
+                )
+            continue
+        merged[code] = (("", engine), rotor)
+        faa_fills += 1
+
+    # Legacy/development codes no source documents (verified against the
+    # mirror, OpenAircraftType and FAA JO 7340.2E on 2026-11-25; E140 added
+    # after the same sweep).  Wake M jets; they are already members of
+    # REGIONAL, so the fill lands them in the regional bucket.  Upstream
+    # PRs to carry them are still worth doing.
+    for code, (wake, engine) in CURATED_FILLS.items():
+        if code in merged:
+            continue
+        merged[code] = ((wake, engine), False)
+        filled += 1
+    return merged, filled, faa_fills
+
+
+def load_faa():
+    """code -> (engine, rotor), parsed from the FAA 7340.2E decode pages."""
+    class_pattern = re.compile(r"^[LSAHGT]\d[A-Z]([/][A-Z]{1,2}[+]?)?$")
+    code_pattern = re.compile(r"^[A-Z0-9]{3,4}$")
+    out = {}
+    for path in sorted(glob.glob(FAA_GLOB)):
+        with open(path, encoding="utf-8", errors="replace") as page_file:
+            page = page_file.read()
+        for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S | re.I):
+            raw_cells = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.S | re.I)
+            cells = [
+                re.sub(r"\s+", " ", value).strip()
+                for value in (re.sub(r"<[^>]+>", "", cell) for cell in raw_cells)
+            ]
+            if len(cells) < 3 or not code_pattern.match(cells[0]):
+                continue
+            if not class_pattern.match(cells[1]):
+                continue
+            kind = cells[1][0]
+            engine = OAT_ENGINE.get(cells[1][2], "")
+            if not engine:
+                continue
+            rotor = kind in "HGT"
+            out.setdefault(cells[0], (engine, rotor))
+    return out
 
 
 def build_table():
-    merged, filled = load_code_wake_engine_rotor()
+    merged, filled, faa_fills = load_code_wake_engine_rotor()
 
     # Curated codes that neither source knows are dropped, loudly.
     missing = sorted(
@@ -344,8 +432,8 @@ def build_table():
         stats[bucket] = stats.get(bucket, 0) + 1
 
     print(
-        f"codes {len(merged)} (OAT fill {filled}), classified {len(table)}, "
-        f"unclassified {len(merged) - len(table)}"
+        f"codes {len(merged)} (OAT fill {filled}, FAA fill {faa_fills}), "
+        f"classified {len(table)}, unclassified {len(merged) - len(table)}"
     )
     print("buckets:", dict(sorted(stats.items(), key=lambda kv: -kv[1])))
     return table

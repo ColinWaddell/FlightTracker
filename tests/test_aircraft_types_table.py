@@ -75,9 +75,29 @@ def test_spot_checks():
 @pytest.mark.parametrize(
     ("code", "absent_reason"),
     [
-        ("RRJ", "SSJ-100 designator exists in neither source"),
-        ("CONC", "retired type absent from both sources"),
+        ("ERJ", "generic family designator, not a DOC 8643 type"),
+        ("ERD", "not a real airframe designator"),
     ],
 )
 def test_known_absences(code, absent_reason):
     assert code not in load_table()
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ("RRJ", "r"),  # legacy Superjet code, 2026-11-25 curated fill
+        ("ER3", "r"),
+        ("ER5", "r"),
+        ("EUFI", "m"),  # Eurofighter Typhoon
+        ("VF35", "m"),  # F-35B, the RAF variant
+        ("RFAL", "m"),  # Rafale
+        ("Q9", "m"),  # MQ-9 Reaper
+        ("E390", "m"),  # C-390 Millennium
+        ("F18", "m"),  # legacy Hornet designator
+        ("NIM", "m"),  # Nimrod
+        ("CONC", "n"),  # Concorde, FAA-fill passthrough
+    ],
+)
+def test_filled_codes(code, expected):
+    assert load_table()[code] == expected

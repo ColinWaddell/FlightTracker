@@ -23,7 +23,13 @@ def test_class_of_unclassified():
     assert at.class_of("") is None
     assert at.class_of(None) is None
     assert at.class_of("ZZZZ") is None  # not a real designator
-    assert at.class_of("RRJ") is None  # absent from both sources
+
+
+def test_class_of_curated_fills():
+    # Legacy/development codes no source documents (2026-11-25 fills).
+    assert at.class_of("RRJ") == "r"
+    assert at.class_of("er5") == "r"  # case-insensitive
+    assert at.class_of("E140") == "r"
 
 
 def test_provider_allows_none_is_noop():
@@ -84,3 +90,33 @@ def test_basket_labels_cover_all_buckets():
     labels = dict(at.BUCKET_LABELS)
     assert set(labels) == frozenset(at.ALL_BUCKETS)
     assert all(label.strip() for _, label in at.BUCKET_LABELS)
+
+
+def test_class_of_uk_and_eu_military_types():
+    # Tripwire from the 2026-11-25 example-picking review: these RAF/EU
+    # in-service types must sit in the military bucket, not fall through
+    # to narrow-body (EUFI Typhoon and VF35 F-35B both did once).
+    for code in (
+        "EUFI",
+        "VF35",
+        "F35",
+        "TOR",
+        "HAWK",
+        "A400",
+        "C17",
+        "MIR2",
+        "MIR4",
+        "RFAL",
+        "Q9",
+        "Q4",
+        "KC39",
+        "E390",
+    ):
+        assert at.class_of(code) == "m", code
+
+
+def test_class_of_deliberate_non_military():
+    # P8 stays narrow-body (737 airframe) by the fuselage rule; a widebody
+    # Voyager files its civil designator and stays wide-body.
+    assert at.class_of("P8") == "n"
+    assert at.class_of("A332") == "w"
