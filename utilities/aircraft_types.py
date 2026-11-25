@@ -50,7 +50,7 @@ BUCKET_LABELS = (
     ("r", "Regional jets"),
     ("t", "Turboprops"),
     ("b", "Business jets"),
-    ("g", "Light & GA"),
+    ("g", "Light & general aviation"),
     ("h", "Rotorcraft"),
     ("m", "Military"),
     (UNKNOWN, "Unknown"),

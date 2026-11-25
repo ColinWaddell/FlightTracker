@@ -411,16 +411,18 @@ export function createStore(initialConfig, pageData) {
   // settings form mirrors it into the POST.
 
   const BODY_TOKEN_ORDER = "wnrtbghmu";
+  // Labels must mirror utilities/aircraft_types.py BUCKET_LABELS.  Examples
+  // are display-only; Unknown lists what falls through to it.
   const bodyTypeLabels = [
-    ["w", "Wide-body jets"],
-    ["n", "Narrow-body jets"],
-    ["r", "Regional jets"],
-    ["t", "Turboprops"],
-    ["b", "Business jets"],
-    ["g", "Light & GA"],
-    ["h", "Rotorcraft"],
-    ["m", "Military"],
-    ["u", "Unknown"],
+    ["w", "Wide-body jets", "Boeing 767, 777, A350"],
+    ["n", "Narrow-body jets", "Boeing 737, Airbus A320"],
+    ["r", "Regional jets", "Bombardier CRJ900, Embraer E175"],
+    ["t", "Turboprops", "ATR 72, Dash 8"],
+    ["b", "Business jets", "Gulfstream, Cessna Citation"],
+    ["g", "Light & general aviation", "Cessna 172, Cirrus SR22"],
+    ["h", "Rotorcraft", "Robinson R44, Bell 206"],
+    ["m", "Military", "C-17, F-16"],
+    ["u", "Unknown", "Not in the lookup table (gliders, balloons)"],
   ];
 
   const bodyTypeHas = (letter) =>
