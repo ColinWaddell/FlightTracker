@@ -124,11 +124,6 @@ export default defineComponent({
         </div>
       </div>
       <input type="hidden" name="flight_body_types" :value="store.config.flight_body_types" />
-      <p class="form-text small text-muted mt-1 mb-0">
-        <i class="bi bi-info-circle me-1"></i>Aircraft classes come from your data feeds
-        and cached ident lookups - aircraft appear in their class shortly after being
-        identified.
-      </p>
     </div>
 
     <!-- ====== Airport Display ====== -->
