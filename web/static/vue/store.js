@@ -414,14 +414,14 @@ export function createStore(initialConfig, pageData) {
   // Labels must mirror utilities/aircraft_types.py BUCKET_LABELS.  Examples
   // are display-only; Unknown lists what falls through to it.
   const bodyTypeLabels = [
-    ["w", "Wide-body jets", "Boeing 767, 777, A350"],
+    ["w", "Wide-body jets", "Boeing 767, 777; Airbus A350"],
     ["n", "Narrow-body jets", "Boeing 737, Airbus A320"],
     ["r", "Regional jets", "Bombardier CRJ900, Embraer E175"],
     ["t", "Turboprops", "ATR 72, Dash 8"],
     ["b", "Business jets", "Gulfstream, Cessna Citation"],
     ["g", "Light & general aviation", "Cessna 172, Cirrus SR22"],
     ["h", "Rotorcraft", "Robinson R44, Bell 206"],
-    ["m", "Military", "C-17, F-16"],
+    ["m", "Military", "Spitfire, C-17, F-16"],
     ["u", "Unknown", "Not in the lookup table (gliders, balloons)"],
   ];
 
