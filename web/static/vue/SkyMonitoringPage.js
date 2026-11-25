@@ -112,7 +112,7 @@ export default defineComponent({
       </p>
 
       <h5 class="mt-3">Aircraft Types</h5>
-      <table class="table table-sm table-borderless align-middle mb-0" style="max-width:480px">
+      <table class="table table-sm table-striped align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th scope="col">Aircraft class</th>
