@@ -170,6 +170,8 @@ MILITARY_CODES = {
     "F18S",
     "F22",
     "F35",
+    "VF35",
+    "EUFI",
     "F104",
     "A10",
     "MIR2",
