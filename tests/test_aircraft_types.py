@@ -69,6 +69,22 @@ def test_is_allowed_all_tokens_and_unknown():
     assert at.is_allowed("ZZZZ", everything) is True
 
 
+def test_non_aircraft_codes_drop_on_every_tick_state():
+    # TWR/GND transponders are not aircraft: hard-dropped at both layers
+    # whenever a filter is configured, Unknown ticked or otherwise.
+    everything = frozenset(at.ALL_BUCKETS)
+    assert at.provider_allows("TWR", everything) is False
+    assert at.is_allowed("GND", everything) is False
+    assert at.is_allowed(" twr ", everything) is False  # case/space clean
+    assert at.class_of("TWR") is None  # still unclassified in the table
+
+
+def test_non_aircraft_codes_pass_on_unset_filter():
+    # A configured-off filter is a no-op, exactly as before the drop-list.
+    assert at.provider_allows("TWR", None) is True
+    assert at.is_allowed("GND", None) is True
+
+
 def test_canonicalise_defaults_on_missing():
     assert at.canonicalise(None) == "wnrtbghmu"
 

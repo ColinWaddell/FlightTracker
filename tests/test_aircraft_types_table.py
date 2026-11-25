@@ -35,6 +35,10 @@ SPOT_CHECKS = {
     "GLEX": "b",
     "C56X": "b",
     "PC24": "b",
+    "GL70": "b",  # G700 family: 2026-11-25 curated fill, replaces FAA no-wake
+    "GL6T": "b",
+    "GL75": "b",
+    "F2EX": "b",  # Falcon 2000EX: same fill family
     "SF50": "b",  # light single-engine jet
     "C172": "g",
     "SR22": "g",

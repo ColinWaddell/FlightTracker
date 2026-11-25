@@ -278,6 +278,17 @@ CURATED_FILLS = {
     "RRJ": ("M", "Jet"),
 }
 
+# Codes curated as BIZJET_CODES but documented by no source, so their
+# curation is inert (see the BIZJET_CODES comment).  Wake L jets, which is
+# both what the fuselage is and what the rule needs.  These deliberately
+# replace any coarse FAA fill (no-wake jets would land narrow-body).
+CURATED_REPLACE_FILLS = {
+    "GL6T": ("L", "Jet"),
+    "GL70": ("L", "Jet"),
+    "GL75": ("L", "Jet"),
+    "F2EX": ("L", "Jet"),
+}
+
 
 def classify(code, wake, engine, rotor):
     """One source record -> bucket name, or None to leave the code out.
@@ -319,6 +330,7 @@ def classify(code, wake, engine, rotor):
 def load_code_wake_engine_rotor():
     """code -> (wake, engine, rotor). DOC 8643 mirror wins; OAT fills."""
     merged = {}
+    provenance = {}
     with open(MIRROR_CSV) as csv_file:
         for row in csv.DictReader(csv_file):
             code = row["ICAO Designator"].strip()
@@ -327,6 +339,7 @@ def load_code_wake_engine_rotor():
             pair = (row["Wake Turbulence"].strip(), row["Engine Type"].strip())
             rotor = row["Description"].strip().lower() in ROTOR_DESCRIPTIONS
             seen = merged.setdefault(code, (pair, rotor))
+            provenance.setdefault(code, "mirror")
             if seen != (pair, rotor):
                 sys.exit(
                     f"wake/engine/rotor conflict for {code}: {seen} vs {(pair, rotor)}"
@@ -352,6 +365,7 @@ def load_code_wake_engine_rotor():
         if not (wake and engine):
             continue
         merged[code] = ((wake, engine), rotor)
+        provenance[code] = "oat"
         filled += 1
 
     # FAA JO 7340.2E decode pages: fills only.  Its "Type/Wt Class" suffix is
@@ -371,6 +385,7 @@ def load_code_wake_engine_rotor():
                 )
             continue
         merged[code] = (("", engine), rotor)
+        provenance[code] = "faa"
         faa_fills += 1
 
     # Legacy/development codes no source documents (verified against the
@@ -382,7 +397,23 @@ def load_code_wake_engine_rotor():
         if code in merged:
             continue
         merged[code] = ((wake, engine), False)
+        provenance[code] = "fill"
         filled += 1
+
+    # Curated codes that were inert because no source documents them: fill
+    # with their correct fuselage metadata, replacing any coarse FAA entry
+    # for the same code (no-wake jets would otherwise land narrow-body).  A
+    # mirror or OAT source of truth still wins - that gets a loud notice
+    # instead of an override.
+    for code, (wake, engine) in CURATED_REPLACE_FILLS.items():
+        seen_from = provenance.get(code)
+        if seen_from in ("mirror", "oat"):
+            print(
+                f"curated replace-fill {code} skipped: {seen_from} already documents it"
+            )
+            continue
+        merged[code] = ((wake, engine), False)
+        provenance[code] = "fill"
     return merged, filled, faa_fills
 
 

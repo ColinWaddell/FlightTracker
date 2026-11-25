@@ -33,6 +33,11 @@ Two predicates serve the two filter layers:
 * :func:`is_allowed` - the display layer (overhead facade).  Unclassified
   flights pass only when the Unknown bucket is allowed, and this is also
   where a type that enrichment filled in late gets judged.
+
+Non-aircraft transponders (tower obstacles, ground vehicles) announce
+``TWR``/``GND`` as their type code and fall to the Unknown bucket
+otherwise; both layers hard-drop them whenever a filter is configured.
+A filter that is *off* (``allowed is None``) remains a strict no-op.
 """
 
 from __future__ import annotations
@@ -42,6 +47,13 @@ from pathlib import Path
 
 UNKNOWN = "u"
 ALL_BUCKETS = "wnrtbghmu"
+
+# Transponders that are not aircraft at all: tower obstacle and ground
+# vehicle units announce these as their type code.  Unclassified by the
+# table, they would otherwise ride the Unknown checkbox; both filter layers
+# reject them whenever a filter is configured.  An unset filter (off) is a
+# no-op and still passes everything.
+NON_AIRCRAFT_CODES = frozenset(("TWR", "GND"))
 
 # Settings-page checkbox labels, in canonical token order (Unknown last).
 BUCKET_LABELS = (
@@ -88,10 +100,13 @@ def provider_allows(icao_type: str, allowed: frozenset[str] | None) -> bool:
 
     ``None`` *allowed* means no filter is configured: everything passes
     (filter-off no-op).  Unclassified designs always pass; the Unknown
-    checkbox is not consulted here (see the module docstring).
+    checkbox is not consulted here (see the module docstring).  Non-aircraft
+    codes (:data:`NON_AIRCRAFT_CODES`) drop when a filter is configured.
     """
     if allowed is None:
         return True
+    if (icao_type or "").strip().upper() in NON_AIRCRAFT_CODES:
+        return False
     bucket = class_of(icao_type)
     return bucket is None or bucket in allowed
 
@@ -100,9 +115,13 @@ def is_allowed(icao_type: str, allowed: frozenset[str] | None) -> bool:
     """Display-layer predicate - unclassified flights follow the Unknown box.
 
     ``None`` *allowed* means no filter is configured: everything passes.
+    Non-aircraft codes (:data:`NON_AIRCRAFT_CODES`) drop when a filter is
+    configured, Unknown ticked or otherwise.
     """
     if allowed is None:
         return True
+    if (icao_type or "").strip().upper() in NON_AIRCRAFT_CODES:
+        return False
     return (class_of(icao_type) or UNKNOWN) in allowed
 
 
