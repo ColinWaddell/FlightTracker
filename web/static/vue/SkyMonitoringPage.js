@@ -113,12 +113,6 @@ export default defineComponent({
 
       <h5 class="mt-3">Aircraft Types</h5>
       <table class="table table-sm table-striped align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th scope="col">Aircraft class</th>
-            <th scope="col">Example aircraft</th>
-          </tr>
-        </thead>
         <tbody>
           <tr v-for="[token, label, examples] in store.bodyTypeLabels" :key="token">
             <td>
