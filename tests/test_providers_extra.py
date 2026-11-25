@@ -228,6 +228,289 @@ class TestFr24FreeFeedSquawk:
         assert self._obs().squawk == ""
 
 
+class TestFr24FreeFeedIcaoType:
+    """The feed's aircraft-code slot (index 8) is the ICAO type designator."""
+
+    _UNSET = object()
+
+    def _obs(self, **flight_attrs):
+        from types import SimpleNamespace
+
+        from utilities.lookups.providers.fr24.flights import _to_observation
+
+        fields = dict(
+            icao_24bit="406DF5",
+            callsign="BAW1AB  ",
+            number="BA1AB",
+            latitude=55.5,
+            longitude=-4.0,
+            altitude=12000,
+            ground_speed=400,
+            heading=90,
+            vertical_speed=-64,
+            origin_airport_iata="LHR",
+            destination_airport_iata="DOH",
+            airline_icao="BAW",
+            aircraft_code="B738",
+        )
+        for key, value in flight_attrs.items():
+            if value is self._UNSET:
+                fields.pop(key, None)  # attribute absent - getattr path
+            else:
+                fields[key] = value
+        return _to_observation(SimpleNamespace(**fields))
+
+    def test_icao_type_mapped(self):
+        assert self._obs().icao_type == "B738"
+
+    def test_blank_code_degrades_to_empty(self):
+        assert self._obs(aircraft_code="").icao_type == ""
+
+    def test_missing_attribute_degrades_to_empty(self):
+        """Older FlightRadarAPI builds without Flight.aircraft_code stay healthy."""
+        assert self._obs(aircraft_code=self._UNSET).icao_type == ""
+
+
+class TestFr24ClientModelInfo:
+    """aircraft_model_info pairs the model text and ICAO type code from one
+    details call, both falling back to the free feed aircraft code."""
+
+    def _client(self, details, aircraft_code=""):
+        from unittest.mock import MagicMock
+
+        from utilities.lookups.providers.fr24.client import FR24Client
+
+        client = FR24Client()
+        client.flight_details = MagicMock(return_value=details)
+        flight = type("_F", (), {"aircraft_code": aircraft_code})()
+        return client, flight
+
+    def test_text_and_code_from_details(self):
+        details = {"aircraft": {"model": {"text": "Boeing 737-800", "code": "B738"}}}
+        text, code = self._client(details)[0].aircraft_model_info(
+            self._client(details)[1]
+        )
+        assert (text, code) == ("Boeing 737-800", "B738")
+
+    def test_code_falls_back_to_feed_aircraft_code(self):
+        details = {"aircraft": {"model": {"text": "Boeing 737-800"}}}
+        client, flight = self._client(details, aircraft_code="B738")
+        assert client.aircraft_model_info(flight) == ("Boeing 737-800", "B738")
+
+    def test_text_falls_back_to_feed_aircraft_code(self):
+        client, flight = self._client(None, aircraft_code="B738")
+        assert client.aircraft_model_info(flight) == ("B738", "B738")
+
+    def test_nothing_available_is_blank_pair(self):
+        client, flight = self._client(None)
+        assert client.aircraft_model_info(flight) == ("", "")
+
+
+class TestAeroDataBoxIcaoType:
+    """The aircraft record's icaoCode is the ICAO type designator."""
+
+    def test_parsed_from_icao_code(self):
+        from utilities.lookups.providers.aerodatabox.aircraft import parse_aircraft
+
+        info = parse_aircraft(
+            {"typeName": "Airbus A320", "icaoCode": "A320", "reg": "G-EUYO"}
+        )
+        assert info.icao_type == "A320"
+        assert info.plane == "Airbus A320"
+
+    def test_uppercased_and_absent_degrades(self):
+        from utilities.lookups.providers.aerodatabox.aircraft import parse_aircraft
+
+        assert parse_aircraft({"icaoCode": "b738"}).icao_type == "B738"
+        assert parse_aircraft({"typeName": "Embraer E195"}).icao_type == ""
+        assert parse_aircraft({}).icao_type == ""
+
+
+# ---------------------------------------------------------------------------
+# Body filter, fetch layer: known disallowed classes dropped before the
+# max_results cap - the mechanism that keeps excluded aircraft out of the
+# enrichment chains (the route/identity API-saving half of issue #140).
+# ---------------------------------------------------------------------------
+
+
+def _body_query(max_results=1, allowed=frozenset("t")):
+    return FlightQuery(
+        zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+        home=[55.5, -4.0, 6371.0],
+        min_altitude_m=100.0,
+        max_altitude_m=15000.0,
+        max_results=max_results,
+        allowed_body_types=allowed,
+    )
+
+
+_TAR1090_BODY_AIRCRAFT = [
+    {"hex": "111111", "t": "B77W", "lat": 55.5, "lon": -4.0, "alt_baro": 20000},
+    {"hex": "222222", "t": "A320", "lat": 55.2, "lon": -3.6, "alt_baro": 20000},
+    {"hex": "333333", "lat": 55.1, "lon": -3.2, "alt_baro": 20000},  # no t
+]
+
+
+@pytest.mark.parametrize(
+    "module_name, envelope",
+    [("adsbfi", "aircraft"), ("adsblol", "ac"), ("airplaneslive", "ac")],
+)
+class TestBodyFilterAggregators:
+    def test_disallowed_dropped_before_cap(self, module_name, envelope):
+        payload = {
+            envelope: [
+                _record(hex="111111", t="B77W"),  # nearest, disallowed
+                _record(hex="333333", t=""),  # mid, unclassified
+            ]
+        }
+        provider = _provider(module_name, _response(payload))
+
+        result = provider.fetch(_body_query(max_results=1))
+
+        # Cap of 1 is filled by the *unknown* record: the wide-body was
+        # culled before the selection cut despite being closest.
+        assert result.is_found
+        assert [o.icao for o in result.value] == ["333333"]
+
+    def test_unknown_type_survives_even_when_unknown_hidden(
+        self, module_name, envelope
+    ):
+        payload = {envelope: [_record(hex="333333", t="")]}
+        provider = _provider(module_name, _response(payload))
+
+        result = provider.fetch(_body_query(allowed=frozenset("t")))
+
+        assert [o.icao for o in result.value] == ["333333"]
+
+
+class TestBodyFilterTar1090:
+    def _provider(self, aircraft):
+        from utilities.lookups.providers.tar1090.flights import FlightProvider
+
+        provider = FlightProvider({"url": "http://localhost/data/aircraft.json"})
+        provider._session = mock.Mock()
+        provider._session.get.return_value = _response({"aircraft": aircraft})
+        return provider
+
+    def test_disallowed_dropped_preferentially(self):
+        provider = self._provider(_TAR1090_BODY_AIRCRAFT)
+
+        result = provider.fetch(_body_query(max_results=2))
+
+        # Under a turboprop-only panel both known jet classes (the wide-body
+        # nearest the observer and the mid-field narrow-body) are culled
+        # pre-cap; the unclassified hex is the only survivor.
+        assert [o.icao for o in result.value] == ["333333"]
+
+    def test_narrow_and_unknown_survive_a_jets_panel(self):
+        provider = self._provider(_TAR1090_BODY_AIRCRAFT)
+
+        result = provider.fetch(_body_query(max_results=2, allowed=frozenset("tn")))
+
+        assert [o.icao for o in result.value] == ["222222", "333333"]
+
+    def test_filter_off_is_noop(self):
+        provider = self._provider(_TAR1090_BODY_AIRCRAFT)
+        # Defaults: no allowed_body_types - every record passes.
+        result = provider.fetch(
+            FlightQuery(
+                zone={"tl_y": 56.0, "tl_x": -5.0, "br_y": 55.0, "br_x": -3.0},
+                home=[55.5, -4.0, 6371.0],
+                max_results=5,
+            )
+        )
+
+        assert [o.icao for o in result.value] == [
+            "111111",
+            "222222",
+            "333333",
+        ]
+
+
+class TestBodyFilterFr24Free:
+    def _fetch(self, flights, allowed=frozenset("t")):
+        import utilities.lookups.providers.fr24.flights as fr24flights
+
+        client = mock.Mock()
+        client.get_zone_bounds.return_value = {
+            "n": 56.0,
+            "s": 55.0,
+            "w": -5.0,
+            "e": -3.0,
+        }
+        client.get_flights_in_bounds.return_value = flights
+        with mock.patch.object(fr24flights, "get_client", return_value=client):
+            return fr24flights.FlightProvider({}).fetch(_body_query(allowed=allowed))
+
+    def test_disallowed_dropped_before_cap(self):
+        from types import SimpleNamespace
+
+        def _feed_flight(hex_, aircraft_code, altitude, lat, lon):
+            return SimpleNamespace(
+                icao_24bit=hex_,
+                callsign=f"CS{altitude}",
+                number="",
+                latitude=lat,
+                longitude=lon,
+                altitude=altitude,
+                ground_speed=400,
+                heading=90,
+                vertical_speed=0,
+                origin_airport_iata="",
+                destination_airport_iata="",
+                airline_icao="",
+                aircraft_code=aircraft_code,
+            )
+
+        # The disallowed wide-body is the *nearest* airframe; if it reached
+        # the selection cut it would win the max_results=1 slot.
+        flights = [
+            _feed_flight("111111", "B77W", 40000, 55.49, -4.01),
+            _feed_flight("333333", "AT76", 15000, 55.3, -3.9),
+        ]
+
+        result = self._fetch(flights)
+
+        assert [o.icao for o in result.value] == ["333333"]
+
+
+class TestBodyFilterFr24Api:
+    def _fetch(self, records, allowed=frozenset("t"), max_results=1):
+        import utilities.lookups.providers.fr24api.client as client
+        import utilities.lookups.providers.fr24api.flights as fr24api
+
+        client.get = mock.Mock(return_value=_fr24_response(records))
+        return fr24api.FlightProvider({"api_key": "TOK"}).fetch(
+            _body_query(allowed=allowed, max_results=max_results)
+        )
+
+    def test_disallowed_dropped_before_cap(self):
+        records = [
+            _fr24_record(hex="111111", type="A35K", lat=55.49, lon=-4.01),
+            _fr24_record(hex="333333", type="E190", lat=55.2, lon=-3.8),
+            _fr24_record(hex="444444", type="", lat=55.3, lon=-3.6),  # no type
+        ]
+
+        result = self._fetch(records)
+
+        # E190 is regional (r) hence also disallowed under a tp-only panel;
+        # the unclassified record was the *farthest* of the three, so
+        # surviving the max_results=1 cut proves A35K dropped pre-cap.
+        assert [o.icao for o in result.value] == ["444444"]
+
+    def test_allowed_types_pass(self):
+        records = [
+            _fr24_record(hex="111111", type="AT76"),
+            _fr24_record(hex="333333", type="", alt=9000),
+        ]
+
+        result = self._fetch(records, allowed=frozenset("t"), max_results=5)
+
+        # Both pass; order follows distance (both share the home position,
+        # where altitude tips the tie)
+        assert sorted(o.icao for o in result.value) == ["111111", "333333"]
+
+
 def _context(callsign="BAW123", lat=55.5, lng=-4.0):
     return LookupContext(callsign=callsign, lat=lat, lng=lng)
 
@@ -597,6 +880,8 @@ class TestFr24ApiFlights:
         assert obs.destination == "DOH"
         assert obs.airline_icao == "BAW"
         assert obs.squawk == "1000"
+        # The record's ICAO type designator rides along as pre-fill.
+        assert obs.icao_type == "A35K"
         # Bounds use the zone corners, north-south-west-east order.
         assert captured["path"] == "/api/live/flight-positions/full"
         assert captured["params"]["bounds"] == "56.0,55.0,-5.0,-3.0"
@@ -679,6 +964,7 @@ class TestFr24ApiRoutes:
         assert result.value.origin == "LHR"
         assert result.value.destination == "DOH"
         assert result.value.airline_icao == "BAW"
+        assert result.value.icao_type == "A35K"
 
     def test_icao_only_codes_converted(self, monkeypatch):
         record = {

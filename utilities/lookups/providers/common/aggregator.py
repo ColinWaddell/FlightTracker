@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import math
 
+from utilities.aircraft_types import provider_allows
 from utilities.lookups.results import FlightObservation, LookupResult
 from utilities.overhead_utilities import clean_field
 
@@ -155,6 +156,8 @@ class AggregatorFlightProvider:
             if not (min_alt_ft < alt < max_alt_ft):
                 continue
             if not in_zone(lat, lon, query.zone):
+                continue
+            if not provider_allows(record.get("t"), query.allowed_body_types):
                 continue
             candidates.append(record)
 

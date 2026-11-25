@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
+- New flight setting "Aircraft Types" - show/hide aircraft by body class
+  (wide-body, narrow-body, regional jet, turboprop, business jet, light & GA,
+  rotorcraft, military, unknown) using a bundled ICAO type-designator table.
+  Classes come free with the feed on ADS-B-family and FlightRadar24 sources,
+  and filtering an aircraft out happens before its route lookups, so unwanted
+  types stop costing API calls.
+
 ## [2.12.8]
 
 - New Hardware option "Gamma Correction" (on by default) for images

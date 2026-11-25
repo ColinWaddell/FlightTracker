@@ -105,6 +105,9 @@ def parse_aircraft(ac: dict) -> AircraftInfo:
     """Build an :class:`AircraftInfo` from an AeroDataBox aircraft object."""
     plane = (ac.get("typeName") or ac.get("productionLine") or "").strip()
     registration = (ac.get("reg") or "").strip()
+    # The aircraft record's ICAO type designator (e.g. "A320") - the body
+    # filter's raw material; typeName alone is free text.
+    icao_type = (ac.get("icaoCode") or "").strip().upper()
 
     # AeroDataBox nests the operator under an "airline" object when known.
     airline = ac.get("airline") or {}
@@ -121,6 +124,7 @@ def parse_aircraft(ac: dict) -> AircraftInfo:
 
     return AircraftInfo(
         plane=plane,
+        icao_type=icao_type,
         registration=registration,
         operator_icao=operator_icao,
         owner=owner,

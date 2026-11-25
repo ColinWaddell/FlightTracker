@@ -124,6 +124,7 @@ class Overhead:
                 min_altitude_m=cfg.flight_min_altitude,
                 max_altitude_m=cfg.flight_max_altitude,
                 max_results=cfg.max_flight_lookup,
+                allowed_body_types=frozenset(cfg.flight_body_types),
             )
 
             outcome = flights.fetch_flights(query)
@@ -152,6 +153,7 @@ class Overhead:
             self._record_failure(e)
             self._set_error(e)
         else:
+            data = self._apply_body_filter(data, cfg)
             data = self._apply_track_timeout(data, cfg)
             with self.lock:
                 self.data_store = data
@@ -227,6 +229,25 @@ class Overhead:
             distance_to_home=distance_to_home,
             bearing_from_home=bearing_deg,
         )
+
+    def _apply_body_filter(self, flights: list, cfg) -> list:
+        """Drop aircraft whose body class the user filtered out.
+
+        The display-layer half of the body filter: by here every flight
+        carries its final ``icao_type`` (feed prefill outranks fills, per the
+        enrichment merge semantics), so classification is a table lookup.
+        The fetch/pre-cap half lives in the providers via
+        ``FlightQuery.allowed_body_types`` - that is the half which saves
+        route/identity lookups; this layer only governs display, including
+        the Unknown checkbox for unclassified designators.
+        """
+        from utilities.aircraft_types import is_allowed
+
+        allowed = frozenset(cfg.flight_body_types)
+        kept = [f for f in flights if is_allowed(f.icao_type, allowed)]
+        if len(kept) != len(flights):
+            logger.debug("Body filter dropped %d flight(s)", len(flights) - len(kept))
+        return kept
 
     def _apply_track_timeout(self, flights: list, cfg) -> list:
         """Drop aircraft that have been sighted for longer than the timeout.

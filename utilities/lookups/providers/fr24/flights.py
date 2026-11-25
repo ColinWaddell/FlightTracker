@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from utilities.aircraft_types import provider_allows
 from utilities.lookups.providers.fr24.client import FR24_TIMEOUT, get_client
 from utilities.lookups.results import (
     FlightObservation,
@@ -56,6 +57,15 @@ class FlightProvider:
             for f in flights
             if isinstance(getattr(f, "altitude", None), (int, float))
             and min_alt_ft < f.altitude < max_alt_ft
+        ]
+        # Body filter - drop only known types outside the allowed set, before
+        # the selection cut; the feed's aircraft_code rides the same rows.
+        flights = [
+            f
+            for f in flights
+            if provider_allows(
+                getattr(f, "aircraft_code", ""), query.allowed_body_types
+            )
         ]
         flights.sort(
             key=lambda f: distance_from_home(
@@ -119,6 +129,10 @@ def _to_observation(flight) -> FlightObservation | None:
         origin=clean_field(flight.origin_airport_iata),
         destination=clean_field(flight.destination_airport_iata),
         airline_icao=clean_field(flight.airline_icao),
+        # The feed's aircraft-code slot (index 8) is the ICAO type designator
+        # (e.g. "B738") - free airframe identity riding the same rows; blank
+        # rows fall back to the aircraft provider's details call.
+        icao_type=clean_field(getattr(flight, "aircraft_code", "")),
         # Squawk: FlightRadarAPI maps feed index 6 to Flight.squawk, but
         # FR24's free feed stopped populating that slot (always '' - see
         # fr24/config.py).  Extracted anyway so squawk flows again if

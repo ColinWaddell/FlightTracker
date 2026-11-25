@@ -52,11 +52,11 @@ class AircraftProvider:
             client.record_feed_miss(callsign)
             return LookupResult.not_found("no matching FR24 flight")
 
-        plane = client.aircraft_model_text(flight)
+        plane, icao_type = client.aircraft_model_info(flight)
         if not plane:
             return LookupResult.not_found("FR24 has no aircraft type")
 
-        info = AircraftInfo(plane=plane)
+        info = AircraftInfo(plane=plane, icao_type=icao_type)
         registration = (getattr(flight, "registration", "") or "").strip()
         if registration:
             info.registration = registration

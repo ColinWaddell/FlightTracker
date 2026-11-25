@@ -404,6 +404,42 @@ export function createStore(initialConfig, pageData) {
       : displayMaxAlt.value;
   });
 
+  // -- Aircraft body-type filter ----------------------------------------
+  // The backend stores one string of allowed class tokens (a subset of
+  // "wnrtbghmu", unknown included).  The checkboxes read membership and
+  // rewrite the string in canonical token order; the hidden input in the
+  // settings form mirrors it into the POST.
+
+  const BODY_TOKEN_ORDER = "wnrtbghmu";
+  const bodyTypeLabels = [
+    ["w", "Wide-body jets"],
+    ["n", "Narrow-body jets"],
+    ["r", "Regional jets"],
+    ["t", "Turboprops"],
+    ["b", "Business jets"],
+    ["g", "Light & GA"],
+    ["h", "Rotorcraft"],
+    ["m", "Military"],
+    ["u", "Unknown"],
+  ];
+
+  const bodyTypeHas = (letter) =>
+    (config.flight_body_types || "").includes(letter);
+
+  const setBodyType = (letter, enabled) => {
+    const selected = new Set(
+      (config.flight_body_types || "").split("").filter(Boolean),
+    );
+    if (enabled) {
+      selected.add(letter);
+    } else {
+      selected.delete(letter);
+    }
+    config.flight_body_types = BODY_TOKEN_ORDER.filter((token) =>
+      selected.has(token),
+    ).join("");
+  };
+
   // Slider bounds in the *display* unit.  Steps are clean whole/half
   // numbers in the display unit, not raw conversions of the metric step.
   const radiusBoundsDisplay = computed(() =>
@@ -461,6 +497,9 @@ export function createStore(initialConfig, pageData) {
     altitudeUnitLabel,
     radiusUnitLabel,
     altitudeHelpExample,
+    bodyTypeLabels,
+    bodyTypeHas,
+    setBodyType,
     flightProvidersOrder,
     routeProvidersOrder,
     screenScheduleAdvanced,

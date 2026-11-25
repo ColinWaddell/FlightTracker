@@ -17,7 +17,10 @@ PROVIDER = ProviderConfig(
         'Create an API client at <a href="https://opensky-network.org/login" '
         'target="_blank" rel="noopener noreferrer">opensky-network.org</a> '
         "(Account &rarr; API Clients) to get your credentials. A free "
-        "registered account is sufficient for 30-second polling."
+        "registered account is sufficient for 30-second polling. "
+        "Note: state vectors carry no aircraft type, so body-filter classes "
+        "fill in from cached ident lookups shortly after each aircraft is "
+        "first seen."
     ),
     capabilities=("flights",),
     live_fields=("squawk",),

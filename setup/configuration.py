@@ -19,6 +19,9 @@ from datetime import datetime, time
 from pathlib import Path
 from typing import Any
 
+from utilities.aircraft_types import ALL_BUCKETS as _AT_ALL_BUCKETS
+from utilities.aircraft_types import canonicalise as _canonicalise
+
 try:
     import platformdirs
 except ModuleNotFoundError:
@@ -45,6 +48,8 @@ DEFAULT_FLIGHT_LNG = -4.25
 DEFAULT_FLIGHT_RADIUS = 20.0  # km
 DEFAULT_FLIGHT_MIN_ALTITUDE = 100.0  # metres
 DEFAULT_FLIGHT_MAX_ALTITUDE = 10000.0  # metres
+# Body filter allowlist: canonical subset of "wnrtbghmu" + "u" (Unknown).
+DEFAULT_FLIGHT_BODY_TYPES = _AT_ALL_BUCKETS
 # Advanced mode: bounding-box corners (FR24/tar1090 search area)
 DEFAULT_FLIGHT_ZONE_TL_Y = 55.87 + 0.18  # north
 DEFAULT_FLIGHT_ZONE_TL_X = -4.25 - 0.32  # west
@@ -232,6 +237,7 @@ DEFAULTS: dict[str, Any] = {
     "flight_radius": DEFAULT_FLIGHT_RADIUS,
     "flight_min_altitude": DEFAULT_FLIGHT_MIN_ALTITUDE,
     "flight_max_altitude": DEFAULT_FLIGHT_MAX_ALTITUDE,
+    "flight_body_types": DEFAULT_FLIGHT_BODY_TYPES,
     # Advanced mode: bounding-box corners
     "flight_zone_tl_y": DEFAULT_FLIGHT_ZONE_TL_Y,
     "flight_zone_tl_x": DEFAULT_FLIGHT_ZONE_TL_X,
@@ -937,6 +943,19 @@ class Config:
     def flight_max_altitude(self) -> float:
         return float(
             self.data_store.get("flight_max_altitude", DEFAULT_FLIGHT_MAX_ALTITUDE)
+        )
+
+    @property
+    def flight_body_types(self) -> str:
+        """Allowed aircraft body classes - canonical subset of "wnrtbghmu".
+
+        Sanitised through utilities.aircraft_types.canonicalise so corrupt or
+        hand-edited values cannot smuggle in unknown tokens.  An empty string
+        is a deliberate "show nothing"; only a missing key (and non-empty
+        garbage) resolves to the all-on default.
+        """
+        return _canonicalise(
+            str(self.data_store.get("flight_body_types", DEFAULT_FLIGHT_BODY_TYPES)),
         )
 
     # -- Advanced mode: bounding-box corners -----------------------------

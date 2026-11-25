@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 
+from utilities.aircraft_types import provider_allows
 from utilities.lookups.providers.fr24api.client import (
     api_key,
     api_unavailable,
@@ -60,6 +61,10 @@ def _to_observation(record: dict) -> FlightObservation | None:
         origin=clean_field(record.get("orig_iata")),
         destination=clean_field(record.get("dest_iata")),
         airline_icao=clean_field(record.get("painted_as")),
+        # Same record's "type" field is the ICAO type designator (e.g. A20N)
+        # - free airframe identity for the body filter; see the aircraft
+        # capability for the callsign-keyed fallback.
+        icao_type=clean_field(record.get("type")),
         # Docs document "sqr" for the /full endpoint (with a "squawks"
         # filter param).  No token exists here to verify hands-on, but
         # squawk is extracted whenever a configured token returns it.
@@ -116,6 +121,8 @@ class FlightProvider:
             ):
                 continue
             if not in_zone(obs.latitude, obs.longitude, query.zone):
+                continue
+            if not provider_allows(obs.icao_type, query.allowed_body_types):
                 continue
             candidates.append(obs)
 

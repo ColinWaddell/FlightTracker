@@ -110,6 +110,25 @@ export default defineComponent({
         <code>{{ store.altitudeHelpExample }}</code>) prevents the device always listing
         aircraft on the tarmac.
       </p>
+
+      <h5 class="mt-3">Aircraft Types</h5>
+      <div class="row g-2">
+        <div v-for="[token, label] in store.bodyTypeLabels" :key="token" class="col-6 col-md-4">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input"
+                   :id="'body_' + token"
+                   :checked="store.bodyTypeHas(token)"
+                   @change="store.setBodyType(token, $event.target.checked)" />
+            <label class="form-check-label" :for="'body_' + token">{{ label }}</label>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" name="flight_body_types" :value="store.config.flight_body_types" />
+      <p class="form-text small text-muted mt-1 mb-0">
+        <i class="bi bi-info-circle me-1"></i>Aircraft classes come from your data feeds
+        and cached ident lookups - aircraft appear in their class shortly after being
+        identified.
+      </p>
     </div>
 
     <!-- ====== Airport Display ====== -->

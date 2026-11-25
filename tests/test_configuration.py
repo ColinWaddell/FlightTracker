@@ -542,6 +542,50 @@ class TestBrightnessMode:
 
 
 # ---------------------------------------------------------------------------
+# flight_body_types property
+# ---------------------------------------------------------------------------
+
+
+class TestFlightBodyTypes:
+    def _cfg(self, stored=None):
+        from setup.configuration import Config
+
+        cfg = Config.__new__(Config)
+        cfg.data_store = {} if stored is None else stored
+        return cfg
+
+    def test_default_when_key_absent(self):
+        assert self._cfg().flight_body_types == "wnrtbghmu"
+
+    def test_no_op_default_is_everything(self):
+        assert self._cfg({"flight_body_types": "wnrtbghmu"}).flight_body_types == (
+            "wnrtbghmu"
+        )
+
+    def test_subset_kept_canonical_order(self):
+        assert self._cfg({"flight_body_types": "ut"}).flight_body_types == "tu"
+
+    def test_duplicates_dedupe(self):
+        assert self._cfg({"flight_body_types": "tt t"}).flight_body_types == "t"
+
+    def test_invalid_chars_dropped(self):
+        assert self._cfg({"flight_body_types": "tx!9"}).flight_body_types == "t"
+
+    def test_all_invalid_falls_back_to_default(self):
+        assert self._cfg({"flight_body_types": "xyz"}).flight_body_types == (
+            "wnrtbghmu"
+        )
+
+    def test_empty_string_is_a_legal_show_nothing(self):
+        assert self._cfg({"flight_body_types": ""}).flight_body_types == ""
+
+    def test_default_seeded_in_defaults(self):
+        from setup.configuration import DEFAULTS
+
+        assert DEFAULTS["flight_body_types"] == "wnrtbghmu"
+
+
+# ---------------------------------------------------------------------------
 # loading_indicator property
 # ---------------------------------------------------------------------------
 

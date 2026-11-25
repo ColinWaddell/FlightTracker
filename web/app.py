@@ -46,6 +46,7 @@ from flask import (
 from display.rgbpanel import PANEL_COLOUR_ORDERS
 from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
+from utilities.aircraft_types import canonicalise
 from utilities.flight import Flight
 from utilities.lookups import cache as routes_cache
 from utilities.lookups import usage as usage_tally
@@ -503,6 +504,11 @@ def parse_settings_form(form, cfg) -> dict:
         ),
         "flight_max_altitude": float_val(
             form.get("flight_max_altitude"), cfg.flight_max_altitude
+        ),
+        # Body filter - canonicalise the posted bucket string; a missing key
+        # (old poster) keeps the current value rather than resetting.
+        "flight_body_types": canonicalise(
+            form.get("flight_body_types"), cfg.flight_body_types
         ),
         # Advanced mode: bounding-box corners
         "flight_zone_tl_y": float_val(

@@ -7,6 +7,7 @@ import logging
 import requests
 from requests.exceptions import RequestException
 
+from utilities.aircraft_types import provider_allows
 from utilities.lookups.providers.common.aggregator import observation_from_record
 from utilities.lookups.results import FlightObservation, FlightQuery, LookupResult
 from utilities.overhead_utilities import (
@@ -72,6 +73,8 @@ class FlightProvider:
             if not (min_alt_ft < alt < max_alt_ft):
                 continue
             if not in_zone(lat, lon, zone):
+                continue
+            if not provider_allows(ac.get("t"), query.allowed_body_types):
                 continue
             candidates.append(ac)
 
