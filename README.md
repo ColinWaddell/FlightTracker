@@ -327,11 +327,9 @@ FlightTracker builds on the work of several open-source projects and contributor
 ## Attribution
 
 FlightTracker bundles its lookup tables in `assets/lookups/` - generated
-snapshots of public data, built and refreshed by the
-[FlightTracker-Scrappers](https://github.com/ColinWaddell/FlightTracker-Scrappers)
-repository (where the generation rules and merge logic live - the data is
-regenerated there and dropped in, never hand-edited here). Thanks to the
-people who maintain those sources:
+snapshots of public data, built and refreshed by the project's own data
+tooling and dropped in unchanged; the data is never hand-edited here.
+Thanks to the people who maintain those sources:
 
 - **Airport tables** (`lookups/airports.json`, `airports-full.json`,
   `airports_icao_to_iata.json`, `airports_iata_to_icao.json`) -
@@ -357,7 +355,7 @@ people who maintain those sources:
   list](https://www.faa.gov/air_traffic/publications/atpubs/CNT/5-2-A.htm).
 - **Airline logos** (`lookups/airline_logos_16/`) - served by
   [FlightAware](https://flightaware.com); 16x16 black-background
-  thumbnails derived in the Scrappers repository.
+  thumbnails derived from the served originals.
 
 ---
 
