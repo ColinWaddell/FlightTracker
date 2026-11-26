@@ -214,6 +214,7 @@ class TestParseSettingsFormProviders:
             flight_radius=25.0,
             flight_min_altitude=100.0,
             flight_max_altitude=10000.0,
+            flight_body_types="wnrtbghmu",
             flight_zone_tl_y=56.0,
             flight_zone_tl_x=-5.0,
             flight_zone_br_y=55.0,
@@ -238,6 +239,35 @@ class TestParseSettingsFormProviders:
 
         out = parse_settings_form({}, self._cfg())
         assert "flight_providers" not in out
+
+    def test_body_types_parse_sanitise_and_fallback(self):
+        from web.app import parse_settings_form
+
+        cfg = self._cfg()
+
+        # Ticked subset arrives in canonical order; invalid chars drop.
+        out = parse_settings_form({"flight_body_types": "utn9!"}, cfg)
+        assert out["flight_body_types"] == "ntu"
+
+        # A missing key (old client) keeps the currently stored value.
+        out = parse_settings_form({}, cfg)
+        assert out["flight_body_types"] == "wnrtbghmu"
+
+        # Uncheck-everything is a deliberate choice; never reset to defaults.
+        empty_cfg = self._cfg()
+        empty_cfg.flight_body_types = ""
+        out = parse_settings_form({"flight_body_types": ""}, empty_cfg)
+        assert out["flight_body_types"] == ""
+
+        # A submission with no valid tokens keeps the currently stored value
+        # rather than silently flipping the panel back to show-everything.
+        out = parse_settings_form({"flight_body_types": "12345!"}, empty_cfg)
+        assert out["flight_body_types"] == ""
+
+        # Valid letters hiding inside junk are gleaned, not lost ("bogus9z"
+        # carries b, g and u).
+        out = parse_settings_form({"flight_body_types": "bogus9z"}, self._cfg())
+        assert out["flight_body_types"] == "bgu"
         assert out["providers"] == {}
         assert out["max_flight_lookup"] == 5  # int_val's documented default
 

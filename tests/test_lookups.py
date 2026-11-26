@@ -1024,7 +1024,7 @@ class TestFr24AircraftProvider:
         client = MagicMock()
         client.recently_missed.return_value = False
         client.match_in_bubble.return_value = None
-        client.aircraft_model_text.return_value = "Airbus A319"
+        client.aircraft_model_info.return_value = ("Airbus A319", "A319")
         return client
 
     @pytest.fixture
@@ -1058,10 +1058,12 @@ class TestFr24AircraftProvider:
         assert result.is_found
         assert result.value.plane == "Airbus A319"
         assert result.value.registration == "G-EUPX"
+        # The details call's ICAO type code rides along for the body filter.
+        assert result.value.icao_type == "A319"
 
     def test_no_model_text_is_not_found(self, provider, client):
         client.match_in_bubble.return_value = _feed_flight()
-        client.aircraft_model_text.return_value = ""
+        client.aircraft_model_info.return_value = ("", "")
         result = provider.lookup_aircraft(self._ctx())
         assert result.is_not_found
 

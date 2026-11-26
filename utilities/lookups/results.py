@@ -285,6 +285,12 @@ class FlightQuery:
     min_altitude_m: float = 100.0
     max_altitude_m: float = 10000.0
     max_results: int = 5
+    # Body-filter allowlist (see utilities.aircraft_types): providers drop
+    # candidates whose *known* type designator maps outside this set, before
+    # the max_results cap, so unwanted aircraft never reach the enrichment
+    # chains.  Unclassified records always pass - the Unknown checkbox is
+    # applied at the display layer.  None (default) = filter off.
+    allowed_body_types: frozenset[str] | None = None
 
 
 @dataclass

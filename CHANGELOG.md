@@ -6,16 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
-- Plane Info Row option "Preserve Case" also selects the row's font. With
-  it off the make & model row and the text parts of custom templates use
-  the wider regular font (the original look). With it on the whole bar -
-  templates and the emergency-squawk prefix included - switches to the
-  small-symbol font the telemetry row always used.
+- New flight setting "Aircraft Types" - show/hide aircraft by body class
+  (wide-body, narrow-body, regional jet, turboprop, business jet,
+  light & general aviation, rotorcraft, military, unknown) using a bundled
+  ICAO type-designator table sourced from ICAO Doc 8643, OpenAircraftType
+  and the FAA designator list, with curated UK/EU military types and legacy
+  regional fills. Each class lists example aircraft, including the ones the
+  table cannot classify.
+  Classes come free with the feed on ADS-B-family and FlightRadar24 sources,
+  and filtering an aircraft out happens before its route lookups, so unwanted
+  types stop costing API calls.
 - New Plane Info Row option "Preserve Case" (off by default): when enabled
   the aircraft make & model is shown exactly as the data source provides it,
   e.g. "Boeing 737-800", instead of being upper-cased to "BOEING 737-800".
   Applies to both the default make & model row and the custom template's
   `{plane}` field.
+- Plane Info Row option "Preserve Case" also selects the row's font. With
+  it off the make & model row and the text parts of custom templates use
+  the wider regular font (the original look). With it on the whole bar -
+  templates and the emergency-squawk prefix included - switches to the
+  small-symbol font the telemetry row always used.
 
 ## [2.12.8]
 

@@ -81,6 +81,10 @@ class RouteProvider:
         fill_airport_details(route, "origin")
         fill_airport_details(route, "destination")
         route.airline_icao = (record.get("painted_as") or "").strip().upper()
+        # The callsign-position record carries the airframe's ICAO type code;
+        # merge_missing semantics mean this only fills what the observation
+        # prefill left blank.
+        route.icao_type = (record.get("type") or "").strip().upper()
 
         logger.debug(
             "FR24 API route for %r: %s->%s", callsign, route.origin, route.destination

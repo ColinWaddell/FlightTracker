@@ -20,6 +20,8 @@ import logging
 import threading
 import time
 
+from utilities.overhead_utilities import clean_field
+
 logger = logging.getLogger(__name__)
 
 # FR24 request timeout (seconds) - the library default of 30 is too short
@@ -202,26 +204,39 @@ class FR24Client:
                     logger.debug("FR24 flight detail error: %s", e)
         return details
 
+    def aircraft_model_info(self, flight, retries: int = DETAIL_RETRIES):
+        """Return ``(model text, ICAO type code)`` for *flight* in one call.
+
+        The clickhandler details call is the expensive one, and both answers
+        live in it: ``aircraft.model.text`` ("Boeing 737-800") and
+        ``aircraft.model.code`` ("B738").  Both fall back to the free feed
+        ``aircraft_code`` (the ICAO type code) when the details call fails or
+        lacks the field - the text keeps its historical fallback, the code is
+        what the body filter classifies on.  Either may be "".
+        """
+        details = self.flight_details(flight, retries)
+        plane_text = ""
+        model_code = ""
+        if details is not None:
+            model = (details.get("aircraft") or {}).get("model") or {}
+            plane_text = clean_field(model.get("text"))
+            model_code = clean_field(model.get("code"))
+        feed_code = clean_field(getattr(flight, "aircraft_code", ""))
+        if not plane_text and feed_code:
+            plane_text = feed_code
+        if not model_code:
+            model_code = feed_code
+        return plane_text, model_code
+
     def aircraft_model_text(self, flight, retries: int = DETAIL_RETRIES) -> str:
         """Return the full model name for *flight* ("Boeing 737-800").
 
         Falls back to the free ``aircraft_code`` (ICAO type code, e.g.
         "B738") from the feed list when the details call fails or has no
-        model text.  Returns "" when neither is available.
+        model text.  Returns "" when neither is available.  See
+        :meth:`aircraft_model_info` for the paired ICAO type code.
         """
-        details = self.flight_details(flight, retries)
-        if details is not None:
-            try:
-                from utilities.overhead_utilities import clean_field
-
-                plane = clean_field(details["aircraft"]["model"]["text"])
-                if plane:
-                    return plane
-            except (KeyError, TypeError):
-                pass
-        from utilities.overhead_utilities import clean_field
-
-        return clean_field(getattr(flight, "aircraft_code", ""))
+        return self.aircraft_model_info(flight, retries)[0]
 
     # ------------------------------------------------------------------
     # Per-callsign live-feed miss tracking (service-specific rate-limit
