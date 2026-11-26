@@ -856,6 +856,8 @@ class TestBuildSpans:
         return scene
 
     def test_mode_0_returns_model_spans(self):
+        from setup import fonts
+
         scene = self._make_scene([Flight(plane="Boeing 787")])
         cfg = MagicMock()
         cfg.details = 0
@@ -863,8 +865,12 @@ class TestBuildSpans:
         spans = scene.build_spans(cfg)
         assert len(spans) == 1
         assert spans[0].text == "BOEING 787"
+        # Default look: the wider regular font.
+        assert spans[0].font is fonts.regular
 
     def test_mode_0_preserves_case_when_enabled(self):
+        from setup import fonts
+
         scene = self._make_scene([Flight(plane="Boeing 787")])
         cfg = MagicMock()
         cfg.details = 0
@@ -872,13 +878,18 @@ class TestBuildSpans:
         spans = scene.build_spans(cfg)
         assert len(spans) == 1
         assert spans[0].text == "Boeing 787"
+        # Preserve case also switches the row to the smaller symbol font.
+        assert spans[0].font is fonts.small_symbols
 
     def test_mode_1_returns_telemetry_spans(self):
+        from setup import fonts
+
         scene = self._make_scene(
             [Flight(altitude=38000, ground_speed=480, heading=270)]
         )
         cfg = MagicMock()
         cfg.details = 1
+        cfg.details_preserve_case = False
         cfg.height_unit = "ft"
         cfg.speed_unit = "kts"
         spans = scene.build_spans(cfg)
@@ -886,6 +897,8 @@ class TestBuildSpans:
         assert "38000" in texts
         assert "480" in texts
         assert "270" in texts
+        # Telemetry always uses the small symbol font, whatever the flag.
+        assert all(s.font is fonts.small_symbols for s in spans)
 
     def test_mode_2_returns_custom_spans(self):
         scene = self._make_scene([Flight(plane="Boeing 787", callsign="BAW123")])
@@ -906,6 +919,7 @@ class TestBuildSpans:
         scene = self._make_scene([Flight(plane="Boeing 787")])
         cfg = MagicMock()
         cfg.details = 2
+        cfg.details_preserve_case = False
         cfg.details_custom_template = ""
         cfg.height_unit = "ft"
         cfg.speed_unit = "kts"
@@ -1096,7 +1110,8 @@ class TestEmergencySquawkCode:
 class TestEmergencySquawkPrefix:
     """draw_plane_details() pins the code to the left of the scroller."""
 
-    # 4 digits at 5px width (fonts.small_symbols).
+    # 4 digits at 6px (fonts.regular) / 5px (fonts.small_symbols) width.
+    REGULAR_DIGIT_WIDTH = 6
     SMALL_DIGIT_WIDTH = 5
 
     def _make_scene(self, flights):
@@ -1129,7 +1144,7 @@ class TestEmergencySquawkPrefix:
         from setup import fonts
 
         squawk = "7700"
-        prefix = len(squawk) * self.SMALL_DIGIT_WIDTH
+        prefix = len(squawk) * self.REGULAR_DIGIT_WIDTH
         scene = self._make_scene([Flight(plane="Boeing 787", squawk=squawk)])
 
         self._draw(scene, self._cfg(details=0))
@@ -1142,8 +1157,27 @@ class TestEmergencySquawkPrefix:
         assert scene.squawk_scroller.width == prefix
         assert scene.details_scroller.x == prefix
         assert scene.details_scroller.width == 64 - prefix
-        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
+        # Default look (preserve case off): the wider regular font.
+        assert scene.squawk_scroller._spans[0].font is fonts.regular
         assert scene.squawk_scroller._spans[0].text == squawk
+
+    def test_prefix_font_follows_preserve_case(self):
+        from setup import fonts
+
+        # A settings change restarts the app, so each (mode, flag) pair is
+        # drawn from a fresh scene - the font is fixed for a runtime.
+        scene = self._make_scene([Flight(squawk="7700")])
+        self._draw(scene, self._cfg(details=0, details_preserve_case=True))
+        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
+
+        scene = self._make_scene([Flight(squawk="7700")])
+        self._draw(scene, self._cfg(details=2, details_preserve_case=True))
+        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
+
+        # Mode 2 with preserve case off keeps the wider font.
+        scene = self._make_scene([Flight(squawk="7700")])
+        self._draw(scene, self._cfg(details=2, details_preserve_case=False))
+        assert scene.squawk_scroller._spans[0].font is fonts.regular
 
     def test_prefix_uses_emergency_theme_colour(self):
         from setup.themes import TC, THEME_SQUAWK_EMERGENCY
@@ -1183,7 +1217,10 @@ class TestEmergencySquawkPrefix:
         scene = self._make_scene([Flight(squawk=squawk)])
         cfg = self._cfg(details=0)
         self._draw(scene, cfg)
-        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
+        assert scene.squawk_scroller._spans[0].font is fonts.regular
+        assert scene.squawk_scroller.content_width == len(
+            squawk
+        ) * self.REGULAR_DIGIT_WIDTH
 
         cfg.data_store["details"] = 1
         self._draw(scene, cfg)

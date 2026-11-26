@@ -259,6 +259,36 @@ class TestBuildCustomSpans:
         assert len(spans) == 1
         assert spans[0].text == "Boeing 787-9"
 
+    def test_default_fonts_are_mixed(self):
+        """Original look: text in regular, telemetry/symbols in small."""
+        from setup import fonts
+
+        flight = make_flight()
+        spans = build_custom_spans(
+            "{plane} {symbol:speed} {ground_speed}", flight, make_cfg()
+        )
+        regular = [s for s in spans if s.font is fonts.regular]
+        small = [s for s in spans if s.font is fonts.small_symbols]
+        # The plane name and the literal separators carry the regular font.
+        assert any(s.text == "BOEING 787-9" for s in regular)
+        assert regular  # literals present between the tags
+        # The symbol glyph and the number carry the small font.
+        assert small
+
+    def test_preserve_case_makes_every_span_small(self):
+        """Preserve case on: the whole template uses the small symbol font."""
+        from setup import fonts
+
+        flight = make_flight()
+        spans = build_custom_spans(
+            "{plane} {symbol:speed} {ground_speed}",
+            flight,
+            make_cfg(details_preserve_case=True),
+        )
+        assert spans
+        assert all(s.font is fonts.small_symbols for s in spans)
+        assert any(s.text == "Boeing 787-9" for s in spans)
+
     def test_other_text_fields_ignore_preserve_case(self):
         """The setting only changes how the plane model renders."""
         flight = make_flight(origin_country="United Kingdom")
