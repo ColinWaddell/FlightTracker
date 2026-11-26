@@ -1,0 +1,16 @@
+{
+  "counts": {
+    "iata_to_icao": 1085,
+    "icao_to_iata": 1786,
+    "icao_to_name": 6268
+  },
+  "fills": [
+    "standing-data: +649 fills, 26 conflicts kept",
+    "openflights: +257 fills, 40 conflicts kept"
+  ],
+  "operators_db_license": "ODbL v1.0",
+  "operators_db_url": "https://raw.githubusercontent.com/WeegeeNumbuh1/FlightGazer-airlines-db/master/operators.csv",
+  "operators_db_version": "2026-11-11",
+  "wikipedia_pairs": 887,
+  "wikipedia_rows": 5804
+}

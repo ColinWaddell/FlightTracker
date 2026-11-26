@@ -59,7 +59,12 @@ class TestRealBundledTable:
     def test_map_file_exists(self):
         from pathlib import Path
 
-        path = Path(__file__).parent.parent / "assets" / "airports_iata_to_icao.json"
+        path = (
+            Path(__file__).parent.parent
+            / "assets"
+            / "lookups"
+            / "airports_iata_to_icao.json"
+        )
         assert path.exists()
 
     def test_regional_airports_convert(self):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-TABLE_PATH = Path(__file__).parents[1] / "assets" / "aircraft_types.json"
+TABLE_PATH = Path(__file__).parents[1] / "assets" / "lookups" / "aircraft_types.json"
 TOKENS = frozenset("wnrtbghm")
 
 # Spot verdicts from the table's derivation rules (DOC 8643 wake/engine,

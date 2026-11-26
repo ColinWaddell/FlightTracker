@@ -43,7 +43,8 @@ A filter that is *off* (``allowed is None``) remains a strict no-op.
 from __future__ import annotations
 
 import json
-from pathlib import Path
+
+from utilities.lookup_data import LOOKUPS_DIR
 
 UNKNOWN = "u"
 ALL_BUCKETS = "wnrtbghmu"
@@ -68,7 +69,7 @@ BUCKET_LABELS = (
     (UNKNOWN, "Unknown"),
 )
 
-_TABLE_PATH = Path(__file__).parents[1] / "assets" / "aircraft_types.json"
+_TABLE_PATH = LOOKUPS_DIR / "aircraft_types.json"
 _table: dict[str, str] | None = None
 
 

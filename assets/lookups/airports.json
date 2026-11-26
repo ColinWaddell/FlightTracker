@@ -2522,7 +2522,7 @@
   "AYO": {
     "country_name": "Paraguay",
     "municipality": "Ayolas",
-    "name": "Aeropuerto Nacional Juan de Ayolas"
+    "name": "Juan de Ayolas National Airport"
   },
   "AYP": {
     "country_name": "Peru",
@@ -3126,7 +3126,7 @@
   },
   "BEB": {
     "country_name": "United Kingdom",
-    "municipality": "Balivanich",
+    "municipality": "Balivanich, Eilean Siar",
     "name": "Benbecula Airport"
   },
   "BEC": {
@@ -4716,7 +4716,7 @@
   },
   "BRR": {
     "country_name": "United Kingdom",
-    "municipality": "Eoligarry",
+    "municipality": "Eoligarry, Eilean Siar",
     "name": "Barra Airport"
   },
   "BRS": {
@@ -6737,7 +6737,7 @@
   "CJJ": {
     "country_name": "South Korea",
     "municipality": "Cheongju",
-    "name": "Cheongju International Airport/Cheongju Air Base (K-59/G-513)"
+    "name": "Cheongju International Airport"
   },
   "CJL": {
     "country_name": "Pakistan",
@@ -8977,7 +8977,7 @@
   "DIQ": {
     "country_name": "Brazil",
     "municipality": "Divinópolis",
-    "name": "Brigadeiro Cabral Airport"
+    "name": "Brigadeiro Antônio Cabral Airport"
   },
   "DIR": {
     "country_name": "Ethiopia",
@@ -9429,6 +9429,11 @@
     "municipality": "Devonport",
     "name": "Devonport Airport"
   },
+  "DPP": {
+    "country_name": "India",
+    "municipality": "Datia",
+    "name": "Datia Airport"
+  },
   "DPS": {
     "country_name": "Indonesia",
     "municipality": "Kuta, Badung",
@@ -9652,7 +9657,7 @@
   "DTI": {
     "country_name": "Brazil",
     "municipality": "Diamantina",
-    "name": "Diamantina Airport"
+    "name": "Juscelino Kubitschek Airport"
   },
   "DTL": {
     "country_name": "United States",
@@ -10217,7 +10222,7 @@
   "EFL": {
     "country_name": "Greece",
     "municipality": "Kefallinia Island",
-    "name": "Kefallinia Airport"
+    "name": "Kefalonia International Airport \"Anna Pollatou\""
   },
   "EFW": {
     "country_name": "United States",
@@ -11657,7 +11662,7 @@
   "FLM": {
     "country_name": "Paraguay",
     "municipality": "Filadelfia",
-    "name": "Aeródromo de Filadelfia"
+    "name": "Fernheim Airport"
   },
   "FLN": {
     "country_name": "Brazil",
@@ -15760,9 +15765,9 @@
     "name": "George Bush Intercontinental Airport"
   },
   "IAL": {
-    "country_name": "Papua New Guinea",
-    "municipality": "Ialibu",
-    "name": "Ialibu Airport"
+    "country_name": "Brazil",
+    "municipality": "Salinas",
+    "name": "Salinas Municipal Airport"
   },
   "IAM": {
     "country_name": "Algeria",
@@ -16099,11 +16104,6 @@
     "municipality": "Inhaca",
     "name": "Inhaca Airport"
   },
-  "IHN": {
-    "country_name": "Yemen",
-    "municipality": "Qishn",
-    "name": "Qishn Airport"
-  },
   "IHO": {
     "country_name": "Madagascar",
     "municipality": "Ihosy",
@@ -16329,11 +16329,6 @@
     "municipality": "Inhaminga",
     "name": "Inhaminga Airport"
   },
-  "IMI": {
-    "country_name": "Marshall Islands",
-    "municipality": "Arno Atoll",
-    "name": "Ine Airport"
-  },
   "IMK": {
     "country_name": "Nepal",
     "municipality": "Simikot",
@@ -16374,10 +16369,10 @@
     "municipality": "Kingsford",
     "name": "Ford Airport"
   },
-  "IMZ": {
-    "country_name": "Afghanistan",
-    "municipality": "Ziarat-e Amiran Saseb",
-    "name": "Nimroz Airport"
+  "IMU": {
+    "country_name": "Indonesia",
+    "municipality": "Akimuga, Mimika",
+    "name": "Akimuga Airstrip"
   },
   "INA": {
     "country_name": "Russia",
@@ -16398,11 +16393,6 @@
     "country_name": "United States",
     "municipality": "Indianapolis",
     "name": "Indianapolis International Airport"
-  },
-  "INE": {
-    "country_name": "Mozambique",
-    "municipality": "Chinde",
-    "name": "Chinde Airport"
   },
   "INF": {
     "country_name": "Algeria",
@@ -16471,7 +16461,7 @@
   },
   "INV": {
     "country_name": "United Kingdom",
-    "municipality": "Inverness",
+    "municipality": "Inverness, Highland",
     "name": "Inverness Airport"
   },
   "INW": {
@@ -16506,7 +16496,7 @@
   },
   "IOM": {
     "country_name": "Isle of Man",
-    "municipality": "Castletown",
+    "municipality": "Castletown, Rushen",
     "name": "Isle of Man Airport"
   },
   "ION": {
@@ -16898,6 +16888,11 @@
     "country_name": "New Zealand",
     "municipality": "Invercargill",
     "name": "Invercargill Airport"
+  },
+  "IVD": {
+    "country_name": "Indonesia",
+    "municipality": "Nusantara",
+    "name": "Nusantara International Airport"
   },
   "IVG": {
     "country_name": "Montenegro",
@@ -23057,7 +23052,7 @@
   "MBD": {
     "country_name": "South Africa",
     "municipality": "Mafeking",
-    "name": "Mmabatho International Airport"
+    "name": "George Dick Montshioa Airport"
   },
   "MBE": {
     "country_name": "Japan",
@@ -23347,7 +23342,7 @@
   "MDN": {
     "country_name": "United States",
     "municipality": "Madison",
-    "name": "Madison Municipal Airport"
+    "name": "Madison Regional Airport"
   },
   "MDO": {
     "country_name": "United States",
@@ -28287,7 +28282,7 @@
   "OLK": {
     "country_name": "Paraguay",
     "municipality": "Fuerte Olimpo",
-    "name": "Aeródromo de Fuerte"
+    "name": "Fuerte Olimpo Airport"
   },
   "OLL": {
     "country_name": "Republic of the Congo",
@@ -29377,7 +29372,7 @@
   "PBT": {
     "country_name": "Paraguay",
     "municipality": "Puerto Leda",
-    "name": "Aeródromo de Puerto Leda"
+    "name": "Puerto Leda Airport"
   },
   "PBU": {
     "country_name": "Myanmar",
@@ -29987,7 +29982,7 @@
   "PIL": {
     "country_name": "Paraguay",
     "municipality": "Pilar",
-    "name": "Aeródromo Don Carlos Miguel Gimenez"
+    "name": "Don Carlos Miguel Gimenez Airport"
   },
   "PIM": {
     "country_name": "United States",
@@ -30067,7 +30062,7 @@
   "PJC": {
     "country_name": "Paraguay",
     "municipality": "Pedro Juan Caballero",
-    "name": "Aeropuerto Nacional Dr. Augusto Roberto Fuster"
+    "name": "Dr. Augusto Roberto Fuster International Airport"
   },
   "PJG": {
     "country_name": "Pakistan",
@@ -31186,8 +31181,8 @@
   },
   "PUR": {
     "country_name": "Bolivia",
-    "municipality": "Puerto Rico/Manuripi",
-    "name": "Puerto Rico Airport"
+    "municipality": "Parai, Santa Cruz",
+    "name": "Parai(Puerto Rico) Airport"
   },
   "PUS": {
     "country_name": "South Korea",
@@ -31668,11 +31663,6 @@
     "country_name": "Iran",
     "municipality": "Masjed Soleyman",
     "name": "Shahid Asiyaee Airport"
-  },
-  "QNS": {
-    "country_name": "Brazil",
-    "municipality": "Porto Alegre",
-    "name": "Canoas Air Force Base"
   },
   "QOQ": {
     "country_name": "Greenland",
@@ -33802,7 +33792,7 @@
   "SDB": {
     "country_name": "South Africa",
     "municipality": "Langebaanweg",
-    "name": "Langebaanweg Airport"
+    "name": "Langebaanweg Air Force Base"
   },
   "SDC": {
     "country_name": "Guyana",
@@ -36878,11 +36868,6 @@
     "country_name": "Papua New Guinea",
     "municipality": "Sasereme",
     "name": "Sasereme Airport"
-  },
-  "TDT": {
-    "country_name": "South Africa",
-    "municipality": "Timbavati",
-    "name": "Tanda Tula Airport"
   },
   "TDV": {
     "country_name": "Madagascar",
@@ -40502,7 +40487,7 @@
   "VMI": {
     "country_name": "Paraguay",
     "municipality": "Puerto Vallemi",
-    "name": "Aeropuerto Nacional Doctor Juan Plate"
+    "name": "Doctor Juan Plate National Airport"
   },
   "VMU": {
     "country_name": "Papua New Guinea",
@@ -42784,6 +42769,11 @@
     "municipality": "Chilliwack",
     "name": "Chilliwack Airport"
   },
+  "YCX": {
+    "country_name": "Canada",
+    "municipality": "Oromocto",
+    "name": "CFB Gagetown Heliport"
+  },
   "YCY": {
     "country_name": "Canada",
     "municipality": "Clyde River",
@@ -44537,7 +44527,7 @@
   "YYF": {
     "country_name": "Canada",
     "municipality": "Penticton",
-    "name": "Penticton Airport"
+    "name": "Penticton Regional Airport"
   },
   "YYG": {
     "country_name": "Canada",
@@ -45167,7 +45157,7 @@
   "ZTH": {
     "country_name": "Greece",
     "municipality": "Zakynthos",
-    "name": "Zakynthos International Airport Dionysios Solomos"
+    "name": "Zakynthos International Airport \"Dionysios Solomos\""
   },
   "ZTM": {
     "country_name": "Canada",
