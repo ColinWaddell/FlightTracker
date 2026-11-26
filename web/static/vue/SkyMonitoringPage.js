@@ -299,10 +299,7 @@ export default defineComponent({
         </label>
       </div>
       <div class="form-text text-muted small">
-        Applies to both the make &amp; model row and the custom template's
-        <code>{plane}</code> field. Off (default): shown in capitals, e.g.
-        BOEING 737-800. On: shown exactly as the data source provides it,
-        e.g. Boeing 737-800.
+        When disabled the details scroller forces uppercase for a more uniform appearance.
       </div>
 
       <template-editor v-if="store.config.details === 2" :store="store" />
