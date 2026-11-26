@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}" />
+  <title>FlightTracker - Attribution &amp; Licensing</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+{% include "navbar.html" %}
+<div class="container-fluid py-4" style="max-width:1100px">
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-c-circle me-2"></i>About this software</h2>
+    <p class="mb-2">
+      Flight Tracker by Colin Waddell. Released under the
+      <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>:
+      you are welcome to use, modify and share the code, as long as you keep it under the
+      same licence and retain the copyright and licence notice.
+    </p>
+    <p class="mb-0 text-muted small">
+      The full licence text is in <code>LICENSE.md</code> in the
+      <a href="https://github.com/ColinWaddell/FlightTracker" target="_blank" rel="noopener">project's repository</a>.
+    </p>
+  </div>
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-broadcast me-2"></i>Flight &amp; weather data sources</h2>
+    <p class="text-muted small mb-3">
+      The sources below are the services Flight Tracker can be configured to use, enabled and
+      ordered on the <a href="{{ url_for('settings') }}">Settings</a> page's Provider section.
+      Each is used live in real time; none of their data is redistributed with Flight Tracker.
+    </p>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped mb-0 align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Source</th>
+            <th scope="col">Used for</th>
+            <th scope="col">Licence and attribution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://www.flightradar24.com/" target="_blank" rel="noopener">FlightRadar24</a></td>
+            <td>Live aircraft positions (free feed, or the paid FR24 API)</td>
+            <td>Proprietary service data, used as served. Not an open licence, and not redistributed.
+              The Python client
+              (<a href="https://github.com/JeanExtreme002/FlightRadarAPI" target="_blank" rel="noopener">FlightRadarAPI</a>)
+              is an unofficial, MIT-licensed SDK.</td>
+          </tr>
+          <tr>
+            <td><a href="https://opensky-network.org/" target="_blank" rel="noopener">OpenSky Network</a></td>
+            <td>Live aircraft positions</td>
+            <td>Custom data licence, not an open licence: a limited grant for non-profit research and
+              education; operational or commercial REST API use requires a written agreement. Each user
+              enables this provider with their own account and is subject to
+              <a href="https://opensky-network.org/about/terms-of-use" target="_blank" rel="noopener">OpenSky's terms of use</a>.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/wiedehopf/tar1090" target="_blank" rel="noopener">tar1090</a></td>
+            <td>Positions from your own ADS-B receiver, plus aircraft type descriptions</td>
+            <td>tar1090 itself is licensed GPL v2 or later. Type descriptions come from
+              <a href="https://github.com/wiedehopf/tar1090-db" target="_blank" rel="noopener">tar1090-db</a>,
+              the aircraft database shipped with that setup (assembled from public sources by Mictronics).
+              Your receiver's data is your own.</td>
+          </tr>
+          <tr>
+            <td><a href="https://adsb.fi/" target="_blank" rel="noopener">ADS-B.fi</a></td>
+            <td>Live aircraft positions</td>
+            <td>Personal, non-commercial use only, as stated in
+              <a href="https://github.com/adsbfi/opendata" target="_blank" rel="noopener">their open data terms</a>,
+              which ask that adsb.fi be cited with a link.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.adsb.lol/" target="_blank" rel="noopener">ADSB.lol</a></td>
+            <td>Live aircraft positions</td>
+            <td>
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>,
+              per their
+              <a href="https://www.adsb.lol/docs/privacy-license/" target="_blank" rel="noopener">published statement</a>:
+              attribution and share-alike for any derived database.</td>
+          </tr>
+          <tr>
+            <td><a href="https://airplanes.live/" target="_blank" rel="noopener">airplanes.live</a></td>
+            <td>Live aircraft positions</td>
+            <td>Free API for personal, non-commercial use per their
+              <a href="https://airplanes.live/api-docs/" target="_blank" rel="noopener">API documentation</a>; access is
+              restricted to feeding stations. No formal open-data licence is published.</td>
+          </tr>
+          <tr>
+            <td><a href="https://hexdb.io/" target="_blank" rel="noopener">HexDB</a></td>
+            <td>Route and aircraft lookups</td>
+            <td>Free service, no API key. Data courtesy of PlaneBase/PlanePlotter, Jim Mason, Steve Hibberd,
+              ip2location and Airport-Data, as credited
+              <a href="https://hexdb.io/" target="_blank" rel="noopener">on their site</a>.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.adsbdb.com/" target="_blank" rel="noopener">adsbdb.com</a></td>
+            <td>Route and airline lookups</td>
+            <td>Free service, no API key. Aircraft data courtesy of PlaneBase; the flight route data is the
+              work of David Taylor (Edinburgh) and Jim Mason (Glasgow) and may not be copied, published or
+              incorporated into other databases without the explicit permission of David J Taylor, as stated in
+              <a href="https://github.com/mrjackwills/adsbdb" target="_blank" rel="noopener">the service's documentation</a>.</td>
+          </tr>
+          <tr>
+            <td><a href="https://adsb.im/" target="_blank" rel="noopener">ADSB.im routeset</a></td>
+            <td>Route lookups</td>
+            <td>The served route data is explicitly licensed
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>,
+              built from <a href="https://github.com/vradarserver/standing-data" target="_blank" rel="noopener">vradarserver standing-data</a>
+              (CC0), parsed ACARS messages and adsb.lol data - see the
+              <a href="https://adsb.im/api" target="_blank" rel="noopener">adsb.im API statement</a>.</td>
+          </tr>
+          <tr>
+            <td><a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener">AeroDataBox</a></td>
+            <td>Route and aircraft lookups</td>
+            <td>Commercial API offered through RapidAPI (paid tiers).</td>
+          </tr>
+          <tr>
+            <td><a href="https://airlabs.co/" target="_blank" rel="noopener">AirLabs</a></td>
+            <td>Route lookups</td>
+            <td>Commercial API with a free plan.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.flightaware.com/aeroapi/portal" target="_blank" rel="noopener">FlightAware AeroAPI</a></td>
+            <td>Route lookups</td>
+            <td>Commercial API (subscription).</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.weatherapi.com/" target="_blank" rel="noopener">WeatherAPI.com</a></td>
+            <td>Weather conditions and forecasts</td>
+            <td>Commercial service with a free plan; data used as served, not redistributed.</td>
+          </tr>
+          <tr>
+            <td><a href="https://celestrak.org/" target="_blank" rel="noopener">CelesTrak</a></td>
+            <td>Satellite orbital elements (TLEs)</td>
+            <td>Freely available orbital data requests follow the
+              <a href="https://celestrak.org/usage-policy.php" target="_blank" rel="noopener">CelesTrak usage policy</a> -
+              Flight Tracker caches element sets between updates rather than polling each pass.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></td>
+            <td>Maps shown on the Settings page</td>
+            <td>
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>.
+              The map itself carries the "&copy; OpenStreetMap contributors" credit.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-database me-2"></i>Bundled lookup data</h2>
+    <p class="text-muted small mb-3">
+      Unlike the live sources above, these datasets ship with Flight Tracker as part of the
+      application. Each is generated from the public sources listed here.
+    </p>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped mb-0 align-middle">
+        <thead>
+          <tr>
+            <th scope="col">What it is</th>
+            <th scope="col">Source</th>
+            <th scope="col">Licence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Airport names and codes (including the extended ICAO/GPS lookup and the IATA&harr;ICAO maps)</td>
+            <td><a href="https://ourairports.com/data/" target="_blank" rel="noopener">OurAirports</a></td>
+            <td>Public domain, per the source's own statement.</td>
+          </tr>
+          <tr>
+            <td rowspan="4">Airline codes and names (IATA&harr;ICAO conversions, friendly airline names)</td>
+            <td><a href="https://en.wikipedia.org/wiki/List_of_airline_codes" target="_blank" rel="noopener">Wikipedia, "List of airline codes"</a></td>
+            <td>CC BY-SA 4.0 (Wikipedia's content licence): attribution to Wikipedia contributors;
+              share-alike applies to the derived code tables.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/WeegeeNumbuh1/FlightGazer-airlines-db" target="_blank" rel="noopener">FlightGazer-airlines-db <code>operators.csv</code></a> -
+              the FAA JO 7340 chapter 3 telephony table with human-reviewed friendly names</td>
+            <td>
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL v1.0</a>:
+              attribution required, share-alike for the distributed database.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/vradarserver/standing-data" target="_blank" rel="noopener">vradarserver/standing-data</a></td>
+            <td>CC0 1.0: no conditions.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/jpatokal/openflights" target="_blank" rel="noopener">OpenFlights <code>airlines.dat</code></a></td>
+            <td>The repository is licensed AGPL-3.0; this file is used only as a tertiary fill of a
+              few hundred entries. Its scope for this dataset is an open question tracked by the project's
+              own data tooling.</td>
+          </tr>
+          <tr>
+            <td>Aircraft body-type designators (the Aircraft Types filter's lookup table)</td>
+            <td>Mirror of ICAO DOC 8643 columns from
+              <a href="https://github.com/George88000/aircraft_models" target="_blank" rel="noopener">George88000/aircraft_models</a>,
+              plus fills from <a href="https://github.com/atoff/OpenAircraftType" target="_blank" rel="noopener">OpenAircraftType</a>
+              and the
+              <a href="https://www.faa.gov/air_traffic/publications/atpubs/CNT/5-2-A.HTM" target="_blank" rel="noopener">FAA JO 7340.2E</a>
+              decode pages</td>
+            <td>DOC 8643 mirror: MIT. FAA pages: US government publication, public domain.
+              OpenAircraftType declares no licence upstream - included with attribution, pending
+              the project's redistribution decision.</td>
+          </tr>
+          <tr>
+            <td>Airline logos (16&times;16 icons shown on the panel)</td>
+            <td>Derived from <a href="https://www.flightaware.com/" target="_blank" rel="noopener">FlightAware</a>'s
+              airline logo images</td>
+            <td>Not an open dataset: the logos are the airlines' trademarks, served by FlightAware and
+              credited here.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted small mt-3 mb-0">
+      Beyond the sources listed, the bundled tables carry manual curation by the project
+      (exclusions, corrections and fills where no source documents a code). The tables are
+      refreshed from the sources above via the project's own data tooling, which prints each
+      build's provenance.
+    </p>
+  </div>
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-box me-2"></i>Open-source software</h2>
+    <p class="text-muted small mb-3">
+      Flight Tracker builds on the work of a great many open-source projects. Listed are the
+      libraries the running application directly depends on, with their licences as of this release.
+    </p>
+
+    <h5 class="fs-6 fw-semibold mb-2">Python dependencies</h5>
+    <div class="table-responsive mb-3">
+      <table class="table table-sm table-striped mb-0 align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Library</th>
+            <th scope="col">Licence</th>
+            <th scope="col">Used for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="https://github.com/pallets/flask" target="_blank" rel="noopener">Flask</a></td><td>BSD-3-Clause</td><td>The web configuration interface</td></tr>
+          <tr><td><a href="https://github.com/psf/requests" target="_blank" rel="noopener">requests</a></td><td>Apache-2.0</td><td>HTTP requests to every data source</td></tr>
+          <tr><td><a href="https://www.crummy.com/software/BeautifulSoup/" target="_blank" rel="noopener">beautifulsoup4</a></td><td>MIT</td><td>HTML parsing</td></tr>
+          <tr><td><a href="https://github.com/JeanExtreme002/FlightRadarAPI" target="_blank" rel="noopener">FlightRadarAPI</a></td><td>MIT</td><td>FlightRadar24 client (unofficial)</td></tr>
+          <tr><td><a href="https://github.com/lincolnloop/python-qrcode" target="_blank" rel="noopener">qrcode</a></td><td>BSD-3-Clause</td><td>The QR code shown while booting</td></tr>
+          <tr><td><a href="https://github.com/Textualize/rich" target="_blank" rel="noopener">rich</a></td><td>MIT</td><td>Command-line output</td></tr>
+          <tr><td><a href="https://github.com/brandon-rhodes/python-sgp4" target="_blank" rel="noopener">sgp4</a></td><td>MIT</td><td>Satellite orbit propagation</td></tr>
+          <tr><td><a href="https://python-pillow.org/" target="_blank" rel="noopener">Pillow</a></td><td>MIT-CMU</td><td>Image processing for panel graphics</td></tr>
+          <tr><td><a href="https://sourceforge.net/projects/raspberry-gpio-python/" target="_blank" rel="noopener">RPi.GPIO</a></td><td>MIT</td><td>GPIO on the Pi (optional)</td></tr>
+          <tr><td><a href="https://github.com/hzeller/rpi-rgb-led-matrix" target="_blank" rel="noopener">rpi-rgb-led-matrix (rgbmatrix)</a> -
+            thanks to Henner Zeller</td><td>GPL-2.0</td><td>LED panel driver on Pi 3/4/Zero</td></tr>
+          <tr><td><a href="https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter" target="_blank" rel="noopener">adafruit-blinka-raspberry-pi5-piomatter</a> -
+            thanks to Adafruit</td><td>GPL-2.0</td><td>LED panel driver on Pi 5</td></tr>
+          <tr><td><a href="https://numpy.org/" target="_blank" rel="noopener">numpy</a></td><td>BSD-3-Clause</td><td>Image buffers for the Pi 5 driver</td></tr>
+          <tr><td><a href="https://github.com/pygame/pygame" target="_blank" rel="noopener">pygame</a></td><td>LGPL-2.1</td><td>Desktop simulator window</td></tr>
+          <tr><td><a href="https://pytest.org/" target="_blank" rel="noopener">pytest</a> &amp;
+            <a href="https://github.com/pytest-dev/pytest-cov" target="_blank" rel="noopener">pytest-cov</a></td><td>MIT</td><td>Test suite (development only)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h5 class="fs-6 fw-semibold mb-2">Web front end (loaded from public CDNs)</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped mb-0 align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Library</th>
+            <th scope="col">Licence</th>
+            <th scope="col">Used for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="https://vuejs.org/" target="_blank" rel="noopener">Vue 3</a></td><td>MIT</td><td>The settings interface</td></tr>
+          <tr><td><a href="https://getbootstrap.com/" target="_blank" rel="noopener">Bootstrap 5</a></td><td>MIT</td><td>Page layout and controls</td></tr>
+          <tr><td><a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener">Bootstrap Icons</a></td><td>MIT</td><td>Interface icons</td></tr>
+          <tr><td><a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a></td><td>BSD-2-Clause</td><td>The location maps</td></tr>
+          <tr><td><a href="https://geoman.io/docs" target="_blank" rel="noopener">Leaflet-Geoman</a></td><td>MIT</td><td>Drawing the advanced search zone on the map</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-type me-2"></i>Fonts</h2>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped mb-0 align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Font</th>
+            <th scope="col">Licence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>The X11 "Misc Fixed" bitmap fonts (4x6, 5x8, 6x12, 7x13/14, 8x13 and their variants)</td>
+            <td>Public domain, by Markus Kuhn.</td>
+          </tr>
+          <tr>
+            <td><code>tom-thumb.bdf</code></td>
+            <td>MIT, by Robey Pointer (<a href="https://robey.lag.net/2010/01/23/tiny-monospace-font.html" target="_blank" rel="noopener">tom thumb</a>).</td>
+          </tr>
+          <tr>
+            <td><code>texgyre-27.bdf</code>, converted from TeX Gyre Adventor</td>
+            <td>
+              <a href="https://www.gust.org.pl/projects/e-foundry/tex-gyre" target="_blank" rel="noopener">GUST Font Licence</a>
+              (legally equivalent to the LaTeX Project Public Licence 1.3c+). Free to use and
+              redistribute; modified copies are asked to change the font's name.</td>
+          </tr>
+          <tr>
+            <td><code>5x8-custom.bdf</code>, a project-specific variant</td>
+            <td>Part of Flight Tracker, under the GNU GPL v3.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3 p-4">
+    <h2 class="fs-5 fw-semibold mb-2"><i class="bi bi-award me-2"></i>Other credits</h2>
+    <ul class="mb-2 ps-3">
+      <li>
+        <a href="https://github.com/c0wsaysmoo/plane-tracker-rgb-pi" target="_blank" rel="noopener">plane-tracker-rgb-pi</a>
+        by c0wsaysmoo - early versions of Flight Tracker started from parts of that project with the
+        author's kind permission; it publishes no licence file.
+      </li>
+      <li>The default image gamma (2.6) follows
+        <a href="https://learn.adafruit.com/image-correction-for-rgb-led-matrices/overview" target="_blank" rel="noopener">Adafruit's image-correction guidance</a>
+        for RGB LED matrices.</li>
+      <li>The Ko-fi logomark shown in the footer is Ko-fi's logo, self-hosted and used only to link
+        to the donation page.</li>
+      <li>The weather, moon and direction icons, the splash screen, and the Flight Tracker logo are
+        the project's own artwork and follow the same GPL v3 licence as the code.</li>
+    </ul>
+    <p class="text-muted small mb-0">
+      This page reflects a review of each source's published terms as of this release. Where a
+      provider publishes its own terms, those terms govern your use of its data. Displayed flight,
+      weather and satellite data may be delayed, incomplete or inaccurate - each source says so
+      itself. This page is provided for information, not as legal advice.
+    </p>
+  </div>
+
+  {% include "footer.html" %}
+</div>
+</body>
+</html>
