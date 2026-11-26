@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
+- Plane Info Row font unified: the aircraft make & model row and all text
+  in custom templates now use the same small-symbol font the telemetry row
+  already used, instead of a wider regular font. Everything on the bar now
+  shares one consistent size.
 - New Plane Info Row option "Preserve Case" (off by default): when enabled
   the aircraft make & model is shown exactly as the data source provides it,
   e.g. "Boeing 737-800", instead of being upper-cased to "BOEING 737-800".

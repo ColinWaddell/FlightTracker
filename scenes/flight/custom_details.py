@@ -50,7 +50,7 @@ NOT_DEFINED_TEXT = "<custom scroller not defined>"
 # Field metadata
 # ---------------------------------------------------------------------------
 
-# Text fields - rendered with fonts.regular, colour THEME_PLANE.
+# Text fields - rendered with fonts.small_symbols, colour THEME_PLANE.
 TEXT_FIELDS: frozenset[str] = frozenset(
     {
         "callsign",
@@ -486,7 +486,7 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
     a single span with the ``<custom scroller not defined>`` warning.
     """
     if not template or not template.strip():
-        return [Span(TC(THEME_PLANE), fonts.regular, NOT_DEFINED_TEXT)]
+        return [Span(TC(THEME_PLANE), fonts.small_symbols, NOT_DEFINED_TEXT)]
 
     tokens = parse_template(template)
     spans: Spans = []
@@ -494,7 +494,7 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
     for token in tokens:
         if isinstance(token, LiteralToken):
             if token.text:
-                spans.append(Span(TC(THEME_PLANE), fonts.regular, token.text))
+                spans.append(Span(TC(THEME_PLANE), fonts.small_symbols, token.text))
 
         elif isinstance(token, FieldToken):
             field_spans = _build_field_spans(token, flight, cfg)
@@ -516,7 +516,7 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
                 index = _direction_index(heading)
                 text = HEADING_ARROW_DIRECTIONS[index]
                 colour = _resolve_colour(token.colour, THEME_PLANE)
-                spans.append(Span(colour, fonts.regular, text))
+                spans.append(Span(colour, fonts.small_symbols, text))
             elif token.name == "bearing_from_home_arrow":
                 # Dynamic symbol: the arrow points from the observer toward
                 # the aircraft - the direction to look.  Nothing renders
@@ -535,7 +535,7 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
                     index = _direction_index(flight.bearing_from_home)
                     text = HEADING_ARROW_DIRECTIONS[index]
                     colour = _resolve_colour(token.colour, THEME_PLANE)
-                    spans.append(Span(colour, fonts.regular, text))
+                    spans.append(Span(colour, fonts.small_symbols, text))
             else:
                 glyph = SYMBOL_MAP.get(token.name, "")
                 if glyph:
@@ -544,7 +544,7 @@ def build_custom_spans(template: str, flight: Flight, cfg: Config) -> Spans:
 
     # If all spans are empty or the list is empty, show the warning.
     if not spans or all(s.text == "" for s in spans):
-        return [Span(TC(THEME_PLANE), fonts.regular, NOT_DEFINED_TEXT)]
+        return [Span(TC(THEME_PLANE), fonts.small_symbols, NOT_DEFINED_TEXT)]
 
     return spans
 
@@ -559,13 +559,12 @@ def _build_field_spans(token: FieldToken, flight: Flight, cfg: Config) -> Spans:
         if not text:
             return []
         colour = _resolve_colour(token.colour, THEME_PLANE)
-        # Text fields use regular font; plane model and its ICAO type
-        # designator are uppercased to match the existing model_spans()
-        # behaviour, unless the "preserve case" setting keeps whatever the
-        # data source provided.
+        # Plane model and its ICAO type designator are uppercased to match
+        # the historical look, unless the "preserve case" setting keeps
+        # whatever the data source provided.
         if token.field in ("plane", "icao_type") and not cfg.details_preserve_case:
             text = text.upper()
-        return [Span(colour, fonts.regular, text)]
+        return [Span(colour, fonts.small_symbols, text)]
 
     # Telemetry fields - value + optional unit suffix.
     if token.field in TELEMETRY_FIELDS:

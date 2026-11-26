@@ -414,7 +414,7 @@ class FlightScene:
         # "preserve case" setting keeps the source's mixed case.
         if not cfg.details_preserve_case:
             text = text.upper()
-        return [Span(TC(THEME_PLANE), fonts.regular, text)]
+        return [Span(TC(THEME_PLANE), fonts.small_symbols, text)]
 
     def telemetry_spans(self, cfg) -> Spans:
         flight = self.flights[self.flight_index]
@@ -458,21 +458,19 @@ class FlightScene:
             Span(ico, f, "*"),
         ]
 
-    def _squawk_span(self, squawk: str, cfg, dark: bool) -> Span:
-        """Prefix span for the given blink phase, in the mode's font.
+    def _squawk_span(self, squawk: str, dark: bool) -> Span:
+        """Prefix span for the given blink phase.
 
-        The prefix font matches the details scroller's font size: telemetry
-        glyphs use the small symbol font; model and custom templates use the
-        regular font.
+        The prefix uses fonts.small_symbols - the same font the details bar
+        itself uses in every display mode.
         """
-        font = fonts.small_symbols if cfg.details == 1 else fonts.regular
         return Span(
             squawk_blink_colour(TC(THEME_SQUAWK_EMERGENCY), dark),
-            font,
+            fonts.small_symbols,
             squawk,
         )
 
-    def _make_squawk_scroller(self, squawk: str, cfg) -> Scroller | None:
+    def _make_squawk_scroller(self, squawk: str, dark: bool) -> Scroller | None:
         """Build the fixed emergency-squawk prefix, or None when absent.
 
         The prefix is a bounce Scroller whose viewport width exactly equals
@@ -482,7 +480,7 @@ class FlightScene:
         """
         if not squawk:
             return None
-        spans: Spans = [self._squawk_span(squawk, cfg, self.squawk_blink_dark)]
+        spans: Spans = [self._squawk_span(squawk, dark)]
         return Scroller(
             self.panel,
             self.canvas,
@@ -505,7 +503,9 @@ class FlightScene:
         if squawk_state != self.last_squawk_state:
             if self.squawk_scroller is not None:
                 self.squawk_scroller.clear()
-            self.squawk_scroller = self._make_squawk_scroller(squawk, cfg)
+            self.squawk_scroller = self._make_squawk_scroller(
+                squawk, self.squawk_blink_dark
+            )
             self.last_squawk_state = squawk_state
             # Fresh appearance: hold the bright phase for a full period.
             self.squawk_blink_at = time.time() + SQUAWK_BLINK_PERIOD_S
@@ -517,7 +517,7 @@ class FlightScene:
             self.squawk_blink_dark = not self.squawk_blink_dark
             self.squawk_blink_at = time.time() + SQUAWK_BLINK_PERIOD_S
             self.squawk_scroller.update(
-                [self._squawk_span(squawk, cfg, self.squawk_blink_dark)]
+                [self._squawk_span(squawk, self.squawk_blink_dark)]
             )
 
         # The details viewport starts immediately after the fixed prefix

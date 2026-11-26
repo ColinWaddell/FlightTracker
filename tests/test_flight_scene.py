@@ -1096,8 +1096,7 @@ class TestEmergencySquawkCode:
 class TestEmergencySquawkPrefix:
     """draw_plane_details() pins the code to the left of the scroller."""
 
-    # 4 digits at 6px (fonts.regular) / 5px (fonts.small_symbols) width.
-    REGULAR_DIGIT_WIDTH = 6
+    # 4 digits at 5px width (fonts.small_symbols).
     SMALL_DIGIT_WIDTH = 5
 
     def _make_scene(self, flights):
@@ -1130,7 +1129,7 @@ class TestEmergencySquawkPrefix:
         from setup import fonts
 
         squawk = "7700"
-        prefix = len(squawk) * self.REGULAR_DIGIT_WIDTH
+        prefix = len(squawk) * self.SMALL_DIGIT_WIDTH
         scene = self._make_scene([Flight(plane="Boeing 787", squawk=squawk)])
 
         self._draw(scene, self._cfg(details=0))
@@ -1143,7 +1142,7 @@ class TestEmergencySquawkPrefix:
         assert scene.squawk_scroller.width == prefix
         assert scene.details_scroller.x == prefix
         assert scene.details_scroller.width == 64 - prefix
-        assert scene.squawk_scroller._spans[0].font is fonts.regular
+        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
         assert scene.squawk_scroller._spans[0].text == squawk
 
     def test_prefix_uses_emergency_theme_colour(self):
@@ -1184,7 +1183,7 @@ class TestEmergencySquawkPrefix:
         scene = self._make_scene([Flight(squawk=squawk)])
         cfg = self._cfg(details=0)
         self._draw(scene, cfg)
-        assert scene.squawk_scroller._spans[0].font is fonts.regular
+        assert scene.squawk_scroller._spans[0].font is fonts.small_symbols
 
         cfg.data_store["details"] = 1
         self._draw(scene, cfg)
