@@ -26,6 +26,7 @@ HERMETIC_PAGES = [
     "/api",
     "/cache-clear",
     "/backup/restore",
+    "/attributions",
 ]
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
@@ -33,6 +34,7 @@ STATIC_KOFI_DIR = Path(__file__).resolve().parent.parent / "web" / "static" / "k
 # Templates that carry the footer (login.html deliberately does not).
 PAGE_TEMPLATES = [
     "api_usage.html",
+    "attributions.html",
     "cached_data.html",
     "clear_cache.html",
     "live_data.html",

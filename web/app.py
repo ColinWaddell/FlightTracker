@@ -15,6 +15,7 @@ POST /update/apply   -> apply update via git + pip, then restart (requires login
 GET  /debug-config   -> download config JSON with secrets redacted
 GET  /logs           -> view in-memory log buffer
 GET  /logs/download  -> download full log buffer as .txt
+GET  /attributions   -> data-source and licensing attribution page
 """
 
 from __future__ import annotations
@@ -1916,3 +1917,15 @@ def api_usage_clear():
     usage_tally.clear()
     logger.info("Provider usage tallies cleared")
     return redirect(url_for("api_usage"))
+
+
+# ---------------------------------------------------------------------------
+# Attribution page - credits for the data sources and open-source software
+# ---------------------------------------------------------------------------
+
+
+@app.route("/attributions")
+@login_required
+def attributions():
+    """Data-source and open-source attribution/licensing page."""
+    return render_template("attributions.html", active_page="attributions")

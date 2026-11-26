@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
+- New "Attribution" link in the web interface footer opening a page
+  that lists every flight, weather and satellite data source the app
+  can use together with its licence and attribution requirements, plus
+  the open-source libraries, bundled lookup data and fonts the project
+  builds on
+
 ## [2.12.8]
 
 - New Hardware option "Gamma Correction" (on by default) for images
