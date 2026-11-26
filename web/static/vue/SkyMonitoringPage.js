@@ -295,7 +295,7 @@ export default defineComponent({
         <input type="checkbox" class="form-check-input" id="details_preserve_case"
                name="details_preserve_case" v-model="store.config.details_preserve_case" />
         <label class="form-check-label" for="details_preserve_case">
-          Show the aircraft make &amp; model in normal case
+          Show the aircraft make &amp; model as supplied from the API.
         </label>
       </div>
       <div class="form-text text-muted small">
