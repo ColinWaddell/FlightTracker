@@ -346,7 +346,7 @@ class TestAirlineLogoWidget:
     def test_draw_blanks_then_draws_image(self):
         panel, canvas = _make_panel_and_canvas()
         widget = AirlineLogoWidget(panel)
-        # BCO icon exists in assets/airlines/airline_logos_16/
+        # BCO icon exists in assets/lookups/airline_logos_16/
         flight = Flight(airline_icao="BCO")
         widget.draw(canvas, flight)
         # Should have blanked the region (set_pixel calls) then drawn the image

@@ -29,7 +29,6 @@ import secrets
 import sys
 import threading
 import time
-from pathlib import Path
 
 from flask import (
     Flask,
@@ -48,6 +47,7 @@ from setup.configuration import CONFIG_PATH, PLATFORM_DATA_DIR, Config
 from setup.logging import get_buffer
 from utilities.aircraft_types import canonicalise
 from utilities.flight import Flight
+from utilities.lookup_data import LOOKUPS_DIR
 from utilities.lookups import cache as routes_cache
 from utilities.lookups import usage as usage_tally
 from utilities.tle_manager import TLE_CACHE_PATH, TLE_CACHE_TTL
@@ -1178,7 +1178,7 @@ def load_airports_json() -> str:
             if Config.instance().airport_lookup_full
             else "airports.json"
         )
-        airports_path = Path(__file__).parent.parent / "assets" / filename
+        airports_path = LOOKUPS_DIR / filename
         try:
             with open(airports_path, encoding="utf-8") as fh:
                 AIRPORTS_JSON = fh.read()

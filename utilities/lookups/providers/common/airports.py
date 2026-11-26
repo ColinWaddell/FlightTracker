@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+
+from utilities.lookup_data import LOOKUPS_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def _load_iata_to_icao() -> None:
 
 
 def _load_code_map(filename: str) -> dict[str, str]:
-    path = Path(__file__).parents[4] / "assets" / filename
+    path = LOOKUPS_DIR / filename
     if not path.exists():
         return {}
     try:

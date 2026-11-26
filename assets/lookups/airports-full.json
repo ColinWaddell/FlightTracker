@@ -109,11 +109,6 @@
     "municipality": "Hobart",
     "name": "St Mary Medical Center Heliport"
   },
-  "00IS": {
-    "country_name": "United States",
-    "municipality": "Kings",
-    "name": "Hayenga's Cant Find Farms Airport"
-  },
   "00KS": {
     "country_name": "United States",
     "municipality": "Gardner",
@@ -1092,7 +1087,7 @@
   "03AR": {
     "country_name": "United States",
     "municipality": "Malvern",
-    "name": "Hscmh Heliport"
+    "name": "BHMC-HSC Heliport"
   },
   "03AZ": {
     "country_name": "United States",
@@ -2679,6 +2674,11 @@
     "municipality": "Hutto",
     "name": "Cross-Country Estates Airport"
   },
+  "07TT": {
+    "country_name": "United States",
+    "municipality": "Brackettville",
+    "name": "P7 Kettle Ranch Airport"
+  },
   "07TX": {
     "country_name": "United States",
     "municipality": "Princeton",
@@ -3107,7 +3107,7 @@
   "09AR": {
     "country_name": "United States",
     "municipality": "Magnolia",
-    "name": "Magnolia Hospital Heliport"
+    "name": "BHMC-Magnolia Heliport"
   },
   "09AZ": {
     "country_name": "United States",
@@ -3438,11 +3438,6 @@
     "country_name": "United States",
     "municipality": "Centreville",
     "name": "Bibb County Airport"
-  },
-  "0A9": {
-    "country_name": "United States",
-    "municipality": "Elizabethton",
-    "name": "Elizabethton Municipal Airport"
   },
   "0AA0": {
     "country_name": "United States",
@@ -4359,11 +4354,6 @@
     "municipality": "Chalmers",
     "name": "Marshall Field"
   },
-  "0II7": {
-    "country_name": "United States",
-    "municipality": "Greenfield",
-    "name": "Frost Field"
-  },
   "0II8": {
     "country_name": "United States",
     "municipality": "Lowell",
@@ -4693,11 +4683,6 @@
     "country_name": "United States",
     "municipality": "Jerseyville",
     "name": "Koenig Airport"
-  },
-  "0LL4": {
-    "country_name": "United States",
-    "municipality": "La Salle",
-    "name": "Flaherty Field"
   },
   "0LL5": {
     "country_name": "United States",
@@ -5947,7 +5932,7 @@
   "0TN3": {
     "country_name": "United States",
     "municipality": "Knoxville",
-    "name": "Park West Heliport"
+    "name": "Park West Helipad"
   },
   "0TN4": {
     "country_name": "United States",
@@ -7199,6 +7184,11 @@
     "municipality": "Richmond",
     "name": "Pentecost Airport"
   },
+  "12IL": {
+    "country_name": "United States",
+    "municipality": "South Beloit",
+    "name": "Nichols Aero Airport"
+  },
   "12IN": {
     "country_name": "United States",
     "municipality": "Darmstadt",
@@ -7316,8 +7306,8 @@
   },
   "12NR": {
     "country_name": "United States",
-    "municipality": "Supply",
-    "name": "Brunswick Novant Medical Center Heliport"
+    "municipality": "Bolivia",
+    "name": "Novant Health Brunswick Medical Center Heliport"
   },
   "12NY": {
     "country_name": "United States",
@@ -7464,6 +7454,11 @@
     "municipality": "Tabay",
     "name": "Rincón de Luna Airport"
   },
+  "1309": {
+    "country_name": "Argentina",
+    "municipality": "Localidad",
+    "name": "Romang Airfield"
+  },
   "1356": {
     "country_name": "Argentina",
     "municipality": "San Roque",
@@ -7578,11 +7573,6 @@
     "country_name": "United States",
     "municipality": "Andover",
     "name": "Daniel's Landing Airport"
-  },
-  "13KY": {
-    "country_name": "United States",
-    "municipality": "Owensboro",
-    "name": "Miles Airport"
   },
   "13LA": {
     "country_name": "United States",
@@ -9046,8 +9036,8 @@
   },
   "17TA": {
     "country_name": "United States",
-    "municipality": "Hurst",
-    "name": "Heli-Dyne Systems Inc Heliport"
+    "municipality": "Denton",
+    "name": "Joy Airport"
   },
   "17TE": {
     "country_name": "United States",
@@ -9069,11 +9059,6 @@
     "municipality": "Houston",
     "name": "Allen Condo/Tower Heliport"
   },
-  "17TX": {
-    "country_name": "United States",
-    "municipality": "Stephenville",
-    "name": "Kimzey Airport"
-  },
   "17V": {
     "country_name": "United States",
     "municipality": "Haxtun",
@@ -9086,8 +9071,8 @@
   },
   "17WA": {
     "country_name": "United States",
-    "municipality": "Startup",
-    "name": "Roesler Timber Company Heliport"
+    "municipality": "Vancouver",
+    "name": "Fly For Fun Airport"
   },
   "17WI": {
     "country_name": "United States",
@@ -9439,11 +9424,6 @@
     "municipality": "Goliad",
     "name": "Lantana Ridge Airport"
   },
-  "18XS": {
-    "country_name": "United States",
-    "municipality": "Ozona",
-    "name": "Oso Canyon Airport"
-  },
   "18Y": {
     "country_name": "United States",
     "municipality": "Milaca",
@@ -9699,6 +9679,11 @@
     "municipality": "Freer",
     "name": "Silverhorn Ranch Airport"
   },
+  "19TT": {
+    "country_name": "United States",
+    "municipality": "Montgomery",
+    "name": "Gator Bend Airport"
+  },
   "19TX": {
     "country_name": "United States",
     "municipality": "Austin",
@@ -9773,6 +9758,11 @@
     "country_name": "United States",
     "municipality": "Prattville",
     "name": "Prattville - Grouby Field"
+  },
+  "1AA1": {
+    "country_name": "United States",
+    "municipality": "Nuiqsut",
+    "name": "Kogru River Airport"
   },
   "1AK0": {
     "country_name": "United States",
@@ -10451,8 +10441,8 @@
   },
   "1FL3": {
     "country_name": "United States",
-    "municipality": "Lake City",
-    "name": "Z Ranch Airport"
+    "municipality": "Port St. Lucie",
+    "name": "Florida Coast Medical Center Heliport"
   },
   "1FL4": {
     "country_name": "United States",
@@ -12134,11 +12124,6 @@
     "municipality": "Oregon City",
     "name": "Skyhill Airport"
   },
-  "1OR8": {
-    "country_name": "United States",
-    "municipality": "Oregon City",
-    "name": "Clackamas County Redsoils Heliport"
-  },
   "1OR9": {
     "country_name": "United States",
     "municipality": "Oregon City",
@@ -12826,8 +12811,8 @@
   },
   "1WA3": {
     "country_name": "United States",
-    "municipality": "Everett",
-    "name": "Calkins Equipment Company Heliport"
+    "municipality": "Paterson",
+    "name": "Columbia Crest Winery Airport"
   },
   "1WA4": {
     "country_name": "United States",
@@ -13063,6 +13048,11 @@
     "country_name": "Argentina",
     "municipality": "Smith",
     "name": "Estancia 13 de Abril Airport"
+  },
+  "2099": {
+    "country_name": "Argentina",
+    "municipality": "Germania",
+    "name": "Establicimiento Las Teresas Airfield"
   },
   "20A": {
     "country_name": "United States",
@@ -13831,8 +13821,8 @@
   },
   "22IS": {
     "country_name": "United States",
-    "municipality": "Carman",
-    "name": "Johnson Farm Airport"
+    "municipality": "Durand",
+    "name": "Steward Restricted Landing Area"
   },
   "22JY": {
     "country_name": "United States",
@@ -14367,7 +14357,7 @@
   "23TA": {
     "country_name": "United States",
     "municipality": "Whitewright",
-    "name": "Rowland R Airfield"
+    "name": "Oaks & Helios Airfield"
   },
   "23TE": {
     "country_name": "United States",
@@ -15486,8 +15476,8 @@
   },
   "26XA": {
     "country_name": "United States",
-    "municipality": "Westlake",
-    "name": "Solana North Heliport"
+    "municipality": "Hamilton",
+    "name": "LI-Luframost Ranch Airport"
   },
   "26XS": {
     "country_name": "United States",
@@ -16369,11 +16359,6 @@
     "municipality": "Michigan City",
     "name": "Norm's Airport"
   },
-  "29IL": {
-    "country_name": "United States",
-    "municipality": "Lostant",
-    "name": "Judd Farms Airport"
-  },
   "29IN": {
     "country_name": "United States",
     "municipality": "Columbia City",
@@ -16576,8 +16561,8 @@
   },
   "29XS": {
     "country_name": "United States",
-    "municipality": "Diboll",
-    "name": "Temple Eastex Heliport"
+    "municipality": "Anderson",
+    "name": "The Zoo Airport"
   },
   "2A0": {
     "country_name": "United States",
@@ -17034,11 +17019,6 @@
     "municipality": "Lake Arrowhead",
     "name": "Lake Arrowhead Airport"
   },
-  "2CO0": {
-    "country_name": "United States",
-    "municipality": "Fort Collins",
-    "name": "Heli-One American Support, LLC Heliport"
-  },
   "2CO1": {
     "country_name": "United States",
     "municipality": "Longmont",
@@ -17212,7 +17192,7 @@
   "2FA7": {
     "country_name": "United States",
     "municipality": "Hastings",
-    "name": "Kathrinstadt Airport"
+    "name": "Frontier Airport"
   },
   "2FA8": {
     "country_name": "United States",
@@ -17312,7 +17292,7 @@
   "2FL8": {
     "country_name": "United States",
     "municipality": "Brooksville",
-    "name": "James Heliport"
+    "name": "Jame's Heliport"
   },
   "2FL9": {
     "country_name": "United States",
@@ -17538,11 +17518,6 @@
     "country_name": "United States",
     "municipality": "McCall",
     "name": "Splan Airport"
-  },
-  "2ID6": {
-    "country_name": "United States",
-    "municipality": "Fruitland",
-    "name": "Lemons Field"
   },
   "2ID7": {
     "country_name": "United States",
@@ -17957,7 +17932,7 @@
   "2LA3": {
     "country_name": "United States",
     "municipality": "Opelousas",
-    "name": "Baham Airstrip"
+    "name": "Baham Airstrip [CLOSED]"
   },
   "2LA4": {
     "country_name": "United States",
@@ -18179,6 +18154,11 @@
     "municipality": "Charleston",
     "name": "Heartstone Farm Airport"
   },
+  "2MI0": {
+    "country_name": "United States",
+    "municipality": "Grosse Ile",
+    "name": "East River Heliport"
+  },
   "2MI1": {
     "country_name": "United States",
     "municipality": "Grand Rapids",
@@ -18248,11 +18228,6 @@
     "country_name": "United States",
     "municipality": "Blue Earth",
     "name": "Cornfield Canyon Airport"
-  },
-  "2MN5": {
-    "country_name": "United States",
-    "municipality": "Pequot Lakes",
-    "name": "Emma's Bay Seaplane Base"
   },
   "2MN6": {
     "country_name": "United States",
@@ -18558,11 +18533,6 @@
     "country_name": "United States",
     "municipality": "Mercer",
     "name": "Makeeff Airport"
-  },
-  "2ND3": {
-    "country_name": "United States",
-    "municipality": "Grand Forks",
-    "name": "Casslindan Airport"
   },
   "2ND4": {
     "country_name": "United States",
@@ -20546,8 +20516,8 @@
   },
   "31IL": {
     "country_name": "United States",
-    "municipality": "Tamms",
-    "name": "Tamms Correctional Center Heliport"
+    "municipality": "Olney",
+    "name": "Olney Air Evac 150 Heliport"
   },
   "31IN": {
     "country_name": "United States",
@@ -20742,7 +20712,7 @@
   "32AR": {
     "country_name": "United States",
     "municipality": "Stuttgart",
-    "name": "Stuttgart Memorial Hospital Heliport"
+    "name": "BHMC-Stuttgart Heliport"
   },
   "32AZ": {
     "country_name": "United States",
@@ -21148,6 +21118,11 @@
     "country_name": "United States",
     "municipality": "Manchester",
     "name": "Seagate Heliport"
+  },
+  "33MD": {
+    "country_name": "United States",
+    "municipality": "Ewell",
+    "name": "Coastal Seaplanes, Smith Island Seaplane Base"
   },
   "33MI": {
     "country_name": "United States",
@@ -22969,6 +22944,11 @@
     "municipality": "Crystal Falls",
     "name": "Huber Airport"
   },
+  "39MN": {
+    "country_name": "United States",
+    "municipality": "Montevideo",
+    "name": "Gades Farm Airport"
+  },
   "39MO": {
     "country_name": "United States",
     "municipality": "Springfield",
@@ -23927,12 +23907,7 @@
   "3HO": {
     "country_name": "United States",
     "municipality": "Hobart",
-    "name": "Hobart Sky Ranch Airport"
-  },
-  "3I2": {
-    "country_name": "United States",
-    "municipality": "Point Pleasant",
-    "name": "Mason County Airport"
+    "name": "Hobart Sky Ranch Airport [CLOSED]"
   },
   "3I3": {
     "country_name": "United States",
@@ -23964,6 +23939,11 @@
     "municipality": "Davenport",
     "name": "Davia Heliport"
   },
+  "3IA4": {
+    "country_name": "United States",
+    "municipality": "DeWitt",
+    "name": "Cy Landing"
+  },
   "3IA6": {
     "country_name": "United States",
     "municipality": "Ottumwa",
@@ -23981,8 +23961,8 @@
   },
   "3IA9": {
     "country_name": "United States",
-    "municipality": "Rake",
-    "name": "Rake Airport"
+    "municipality": "Malone",
+    "name": "Schnack Field"
   },
   "3ID2": {
     "country_name": "United States",
@@ -24058,6 +24038,11 @@
     "country_name": "United States",
     "municipality": "Arcola",
     "name": "Dick's Strip"
+  },
+  "3IL0": {
+    "country_name": "United States",
+    "municipality": "Toulon",
+    "name": "Dennis Webster Heliport"
   },
   "3IL1": {
     "country_name": "United States",
@@ -24539,11 +24524,6 @@
     "municipality": "Dartmouth",
     "name": "Happy Heliport"
   },
-  "3MA8": {
-    "country_name": "United States",
-    "municipality": "Gloucester",
-    "name": "Sadler Hill Heliport"
-  },
   "3MA9": {
     "country_name": "United States",
     "municipality": "Marston Mills",
@@ -24733,6 +24713,11 @@
     "country_name": "United States",
     "municipality": "Bonne Terre",
     "name": "Kelly Field"
+  },
+  "3MO8": {
+    "country_name": "United States",
+    "municipality": "Fort Leonard Wood",
+    "name": "Fort Leonard Wood Hospital Heliport"
   },
   "3MS0": {
     "country_name": "United States",
@@ -28354,6 +28339,11 @@
     "municipality": "Hensley",
     "name": "Heird Hill Farm Airport"
   },
+  "47AZ": {
+    "country_name": "United States",
+    "municipality": "Meadview",
+    "name": "New Frontier Heliport"
+  },
   "47CA": {
     "country_name": "United States",
     "municipality": "Lake Arrowhead",
@@ -28373,11 +28363,6 @@
     "country_name": "United States",
     "municipality": "New Raymer",
     "name": "Mile Hi Airport"
-  },
-  "47FA": {
-    "country_name": "United States",
-    "municipality": "Tavernier",
-    "name": "Canal Heliport"
   },
   "47FD": {
     "country_name": "United States",
@@ -29237,7 +29222,7 @@
   "4A5": {
     "country_name": "United States",
     "municipality": "Marshall",
-    "name": "Searcy County Airport"
+    "name": "Buffalo River Airport"
   },
   "4A6": {
     "country_name": "United States",
@@ -29544,11 +29529,6 @@
     "municipality": "Temecula",
     "name": "Wolfranch Heliport"
   },
-  "4CL3": {
-    "country_name": "United States",
-    "municipality": "Williams",
-    "name": "Antelope Valley Ranch Airport"
-  },
   "4CL4": {
     "country_name": "United States",
     "municipality": "Lucerne Valley",
@@ -29614,11 +29594,6 @@
     "municipality": "Meeker",
     "name": "Pioneers Heliport"
   },
-  "4CO6": {
-    "country_name": "United States",
-    "municipality": "Wheat Ridge",
-    "name": "Lutheran Medical Center Heliport"
-  },
   "4CO7": {
     "country_name": "United States",
     "municipality": "Elbert",
@@ -29626,13 +29601,13 @@
   },
   "4CO8": {
     "country_name": "United States",
-    "municipality": "Castle Rock",
-    "name": "Kelgun Airport"
+    "municipality": "Pagosa Springs",
+    "name": "Pagosa Springs Medical Center Heliport"
   },
   "4CO9": {
     "country_name": "United States",
-    "municipality": "Beaver Creek",
-    "name": "Beaver Creek Heliport"
+    "municipality": "Brighton",
+    "name": "Maria Vilma Field"
   },
   "4D0": {
     "country_name": "United States",
@@ -29953,6 +29928,11 @@
     "country_name": "United States",
     "municipality": "Clarion",
     "name": "Iowa Speciality Hospital Heliport"
+  },
+  "4IA6": {
+    "country_name": "United States",
+    "municipality": "DeWitt",
+    "name": "Spies Field"
   },
   "4IA7": {
     "country_name": "United States",
@@ -31007,7 +30987,7 @@
   "4OA1": {
     "country_name": "United States",
     "municipality": "Lancaster",
-    "name": "Fairfield Medical Center Heliport"
+    "name": "Adena Fairfield Medical Center Heliport"
   },
   "4OA8": {
     "country_name": "United States",
@@ -32381,8 +32361,8 @@
   },
   "51IL": {
     "country_name": "United States",
-    "municipality": "Mansfield",
-    "name": "Marvin D Bradd Airport"
+    "municipality": "Big Rock",
+    "name": "Roca Grande RLA"
   },
   "51IN": {
     "country_name": "United States",
@@ -33129,11 +33109,6 @@
     "municipality": "San Benito",
     "name": "Kornegay Private Airport"
   },
-  "5407": {
-    "country_name": "South Africa",
-    "municipality": "Hiltonia",
-    "name": "Baragwanath Airfield"
-  },
   "54AK": {
     "country_name": "United States",
     "municipality": "Wasilla",
@@ -33141,8 +33116,8 @@
   },
   "54AL": {
     "country_name": "United States",
-    "municipality": "Daphne",
-    "name": "Belforest Field"
+    "municipality": "Fairhope",
+    "name": "Thomas Hospital Helistop"
   },
   "54AR": {
     "country_name": "United States",
@@ -34019,11 +33994,6 @@
     "municipality": "Boron",
     "name": "Boron Airstrip"
   },
-  "57CN": {
-    "country_name": "United States",
-    "municipality": "Rancho Murieta",
-    "name": "Van Vleck Airport"
-  },
   "57CO": {
     "country_name": "United States",
     "municipality": "Fort Collins",
@@ -34163,6 +34133,11 @@
     "country_name": "United States",
     "municipality": "Athens",
     "name": "Athens Emergency Med-Evac Heliport"
+  },
+  "57OH": {
+    "country_name": "United States",
+    "municipality": "Amanda",
+    "name": "Flying W Airport"
   },
   "57OI": {
     "country_name": "United States",
@@ -34897,7 +34872,7 @@
   "5AR5": {
     "country_name": "United States",
     "municipality": "Little Rock",
-    "name": "Baptist Health Extended Care Heliport"
+    "name": "BHMC-Little Rock / MedFlight Heliport"
   },
   "5AR6": {
     "country_name": "United States",
@@ -35168,6 +35143,11 @@
     "country_name": "United States",
     "municipality": "Del Norte",
     "name": "La Garita Creek Ranch Airport"
+  },
+  "5CO7": {
+    "country_name": "United States",
+    "municipality": "Wellington",
+    "name": "Virga Ridge Field"
   },
   "5CO8": {
     "country_name": "United States",
@@ -35908,11 +35888,6 @@
     "country_name": "United States",
     "municipality": "Moreauville",
     "name": "Kent's Flying Service Airport"
-  },
-  "5LA2": {
-    "country_name": "United States",
-    "municipality": "Morgan City",
-    "name": "Mobil Heliport"
   },
   "5LA3": {
     "country_name": "United States",
@@ -39161,8 +39136,8 @@
   },
   "66FA": {
     "country_name": "United States",
-    "municipality": "Miami Gardens",
-    "name": "Tootsies Cabaret Heliport"
+    "municipality": "Okeechobee",
+    "name": "Priolo Heliport"
   },
   "66FD": {
     "country_name": "United States",
@@ -39223,11 +39198,6 @@
     "country_name": "United States",
     "municipality": "Kalamazoo",
     "name": "East Lake Airport"
-  },
-  "66MN": {
-    "country_name": "United States",
-    "municipality": "Clara City",
-    "name": "Howard's Airport"
   },
   "66MO": {
     "country_name": "United States",
@@ -39518,6 +39488,11 @@
     "country_name": "United States",
     "municipality": "Sheridan",
     "name": "George Airport"
+  },
+  "67OH": {
+    "country_name": "United States",
+    "municipality": "Rattlesnake Island",
+    "name": "Rattlesnake Island Helideck"
   },
   "67OI": {
     "country_name": "United States",
@@ -40042,7 +40017,7 @@
   "69OK": {
     "country_name": "United States",
     "municipality": "Fairland",
-    "name": "Green Country Airpark"
+    "name": "Uncle Kenny's Aerodrome"
   },
   "69OR": {
     "country_name": "United States",
@@ -41834,11 +41809,6 @@
     "municipality": "Okemah",
     "name": "Okemah Muscogee (Creek) Nation Community Hospital Heliport"
   },
-  "6OK7": {
-    "country_name": "United States",
-    "municipality": "Welch",
-    "name": "Bryan Brothers Ranch Airport"
-  },
   "6OK8": {
     "country_name": "United States",
     "municipality": "Eakly",
@@ -42673,6 +42643,11 @@
     "country_name": "United States",
     "municipality": "Death Valley Junction",
     "name": "Amargosa Airport"
+  },
+  "70CO": {
+    "country_name": "United States",
+    "municipality": "Villa Grove",
+    "name": "Bonanza Airpark"
   },
   "70D": {
     "country_name": "United States",
@@ -45467,7 +45442,7 @@
   "7CL1": {
     "country_name": "United States",
     "municipality": "Oakland",
-    "name": "Children's Hospital Oakland Heliport"
+    "name": "UCSF Benioff Childrens Hospital Heliport"
   },
   "7CL2": {
     "country_name": "United States",
@@ -45593,6 +45568,11 @@
     "country_name": "United States",
     "municipality": "Orlando",
     "name": "Premium Heliport"
+  },
+  "7FA7": {
+    "country_name": "United States",
+    "municipality": "Eustis",
+    "name": "Orlando Health Heliport"
   },
   "7FA8": {
     "country_name": "United States",
@@ -47324,11 +47304,6 @@
     "municipality": "Dimmitt",
     "name": "Ott Farms Airport"
   },
-  "7TS9": {
-    "country_name": "United States",
-    "municipality": "Bovina",
-    "name": "Hefner Farms Airport"
-  },
   "7TX0": {
     "country_name": "United States",
     "municipality": "Wichita Falls",
@@ -48409,6 +48384,16 @@
     "municipality": "Rice",
     "name": "Magee Creek Aerodrome"
   },
+  "82WY": {
+    "country_name": "United States",
+    "municipality": "Lusk",
+    "name": "Miller Strip"
+  },
+  "82XA": {
+    "country_name": "United States",
+    "municipality": "Richmond",
+    "name": "GPH Airport"
+  },
   "82XS": {
     "country_name": "United States",
     "municipality": "Floresville",
@@ -49014,6 +48999,11 @@
     "municipality": "Rogersville",
     "name": "Rogersville Remote Fuel Site Heliport"
   },
+  "85MT": {
+    "country_name": "United States",
+    "municipality": "Billings",
+    "name": "Shaukes Airport"
+  },
   "85N": {
     "country_name": "United States",
     "municipality": "Newfane",
@@ -49418,6 +49408,11 @@
     "country_name": "United States",
     "municipality": "Walkerton",
     "name": "May's Strip"
+  },
+  "87JY": {
+    "country_name": "United States",
+    "municipality": "Lacey Township",
+    "name": "GSP Celia Cruz Service Area Heliport"
   },
   "87K": {
     "country_name": "United States",
@@ -51087,7 +51082,7 @@
   "8MI2": {
     "country_name": "United States",
     "municipality": "Williamston",
-    "name": "Mikes Helipad"
+    "name": "Mikes Airpark"
   },
   "8MI3": {
     "country_name": "United States",
@@ -52256,8 +52251,8 @@
   },
   "8WA2": {
     "country_name": "United States",
-    "municipality": "Renton",
-    "name": "Boeing Renton Ramp Site Nr 2 Heliport"
+    "municipality": "Cathlamet",
+    "name": "Island Aire Farms Airport"
   },
   "8WA3": {
     "country_name": "United States",
@@ -53232,7 +53227,7 @@
   "93IL": {
     "country_name": "United States",
     "municipality": "Flanagan",
-    "name": "Scneider RLA"
+    "name": "Schneider RLA"
   },
   "93IN": {
     "country_name": "United States",
@@ -53699,11 +53694,6 @@
     "municipality": "Seymour",
     "name": "Stewart Field"
   },
-  "95IS": {
-    "country_name": "United States",
-    "municipality": "Warsaw",
-    "name": "Jan Knipe Airport"
-  },
   "95KS": {
     "country_name": "United States",
     "municipality": "Maple Hill",
@@ -53843,6 +53833,11 @@
     "country_name": "United States",
     "municipality": "Stoughton",
     "name": "Wisersky Airport"
+  },
+  "95WY": {
+    "country_name": "United States",
+    "municipality": "Lusk",
+    "name": "Rocking T Airport"
   },
   "95XS": {
     "country_name": "United States",
@@ -54644,11 +54639,6 @@
     "municipality": "Reelsville",
     "name": "Cooper Field"
   },
-  "99IL": {
-    "country_name": "United States",
-    "municipality": "Stockton",
-    "name": "Providence Place Field"
-  },
   "99KS": {
     "country_name": "United States",
     "municipality": "Lindsborg",
@@ -55214,6 +55204,11 @@
     "municipality": "Fort Worth",
     "name": "Sycamore Strip"
   },
+  "9FA0": {
+    "country_name": "United States",
+    "municipality": "Homestead",
+    "name": "Baptist Health Homestead Heliport"
+  },
   "9FA2": {
     "country_name": "United States",
     "municipality": "Belle Glade",
@@ -55233,6 +55228,11 @@
     "country_name": "United States",
     "municipality": "Miami",
     "name": "Baptist Hospital Heliport"
+  },
+  "9FA9": {
+    "country_name": "United States",
+    "municipality": "Groveland",
+    "name": "Flying WM Airport"
   },
   "9FD": {
     "country_name": "United States",
@@ -56042,7 +56042,7 @@
   "9NC0": {
     "country_name": "United States",
     "municipality": "Charlotte",
-    "name": "Presbyterian Hospital Helipad"
+    "name": "Novant Presbyterian Medical Center Helistop"
   },
   "9NC1": {
     "country_name": "United States",
@@ -56743,6 +56743,11 @@
     "country_name": "United States",
     "municipality": "Paige",
     "name": "Flying G H Ranch Airport"
+  },
+  "9TN": {
+    "country_name": "United States",
+    "municipality": "Shelbyville",
+    "name": "Vanderbilt Bedford Hospital Heliport"
   },
   "9TN0": {
     "country_name": "United States",
@@ -57873,11 +57878,6 @@
     "country_name": "China",
     "municipality": "Aral",
     "name": "Aral Tarim Airport"
-  },
-  "ACFC": {
-    "country_name": "Philippines",
-    "municipality": "Magalang",
-    "name": "Woodland Airpark"
   },
   "ACG": {
     "country_name": "Mexico",
@@ -60717,7 +60717,7 @@
   "AR40": {
     "country_name": "United States",
     "municipality": "Fort Smith",
-    "name": "Sparks Regional Medical Center Heliport"
+    "name": "Baptist Health-Fort Smith Heliport"
   },
   "AR41": {
     "country_name": "United States",
@@ -60757,7 +60757,7 @@
   "AR48": {
     "country_name": "United States",
     "municipality": "El Dorado",
-    "name": "Union Medical Center Heliport"
+    "name": "BHMC-El Dorado Heliport"
   },
   "AR49": {
     "country_name": "United States",
@@ -60917,7 +60917,7 @@
   "AR85": {
     "country_name": "United States",
     "municipality": "Monticello",
-    "name": "Drew Memorial Hospital Heliport"
+    "name": "BHMC-Drew County Heliport"
   },
   "AR87": {
     "country_name": "United States",
@@ -61108,6 +61108,11 @@
     "country_name": "United States",
     "municipality": "Jonesboro",
     "name": "Carpenter Field"
+  },
+  "AS33": {
+    "country_name": "United States",
+    "municipality": "North Little Rock",
+    "name": "Baptist Health North Little Rock Helistop"
   },
   "AS91": {
     "country_name": "United States",
@@ -62199,6 +62204,11 @@
     "municipality": "Iteri",
     "name": "Iteri Airstrip"
   },
+  "AYIU": {
+    "country_name": "Papua New Guinea",
+    "municipality": "Ialibu",
+    "name": "Ialibu Airport"
+  },
   "AYJ": {
     "country_name": "India",
     "municipality": "Faizabad",
@@ -62362,7 +62372,7 @@
   "AYO": {
     "country_name": "Paraguay",
     "municipality": "Ayolas",
-    "name": "Aeropuerto Nacional Juan de Ayolas"
+    "name": "Juan de Ayolas National Airport"
   },
   "AYOA": {
     "country_name": "Papua New Guinea",
@@ -64116,7 +64126,7 @@
   },
   "BEB": {
     "country_name": "United Kingdom",
-    "municipality": "Balivanich",
+    "municipality": "Balivanich, Eilean Siar",
     "name": "Benbecula Airport"
   },
   "BEC": {
@@ -66141,7 +66151,7 @@
   },
   "BRR": {
     "country_name": "United Kingdom",
-    "municipality": "Eoligarry",
+    "municipality": "Eoligarry, Eilean Siar",
     "name": "Barra Airport"
   },
   "BRS": {
@@ -73342,7 +73352,7 @@
   "CJJ": {
     "country_name": "South Korea",
     "municipality": "Cheongju",
-    "name": "Cheongju International Airport/Cheongju Air Base (K-59/G-513)"
+    "name": "Cheongju International Airport"
   },
   "CJJ2": {
     "country_name": "Canada",
@@ -74942,7 +74952,7 @@
   "CL46": {
     "country_name": "United States",
     "municipality": "Gorman/Lancaster",
-    "name": "Quail Lake Sky Park Airport"
+    "name": "Quail Lake Airport"
   },
   "CL47": {
     "country_name": "United States",
@@ -76867,12 +76877,12 @@
   "CNW8": {
     "country_name": "Canada",
     "municipality": "Toronto",
-    "name": "Toronto (Hospital For Sick Children) Heliport"
+    "name": "The Hospital for Sick Children Helistop"
   },
   "CNW9": {
     "country_name": "Canada",
     "municipality": "New Westminster",
-    "name": "New Westminster (Royal Columbian Hospital) Heliport"
+    "name": "Royal Columbian Hospital Helistop"
   },
   "CNX": {
     "country_name": "Thailand",
@@ -77166,8 +77176,8 @@
   },
   "CO40": {
     "country_name": "United States",
-    "municipality": "Denver",
-    "name": "Vtol Heliport"
+    "municipality": "Franktown",
+    "name": "Plane and Mane Airport"
   },
   "CO41": {
     "country_name": "United States",
@@ -81024,6 +81034,11 @@
     "municipality": "Vulcan",
     "name": "Vulcan (Hospital) Heliport"
   },
+  "CVHA": {
+    "country_name": "Canada",
+    "municipality": "Hope",
+    "name": "Valley Helicopters"
+  },
   "CVI": {
     "country_name": "Argentina",
     "municipality": "Caleta Olivia",
@@ -81524,11 +81539,6 @@
     "municipality": "Blue River",
     "name": "Blue River Airport"
   },
-  "CYCX": {
-    "country_name": "Canada",
-    "municipality": "Oromocto",
-    "name": "CFB Gagetown Heliport"
-  },
   "CYD": {
     "country_name": "Belize",
     "municipality": "Maya Flats",
@@ -81838,11 +81848,6 @@
     "country_name": "Mexico",
     "municipality": "Celaya",
     "name": "Captain Rogelio Castillo National Airport"
-  },
-  "CYWB": {
-    "country_name": "Canada",
-    "municipality": "",
-    "name": "Penfold Airstrip"
   },
   "CYWM": {
     "country_name": "Canada",
@@ -83477,7 +83482,7 @@
   "DIQ": {
     "country_name": "Brazil",
     "municipality": "Divinópolis",
-    "name": "Brigadeiro Cabral Airport"
+    "name": "Brigadeiro Antônio Cabral Airport"
   },
   "DIR": {
     "country_name": "Ethiopia",
@@ -84074,6 +84079,11 @@
     "municipality": "Devonport",
     "name": "Devonport Airport"
   },
+  "DPP": {
+    "country_name": "India",
+    "municipality": "Datia",
+    "name": "Datia Airport"
+  },
   "DPS": {
     "country_name": "Indonesia",
     "municipality": "Kuta, Badung",
@@ -84407,7 +84417,7 @@
   "DTI": {
     "country_name": "Brazil",
     "municipality": "Diamantina",
-    "name": "Diamantina Airport"
+    "name": "Juscelino Kubitschek Airport"
   },
   "DTL": {
     "country_name": "United States",
@@ -87464,6 +87474,11 @@
     "municipality": "Albstadt",
     "name": "Albstadt-Degerfeld Airfield"
   },
+  "EDSC": {
+    "country_name": "Germany",
+    "municipality": "Mössingen",
+    "name": "Farrenberg Gliderfield"
+  },
   "EDSD": {
     "country_name": "Germany",
     "municipality": "Sindelfingen",
@@ -88087,7 +88102,7 @@
   "EEO": {
     "country_name": "United States",
     "municipality": "Meeker",
-    "name": "Meeker Airport"
+    "name": "Meeker Coulter Field"
   },
   "EEPA": {
     "country_name": "Estonia",
@@ -88267,7 +88282,7 @@
   "EFHO": {
     "country_name": "Finland",
     "municipality": "Oulu",
-    "name": "Oulun University Hospital Heliport"
+    "name": "Oulun University Hospital Helistop"
   },
   "EFHP": {
     "country_name": "Finland",
@@ -88344,11 +88359,6 @@
     "municipality": "",
     "name": "Kemijärvi Airfield"
   },
-  "EFKN": {
-    "country_name": "Finland",
-    "municipality": "Kannus",
-    "name": "Kannus Airfield"
-  },
   "EFKO": {
     "country_name": "Finland",
     "municipality": "Kalajoki",
@@ -88372,7 +88382,7 @@
   "EFL": {
     "country_name": "Greece",
     "municipality": "Kefallinia Island",
-    "name": "Kefallinia Airport"
+    "name": "Kefalonia International Airport \"Anna Pollatou\""
   },
   "EFLA": {
     "country_name": "Finland",
@@ -88398,6 +88408,11 @@
     "country_name": "Finland",
     "municipality": "Alajärvi",
     "name": "Menkijärvi Airfield"
+  },
+  "EFMH": {
+    "country_name": "Finland",
+    "municipality": "Mariehamn",
+    "name": "Åland Central Hospital Heliport"
   },
   "EFML": {
     "country_name": "Finland",
@@ -88678,11 +88693,6 @@
     "country_name": "United Kingdom",
     "municipality": "Alford, Lincolnshire",
     "name": "Strubby Airfield"
-  },
-  "EGCH": {
-    "country_name": "United Kingdom",
-    "municipality": "",
-    "name": "Holyhead Heliport"
   },
   "EGCJ": {
     "country_name": "United Kingdom",
@@ -92234,6 +92244,11 @@
     "municipality": "",
     "name": "Minsk Mazowiecki Military Air Base"
   },
+  "EPMN": {
+    "country_name": "Poland",
+    "municipality": "Chmielów",
+    "name": "DOM WESELNY MONIKA Heliport"
+  },
   "EPMR": {
     "country_name": "Poland",
     "municipality": "Mirosławice",
@@ -93649,6 +93664,11 @@
     "municipality": "Ādaži",
     "name": "Ādaži Airfield"
   },
+  "EVAL": {
+    "country_name": "Latvia",
+    "municipality": "Aloja",
+    "name": "Aloja Airstrip"
+  },
   "EVAP": {
     "country_name": "Latvia",
     "municipality": "Jelgava",
@@ -94675,9 +94695,9 @@
     "name": "Montgomery Ranch Airport"
   },
   "FA65": {
-    "country_name": "South Africa",
-    "municipality": "Mubatuba",
-    "name": "Mubatuba Airport"
+    "country_name": "United States",
+    "municipality": "Jacksonville",
+    "name": "Memorial Hospital Jacksonville Heliport"
   },
   "FA69": {
     "country_name": "United States",
@@ -94854,16 +94874,6 @@
     "municipality": "Aliwal North",
     "name": "Aliwal North Airport"
   },
-  "FAAP": {
-    "country_name": "South Africa",
-    "municipality": "Primindia",
-    "name": "Aviators Paradise Field"
-  },
-  "FAAS": {
-    "country_name": "South Africa",
-    "municipality": "Ashton",
-    "name": "Ashton Airport"
-  },
   "FAB": {
     "country_name": "United Kingdom",
     "municipality": "Farnborough, Hampshire",
@@ -94929,45 +94939,25 @@
     "municipality": "Brits",
     "name": "Brits Airport"
   },
-  "FABT": {
-    "country_name": "South Africa",
-    "municipality": "Bethesda",
-    "name": "Bethesda Road Airport"
-  },
   "FABV": {
     "country_name": "South Africa",
-    "municipality": "Brandviei",
-    "name": "Brandviei Airfield"
+    "municipality": "Gcuwa",
+    "name": "Butterworth Airport"
   },
   "FABW": {
     "country_name": "South Africa",
     "municipality": "Beaufort West",
-    "name": "Beaufort West Airport"
-  },
-  "FABX": {
-    "country_name": "South Africa",
-    "municipality": "Virginia",
-    "name": "Beatrix Airport"
-  },
-  "FABZ": {
-    "country_name": "South Africa",
-    "municipality": "Bizana",
-    "name": "Bizana Airport"
+    "name": "Karoo Gateway Airport"
   },
   "FAC": {
     "country_name": "French Polynesia",
     "municipality": "Faaite",
     "name": "Faaite Airport"
   },
-  "FACA": {
+  "FACC": {
     "country_name": "South Africa",
-    "municipality": "Monte Carlo",
-    "name": "Monte Carlo Airport"
-  },
-  "FACB": {
-    "country_name": "South Africa",
-    "municipality": "Colesberg",
-    "name": "Colesberg Airport"
+    "municipality": "Chitwa Chitwa",
+    "name": "Gowrie Airport"
   },
   "FACE": {
     "country_name": "South Africa",
@@ -94984,26 +94974,6 @@
     "municipality": "Caledon",
     "name": "Caledon Airfield"
   },
-  "FACH": {
-    "country_name": "South Africa",
-    "municipality": "Cookhouse",
-    "name": "Cookhouse Airport"
-  },
-  "FACI": {
-    "country_name": "South Africa",
-    "municipality": "Citrusdal",
-    "name": "Citrusdal Airport"
-  },
-  "FACK": {
-    "country_name": "South Africa",
-    "municipality": "Christiana",
-    "name": "Christiana Airport"
-  },
-  "FACL": {
-    "country_name": "South Africa",
-    "municipality": "Carolina",
-    "name": "Carolina Airport"
-  },
   "FACN": {
     "country_name": "South Africa",
     "municipality": "Carnarvon",
@@ -95019,15 +94989,15 @@
     "municipality": "Carltonville",
     "name": "Carltonville Airport"
   },
+  "FACV": {
+    "country_name": "South Africa",
+    "municipality": "Calvinia",
+    "name": "Calvinia Airport"
+  },
   "FACW": {
     "country_name": "South Africa",
     "municipality": "Clanwilliam",
     "name": "Clanwilliam Airport"
-  },
-  "FACX": {
-    "country_name": "South Africa",
-    "municipality": "Cathcart",
-    "name": "Cathcart Airport"
   },
   "FACY": {
     "country_name": "South Africa",
@@ -95049,30 +95019,15 @@
     "municipality": "Douglas",
     "name": "Douglas Cape Airport"
   },
-  "FADD": {
+  "FADF": {
     "country_name": "South Africa",
-    "municipality": "Dundee",
-    "name": "Dundee Airport"
-  },
-  "FADG": {
-    "country_name": "South Africa",
-    "municipality": "Dordrecht",
-    "name": "Dordrecht Airport"
-  },
-  "FADH": {
-    "country_name": "South Africa",
-    "municipality": "Durnacol",
-    "name": "Durnacol Airport"
+    "municipality": "",
+    "name": "Driefontein Fochville Airport"
   },
   "FADL": {
     "country_name": "South Africa",
     "municipality": "Delareyville",
     "name": "Delareyville Airport"
-  },
-  "FADM": {
-    "country_name": "South Africa",
-    "municipality": "Kokstad",
-    "name": "Kokstad Airport"
   },
   "FADO": {
     "country_name": "South Africa",
@@ -95084,11 +95039,6 @@
     "municipality": "Port Elizabeth",
     "name": "Darlington Dam Lodge Airport"
   },
-  "FADR": {
-    "country_name": "South Africa",
-    "municipality": "Dunnottar",
-    "name": "Dunnottar Airfield"
-  },
   "FADS": {
     "country_name": "South Africa",
     "municipality": "De Doorns",
@@ -95098,11 +95048,6 @@
     "country_name": "South Africa",
     "municipality": "",
     "name": "Walkersons Field"
-  },
-  "FADV": {
-    "country_name": "South Africa",
-    "municipality": "Devon",
-    "name": "Devon Airport"
   },
   "FADW": {
     "country_name": "South Africa",
@@ -95134,15 +95079,10 @@
     "municipality": "Estcourt",
     "name": "Estcourt Airport"
   },
-  "FAED": {
-    "country_name": "South Africa",
-    "municipality": "Edenburg",
-    "name": "Edenburg Airport"
-  },
   "FAEG": {
     "country_name": "South Africa",
-    "municipality": "Egnep",
-    "name": "Egnep Airport"
+    "municipality": "",
+    "name": "Elgin Airstrip"
   },
   "FAEN": {
     "country_name": "South Africa",
@@ -95154,6 +95094,11 @@
     "municipality": "Ermelo",
     "name": "Ermelo Airport"
   },
+  "FAER": {
+    "country_name": "South Africa",
+    "municipality": "",
+    "name": "Ekland Ranch Airstrip"
+  },
   "FAES": {
     "country_name": "South Africa",
     "municipality": "Eshowe",
@@ -95164,40 +95109,20 @@
     "municipality": "Elliot",
     "name": "Elliot Airport"
   },
-  "FAEV": {
+  "FAEW": {
     "country_name": "South Africa",
-    "municipality": "Walkersons",
-    "name": "Eagle View Helipad"
+    "municipality": "Gqeberha (Port Elizabeth)",
+    "name": "Seaview Airport"
   },
   "FAF": {
     "country_name": "United States",
     "municipality": "Newport News (Fort Eustis)",
     "name": "Felker Army Air Field"
   },
-  "FAFF": {
-    "country_name": "South Africa",
-    "municipality": "Frankfort",
-    "name": "Frankfort Airport"
-  },
-  "FAFG": {
-    "country_name": "South Africa",
-    "municipality": "Flamingo Vlei",
-    "name": "Flamingo Vlei Airport"
-  },
   "FAFO": {
     "country_name": "South Africa",
     "municipality": "Fort Beaufort",
-    "name": "Fort Beaufort Airport"
-  },
-  "FAFR": {
-    "country_name": "South Africa",
-    "municipality": "Fraseburg",
-    "name": "Fraserburg Airport"
-  },
-  "FAFU": {
-    "country_name": "South Africa",
-    "municipality": "Fraaiuitzicht",
-    "name": "Fraaiuitzicht Airport"
+    "name": "KwaMaqoma Airport"
   },
   "FAFW": {
     "country_name": "South Africa",
@@ -95211,33 +95136,23 @@
   },
   "FAGA": {
     "country_name": "South Africa",
-    "municipality": "Umzimkulu",
-    "name": "The Grange Airport"
+    "municipality": "Gariep Dam",
+    "name": "Big Water Airport"
   },
   "FAGE": {
     "country_name": "Saint Helena, Ascension and Tristan da Cunha",
     "municipality": "Gough Island",
     "name": "Gough Island Heliport"
   },
-  "FAGH": {
+  "FAGF": {
     "country_name": "South Africa",
-    "municipality": "Emmaus",
-    "name": "Glen Grey Airport"
-  },
-  "FAGJ": {
-    "country_name": "South Africa",
-    "municipality": "Gifvlei",
-    "name": "Gifvlei Airport"
+    "municipality": "",
+    "name": "Grootfontein Airstrip"
   },
   "FAGL": {
     "country_name": "South Africa",
     "municipality": "Groblersdal",
     "name": "Groblersdal Kob Airport"
-  },
-  "FAGO": {
-    "country_name": "South Africa",
-    "municipality": "",
-    "name": "Gowrie Airport"
   },
   "FAGR": {
     "country_name": "South Africa",
@@ -95254,11 +95169,6 @@
     "municipality": "Gravelotte",
     "name": "Gravelotte Airport"
   },
-  "FAGW": {
-    "country_name": "South Africa",
-    "municipality": "Magwa",
-    "name": "Magwa Airport"
-  },
   "FAGY": {
     "country_name": "South Africa",
     "municipality": "Greytown",
@@ -95269,16 +95179,6 @@
     "municipality": "Farah",
     "name": "Farah Airport"
   },
-  "FAHA": {
-    "country_name": "South Africa",
-    "municipality": "Virginia",
-    "name": "Harmony Airport"
-  },
-  "FAHB": {
-    "country_name": "South Africa",
-    "municipality": "Hartebeespoort",
-    "name": "Hartebeespoortdam Airport"
-  },
   "FAHC": {
     "country_name": "South Africa",
     "municipality": "Howick",
@@ -95286,28 +95186,18 @@
   },
   "FAHD": {
     "country_name": "South Africa",
-    "municipality": "Humansdorp",
-    "name": "Humansdorp Airport"
-  },
-  "FAHE": {
-    "country_name": "South Africa",
-    "municipality": "Hendrina",
-    "name": "Pullenshope Hendrina Airport"
+    "municipality": "Hippo Pools Resort",
+    "name": "Hippo Pools Airport"
   },
   "FAHF": {
     "country_name": "South Africa",
-    "municipality": "Henry'S Flats",
-    "name": "Henrys Flats Airport"
+    "municipality": "Henry's Flats",
+    "name": "Henry's Flats Airport"
   },
   "FAHG": {
     "country_name": "South Africa",
     "municipality": "Heidelburg",
     "name": "Heidelburg Airport"
-  },
-  "FAHH": {
-    "country_name": "South Africa",
-    "municipality": "Hibberdene",
-    "name": "Hibberdene Airport"
   },
   "FAHI": {
     "country_name": "South Africa",
@@ -95319,11 +95209,6 @@
     "municipality": "Harding",
     "name": "Harding Airport"
   },
-  "FAHK": {
-    "country_name": "South Africa",
-    "municipality": "Haakdoornboom",
-    "name": "Haakdoornboom Airport"
-  },
   "FAHO": {
     "country_name": "South Africa",
     "municipality": "Heilbron",
@@ -95334,15 +95219,15 @@
     "municipality": "Hoopstad",
     "name": "Hoopstad Airport"
   },
+  "FAHT": {
+    "country_name": "South Africa",
+    "municipality": "Hoedspruit",
+    "name": "Hoedspruit Civil Airfield"
+  },
   "FAHU": {
     "country_name": "South Africa",
     "municipality": "H.M.S.Bastard Memorial",
     "name": "H M S Bastard Memorial Airport"
-  },
-  "FAHV": {
-    "country_name": "South Africa",
-    "municipality": "Gariepdam",
-    "name": "Gariep Dam Airport"
   },
   "FAI": {
     "country_name": "United States",
@@ -95353,11 +95238,6 @@
     "country_name": "South Africa",
     "municipality": "Itala",
     "name": "Itala Airport"
-  },
-  "FAID": {
-    "country_name": "South Africa",
-    "municipality": "Idutywa",
-    "name": "Idutywa Airport"
   },
   "FAIS": {
     "country_name": "South Africa",
@@ -95371,18 +95251,18 @@
   },
   "FAIW": {
     "country_name": "South Africa",
-    "municipality": "Indwe",
-    "name": "Indwe Airport"
+    "municipality": "Ingwelala",
+    "name": "Ingwelala"
   },
   "FAJC": {
     "country_name": "South Africa",
     "municipality": "",
     "name": "Jackalberry Airstrip"
   },
-  "FAJF": {
+  "FAJK": {
     "country_name": "South Africa",
-    "municipality": "Jagersfontain",
-    "name": "Jagersfontain Airport"
+    "municipality": "Ganspan",
+    "name": "Ganspan Airport"
   },
   "FAJP": {
     "country_name": "South Africa",
@@ -95399,6 +95279,11 @@
     "municipality": "False Island",
     "name": "False Island Seaplane Base"
   },
+  "FAKA": {
+    "country_name": "South Africa",
+    "municipality": "Kagga Kamma Private Game Reserve",
+    "name": "Kagga Kamma Airport"
+  },
   "FAKB": {
     "country_name": "South Africa",
     "municipality": "Kosi Bay",
@@ -95409,40 +95294,20 @@
     "municipality": "Keimouth",
     "name": "Keimouth Airport"
   },
-  "FAKF": {
-    "country_name": "South Africa",
-    "municipality": "Koffee Bay",
-    "name": "Koffee Bay Airport"
-  },
   "FAKG": {
     "country_name": "South Africa",
-    "municipality": "Komati Power Station",
-    "name": "Komati Power Station Airport"
+    "municipality": "",
+    "name": "Kwande Airstrip"
   },
-  "FAKH": {
+  "FAKJ": {
     "country_name": "South Africa",
-    "municipality": "Kenhardt",
-    "name": "Kenhardt Aerodrome"
-  },
-  "FAKI": {
-    "country_name": "South Africa",
-    "municipality": "Kobb Inn",
-    "name": "Kobb Inn Airport"
-  },
-  "FAKK": {
-    "country_name": "South Africa",
-    "municipality": "Kakamas",
-    "name": "Kakamas Airport"
+    "municipality": "",
+    "name": "Kalahari Dunes Private Game Reserve airstrip"
   },
   "FAKL": {
     "country_name": "South Africa",
     "municipality": "Kriel",
     "name": "Kriel Airport"
-  },
-  "FAKO": {
-    "country_name": "South Africa",
-    "municipality": "Komga",
-    "name": "Komga Airport"
   },
   "FAKR": {
     "country_name": "South Africa",
@@ -95462,12 +95327,7 @@
   "FAKV": {
     "country_name": "South Africa",
     "municipality": "Koffyfontein",
-    "name": "Koffyfontein Min Airport"
-  },
-  "FAKW": {
-    "country_name": "South Africa",
-    "municipality": "Kareedouw",
-    "name": "Kareedouw Airport"
+    "name": "Koffiefontein Mine Airport"
   },
   "FAKX": {
     "country_name": "South Africa",
@@ -95524,11 +95384,6 @@
     "municipality": "Farmington",
     "name": "Farmington Regional Airport"
   },
-  "FAMA": {
-    "country_name": "South Africa",
-    "municipality": "Matatiele",
-    "name": "Matatiele Airport"
-  },
   "FAMB": {
     "country_name": "South Africa",
     "municipality": "Middelburg",
@@ -95539,10 +95394,15 @@
     "municipality": "Cape Town",
     "name": "Middelburg 2 Airport"
   },
+  "FAME": {
+    "country_name": "South Africa",
+    "municipality": "Cape Town (Marion Island)",
+    "name": "Marion Research Station Heliport"
+  },
   "FAMF": {
     "country_name": "South Africa",
-    "municipality": "Malabar",
-    "name": "Malabar Airport"
+    "municipality": "Nqanqarhu (Maclear)",
+    "name": "Maclear Airport"
   },
   "FAMI": {
     "country_name": "South Africa",
@@ -95554,85 +95414,35 @@
     "municipality": "Amerspoort",
     "name": "Majuba Power Station Airport"
   },
-  "FAML": {
-    "country_name": "South Africa",
-    "municipality": "Mafeking",
-    "name": "Manyani Game Lodge Airport"
-  },
   "FAMP": {
     "country_name": "South Africa",
     "municipality": "Matshakatini",
     "name": "Madimbo Airport"
-  },
-  "FAMQ": {
-    "country_name": "South Africa",
-    "municipality": "Nqanqarhu (Maclear)",
-    "name": "Maclear Airport"
   },
   "FAMS": {
     "country_name": "South Africa",
     "municipality": "Silveroaks",
     "name": "Morningside Farm Airport"
   },
-  "FAMT": {
-    "country_name": "South Africa",
-    "municipality": "Molteno",
-    "name": "Molteno Airport"
-  },
-  "FAMV": {
-    "country_name": "South Africa",
-    "municipality": "Lanseria",
-    "name": "Mountain View Estate Airfield"
-  },
-  "FAMX": {
-    "country_name": "South Africa",
-    "municipality": "Mbazwana",
-    "name": "Mbazwana Airport"
-  },
   "FAMY": {
     "country_name": "South Africa",
-    "municipality": "Malmesbury",
-    "name": "Malmesbury Airport"
+    "municipality": "Mazeppa Bay",
+    "name": "Mazeppa Bay Airport"
   },
-  "FAMZ": {
+  "FAND": {
     "country_name": "South Africa",
-    "municipality": "Msauli",
-    "name": "Msauli Airport"
-  },
-  "FANA": {
-    "country_name": "South Africa",
-    "municipality": "Nongoma",
-    "name": "Nongoma Airport"
+    "municipality": "",
+    "name": "Sappi / Ngodwana"
   },
   "FANE": {
     "country_name": "Papua New Guinea",
     "municipality": "Fane Mission",
     "name": "Fane Airport"
   },
-  "FANH": {
-    "country_name": "South Africa",
-    "municipality": "New Hanover",
-    "name": "New Hanover Airport"
-  },
   "FANI": {
     "country_name": "South Africa",
     "municipality": "",
     "name": "N’tsiri Airstrip"
-  },
-  "FANL": {
-    "country_name": "South Africa",
-    "municipality": "Witbank",
-    "name": "New Largo Airport"
-  },
-  "FANV": {
-    "country_name": "South Africa",
-    "municipality": "Nieuwoudtville",
-    "name": "Nieuwoudtville Airfield"
-  },
-  "FANX": {
-    "country_name": "South Africa",
-    "municipality": "Malmesbury",
-    "name": "Diepkloof Airfield"
   },
   "FANY": {
     "country_name": "South Africa",
@@ -95644,21 +95454,6 @@
     "municipality": "Faro",
     "name": "Faro - Gago Coutinho International Airport"
   },
-  "FAOD": {
-    "country_name": "South Africa",
-    "municipality": "Odendaalsrus",
-    "name": "Odendaalsrus Airport"
-  },
-  "FAOF": {
-    "country_name": "South Africa",
-    "municipality": "Olifantshoek",
-    "name": "Jack Duvenhage Airport"
-  },
-  "FAOH": {
-    "country_name": "South Africa",
-    "municipality": "Oudtshoorn",
-    "name": "Oudtshoorn Airport"
-  },
   "FAOI": {
     "country_name": "South Africa",
     "municipality": "Orient",
@@ -95669,30 +95464,10 @@
     "municipality": "Otthawa",
     "name": "Othawa Airport"
   },
-  "FAON": {
-    "country_name": "South Africa",
-    "municipality": "Hluhluwe",
-    "name": "Ornate Lake - St Lucia Airport"
-  },
-  "FAOT": {
-    "country_name": "South Africa",
-    "municipality": "Ottosdal",
-    "name": "Ottosdal Airport"
-  },
-  "FAOY": {
-    "country_name": "South Africa",
-    "municipality": "Orkney",
-    "name": "Orkney Airport"
-  },
   "FAP": {
     "country_name": "Mexico",
     "municipality": "Mocorito",
     "name": "Fumigaciones Aereas Perez Airport"
-  },
-  "FAPC": {
-    "country_name": "South Africa",
-    "municipality": "Prince Albert",
-    "name": "Prince Albert Airport"
   },
   "FAPD": {
     "country_name": "South Africa",
@@ -95727,7 +95502,7 @@
   "FAPT": {
     "country_name": "South Africa",
     "municipality": "Postmasburg",
-    "name": "Posmasburg Soil Airport"
+    "name": "Postmasburg Airport"
   },
   "FAPU": {
     "country_name": "South Africa",
@@ -95779,11 +95554,6 @@
     "municipality": "Daveyton",
     "name": "Petit Airport"
   },
-  "FARD": {
-    "country_name": "South Africa",
-    "municipality": "Riversdale",
-    "name": "Riversdale Airport"
-  },
   "FARG": {
     "country_name": "South Africa",
     "municipality": "Rustenburg",
@@ -95794,14 +95564,9 @@
     "municipality": "Richmond",
     "name": "Richmond Airport"
   },
-  "FARO": {
-    "country_name": "South Africa",
-    "municipality": "Rooiberg",
-    "name": "Rooiberg Airport"
-  },
   "FARZ": {
     "country_name": "South Africa",
-    "municipality": "Maasstroom",
+    "municipality": "Petsana",
     "name": "Reitz Airport"
   },
   "FAS": {
@@ -95829,11 +95594,6 @@
     "municipality": "Del Fouche",
     "name": "Springs Airfield"
   },
-  "FASJ": {
-    "country_name": "South Africa",
-    "municipality": "Saffier",
-    "name": "Saffier Airport"
-  },
   "FASK": {
     "country_name": "South Africa",
     "municipality": "Pretoria",
@@ -95858,16 +95618,6 @@
     "country_name": "South Africa",
     "municipality": "Somerset East",
     "name": "Somerset East Airport"
-  },
-  "FASU": {
-    "country_name": "South Africa",
-    "municipality": "Sace",
-    "name": "Sace Airport"
-  },
-  "FASW": {
-    "country_name": "South Africa",
-    "municipality": "Slurry",
-    "name": "Slurry Airport"
   },
   "FASX": {
     "country_name": "South Africa",
@@ -95917,7 +95667,7 @@
   "FATR": {
     "country_name": "South Africa",
     "municipality": "Qolora",
-    "name": "Trennery's Airport"
+    "name": "Twee Rivieren Airport"
   },
   "FATT": {
     "country_name": "South Africa",
@@ -95933,11 +95683,6 @@
     "country_name": "Oman",
     "municipality": "Fahud",
     "name": "Fahud Airport"
-  },
-  "FAUB": {
-    "country_name": "South Africa",
-    "municipality": "Underberg",
-    "name": "Underberg Airport"
   },
   "FAUC": {
     "country_name": "South Africa",
@@ -95969,35 +95714,15 @@
     "municipality": "Vaalputs",
     "name": "Vaalputs Airport"
   },
-  "FAVD": {
-    "country_name": "South Africa",
-    "municipality": "Vrede",
-    "name": "Vrede Airport"
-  },
-  "FAVE": {
-    "country_name": "South Africa",
-    "municipality": "Ventersdorp",
-    "name": "Ventersdorp Airport"
-  },
   "FAVF": {
     "country_name": "South Africa",
     "municipality": "Verborgenfontein",
     "name": "Verborgenfontei Airport"
   },
-  "FAVI": {
-    "country_name": "South Africa",
-    "municipality": "Von Abo's Villa",
-    "name": "Von Abo's Villa Airport"
-  },
   "FAVM": {
     "country_name": "South Africa",
     "municipality": "Alldays",
     "name": "Venetia Mine Airport"
-  },
-  "FAVP": {
-    "country_name": "South Africa",
-    "municipality": "Vanderbijlpark",
-    "name": "Vanderbijlpark Airport"
   },
   "FAVS": {
     "country_name": "South Africa",
@@ -96079,11 +95804,6 @@
     "municipality": "White River",
     "name": "White River Mercy Air"
   },
-  "FAWW": {
-    "country_name": "South Africa",
-    "municipality": "Sodwana Bay",
-    "name": "Sodwana Airstrip"
-  },
   "FAY": {
     "country_name": "United States",
     "municipality": "Fayetteville",
@@ -96108,11 +95828,6 @@
     "country_name": "South Africa",
     "municipality": "Swartberg",
     "name": "Swartberg Airport"
-  },
-  "FAZP": {
-    "country_name": "South Africa",
-    "municipality": "Mazeppa Bay",
-    "name": "Mazeppa Bay Airport"
   },
   "FAZQ": {
     "country_name": "South Africa",
@@ -97114,11 +96829,6 @@
     "municipality": "Kissimmee",
     "name": "Stout Airport"
   },
-  "FD84": {
-    "country_name": "United States",
-    "municipality": "Lake City",
-    "name": "Delta Airport"
-  },
   "FD85": {
     "country_name": "United States",
     "municipality": "Arcadia",
@@ -97176,8 +96886,8 @@
   },
   "FD96": {
     "country_name": "United States",
-    "municipality": "Moore Haven",
-    "name": "Hilliard's Private Airport"
+    "municipality": "Inverness",
+    "name": "HCA Florida Citrus Hospital Heliport"
   },
   "FD97": {
     "country_name": "United States",
@@ -97762,7 +97472,7 @@
   "FL05": {
     "country_name": "United States",
     "municipality": "Orlando",
-    "name": "GEICO Helistop"
+    "name": "South St Garage Helistop"
   },
   "FL06": {
     "country_name": "United States",
@@ -97858,11 +97568,6 @@
     "country_name": "United States",
     "municipality": "Miami",
     "name": "Alternate Mercy Hospital Heliport"
-  },
-  "FL26": {
-    "country_name": "United States",
-    "municipality": "Fort Myers",
-    "name": "MP25 Heliport"
   },
   "FL27": {
     "country_name": "United States",
@@ -98412,7 +98117,7 @@
   "FLM": {
     "country_name": "Paraguay",
     "municipality": "Filadelfia",
-    "name": "Aeródromo de Filadelfia"
+    "name": "Fernheim Airport"
   },
   "FLMB": {
     "country_name": "Zambia",
@@ -104839,6 +104544,11 @@
     "municipality": "Rumyantsevo",
     "name": "Zeleniy Mys Heliport"
   },
+  "HA76": {
+    "country_name": "Russia",
+    "municipality": "Barlak",
+    "name": "Barlak Heliport"
+  },
   "HA9A": {
     "country_name": "Russia",
     "municipality": "Gubkinskiy",
@@ -105534,6 +105244,11 @@
     "municipality": "Hat Yai",
     "name": "Hat Yai International Airport"
   },
+  "HE0Y": {
+    "country_name": "Russia",
+    "municipality": "Tumanniy",
+    "name": "Tumanniy Heliport"
+  },
   "HE15": {
     "country_name": "Egypt",
     "municipality": "Helwan",
@@ -105559,10 +105274,35 @@
     "municipality": "Sudr Cape",
     "name": "Ras Sedr Airport"
   },
+  "HE59": {
+    "country_name": "Russia",
+    "municipality": "Saint Petersburg",
+    "name": "Utkina Zavod Helipad"
+  },
+  "HE5A": {
+    "country_name": "Russia",
+    "municipality": "Saint Petersburg",
+    "name": "Saint Petersburg Children's Hospital No.1 Helipad"
+  },
+  "HE6J": {
+    "country_name": "Russia",
+    "municipality": "Saint Petersburg",
+    "name": "Osinovaya Roshcha Helipad"
+  },
+  "HE6Y": {
+    "country_name": "Russia",
+    "municipality": "Valek",
+    "name": "Nord-Avia Heliport"
+  },
   "HE79": {
     "country_name": "Russia",
     "municipality": "Abrau-Dyurso",
     "name": "Abrau-Dyurso Heliport"
+  },
+  "HE9U": {
+    "country_name": "Russia",
+    "municipality": "Varnek",
+    "name": "Varnek Heliport"
   },
   "HEA": {
     "country_name": "Afghanistan",
@@ -106129,6 +105869,11 @@
     "municipality": "Salsk",
     "name": "Alexandria Heliport"
   },
+  "HH8G": {
+    "country_name": "Russia",
+    "municipality": "Zarechye",
+    "name": "Zarechye Helipad"
+  },
   "HH9Y": {
     "country_name": "Russia",
     "municipality": "",
@@ -106163,11 +105908,6 @@
     "country_name": "Eritrea",
     "municipality": "Barentu",
     "name": "Barentu Airport"
-  },
-  "HHBG": {
-    "country_name": "Germany",
-    "municipality": "Hamburg",
-    "name": "Christoph Hansa ADAC Helipad"
   },
   "HHBL": {
     "country_name": "Eritrea",
@@ -106288,6 +106028,11 @@
     "country_name": "Argentina",
     "municipality": "Las Lajas",
     "name": "Estancia Haychol Heliport"
+  },
+  "HHL8": {
+    "country_name": "Russia",
+    "municipality": "Volkovo",
+    "name": "Volkovo Helipad"
   },
   "HHM": {
     "country_name": "Argentina",
@@ -106638,6 +106383,11 @@
     "country_name": "Russia",
     "municipality": "Bolshoy Tyuters",
     "name": "Tuters Island Heliport"
+  },
+  "HJ9T": {
+    "country_name": "Russia",
+    "municipality": "Gorodishe",
+    "name": "Gorodishchenskoye LPUMG Helipad"
   },
   "HJ9U": {
     "country_name": "Russia",
@@ -109134,6 +108884,11 @@
     "municipality": "Redstone Arsnl Huntsville",
     "name": "Redstone Army Air Field"
   },
+  "HUAD": {
+    "country_name": "Uganda",
+    "municipality": "Amudat",
+    "name": "Amudat Airstrip"
+  },
   "HUAJ": {
     "country_name": "Uganda",
     "municipality": "Adjumani",
@@ -110465,9 +110220,9 @@
     "name": "George Bush Intercontinental Airport"
   },
   "IAL": {
-    "country_name": "Papua New Guinea",
-    "municipality": "Ialibu",
-    "name": "Ialibu Airport"
+    "country_name": "Brazil",
+    "municipality": "Salinas",
+    "name": "Salinas Municipal Airport"
   },
   "IAM": {
     "country_name": "Algeria",
@@ -110857,7 +110612,7 @@
   "ID45": {
     "country_name": "United States",
     "municipality": "Slickpoo",
-    "name": "Slickpoo MX Park Airport"
+    "name": "Slickpoo Airport"
   },
   "ID46": {
     "country_name": "United States",
@@ -111394,11 +111149,6 @@
     "municipality": "Inhaca",
     "name": "Inhaca Airport"
   },
-  "IHN": {
-    "country_name": "Yemen",
-    "municipality": "Qishn",
-    "name": "Qishn Airport"
-  },
   "IHO": {
     "country_name": "Madagascar",
     "municipality": "Ihosy",
@@ -111443,11 +111193,6 @@
     "country_name": "United States",
     "municipality": "Cloverdale",
     "name": "Clover Knoll Airport"
-  },
-  "II08": {
-    "country_name": "United States",
-    "municipality": "Earl Park",
-    "name": "Rheude Airport"
   },
   "II09": {
     "country_name": "United States",
@@ -111989,6 +111734,11 @@
     "municipality": "Bushnell",
     "name": "Runyan Aviation Airport"
   },
+  "IL17": {
+    "country_name": "United States",
+    "municipality": "Villa Grove",
+    "name": "Toler RLA Heliport"
+  },
   "IL19": {
     "country_name": "United States",
     "municipality": "Ullin",
@@ -112294,11 +112044,6 @@
     "municipality": "Walnut",
     "name": "Fisch RLA Airport"
   },
-  "IL84": {
-    "country_name": "United States",
-    "municipality": "Colusa",
-    "name": "Douglas Airport"
-  },
   "IL85": {
     "country_name": "United States",
     "municipality": "Kaneville",
@@ -112313,11 +112058,6 @@
     "country_name": "United States",
     "municipality": "Compton",
     "name": "W Davis Airport"
-  },
-  "IL88": {
-    "country_name": "United States",
-    "municipality": "Compton",
-    "name": "Earl Barnickel Airport"
   },
   "IL89": {
     "country_name": "United States",
@@ -112489,11 +112229,6 @@
     "municipality": "Inhaminga",
     "name": "Inhaminga Airport"
   },
-  "IMI": {
-    "country_name": "Marshall Islands",
-    "municipality": "Arno Atoll",
-    "name": "Ine Airport"
-  },
   "IMK": {
     "country_name": "Nepal",
     "municipality": "Simikot",
@@ -112532,17 +112267,17 @@
   "IMS": {
     "country_name": "United States",
     "municipality": "Madison",
-    "name": "Madison Municipal Airport"
+    "name": "Madison Regional Airport"
   },
   "IMT": {
     "country_name": "United States",
     "municipality": "Kingsford",
     "name": "Ford Airport"
   },
-  "IMZ": {
-    "country_name": "Afghanistan",
-    "municipality": "Ziarat-e Amiran Saseb",
-    "name": "Nimroz Airport"
+  "IMU": {
+    "country_name": "Indonesia",
+    "municipality": "Akimuga, Mimika",
+    "name": "Akimuga Airstrip"
   },
   "IN0": {
     "country_name": "United States",
@@ -113049,11 +112784,6 @@
     "municipality": "Indianapolis",
     "name": "Indianapolis International Airport"
   },
-  "INE": {
-    "country_name": "Mozambique",
-    "municipality": "Chinde",
-    "name": "Chinde Airport"
-  },
   "INF": {
     "country_name": "Algeria",
     "municipality": "In Guezzam",
@@ -113131,7 +112861,7 @@
   },
   "INV": {
     "country_name": "United Kingdom",
-    "municipality": "Inverness",
+    "municipality": "Inverness, Highland",
     "name": "Inverness Airport"
   },
   "INW": {
@@ -113171,7 +112901,7 @@
   },
   "IOM": {
     "country_name": "Isle of Man",
-    "municipality": "Castletown",
+    "municipality": "Castletown, Rushen",
     "name": "Isle of Man Airport"
   },
   "IOMA": {
@@ -113958,6 +113688,11 @@
     "country_name": "New Zealand",
     "municipality": "Invercargill",
     "name": "Invercargill Airport"
+  },
+  "IVD": {
+    "country_name": "Indonesia",
+    "municipality": "Nusantara",
+    "name": "Nusantara International Airport"
   },
   "IVG": {
     "country_name": "Montenegro",
@@ -115919,11 +115654,6 @@
     "municipality": "Centreville",
     "name": "Bibb County Airport"
   },
-  "K0A9": {
-    "country_name": "United States",
-    "municipality": "Elizabethton",
-    "name": "Elizabethton Municipal Airport"
-  },
   "K0B1": {
     "country_name": "United States",
     "municipality": "Bethel",
@@ -117289,11 +117019,6 @@
     "municipality": "Yuma",
     "name": "Yuma Municipal Airport"
   },
-  "K2W5": {
-    "country_name": "United States",
-    "municipality": "Indian Head",
-    "name": "Maryland Airport"
-  },
   "K2Y4": {
     "country_name": "United States",
     "municipality": "Rockwell City",
@@ -117558,16 +117283,6 @@
     "country_name": "United States",
     "municipality": "Hillsboro",
     "name": "Hillsboro Municipal Airport"
-  },
-  "K3HO": {
-    "country_name": "United States",
-    "municipality": "Hobart",
-    "name": "Hobart Sky Ranch Airport"
-  },
-  "K3I2": {
-    "country_name": "United States",
-    "municipality": "Point Pleasant",
-    "name": "Mason County Airport"
   },
   "K3I3": {
     "country_name": "United States",
@@ -117908,11 +117623,6 @@
     "country_name": "United States",
     "municipality": "Havasu Lake",
     "name": "Chemehuevi Valley Airport"
-  },
-  "K4A5": {
-    "country_name": "United States",
-    "municipality": "Marshall",
-    "name": "Searcy County Airport"
   },
   "K4A6": {
     "country_name": "United States",
@@ -120802,7 +120512,7 @@
   "KCMA": {
     "country_name": "United States",
     "municipality": "Camarillo",
-    "name": "Camarillo International Airport"
+    "name": "Camarillo Airport"
   },
   "KCMD": {
     "country_name": "United States",
@@ -121592,7 +121302,7 @@
   "KEEO": {
     "country_name": "United States",
     "municipality": "Meeker",
-    "name": "Meeker Airport"
+    "name": "Meeker Coulter Field"
   },
   "KEET": {
     "country_name": "United States",
@@ -121693,6 +121403,11 @@
     "country_name": "Germany",
     "municipality": "Kiel",
     "name": "Kiel-Holtenau Airport"
+  },
+  "KELT": {
+    "country_name": "United States",
+    "municipality": "Elizabethton",
+    "name": "William B Greene Jr Regional Airport"
   },
   "KEM": {
     "country_name": "Finland",
@@ -124589,11 +124304,6 @@
     "municipality": "Richmond",
     "name": "Scott Airport"
   },
-  "KM83": {
-    "country_name": "United States",
-    "municipality": "West Point",
-    "name": "Mccharen Field"
-  },
   "KM85": {
     "country_name": "United States",
     "municipality": "Gideon",
@@ -126444,11 +126154,6 @@
     "municipality": "Kristiansand(Kjevik)",
     "name": "Kristiansand Airport"
   },
-  "KRSP": {
-    "country_name": "United States",
-    "municipality": "Thurmont",
-    "name": "Naval Support Facility Thurmont (Camp David)"
-  },
   "KRSV": {
     "country_name": "United States",
     "municipality": "Robinson",
@@ -127148,11 +126853,6 @@
     "country_name": "United States",
     "municipality": "Tylertown",
     "name": "Paul Pittman Memorial Airport"
-  },
-  "KT37": {
-    "country_name": "United States",
-    "municipality": "Goldthwaite",
-    "name": "Goldthwaite Municipal Airport"
   },
   "KT39": {
     "country_name": "United States",
@@ -130234,6 +129934,11 @@
     "municipality": "Udbina",
     "name": "Udbina Airfield"
   },
+  "LE05": {
+    "country_name": "Italy",
+    "municipality": "Ugento (LE)",
+    "name": "Gemini"
+  },
   "LE06": {
     "country_name": "Italy",
     "municipality": "Lecce (LE)",
@@ -130991,8 +130696,8 @@
   },
   "LEPZ": {
     "country_name": "Spain",
-    "municipality": "Los Pozuelos De Calatrava",
-    "name": "Los Pozuelos De Calatrava Airfield"
+    "municipality": "Pozo-Cañada",
+    "name": "Aeródromo de Pozo-Cañada"
   },
   "LEQ": {
     "country_name": "United Kingdom",
@@ -133744,6 +133449,11 @@
     "municipality": "Zalakaros",
     "name": "Zalakaros Airfield"
   },
+  "LI02": {
+    "country_name": "Russia",
+    "municipality": "St. Petersburg",
+    "name": "Aleksandrovskaya Bolnitsa Helipad"
+  },
   "LI04": {
     "country_name": "Italy",
     "municipality": "Campo nell'Elba (LI)",
@@ -134912,7 +134622,7 @@
   "LKKT": {
     "country_name": "Czech Republic",
     "municipality": "Klatovy",
-    "name": "Klatovy Josef Hubáč Airfield"
+    "name": "Klatovy - Josef Hubáč Airfield"
   },
   "LKKY": {
     "country_name": "Czech Republic",
@@ -140517,7 +140227,7 @@
   "M83": {
     "country_name": "United States",
     "municipality": "West Point",
-    "name": "Mccharen Field"
+    "name": "McCharen Field"
   },
   "M85": {
     "country_name": "United States",
@@ -141172,7 +140882,7 @@
   "MBD": {
     "country_name": "South Africa",
     "municipality": "Mafeking",
-    "name": "Mmabatho International Airport"
+    "name": "George Dick Montshioa Airport"
   },
   "MBE": {
     "country_name": "Japan",
@@ -141569,6 +141279,11 @@
     "municipality": "Keymar",
     "name": "Keymar Airpark"
   },
+  "MD44": {
+    "country_name": "United States",
+    "municipality": "Latham",
+    "name": "Luminis Heath DCMC Heliport."
+  },
   "MD45": {
     "country_name": "United States",
     "municipality": "Leonardtown",
@@ -141942,7 +141657,7 @@
   "MDN": {
     "country_name": "United States",
     "municipality": "Madison",
-    "name": "Madison Municipal Airport"
+    "name": "Madison Regional Airport"
   },
   "MDO": {
     "country_name": "United States",
@@ -143851,8 +143566,8 @@
   },
   "MI59": {
     "country_name": "United States",
-    "municipality": "West Bloomfield",
-    "name": "Cass Heliport"
+    "municipality": "Wyoming",
+    "name": "UMH West Hospital Heliport"
   },
   "MI60": {
     "country_name": "United States",
@@ -144959,11 +144674,6 @@
     "municipality": "Suzzara (MN)",
     "name": "La Fenice Airfield"
   },
-  "MN06": {
-    "country_name": "United States",
-    "municipality": "Angus",
-    "name": "Pulkrabek Landing Field"
-  },
   "MN07": {
     "country_name": "United States",
     "municipality": "Coon Rapids",
@@ -145188,6 +144898,11 @@
     "country_name": "United States",
     "municipality": "Gatzke",
     "name": "Arthur Field"
+  },
+  "MN51": {
+    "country_name": "United States",
+    "municipality": "Breckenridge",
+    "name": "CHI St. Francis Health Heliport"
   },
   "MN52": {
     "country_name": "United States",
@@ -146766,7 +146481,7 @@
   },
   "MRCV": {
     "country_name": "Costa Rica",
-    "municipality": "Nicoya",
+    "municipality": "Cabo Velas",
     "name": "Cabo Velas Airport"
   },
   "MRCZ": {
@@ -148934,11 +148649,6 @@
     "municipality": "Poplar Bluff",
     "name": "Yarbro Field"
   },
-  "MU89": {
-    "country_name": "United States",
-    "municipality": "Troy",
-    "name": "Woodland Airstrip"
-  },
   "MU90": {
     "country_name": "United States",
     "municipality": "Lees Summit",
@@ -149777,12 +149487,7 @@
   "MY65": {
     "country_name": "United States",
     "municipality": "Minneapolis",
-    "name": "University of Minnesota Hospitals & Clinics Heliport"
-  },
-  "MY66": {
-    "country_name": "United States",
-    "municipality": "Onamia",
-    "name": "North Star Ranch Airport"
+    "name": "University of Minnesota Hospitals & Clinics Helistop"
   },
   "MY68": {
     "country_name": "United States",
@@ -149948,11 +149653,6 @@
     "country_name": "Bahamas",
     "municipality": "Hawks Nest Creek",
     "name": "Hawks Nest Airport"
-  },
-  "MYCS": {
-    "country_name": "Bahamas",
-    "municipality": "Cay Sal",
-    "name": "Cay Sal Airport"
   },
   "MYCZ": {
     "country_name": "Bahamas",
@@ -151706,8 +151406,8 @@
   },
   "ND24": {
     "country_name": "United States",
-    "municipality": "Inkster",
-    "name": "Inkster Airport"
+    "municipality": "Stanton",
+    "name": "Pleasant Valley Airport"
   },
   "ND25": {
     "country_name": "United States",
@@ -152111,8 +151811,8 @@
   },
   "NE12": {
     "country_name": "United States",
-    "municipality": "Palmer",
-    "name": "Sullivan Airstrip"
+    "municipality": "Franklin",
+    "name": "Center Creek Field"
   },
   "NE14": {
     "country_name": "United States",
@@ -152308,11 +152008,6 @@
     "country_name": "United States",
     "municipality": "Madison",
     "name": "Ochsner Heliport"
-  },
-  "NE64": {
-    "country_name": "United States",
-    "municipality": "Hershey",
-    "name": "Hershey Flying Service Field Airport"
   },
   "NE65": {
     "country_name": "United States",
@@ -155014,6 +154709,11 @@
     "municipality": "Burnsville",
     "name": "Yancey EMS Medical Heliport"
   },
+  "NR12": {
+    "country_name": "United States",
+    "municipality": "Benson",
+    "name": "Lee Allen Field"
+  },
   "NR13": {
     "country_name": "United States",
     "municipality": "Norlina",
@@ -155084,6 +154784,11 @@
     "municipality": "Bethel",
     "name": "Als Airport"
   },
+  "NR43": {
+    "country_name": "United States",
+    "municipality": "Belvidere",
+    "name": "Belvidere/Chappell Hill Fire Dept Heliport"
+  },
   "NR44": {
     "country_name": "United States",
     "municipality": "Morehead City",
@@ -155103,6 +154808,11 @@
     "country_name": "United States",
     "municipality": "Kenly",
     "name": "Hawks Nest Airport"
+  },
+  "NR61": {
+    "country_name": "United States",
+    "municipality": "Salisbury",
+    "name": "Novant Health Rowan Medical Center Helistop"
   },
   "NR66": {
     "country_name": "United States",
@@ -155383,6 +155093,21 @@
     "country_name": "French Polynesia",
     "municipality": "TAIOHAE",
     "name": "TAIOHAE HELIPAD"
+  },
+  "NTHF": {
+    "country_name": "French Polynesia",
+    "municipality": "Moorea-Maiao",
+    "name": "Afareaitu CHT Heiport"
+  },
+  "NTHP": {
+    "country_name": "French Polynesia",
+    "municipality": "Papeete",
+    "name": "Taaone Hospital Helistop"
+  },
+  "NTHV": {
+    "country_name": "French Polynesia",
+    "municipality": "Taravao",
+    "name": "Taravao Hospital Heliport"
   },
   "NTI": {
     "country_name": "Indonesia",
@@ -157784,6 +157509,11 @@
     "municipality": "Okeene",
     "name": "Christman Airfield"
   },
+  "O67": {
+    "country_name": "United States",
+    "municipality": "Welch",
+    "name": "918 Backcountry Airport"
+  },
   "O68": {
     "country_name": "United States",
     "municipality": "Imnaha",
@@ -158043,6 +157773,11 @@
     "country_name": "Afghanistan",
     "municipality": "Nili",
     "name": "Nili Airport"
+  },
+  "OANZ": {
+    "country_name": "Afghanistan",
+    "municipality": "Ziarat-e Amiran Saseb",
+    "name": "Nimroz Airport"
   },
   "OAPJ": {
     "country_name": "Afghanistan",
@@ -159564,11 +159299,6 @@
     "municipality": "Mehtar Kalateh",
     "name": "Mehtar Kalateh Airport"
   },
-  "OI20": {
-    "country_name": "Iran",
-    "municipality": "Imam Hassan",
-    "name": "Bahregan Airport"
-  },
   "OI21": {
     "country_name": "Iran",
     "municipality": "",
@@ -159598,11 +159328,6 @@
     "country_name": "United States",
     "municipality": "Lowell",
     "name": "Checkpoint Charlie Airport"
-  },
-  "OI28": {
-    "country_name": "United States",
-    "municipality": "Mount Gilead",
-    "name": "Lanker Airport"
   },
   "OI31": {
     "country_name": "United States",
@@ -159878,11 +159603,6 @@
     "country_name": "Brazil",
     "municipality": "Ourilândia do Norte",
     "name": "Ourilândia do Norte Airport"
-  },
-  "OIBH": {
-    "country_name": "Iran",
-    "municipality": "",
-    "name": "Bastak Airport"
   },
   "OIBX": {
     "country_name": "Iran",
@@ -160162,7 +159882,7 @@
   "OK11": {
     "country_name": "United States",
     "municipality": "Comanche",
-    "name": "Ksa Orchards Airport"
+    "name": "Shelby Airport"
   },
   "OK12": {
     "country_name": "United States",
@@ -161004,6 +160724,11 @@
     "municipality": "Bristow",
     "name": "B&S Ranch Airport"
   },
+  "OL73": {
+    "country_name": "United States",
+    "municipality": "Guthrie",
+    "name": "AK Ranch Airport"
+  },
   "OL99": {
     "country_name": "United States",
     "municipality": "Homer",
@@ -161062,7 +160787,7 @@
   "OLK": {
     "country_name": "Paraguay",
     "municipality": "Fuerte Olimpo",
-    "name": "Aeródromo de Fuerte"
+    "name": "Fuerte Olimpo Airport"
   },
   "OLL": {
     "country_name": "Republic of the Congo",
@@ -161654,6 +161379,11 @@
     "municipality": "Miami",
     "name": "Miami-Opa Locka Executive Airport"
   },
+  "OPGD": {
+    "country_name": "Pakistan",
+    "municipality": "Gwadar",
+    "name": "Gwadar International Airport (Old)"
+  },
   "OPI": {
     "country_name": "Australia",
     "municipality": "",
@@ -162088,11 +161818,6 @@
     "country_name": "United States",
     "municipality": "Seaside",
     "name": "Seaside Heliport"
-  },
-  "OR64": {
-    "country_name": "United States",
-    "municipality": "Enterprise",
-    "name": "Beach Ranch Airport"
   },
   "OR65": {
     "country_name": "United States",
@@ -162994,6 +162719,11 @@
     "municipality": "Saint-Georges-de-l'Oyapock",
     "name": "Saint-Georges-de-l'Oyapock Airport"
   },
+  "OYQN": {
+    "country_name": "Yemen",
+    "municipality": "Qishn",
+    "name": "Qishn Airport"
+  },
   "OYRT": {
     "country_name": "Yemen",
     "municipality": "Barat",
@@ -163386,8 +163116,8 @@
   },
   "PA39": {
     "country_name": "United States",
-    "municipality": "Benfer",
-    "name": "Beaver Springs Airport"
+    "municipality": "Philadelphia",
+    "name": "Penn Presbyterian Medical Center - North Heliport"
   },
   "PA40": {
     "country_name": "United States",
@@ -163987,7 +163717,7 @@
   "PBT": {
     "country_name": "Paraguay",
     "municipality": "Puerto Leda",
-    "name": "Aeródromo de Puerto Leda"
+    "name": "Puerto Leda Airport"
   },
   "PBU": {
     "country_name": "Myanmar",
@@ -164762,7 +164492,7 @@
   "PIL": {
     "country_name": "Paraguay",
     "municipality": "Pilar",
-    "name": "Aeródromo Don Carlos Miguel Gimenez"
+    "name": "Don Carlos Miguel Gimenez Airport"
   },
   "PIM": {
     "country_name": "United States",
@@ -164842,7 +164572,7 @@
   "PJC": {
     "country_name": "Paraguay",
     "municipality": "Pedro Juan Caballero",
-    "name": "Aeropuerto Nacional Dr. Augusto Roberto Fuster"
+    "name": "Dr. Augusto Roberto Fuster International Airport"
   },
   "PJG": {
     "country_name": "Pakistan",
@@ -166604,6 +166334,11 @@
     "municipality": "Larksville Borough",
     "name": "Larksville EMS Heliport"
   },
+  "PS49": {
+    "country_name": "United States",
+    "municipality": "Le Raysville",
+    "name": "Chaffee Field"
+  },
   "PS50": {
     "country_name": "United States",
     "municipality": "Kingsley",
@@ -167116,8 +166851,8 @@
   },
   "PUR": {
     "country_name": "Bolivia",
-    "municipality": "Puerto Rico/Manuripi",
-    "name": "Puerto Rico Airport"
+    "municipality": "Parai, Santa Cruz",
+    "name": "Parai(Puerto Rico) Airport"
   },
   "PUS": {
     "country_name": "South Korea",
@@ -167683,11 +167418,6 @@
     "country_name": "Australia",
     "municipality": "Cooroy",
     "name": "Tinbeerwah Airstrip (private)"
-  },
-  "QNS": {
-    "country_name": "Brazil",
-    "municipality": "Porto Alegre",
-    "name": "Canoas Air Force Base"
   },
   "QOQ": {
     "country_name": "Greenland",
@@ -171079,6 +170809,11 @@
     "municipality": "Pomezia (RM)",
     "name": "Pratica di Mare Air Base"
   },
+  "RM24": {
+    "country_name": "Italy",
+    "municipality": "Gallicano nel Lazio (RM)",
+    "name": "Aviocaipoli Airfield"
+  },
   "RM33": {
     "country_name": "Italy",
     "municipality": "Roma",
@@ -173519,6 +173254,11 @@
     "municipality": "Novo Progresso",
     "name": "Campo de Provas Brigadeiro Veloso"
   },
+  "SBCO": {
+    "country_name": "Brazil",
+    "municipality": "Porto Alegre",
+    "name": "Canoas Air Force Base"
+  },
   "SBD": {
     "country_name": "United States",
     "municipality": "San Bernardino",
@@ -174597,7 +174337,7 @@
   "SCBQ": {
     "country_name": "Chile",
     "municipality": "Santiago",
-    "name": "El Bosque Airport"
+    "name": "El Bosque Airbase"
   },
   "SCBR": {
     "country_name": "Chile",
@@ -174616,8 +174356,8 @@
   },
   "SCBU": {
     "country_name": "Chile",
-    "municipality": "Molina",
-    "name": "El Baúl Airstrip"
+    "municipality": "Retiro",
+    "name": "Bureo Airport"
   },
   "SCBV": {
     "country_name": "Chile",
@@ -174836,7 +174576,7 @@
   },
   "SCFC": {
     "country_name": "Chile",
-    "municipality": "Fachinal",
+    "municipality": "Chile Chico",
     "name": "Fachinal Airport"
   },
   "SCFF": {
@@ -178072,7 +177812,7 @@
   "SDB": {
     "country_name": "South Africa",
     "municipality": "Langebaanweg",
-    "name": "Langebaanweg Airport"
+    "name": "Langebaanweg Air Force Base"
   },
   "SDB1": {
     "country_name": "Brazil",
@@ -181357,12 +181097,12 @@
   "SDUI": {
     "country_name": "Brazil",
     "municipality": "São Paulo",
-    "name": "Centro EmpresariaL Iudice Helipad"
+    "name": "Centro Empresarial Iudice Helistop"
   },
   "SDUJ": {
     "country_name": "Brazil",
     "municipality": "São Paulo",
-    "name": "Milennium Heliport"
+    "name": "Milennium Helistop"
   },
   "SDUK": {
     "country_name": "Brazil",
@@ -181373,16 +181113,6 @@
     "country_name": "Brazil",
     "municipality": "Ribeirão Preto",
     "name": "Usina Santa Lydia Airport"
-  },
-  "SDUM": {
-    "country_name": "Brazil",
-    "municipality": "São Paulo",
-    "name": "Uniban Heliport"
-  },
-  "SDUN": {
-    "country_name": "Brazil",
-    "municipality": "Itaperuna",
-    "name": "Itaperuna Airport"
   },
   "SDUO": {
     "country_name": "Brazil",
@@ -183999,6 +183729,11 @@
     "municipality": "Shiveh",
     "name": "Sheghnan Airport"
   },
+  "SGAM": {
+    "country_name": "Paraguay",
+    "municipality": "Luque",
+    "name": "Ñu Guasú Airbase"
+  },
   "SGB": {
     "country_name": "Mexico",
     "municipality": "San Gabriel",
@@ -184007,7 +183742,12 @@
   "SGBA": {
     "country_name": "Paraguay",
     "municipality": "Colonia Doctor Pastor Obligado",
-    "name": "Aeródromo de Bella Vista Sur"
+    "name": "Bella Vista Sur Airport"
+  },
+  "SGBV": {
+    "country_name": "Paraguay",
+    "municipality": "Bella Vista Norte",
+    "name": "Icanimby Airport"
   },
   "SGC": {
     "country_name": "Russia",
@@ -184017,17 +183757,17 @@
   "SGCB": {
     "country_name": "Paraguay",
     "municipality": "Capitan Bado",
-    "name": "Aeródromo Capitan Bado"
+    "name": "Capitan Bado Airport"
   },
   "SGCU": {
     "country_name": "Paraguay",
     "municipality": "",
-    "name": "Aeródromo de Curuguaty"
+    "name": "Curuguaty Airport"
   },
   "SGCZ": {
     "country_name": "Paraguay",
     "municipality": "Caazapá",
-    "name": "Aeródromo de Caazapá"
+    "name": "Caazapá Airport"
   },
   "SGD": {
     "country_name": "Denmark",
@@ -184044,6 +183784,11 @@
     "municipality": "Springfield",
     "name": "Springfield Branson National Airport"
   },
+  "SGFR": {
+    "country_name": "Paraguay",
+    "municipality": "Colonia Friesland",
+    "name": "Friesland Airport"
+  },
   "SGG": {
     "country_name": "Greenland",
     "municipality": "Sermiligaaq",
@@ -184052,7 +183797,7 @@
   "SGGR": {
     "country_name": "Paraguay",
     "municipality": "Salto del Guaira",
-    "name": "Aeropuerto Nacional de Salto del Guaira"
+    "name": "Saltos del Guairá Airport"
   },
   "SGH": {
     "country_name": "United States",
@@ -184069,10 +183814,20 @@
     "municipality": "Itaipú",
     "name": "Itaipú Airport"
   },
+  "SGIT": {
+    "country_name": "Paraguay",
+    "municipality": "Itapé",
+    "name": "Itapé Airport"
+  },
   "SGJ": {
     "country_name": "United States",
     "municipality": "St Augustine",
     "name": "Northeast Florida Regional Airport"
+  },
+  "SGJN": {
+    "country_name": "Paraguay",
+    "municipality": "San Juan Nepomuceno",
+    "name": "San Juan Nepomuceno Airport"
   },
   "SGK": {
     "country_name": "Papua New Guinea",
@@ -184087,12 +183842,12 @@
   "SGLP": {
     "country_name": "Paraguay",
     "municipality": "Loma Plata",
-    "name": "Aeródromo de Loma Plata"
+    "name": "Loma Plata Airport"
   },
   "SGLZ": {
     "country_name": "Paraguay",
     "municipality": "La Paz",
-    "name": "Aeródromo La Paz"
+    "name": "La Paz Airport"
   },
   "SGM": {
     "country_name": "Mexico",
@@ -184101,13 +183856,18 @@
   },
   "SGMZ": {
     "country_name": "Paraguay",
-    "municipality": "",
-    "name": "Aeródromo José María Argaña"
+    "municipality": "Capitán Meza",
+    "name": "José María Argaña Airport"
   },
   "SGN": {
     "country_name": "Vietnam",
     "municipality": "Ho Chi Minh City",
     "name": "Tan Son Nhat International Airport"
+  },
+  "SGNE": {
+    "country_name": "Paraguay",
+    "municipality": "Neuland",
+    "name": "Neuland Airport"
   },
   "SGO": {
     "country_name": "Australia",
@@ -184117,7 +183877,7 @@
   "SGOV": {
     "country_name": "Paraguay",
     "municipality": "Coronel Oviedo",
-    "name": "Aeropuerto Nacional de Coronel Oviedo"
+    "name": "Coronel Oviedo National Airport"
   },
   "SGP": {
     "country_name": "Australia",
@@ -184127,17 +183887,17 @@
   "SGPC": {
     "country_name": "Paraguay",
     "municipality": "Pozo Colorado",
-    "name": "Aeropuerto de Pozo Colorado"
+    "name": "Pozo Colorado Airport"
   },
   "SGPG": {
     "country_name": "Paraguay",
-    "municipality": "",
-    "name": "Base de la Fuerza Aérea Paraguaya \"Teniente Pelayo Prats Gill\""
+    "municipality": "Fort Prats Gill",
+    "name": "Lt. Pelayo Prats Gill Airbase"
   },
   "SGPO": {
     "country_name": "Paraguay",
     "municipality": "Pinasco",
-    "name": "Aeródromo de Puerto Pinasco"
+    "name": "Puerto Pinasco Airport"
   },
   "SGQ": {
     "country_name": "Indonesia",
@@ -184152,7 +183912,7 @@
   "SGRO": {
     "country_name": "Paraguay",
     "municipality": "Rosario",
-    "name": "Aeródromo de Rosario"
+    "name": "Rosario Airport"
   },
   "SGS": {
     "country_name": "United States",
@@ -184187,7 +183947,7 @@
   "SGVO": {
     "country_name": "Paraguay",
     "municipality": "Villa del Rosario",
-    "name": "Aeródromo de la Colonia Volendam"
+    "name": "Colonia Volendam Airport"
   },
   "SGW": {
     "country_name": "United States",
@@ -184302,7 +184062,7 @@
   "SHBE": {
     "country_name": "Chile",
     "municipality": "Santiago",
-    "name": "Banco Exterior Heliport"
+    "name": "Banco Exterior Helistop"
   },
   "SHBH": {
     "country_name": "Chile",
@@ -185029,6 +184789,26 @@
     "municipality": "Ampugnano (SI)",
     "name": "Siena-Ampugnano Airport"
   },
+  "SI02": {
+    "country_name": "Brazil",
+    "municipality": "Porto dos Gaúchos",
+    "name": "Fazenda Carvalho Airport"
+  },
+  "SI03": {
+    "country_name": "Brazil",
+    "municipality": "Tomé-Açu",
+    "name": "Fazenda São Roque Airport"
+  },
+  "SI04": {
+    "country_name": "Brazil",
+    "municipality": "Ariquemes",
+    "name": "Aeromínio Santos Dumont"
+  },
+  "SI05": {
+    "country_name": "Brazil",
+    "municipality": "Descalvado",
+    "name": "Estância Flamboyants Heliport"
+  },
   "SI06": {
     "country_name": "Italy",
     "municipality": "Radicofani (SI)",
@@ -185038,6 +184818,16 @@
     "country_name": "Brazil",
     "municipality": "Aquidauana",
     "name": "Estancia Brasil Airstrip"
+  },
+  "SI08": {
+    "country_name": "Brazil",
+    "municipality": "Rio de Janeiro",
+    "name": "Minerva Heliport"
+  },
+  "SI09": {
+    "country_name": "Brazil",
+    "municipality": "Colniza",
+    "name": "Fazenda Xodó Airport"
   },
   "SI0M": {
     "country_name": "Brazil",
@@ -185214,6 +185004,11 @@
     "municipality": "Almas",
     "name": "Dedo de Deus Airstrip"
   },
+  "SI20": {
+    "country_name": "Brazil",
+    "municipality": "Diamantino",
+    "name": "Fazenda Camagril Agropecuária Airport"
+  },
   "SI21": {
     "country_name": "Brazil",
     "municipality": "Sonora",
@@ -185389,6 +185184,11 @@
     "municipality": "Corumbá",
     "name": "Fazenda das Aroeiras Airport"
   },
+  "SI30": {
+    "country_name": "Brazil",
+    "municipality": "Altamira",
+    "name": "Fazenda Favorita Airport"
+  },
   "SI31": {
     "country_name": "Brazil",
     "municipality": "Balsas",
@@ -185563,6 +185363,11 @@
     "country_name": "Brazil",
     "municipality": "Mucajaí",
     "name": "Fazenda Campo Verde Airstrip"
+  },
+  "SI40": {
+    "country_name": "Brazil",
+    "municipality": "Bom Jardim",
+    "name": "Estância Benício Airport"
   },
   "SI41": {
     "country_name": "Brazil",
@@ -185769,15 +185574,150 @@
     "municipality": "Canarana",
     "name": "Úbere Agropecuária Airport"
   },
+  "SI57": {
+    "country_name": "Brazil",
+    "municipality": "Lucianópolis",
+    "name": "Fazenda São Bento Airstrip"
+  },
+  "SI58": {
+    "country_name": "Brazil",
+    "municipality": "Ariquemes",
+    "name": "Agrolim Airport"
+  },
+  "SI59": {
+    "country_name": "Brazil",
+    "municipality": "São Gabriel",
+    "name": "Estância Cerro Airport"
+  },
   "SI5A": {
     "country_name": "Brazil",
     "municipality": "Itaituba",
     "name": "Fazenda Isa - Agropecuária WVS Airport"
   },
+  "SI5B": {
+    "country_name": "Brazil",
+    "municipality": "Nova Crixás",
+    "name": "Fazenda Campinas Airport"
+  },
+  "SI5C": {
+    "country_name": "Brazil",
+    "municipality": "Montes Claros de Goiás",
+    "name": "Fazenda Rancho Grande Airport"
+  },
+  "SI5D": {
+    "country_name": "Brazil",
+    "municipality": "Curitiba",
+    "name": "Morro Chato Heliport"
+  },
+  "SI5E": {
+    "country_name": "Brazil",
+    "municipality": "Lagoa da Confusão",
+    "name": "Fazenda Frutacc Airport"
+  },
+  "SI5F": {
+    "country_name": "Brazil",
+    "municipality": "Uruçuí",
+    "name": "Fazenda Canel - HQs Airport"
+  },
+  "SI5G": {
+    "country_name": "Brazil",
+    "municipality": "Lucas do Rio Verde",
+    "name": "Fazenda Avante Airport"
+  },
+  "SI5H": {
+    "country_name": "Brazil",
+    "municipality": "Corumbá",
+    "name": "São João do Capim Dourado Airport"
+  },
+  "SI5J": {
+    "country_name": "Brazil",
+    "municipality": "Edéia",
+    "name": "Fazenda Canadá Airport"
+  },
+  "SI5K": {
+    "country_name": "Brazil",
+    "municipality": "Porto Murtinho",
+    "name": "Fazenda Lucia Airport"
+  },
+  "SI5L": {
+    "country_name": "Brazil",
+    "municipality": "Fazenda Monte Alto",
+    "name": "Fazenda Monte Alto Airstrip"
+  },
+  "SI5M": {
+    "country_name": "Brazil",
+    "municipality": "Abadiânia",
+    "name": "Aurora do Lago Heliport"
+  },
+  "SI5N": {
+    "country_name": "Brazil",
+    "municipality": "Uberaba",
+    "name": "Fazenda Austrália Airport"
+  },
+  "SI5P": {
+    "country_name": "Brazil",
+    "municipality": "Indaiatuba",
+    "name": "Caburé Heliport"
+  },
+  "SI5Q": {
+    "country_name": "Brazil",
+    "municipality": "Costa Rica",
+    "name": "Fazenda Arizona Airport"
+  },
   "SI5R": {
     "country_name": "Brazil",
     "municipality": "Araguacema",
     "name": "Fazenda Recanto Airstrip"
+  },
+  "SI5S": {
+    "country_name": "Brazil",
+    "municipality": "Uberaba",
+    "name": "Estância Tangará Airport"
+  },
+  "SI5T": {
+    "country_name": "Brazil",
+    "municipality": "Alto Paraíso de Goiá",
+    "name": "Vila do Quadrado Heliport"
+  },
+  "SI5U": {
+    "country_name": "Brazil",
+    "municipality": "Itajaí",
+    "name": "Marieta Konder Bornhausen Hospital Helistop"
+  },
+  "SI5V": {
+    "country_name": "Brazil",
+    "municipality": "São José dos Campos",
+    "name": "Helicentury Helipad"
+  },
+  "SI5W": {
+    "country_name": "Brazil",
+    "municipality": "Diamantino",
+    "name": "Fazenda Guapirama Airport"
+  },
+  "SI5X": {
+    "country_name": "Brazil",
+    "municipality": "Jaraguá do Sul",
+    "name": "RN Property Management Heliport"
+  },
+  "SI5Y": {
+    "country_name": "Brazil",
+    "municipality": "Nioaque",
+    "name": "Fazenda Impacto Airstrip"
+  },
+  "SI5Z": {
+    "country_name": "Brazil",
+    "municipality": "Formoso do Araguaia",
+    "name": "Fazenda União Airstrip"
+  },
+  "SI60": {
+    "country_name": "Brazil",
+    "municipality": "Urubici",
+    "name": "Ninho da Águia Heliport"
+  },
+  "SI61": {
+    "country_name": "Brazil",
+    "municipality": "Jaborandi",
+    "name": "Fazenda Bom Jesus Airport"
   },
   "SI62": {
     "country_name": "Brazil",
@@ -185944,6 +185884,16 @@
     "municipality": "Ipatinga",
     "name": "Ipatinga Tower Helipad"
   },
+  "SI70": {
+    "country_name": "Brazil",
+    "municipality": "São José do Rio Preto",
+    "name": "Estância Ipanema Airport"
+  },
+  "SI71": {
+    "country_name": "Brazil",
+    "municipality": "Novo Repartimento",
+    "name": "Fazenda Lajeado - Boi na Grota Airport"
+  },
   "SI72": {
     "country_name": "Brazil",
     "municipality": "Iguaraçu",
@@ -185958,6 +185908,11 @@
     "country_name": "Brazil",
     "municipality": "São Paulo",
     "name": "Company Helipad"
+  },
+  "SI75": {
+    "country_name": "Brazil",
+    "municipality": "Conselheiro Lafaiete",
+    "name": "Avelar Sports Heliport"
   },
   "SI76": {
     "country_name": "Brazil",
@@ -186104,6 +186059,16 @@
     "municipality": "Carlinda",
     "name": "Fazenda Real Airport"
   },
+  "SI80": {
+    "country_name": "Brazil",
+    "municipality": "Senador José Porfírio",
+    "name": "Triunfo Airport"
+  },
+  "SI81": {
+    "country_name": "Brazil",
+    "municipality": "Pimenteiras do Oeste",
+    "name": "Fazenda Bosco Airport"
+  },
   "SI82": {
     "country_name": "Brazil",
     "municipality": "Paraíso das Águas",
@@ -186118,6 +186083,11 @@
     "country_name": "Brazil",
     "municipality": "Maraú",
     "name": "Kiaroa Marine Heliport"
+  },
+  "SI85": {
+    "country_name": "Brazil",
+    "municipality": "Porto Murtinho",
+    "name": "Fazenda Marajá Airstrip"
   },
   "SI86": {
     "country_name": "Brazil",
@@ -186269,6 +186239,16 @@
     "municipality": "Novo Progresso",
     "name": "Dr Ivanor Alba Airport"
   },
+  "SI90": {
+    "country_name": "Brazil",
+    "municipality": "Vila Rica",
+    "name": "Fazenda Onça Preta Airport"
+  },
+  "SI91": {
+    "country_name": "Brazil",
+    "municipality": "Florianópolis",
+    "name": "Fortaleza da Barra Heliport"
+  },
   "SI92": {
     "country_name": "Brazil",
     "municipality": "Porto Alegre do Norte",
@@ -186283,6 +186263,11 @@
     "country_name": "Brazil",
     "municipality": "Peixoto de Azevedo",
     "name": "Fazenda Vitória Airport"
+  },
+  "SI95": {
+    "country_name": "Brazil",
+    "municipality": "São Paulo",
+    "name": "Esther Towers Helistop"
   },
   "SI96": {
     "country_name": "Brazil",
@@ -186439,6 +186424,11 @@
     "municipality": "Xi'an (Baqiao)",
     "name": "Xi'an Xiguan Airport"
   },
+  "SIA1": {
+    "country_name": "Brazil",
+    "municipality": "Campinas",
+    "name": "Shopping Parque Dom Pedro Heliport"
+  },
   "SIA2": {
     "country_name": "Brazil",
     "municipality": "Amélia Rodrigues",
@@ -186453,6 +186443,11 @@
     "country_name": "Brazil",
     "municipality": "Santo Amaro do Maranhão",
     "name": "Santo Amaro Grand House Helipad"
+  },
+  "SIA5": {
+    "country_name": "Brazil",
+    "municipality": "Nioaque",
+    "name": "Fazenda Morrinho Airport"
   },
   "SIA6": {
     "country_name": "Brazil",
@@ -186964,6 +186959,11 @@
     "municipality": "Mucajaí",
     "name": "Fazenda Boa Esperança Airstrip"
   },
+  "SID5": {
+    "country_name": "Brazil",
+    "municipality": "Cabeceira Grande",
+    "name": "Fazenda Santa Matilde Airport"
+  },
   "SID6": {
     "country_name": "Brazil",
     "municipality": "Tapurah",
@@ -187113,6 +187113,11 @@
     "country_name": "Mexico",
     "municipality": "Tamazula",
     "name": "Sierrita Airstrip"
+  },
+  "SIE1": {
+    "country_name": "Brazil",
+    "municipality": "Gonçalves Dias",
+    "name": "Rancho Cardoso"
   },
   "SIE2": {
     "country_name": "Brazil",
@@ -187294,6 +187299,11 @@
     "municipality": "Tangará da Serra",
     "name": "Fazenda Cachoeira Airport"
   },
+  "SIF1": {
+    "country_name": "Brazil",
+    "municipality": "Sete Lagoas",
+    "name": "Sete Lagoas Regional Hospital Helistop"
+  },
   "SIF2": {
     "country_name": "Brazil",
     "municipality": "Vila Bela da Santíssima Trindade",
@@ -187308,6 +187318,11 @@
     "country_name": "Brazil",
     "municipality": "Barueri",
     "name": "Grand Brasil Helipad"
+  },
+  "SIF5": {
+    "country_name": "Brazil",
+    "municipality": "Alto Boa Vista",
+    "name": "Fazenda Santa Juliana Airport"
   },
   "SIF6": {
     "country_name": "Brazil",
@@ -187453,6 +187468,11 @@
     "country_name": "Puerto Rico",
     "municipality": "San Juan",
     "name": "Fernando Luis Ribas Dominicci Airport"
+  },
+  "SIG1": {
+    "country_name": "Brazil",
+    "municipality": "Vassouras",
+    "name": "Fazenda São Fernando Heliport"
   },
   "SIG2": {
     "country_name": "Brazil",
@@ -187628,6 +187648,11 @@
     "country_name": "Nepal",
     "municipality": "Silgadi Doti",
     "name": "Silgadi Doti Airport"
+  },
+  "SIH1": {
+    "country_name": "Brazil",
+    "municipality": "São Miguel do Araguaia",
+    "name": "Millhão Airport"
   },
   "SIH2": {
     "country_name": "Brazil",
@@ -187974,6 +187999,11 @@
     "municipality": "Siglufjörður",
     "name": "Siglufjörður Airport"
   },
+  "SIJ1": {
+    "country_name": "Brazil",
+    "municipality": "Divinópolis",
+    "name": "Oper Heliport"
+  },
   "SIJ2": {
     "country_name": "Brazil",
     "municipality": "Cristalina",
@@ -187988,6 +188018,11 @@
     "country_name": "Brazil",
     "municipality": "Santa Rita do Pardo",
     "name": "Fazenda Tamanduá Bandeira Airport"
+  },
+  "SIJ5": {
+    "country_name": "Brazil",
+    "municipality": "Divinópolis",
+    "name": "ABC Heliport"
   },
   "SIJ6": {
     "country_name": "Brazil",
@@ -188153,6 +188188,11 @@
     "country_name": "Brazil",
     "municipality": "Urbano Santos",
     "name": "Fazenda Bomfim Airport"
+  },
+  "SIK5": {
+    "country_name": "Brazil",
+    "municipality": "Dueré",
+    "name": "Fazenda L3 Airport"
   },
   "SIK6": {
     "country_name": "Brazil",
@@ -189819,6 +189859,11 @@
     "municipality": "Luís Eduardo Magalhães",
     "name": "Fazenda Nossa Senhora da Salete Airstrip"
   },
+  "SIU5": {
+    "country_name": "Brazil",
+    "municipality": "Luís Eduardo Magalhães",
+    "name": "Fazenda Stein Airport"
+  },
   "SIU6": {
     "country_name": "Brazil",
     "municipality": "Cassilândia",
@@ -190329,6 +190374,11 @@
     "municipality": "Jaguaripe",
     "name": "Rancho Recanto das Águas Heliport"
   },
+  "SIX5": {
+    "country_name": "Brazil",
+    "municipality": "São João dos Patos",
+    "name": "Fazenda Tangará Airport"
+  },
   "SIX6": {
     "country_name": "Brazil",
     "municipality": "Santana do Araguaia",
@@ -190649,6 +190699,11 @@
     "municipality": "Sissano",
     "name": "Sissano Airport"
   },
+  "SIZ0": {
+    "country_name": "Brazil",
+    "municipality": "Cantá",
+    "name": "Fazenda Quincuncá Airport"
+  },
   "SIZ1": {
     "country_name": "Brazil",
     "municipality": "Vera",
@@ -190814,6 +190869,21 @@
     "municipality": "Jundiaí",
     "name": "Zezé Heliport"
   },
+  "SJ01": {
+    "country_name": "Brazil",
+    "municipality": "Feliz Natal",
+    "name": "Aldeia Pavuru Airport"
+  },
+  "SJ02": {
+    "country_name": "Brazil",
+    "municipality": "Sorriso",
+    "name": "Fazenda São José Airport"
+  },
+  "SJ03": {
+    "country_name": "Brazil",
+    "municipality": "Açailândia",
+    "name": "Aero Agro São João Airstrip"
+  },
   "SJ08": {
     "country_name": "Brazil",
     "municipality": "Camapuã",
@@ -190859,10 +190929,20 @@
     "municipality": "Sonora",
     "name": "Fazenda Pássaro Preto Airport"
   },
+  "SJ18": {
+    "country_name": "Brazil",
+    "municipality": "Sud Menucci",
+    "name": "Fazenda Vista Alegre Airport"
+  },
   "SJ19": {
     "country_name": "Brazil",
     "municipality": "Cujubim",
     "name": "Fazenda Acari Airport"
+  },
+  "SJ1A": {
+    "country_name": "Brazil",
+    "municipality": "Queluzito",
+    "name": "Queluzito Heliport"
   },
   "SJ1B": {
     "country_name": "Brazil",
@@ -190894,6 +190974,16 @@
     "municipality": "Rio Verde",
     "name": "Fazenda Vale do São Pedro Airport"
   },
+  "SJ1H": {
+    "country_name": "Brazil",
+    "municipality": "Santa Filomena",
+    "name": "Fazenda Japurá Airport"
+  },
+  "SJ1J": {
+    "country_name": "Brazil",
+    "municipality": "Formosa do Rio Preto",
+    "name": "Fazenda Cabreuva e Paz Airstrip"
+  },
   "SJ1K": {
     "country_name": "Brazil",
     "municipality": "Araioses",
@@ -190919,20 +191009,55 @@
     "municipality": "Brasnorte",
     "name": "Fazenda São José Airport"
   },
+  "SJ1P": {
+    "country_name": "Brazil",
+    "municipality": "Baianópolis",
+    "name": "Fazenda Preferência Airport"
+  },
+  "SJ1Q": {
+    "country_name": "Brazil",
+    "municipality": "Vera Cruz",
+    "name": "John Brussel Heliport"
+  },
   "SJ1R": {
     "country_name": "Brazil",
     "municipality": "Paraúna",
     "name": "Fazendas Reunidas Baumgart Airstrip"
+  },
+  "SJ1S": {
+    "country_name": "Brazil",
+    "municipality": "Taubaté",
+    "name": "Unimetal Taubaté Heliport"
+  },
+  "SJ1T": {
+    "country_name": "Brazil",
+    "municipality": "Sorriso",
+    "name": "Fazenda Gaspar Airport"
+  },
+  "SJ1U": {
+    "country_name": "Brazil",
+    "municipality": "Sorocaba",
+    "name": "Estação Felivel Helistop"
   },
   "SJ1V": {
     "country_name": "Brazil",
     "municipality": "Bela Vista de Goiás",
     "name": "Aeroparque Bela Vista"
   },
+  "SJ1Y": {
+    "country_name": "Brazil",
+    "municipality": "Estiva",
+    "name": "Assertiva Heliport"
+  },
   "SJ1Z": {
     "country_name": "Brazil",
     "municipality": "Flores de Goiás",
     "name": "Fazenda Jeovazão Airport"
+  },
+  "SJ21": {
+    "country_name": "Brazil",
+    "municipality": "Nova Maringá",
+    "name": "Fazenda Conquista Airport"
   },
   "SJ22": {
     "country_name": "Brazil",
@@ -190948,6 +191073,11 @@
     "country_name": "Brazil",
     "municipality": "Campos do Jordão",
     "name": "Vale dos Pinheiros Heliport"
+  },
+  "SJ25": {
+    "country_name": "Brazil",
+    "municipality": "Sorocaba",
+    "name": "Unimetal Sorocaba Heliport"
   },
   "SJ26": {
     "country_name": "Brazil",
@@ -191098,6 +191228,16 @@
     "country_name": "Brazil",
     "municipality": "Jaguaripe",
     "name": "Pontal de Jaguaripe Heliport"
+  },
+  "SJ30": {
+    "country_name": "Brazil",
+    "municipality": "Taubaté",
+    "name": "DAS Brasil Heliport"
+  },
+  "SJ31": {
+    "country_name": "Brazil",
+    "municipality": "Guararema",
+    "name": "ML3 Empreendimentos Heliport"
   },
   "SJ32": {
     "country_name": "Brazil",
@@ -191263,6 +191403,11 @@
     "country_name": "Brazil",
     "municipality": "Jaborandi",
     "name": "Fazenda Santo Expedito Airport"
+  },
+  "SJ40": {
+    "country_name": "Brazil",
+    "municipality": "Riachão das Neves",
+    "name": "Fazenda LG Airport"
   },
   "SJ42": {
     "country_name": "Brazil",
@@ -191434,6 +191579,11 @@
     "municipality": "Goiânia",
     "name": "Marista Helistop"
   },
+  "SJ54": {
+    "country_name": "Brazil",
+    "municipality": "Santana do Araguaia",
+    "name": "Fazenda Aconchego Airport"
+  },
   "SJ56": {
     "country_name": "Brazil",
     "municipality": "Fortaleza",
@@ -191448,6 +191598,11 @@
     "country_name": "Brazil",
     "municipality": "Pirapora do Bom Jesus",
     "name": "Helimarte Heliport"
+  },
+  "SJ59": {
+    "country_name": "Brazil",
+    "municipality": "Bom Jesus do Tocantins",
+    "name": "Fazenda Vale do Paraiso Airport"
   },
   "SJ5A": {
     "country_name": "Brazil",
@@ -191473,6 +191628,11 @@
     "country_name": "Brazil",
     "municipality": "Maringá",
     "name": "Phenom Parque Empresarial Heliport"
+  },
+  "SJ61": {
+    "country_name": "Brazil",
+    "municipality": "São Félix do Xingu",
+    "name": "Fazenda Maranata Airport"
   },
   "SJ62": {
     "country_name": "Brazil",
@@ -192309,6 +192469,11 @@
     "municipality": "San Joaquín",
     "name": "San Joaquín Airport"
   },
+  "SJB1": {
+    "country_name": "Brazil",
+    "municipality": "Balneário Camboriú",
+    "name": "Pier da Barra Heliport"
+  },
   "SJB2": {
     "country_name": "Brazil",
     "municipality": "Crixás do Tocantins",
@@ -192371,13 +192536,13 @@
   },
   "SJBF": {
     "country_name": "Brazil",
-    "municipality": "Manga",
-    "name": "Fazed Santa Bárbara Airport"
+    "municipality": "Mimoso De Goiás",
+    "name": "Fazenda J.K. Airport"
   },
   "SJBG": {
     "country_name": "Brazil",
-    "municipality": "Rio de Janeiro",
-    "name": "Edifício Torre Almirante Heliport"
+    "municipality": "São Paulo",
+    "name": "Birmann 31 Heliport"
   },
   "SJBH": {
     "country_name": "Brazil",
@@ -193551,8 +193716,8 @@
   },
   "SJID": {
     "country_name": "Brazil",
-    "municipality": "Três Lagoas",
-    "name": "Fazenda Goiaba Airport"
+    "municipality": "Lagarto",
+    "name": "Fazenda Bonfim Heliport"
   },
   "SJIE": {
     "country_name": "Brazil",
@@ -194338,6 +194503,11 @@
     "country_name": "United States",
     "municipality": "St Johns",
     "name": "St Johns Industrial Air Park"
+  },
+  "SJN1": {
+    "country_name": "Brazil",
+    "municipality": "Sambaíba",
+    "name": "Fazenda Chapadão da Serra Airport"
   },
   "SJN2": {
     "country_name": "Brazil",
@@ -196834,6 +197004,11 @@
     "municipality": "Carrasco",
     "name": "Bulo Bulo Airport"
   },
+  "SLBE": {
+    "country_name": "Bolivia",
+    "municipality": "Chiquitos",
+    "name": "Beirut Airstrip"
+  },
   "SLBF": {
     "country_name": "Bolivia",
     "municipality": "Madre De Dios",
@@ -196919,10 +197094,15 @@
     "municipality": "Charaña",
     "name": "Charaña Airport"
   },
+  "SLCQ": {
+    "country_name": "Bolivia",
+    "municipality": "",
+    "name": "Chiquitos Airport"
+  },
   "SLCR": {
     "country_name": "Bolivia",
-    "municipality": "M. Caballero",
-    "name": "Comarapa Airport"
+    "municipality": "Carrasco",
+    "name": "Carrasco Airport"
   },
   "SLCS": {
     "country_name": "Bolivia",
@@ -196964,10 +197144,20 @@
     "municipality": "Ichilo",
     "name": "Caranda Airport"
   },
+  "SLDF": {
+    "country_name": "Bolivia",
+    "municipality": "Chiquitos",
+    "name": "Doña Francisca Airstrip"
+  },
   "SLDL": {
     "country_name": "Bolivia",
     "municipality": "",
     "name": "Dalmacia Airport"
+  },
+  "SLDM": {
+    "country_name": "Bolivia",
+    "municipality": "Chiquitos",
+    "name": "Don Mario Airport"
   },
   "SLDN": {
     "country_name": "Bolivia",
@@ -196986,8 +197176,8 @@
   },
   "SLEC": {
     "country_name": "Bolivia",
-    "municipality": "Yacuma",
-    "name": "El Cairo Airport"
+    "municipality": "Velasco",
+    "name": "El Carmen de Ruiz Airport"
   },
   "SLEE": {
     "country_name": "Bolivia",
@@ -197059,6 +197249,11 @@
     "municipality": "Moira",
     "name": "Florida Airport"
   },
+  "SLFN": {
+    "country_name": "Bolivia",
+    "municipality": "Finlandia",
+    "name": "Finlandia Airport"
+  },
   "SLFO": {
     "country_name": "Bolivia",
     "municipality": "Moxos",
@@ -197074,15 +197269,15 @@
     "municipality": "Siloam Springs",
     "name": "Smith Field"
   },
+  "SLGG": {
+    "country_name": "Bolivia",
+    "municipality": "Ñuflo Chávez",
+    "name": "Guayabas Guayacanes BBA Airstrip"
+  },
   "SLGP": {
     "country_name": "Bolivia",
     "municipality": "Cordillera",
     "name": "Guirapembi Airport"
-  },
-  "SLGQ": {
-    "country_name": "Bolivia",
-    "municipality": "",
-    "name": "Chiquitos Airport"
   },
   "SLGY": {
     "country_name": "Bolivia",
@@ -197104,6 +197299,11 @@
     "municipality": "H. Silez",
     "name": "Huacareta Airport"
   },
+  "SLHM": {
+    "country_name": "Bolivia",
+    "municipality": "Carnen de la Frontera",
+    "name": "Mutun Heliport"
+  },
   "SLHS": {
     "country_name": "Bolivia",
     "municipality": "Parapeti",
@@ -197113,6 +197313,11 @@
     "country_name": "Bolivia",
     "municipality": "Transierra Natural Gas Co.",
     "name": "Transierra Helipuerto"
+  },
+  "SLHY": {
+    "country_name": "Bolivia",
+    "municipality": "Germán Busch",
+    "name": "Yacuses Heliport"
   },
   "SLI": {
     "country_name": "Zambia",
@@ -197169,6 +197374,11 @@
     "municipality": "Madre De Dios",
     "name": "Jatata Airport"
   },
+  "SLJD": {
+    "country_name": "Bolivia",
+    "municipality": "Ñuflo de Chávez",
+    "name": "San Judas Tadeo Airport"
+  },
   "SLJS": {
     "country_name": "Bolivia",
     "municipality": "Yacuma",
@@ -197188,6 +197398,11 @@
     "country_name": "Bolivia",
     "municipality": "Yacuma",
     "name": "Las Brizas Airport"
+  },
+  "SLLC": {
+    "country_name": "Bolivia",
+    "municipality": "Chiquitos",
+    "name": "Santa Lucia Airport"
   },
   "SLLH": {
     "country_name": "Bolivia",
@@ -197426,13 +197641,18 @@
   },
   "SLSJ": {
     "country_name": "Bolivia",
-    "municipality": "Ladislao Cabrera",
-    "name": "Salinas Airport"
+    "municipality": "Federico Román",
+    "name": "San Juan Pando Airport"
   },
   "SLSK": {
     "country_name": "Bolivia",
     "municipality": "A. Ibañez",
     "name": "Santa Rosa Del Sara Airport"
+  },
+  "SLSL": {
+    "country_name": "Bolivia",
+    "municipality": "Espiritu, Velasco",
+    "name": "Santa Anita de Los Robles Airport"
   },
   "SLSN": {
     "country_name": "Bolivia",
@@ -197441,8 +197661,8 @@
   },
   "SLSP": {
     "country_name": "Bolivia",
-    "municipality": "Gran Chaco",
-    "name": "Sipuati Airport"
+    "municipality": "Chiquitos",
+    "name": "San Pablo Airport"
   },
   "SLSQ": {
     "country_name": "Bolivia",
@@ -197451,7 +197671,7 @@
   },
   "SLSS": {
     "country_name": "Bolivia",
-    "municipality": "Sunsas",
+    "municipality": "Sunsas, Germán Busch",
     "name": "Sunsas Airport"
   },
   "SLSU": {
@@ -197498,6 +197718,11 @@
     "country_name": "Bolivia",
     "municipality": "Oruro",
     "name": "Totora Airport"
+  },
+  "SLTP": {
+    "country_name": "Bolivia",
+    "municipality": "Ñuflo de Chávez",
+    "name": "Tarope Airstrip"
   },
   "SLTU": {
     "country_name": "Bolivia",
@@ -197980,9 +198205,9 @@
     "name": "Wright International Airport"
   },
   "SN03": {
-    "country_name": "United States",
-    "municipality": "Lenora",
-    "name": "Lenora Municipal Airport"
+    "country_name": "Brazil",
+    "municipality": "Bom Jesus do Araguaia",
+    "name": "Fazenda Caaporã Airport"
   },
   "SN04": {
     "country_name": "United States",
@@ -198029,6 +198254,16 @@
     "municipality": "Cheney",
     "name": "Albers Airport"
   },
+  "SN14": {
+    "country_name": "Brazil",
+    "municipality": "Barra de São Francisco",
+    "name": "Gramazini BSF Heliport"
+  },
+  "SN15": {
+    "country_name": "Brazil",
+    "municipality": "Alta Floresta d'Oeste",
+    "name": "Fazenda Itauna Airport"
+  },
   "SN16": {
     "country_name": "Brazil",
     "municipality": "Alta Floresta d'Oeste",
@@ -198073,6 +198308,11 @@
     "country_name": "Brazil",
     "municipality": "São Miguel dos Milagres",
     "name": "Hamares Milagres Heliport"
+  },
+  "SN1J": {
+    "country_name": "Brazil",
+    "municipality": "São Desidério",
+    "name": "Fazenda Jatobá Airport"
   },
   "SN1K": {
     "country_name": "Brazil",
@@ -198138,6 +198378,11 @@
     "country_name": "Brazil",
     "municipality": "Porto Seguro",
     "name": "Águia Trancoso Heliport"
+  },
+  "SN25": {
+    "country_name": "Brazil",
+    "municipality": "Iguatemi",
+    "name": "Fazenda Três Irmãos Airstrip"
   },
   "SN26": {
     "country_name": "Brazil",
@@ -198295,9 +198540,9 @@
     "name": "Marysville Mediport Heliport"
   },
   "SN31": {
-    "country_name": "United States",
-    "municipality": "Winfield",
-    "name": "William Newton Memorial Hospital Heliport"
+    "country_name": "Brazil",
+    "municipality": "Figueirão",
+    "name": "Fazenda Selena Taludia Airstrip"
   },
   "SN32": {
     "country_name": "United States",
@@ -198650,9 +198895,9 @@
     "name": "Fazenda Piracicaba Airport"
   },
   "SN50": {
-    "country_name": "United States",
-    "municipality": "Pittsburg",
-    "name": "Mt Carmel Medical Center Heliport"
+    "country_name": "Brazil",
+    "municipality": "Aporé",
+    "name": "Fazenda Ranchinho Airport"
   },
   "SN51": {
     "country_name": "Brazil",
@@ -198665,14 +198910,14 @@
     "name": "Pilot Pointe Estates Airport"
   },
   "SN53": {
-    "country_name": "United States",
-    "municipality": "Fredonia",
-    "name": "Bonner Field"
+    "country_name": "Brazil",
+    "municipality": "Itarumã",
+    "name": "Fazenda São José do Corrente Airport"
   },
   "SN54": {
-    "country_name": "United States",
-    "municipality": "Overland Park",
-    "name": "Overland Park Regional Medical Center Heliport"
+    "country_name": "Brazil",
+    "municipality": "Gameleira de Goiás",
+    "name": "Fazenda Conquista Airport"
   },
   "SN55": {
     "country_name": "United States",
@@ -199549,6 +199794,11 @@
     "municipality": "Milikapiti",
     "name": "Snake Bay Airport"
   },
+  "SNB1": {
+    "country_name": "Brazil",
+    "municipality": "São Félix de Balsas",
+    "name": "Fazenda Dona Mari Agromapi Airport"
+  },
   "SNB2": {
     "country_name": "Brazil",
     "municipality": "Uberlândia",
@@ -199662,7 +199912,7 @@
   "SNBQ": {
     "country_name": "Brazil",
     "municipality": "São Paulo",
-    "name": "Bela Cintra Heliport"
+    "name": "Bela Cintra Helistop"
   },
   "SNBT": {
     "country_name": "Brazil",
@@ -199683,11 +199933,6 @@
     "country_name": "Brazil",
     "municipality": "Sapezal",
     "name": "Fazenda Santa Luzia Airport"
-  },
-  "SNBX": {
-    "country_name": "Brazil",
-    "municipality": "Barra",
-    "name": "Barra Airport"
   },
   "SNBY": {
     "country_name": "Brazil",
@@ -199766,7 +200011,7 @@
   },
   "SNCE": {
     "country_name": "Brazil",
-    "municipality": "Campo Do Meio",
+    "municipality": "Campo do Meio",
     "name": "Campo do Meio Airport"
   },
   "SNCF": {
@@ -199838,11 +200083,6 @@
     "country_name": "Brazil",
     "municipality": "Rio do Fogo",
     "name": "Punaú Eco Brasil Heliport"
-  },
-  "SNCV": {
-    "country_name": "Brazil",
-    "municipality": "Campina Verde",
-    "name": "Campina Verde Airport"
   },
   "SNCW": {
     "country_name": "Brazil",
@@ -199937,7 +200177,7 @@
   "SNDK": {
     "country_name": "Brazil",
     "municipality": "São Paulo",
-    "name": "C.T.O Itaú Heliport"
+    "name": "C.T.O Itaú Helistops"
   },
   "SNDL": {
     "country_name": "Brazil",
@@ -199947,12 +200187,12 @@
   "SNDM": {
     "country_name": "Brazil",
     "municipality": "Guarulhos",
-    "name": "Karina Heliport"
+    "name": "Karina Helistop"
   },
   "SNDN": {
     "country_name": "Brazil",
     "municipality": "Salvador",
-    "name": "Cemaden - CIGE Heliport"
+    "name": "Cemaden - CIGE Helistop"
   },
   "SNDO": {
     "country_name": "Brazil",
@@ -199982,12 +200222,7 @@
   "SNDU": {
     "country_name": "Brazil",
     "municipality": "Capitólio",
-    "name": "Ponta Do Sol Airport"
-  },
-  "SNDV": {
-    "country_name": "Brazil",
-    "municipality": "Divinópolis",
-    "name": "Brigadeiro Cabral Airport"
+    "name": "Ponta do Sol Airport"
   },
   "SNDX": {
     "country_name": "Brazil",
@@ -201929,11 +202164,6 @@
     "municipality": "São Bernardo do Campo",
     "name": "Wheaton Heliport"
   },
-  "SNQI": {
-    "country_name": "Brazil",
-    "municipality": "Diamantino",
-    "name": "Fazenda Camagril Agropecuária Airport"
-  },
   "SNQJ": {
     "country_name": "Brazil",
     "municipality": "Divinópolis",
@@ -202091,7 +202321,7 @@
   },
   "SNRK": {
     "country_name": "Brazil",
-    "municipality": "Campo Alegre De Goiás",
+    "municipality": "Campo Alegre de Goiás",
     "name": "Fazenda Soledade Airport"
   },
   "SNRL": {
@@ -202287,17 +202517,12 @@
   "SNSQ": {
     "country_name": "Brazil",
     "municipality": "São Paulo",
-    "name": "Centro Empresarial Nações Unidas - Torre Norte Heliport"
+    "name": "Centro Empresarial Nações Unidas - North Tower Helistop"
   },
   "SNSR": {
     "country_name": "Brazil",
     "municipality": "Guarda-Mor",
     "name": "Fazenda Santos Reis Airport"
-  },
-  "SNSS": {
-    "country_name": "Brazil",
-    "municipality": "Salinas",
-    "name": "Salinas Airport"
   },
   "SNSU": {
     "country_name": "Brazil",
@@ -202409,20 +202634,10 @@
     "municipality": "Araguaína",
     "name": "Fazenda Treze Estrelas Airport"
   },
-  "SNTM": {
-    "country_name": "Brazil",
-    "municipality": "Turmalina",
-    "name": "Turmalina Airport"
-  },
   "SNTN": {
     "country_name": "Brazil",
     "municipality": "Barueri",
     "name": "Gama Helipad"
-  },
-  "SNTO": {
-    "country_name": "Brazil",
-    "municipality": "Teófilo Otoni",
-    "name": "Juscelino Kubitscheck Airport"
   },
   "SNTP": {
     "country_name": "Brazil",
@@ -202772,7 +202987,7 @@
   "SNVY": {
     "country_name": "Brazil",
     "municipality": "Paranhos",
-    "name": "Aeródromo de  Fazenda Ouro Verde"
+    "name": "Fazenda Ouro Verde Airport"
   },
   "SNVZ": {
     "country_name": "Brazil",
@@ -202866,8 +203081,8 @@
   },
   "SNWJ": {
     "country_name": "Brazil",
-    "municipality": "Araputanga",
-    "name": "Fazenda Rancho Alegre Airport"
+    "municipality": "Indiavaí",
+    "name": "Fazenda Rancho Grande Airport"
   },
   "SNWK": {
     "country_name": "Brazil",
@@ -207694,11 +207909,6 @@
     "municipality": "São Miguel do Oeste",
     "name": "São Miguel do Oeste Hélio Wasum Airport"
   },
-  "SSOF": {
-    "country_name": "Brazil",
-    "municipality": "Curitiba",
-    "name": "Ouro Verde Heliport"
-  },
   "SSOH": {
     "country_name": "Brazil",
     "municipality": "Brasilia",
@@ -207846,7 +208056,7 @@
   },
   "SSPL": {
     "country_name": "Brazil",
-    "municipality": "Palmeira Da Missões",
+    "municipality": "Palmeira da Missões",
     "name": "Palmeira das Missões Airport"
   },
   "SSPM": {
@@ -208496,8 +208706,8 @@
   },
   "SSUZ": {
     "country_name": "Brazil",
-    "municipality": "Sud Menucci",
-    "name": "Fazenda Vista Alegre Airport"
+    "municipality": "Rio de Janeiro",
+    "name": "Disco Heliport"
   },
   "SSV": {
     "country_name": "Philippines",
@@ -208591,8 +208801,8 @@
   },
   "SSVT": {
     "country_name": "Brazil",
-    "municipality": "Figueirópolis d'Oeste",
-    "name": "Fazenda Vittória Airstrip"
+    "municipality": "Russas",
+    "name": "Aníbal Airport"
   },
   "SSVU": {
     "country_name": "Brazil",
@@ -211944,11 +212154,6 @@
     "municipality": "Santa Luzia",
     "name": "Boa Esperança Airport"
   },
-  "SWEY": {
-    "country_name": "Brazil",
-    "municipality": "Vassouras",
-    "name": "Fazenda São Fernando Heliport"
-  },
   "SWF": {
     "country_name": "United States",
     "municipality": "Newburgh",
@@ -211983,11 +212188,6 @@
     "country_name": "Brazil",
     "municipality": "Sapezal",
     "name": "Fazenda Franciosi Airport"
-  },
-  "SWFG": {
-    "country_name": "Brazil",
-    "municipality": "Barra Do Garças",
-    "name": "Fazenda Guanabara Airport"
   },
   "SWFH": {
     "country_name": "Brazil",
@@ -212546,8 +212746,8 @@
   },
   "SWJY": {
     "country_name": "Brazil",
-    "municipality": "Alto Garças",
-    "name": "Fazenda Campo Alegre III Airport"
+    "municipality": "São Miguel de Taipu",
+    "name": "Professora Francisca Cardoso Airport."
   },
   "SWJZ": {
     "country_name": "Brazil",
@@ -212769,6 +212969,11 @@
     "municipality": "Luís Antônio",
     "name": "Capão da Cruz Airport"
   },
+  "SWMD": {
+    "country_name": "Brazil",
+    "municipality": "Sete Lagoas",
+    "name": "Fazenda da Máquina Heliport"
+  },
   "SWME": {
     "country_name": "Brazil",
     "municipality": "Mineiros",
@@ -212809,6 +213014,11 @@
     "municipality": "Itiquira",
     "name": "Fazenda Maria José Airport"
   },
+  "SWMP": {
+    "country_name": "Brazil",
+    "municipality": "Alhandra",
+    "name": "Paladino Heliport"
+  },
   "SWMQ": {
     "country_name": "Brazil",
     "municipality": "Aripuanã",
@@ -212819,15 +213029,20 @@
     "municipality": "Aquidauana",
     "name": "Fazenda Retirinho Airstrip"
   },
+  "SWMS": {
+    "country_name": "Brazil",
+    "municipality": "Ribeirão Preto",
+    "name": "Monte Sinai III Helistop"
+  },
   "SWMT": {
     "country_name": "Brazil",
-    "municipality": "Nova Ubiratã",
-    "name": "Fazenda Centro da Mata Airport"
+    "municipality": "Japurá",
+    "name": "Chácara São Matheus Airport"
   },
   "SWMU": {
     "country_name": "Brazil",
-    "municipality": "Pacaraima",
-    "name": "Surumu Airport"
+    "municipality": "Bandeirantes",
+    "name": "Fazenda Três Muchachas Airport"
   },
   "SWMV": {
     "country_name": "Brazil",
@@ -212964,11 +213179,6 @@
     "municipality": "Goianira",
     "name": "Arnapar Airport"
   },
-  "SWOB": {
-    "country_name": "Brazil",
-    "municipality": "Fonte Boa",
-    "name": "Fonte Boa Airport"
-  },
   "SWOC": {
     "country_name": "Brazil",
     "municipality": "Caracol",
@@ -212991,7 +213201,7 @@
   },
   "SWOG": {
     "country_name": "Brazil",
-    "municipality": "São José Do Rio Claro",
+    "municipality": "São José do Rio Claro",
     "name": "Fazenda Itaipu Airport"
   },
   "SWOH": {
@@ -213009,14 +213219,9 @@
     "municipality": "Itu",
     "name": "Coudelaria Rocas do Vouga Heliport"
   },
-  "SWOK": {
-    "country_name": "Brazil",
-    "municipality": "Itiquira",
-    "name": "Fazenda Pontal Airport"
-  },
   "SWOL": {
     "country_name": "Brazil",
-    "municipality": "Barra Do Garças",
+    "municipality": "Barra do Garças",
     "name": "Fazenda Roncador Airport"
   },
   "SWOM": {
@@ -213161,7 +213366,7 @@
   },
   "SWPR": {
     "country_name": "Brazil",
-    "municipality": "Pires Do Rio",
+    "municipality": "Pires do Rio",
     "name": "Pires do Rio Airport"
   },
   "SWPS": {
@@ -213426,8 +213631,8 @@
   },
   "SWRQ": {
     "country_name": "Brazil",
-    "municipality": "Figueirópolis d'Oeste",
-    "name": "Fazenda Vittória Airport"
+    "municipality": "Teresina",
+    "name": "Aero Park Airport"
   },
   "SWRR": {
     "country_name": "Brazil",
@@ -216179,11 +216384,6 @@
     "municipality": "Sasereme",
     "name": "Sasereme Airport"
   },
-  "TDT": {
-    "country_name": "South Africa",
-    "municipality": "Timbavati",
-    "name": "Tanda Tula Airport"
-  },
   "TDV": {
     "country_name": "Madagascar",
     "municipality": "Tanandava",
@@ -216316,8 +216516,8 @@
   },
   "TE23": {
     "country_name": "United States",
-    "municipality": "San Antonio",
-    "name": "Santa Rosa Northwest Hospital Heliport"
+    "municipality": "Bedias",
+    "name": "Bedias Executive Airport"
   },
   "TE24": {
     "country_name": "United States",
@@ -216423,11 +216623,6 @@
     "country_name": "United States",
     "municipality": "Merit",
     "name": "R-Ranch Airstrip"
-  },
-  "TE45": {
-    "country_name": "United States",
-    "municipality": "Joshua",
-    "name": "Buffalo Chips Airpark"
   },
   "TE46": {
     "country_name": "United States",
@@ -217986,8 +218181,8 @@
   },
   "TN55": {
     "country_name": "United States",
-    "municipality": "Nashville",
-    "name": "Ginny 'B' Heliport"
+    "municipality": "Only",
+    "name": "Larry Land Airport"
   },
   "TN56": {
     "country_name": "United States",
@@ -218899,6 +219094,11 @@
     "municipality": "Kingsland",
     "name": "Kingsland Estates Airport"
   },
+  "TS19": {
+    "country_name": "United States",
+    "municipality": "Giddings",
+    "name": "Uncle Raymonds Airport"
+  },
   "TS20": {
     "country_name": "United States",
     "municipality": "Muenster",
@@ -218956,8 +219156,8 @@
   },
   "TS33": {
     "country_name": "United States",
-    "municipality": "Houston",
-    "name": "Tex-Star Heliport"
+    "municipality": "Star",
+    "name": "Fox Garden Aero Airport"
   },
   "TS34": {
     "country_name": "United States",
@@ -220197,7 +220397,7 @@
   "TX22": {
     "country_name": "United States",
     "municipality": "Argyle",
-    "name": "Leroux Airport"
+    "name": "US Trinity Airport"
   },
   "TX23": {
     "country_name": "United States",
@@ -223174,6 +223374,11 @@
     "municipality": "Novgorod",
     "name": "Krechevitsy Air Base"
   },
+  "ULLN": {
+    "country_name": "Russia",
+    "municipality": "Saint Petersburg",
+    "name": "Marli Helipad"
+  },
   "ULLO": {
     "country_name": "Russia",
     "municipality": "St. Petersburg",
@@ -224062,7 +224267,7 @@
   "URKS": {
     "country_name": "Russia",
     "municipality": "Enem",
-    "name": "Enem Airfield"
+    "name": "Krasnodar / Enem Airport"
   },
   "URKT": {
     "country_name": "Russia",
@@ -224154,6 +224359,11 @@
     "municipality": "Veshenskaya",
     "name": "Veshenskaya Airfield"
   },
+  "URRX": {
+    "country_name": "Russia",
+    "municipality": "Rostov-on-Don",
+    "name": "Olginskaya Airport"
+  },
   "URS": {
     "country_name": "Russia",
     "municipality": "Kursk",
@@ -224168,6 +224378,11 @@
     "country_name": "Papua New Guinea",
     "municipality": "Uroubi",
     "name": "Uroubi Airport"
+  },
+  "URUD": {
+    "country_name": "Russia",
+    "municipality": "Rostov-on-Don",
+    "name": "Dugino Airfield"
   },
   "URY": {
     "country_name": "Saudi Arabia",
@@ -225184,6 +225399,11 @@
     "municipality": "Kalyazin",
     "name": "Kalyazin Heliport"
   },
+  "UUTV": {
+    "country_name": "Russia",
+    "municipality": "Volzhskaya",
+    "name": "Volzhskaya 7 Helideck"
+  },
   "UUTZ": {
     "country_name": "Russia",
     "municipality": "Shetakovo",
@@ -225646,13 +225866,8 @@
   },
   "VA1F": {
     "country_name": "India",
-    "municipality": "",
-    "name": "Sidhi Airport"
-  },
-  "VA1G": {
-    "country_name": "India",
-    "municipality": "Rewa",
-    "name": "Rewa Airport, Chorhata, REWA"
+    "municipality": "Sidhi",
+    "name": "Sidhi Airstrip"
   },
   "VA1H": {
     "country_name": "India",
@@ -226902,7 +227117,7 @@
   "VG45": {
     "country_name": "United States",
     "municipality": "Richmond",
-    "name": "VCU Health System-Main Hospital Heliport"
+    "name": "VCU Health System-Main Hospital Helistop"
   },
   "VG46": {
     "country_name": "United States",
@@ -227562,7 +227777,7 @@
   "VMI": {
     "country_name": "Paraguay",
     "municipality": "Puerto Vallemi",
-    "name": "Aeropuerto Nacional Doctor Juan Plate"
+    "name": "Doctor Juan Plate National Airport"
   },
   "VMK": {
     "country_name": "Argentina",
@@ -228077,7 +228292,7 @@
   "VT12": {
     "country_name": "United States",
     "municipality": "Charlotte",
-    "name": "E.A.Deeds Farm Airport"
+    "name": "Big Goose Farm Airport"
   },
   "VT13": {
     "country_name": "United States",
@@ -228664,6 +228879,11 @@
     "municipality": "Artyom",
     "name": "Vladivostok International Airport"
   },
+  "VVPT": {
+    "country_name": "Vietnam",
+    "municipality": "Phan Thiet",
+    "name": "Phan Thiet Airport"
+  },
   "VVS": {
     "country_name": "United States",
     "municipality": "Connellsville",
@@ -229038,11 +229258,6 @@
     "country_name": "United States",
     "municipality": "Seattle",
     "name": "Kenmore Air Harbor Seaplane Base"
-  },
-  "W56": {
-    "country_name": "United States",
-    "municipality": "Vancouver",
-    "name": "Fly For Fun Airport"
   },
   "W57": {
     "country_name": "United States",
@@ -229849,11 +230064,6 @@
     "municipality": "Sangata",
     "name": "Tanjung Bara Airport"
   },
-  "WALK": {
-    "country_name": "Indonesia",
-    "municipality": "Nusantara",
-    "name": "Nusantara International Airport"
-  },
   "WALN": {
     "country_name": "Indonesia",
     "municipality": "Long Mawang-Borneo Island",
@@ -230173,11 +230383,6 @@
     "country_name": "Indonesia",
     "municipality": "Keneyan",
     "name": "Keneyan Airstrip"
-  },
-  "WAYG": {
-    "country_name": "Indonesia",
-    "municipality": "Akimuga",
-    "name": "Akimuga Airstrip"
   },
   "WAYH": {
     "country_name": "Indonesia",
@@ -231016,8 +231221,8 @@
   },
   "WI83": {
     "country_name": "United States",
-    "municipality": "Kewaunee",
-    "name": "St Mary's Kewaunee Area Memorial Hospital Heliport"
+    "municipality": "Stone Lake",
+    "name": "Whitefish Seaplane Base"
   },
   "WI84": {
     "country_name": "United States",
@@ -232947,7 +233152,7 @@
   "WS70": {
     "country_name": "United States",
     "municipality": "Beaver Dam",
-    "name": "Marshfield Medical Center/Beaver Dam Heliport"
+    "name": "UW Health Beaver Dam Hospital Heliport"
   },
   "WS71": {
     "country_name": "United States",
@@ -234179,6 +234384,11 @@
     "municipality": "Rawlins",
     "name": "Memorial Hospital Heliport"
   },
+  "WY70": {
+    "country_name": "United States",
+    "municipality": "Lovell",
+    "name": "Lowmiller Airport"
+  },
   "WYA": {
     "country_name": "Australia",
     "municipality": "Whyalla",
@@ -234563,11 +234773,6 @@
     "country_name": "United States",
     "municipality": "Fort Worth",
     "name": "Cook Children's Medical Center Heliport"
-  },
-  "XA37": {
-    "country_name": "United States",
-    "municipality": "Fort Worth",
-    "name": "Plaza Medical Center Heliport"
   },
   "XA38": {
     "country_name": "United States",
@@ -235049,6 +235254,11 @@
     "municipality": "Lake Geneva",
     "name": "Grand Geneva Resort Airport"
   },
+  "XEST": {
+    "country_name": "Russia",
+    "municipality": "Tiksi",
+    "name": "Tiksi Airport"
+  },
   "XFN": {
     "country_name": "China",
     "municipality": "Xiangyang (Xiangzhou)",
@@ -235164,6 +235374,11 @@
     "municipality": "Sharomy",
     "name": "Sharomy Air Base"
   },
+  "XHSM": {
+    "country_name": "Russia",
+    "municipality": "Yuzhno-Kurilsk",
+    "name": "Yuzhno-Kurilsk Mendeleyevo Airport"
+  },
   "XHSO": {
     "country_name": "Russia",
     "municipality": "Dolinsk",
@@ -235248,6 +235463,11 @@
     "country_name": "Brazil",
     "municipality": "Xinguara",
     "name": "Xinguara Municipal Airport"
+  },
+  "XIII": {
+    "country_name": "Russia",
+    "municipality": "Irkutsk",
+    "name": "Irkutsk International Airport"
   },
   "XIIO": {
     "country_name": "Russia",
@@ -235383,6 +235603,11 @@
     "country_name": "Russia",
     "municipality": "Soltsy",
     "name": "Soltsy-2 Air Base"
+  },
+  "XLLV": {
+    "country_name": "Russia",
+    "municipality": "St. Petersburg",
+    "name": "Levashovo Air Base"
   },
   "XLLY": {
     "country_name": "Russia",
@@ -235896,8 +236121,8 @@
   },
   "XS10": {
     "country_name": "United States",
-    "municipality": "Live Oak",
-    "name": "Northeast Methodist Hospital Ground Heliport"
+    "municipality": "Midlothian",
+    "name": "Texas Health Midlothian Heliport"
   },
   "XS11": {
     "country_name": "United States",
@@ -235948,11 +236173,6 @@
     "country_name": "United States",
     "municipality": "Mountain Home",
     "name": "Dos Arroyos Ranch Airport"
-  },
-  "XS21": {
-    "country_name": "United States",
-    "municipality": "Damon",
-    "name": "H & S Airfield"
   },
   "XS22": {
     "country_name": "United States",
@@ -236056,8 +236276,8 @@
   },
   "XS45": {
     "country_name": "United States",
-    "municipality": "Port Aransas",
-    "name": "Mustang Island Heliport"
+    "municipality": "Ozona",
+    "name": "Oso Canyon Airport"
   },
   "XS46": {
     "country_name": "United States",
@@ -236453,11 +236673,6 @@
     "country_name": "Russia",
     "municipality": "Ivanovo",
     "name": "Ivanovo Yasyunikha Airfield"
-  },
-  "XUDP": {
-    "country_name": "Russia",
-    "municipality": "Balakhna",
-    "name": "Istomino Airfield"
   },
   "XUDS": {
     "country_name": "Russia",
@@ -238748,6 +238963,11 @@
     "country_name": "Australia",
     "municipality": "",
     "name": "Canowindra Airport"
+  },
+  "YCX": {
+    "country_name": "Canada",
+    "municipality": "Oromocto",
+    "name": "CFB Gagetown Heliport"
   },
   "YCXA": {
     "country_name": "Australia",
@@ -246147,7 +246367,7 @@
   "YYF": {
     "country_name": "Canada",
     "municipality": "Penticton",
-    "name": "Penticton Airport"
+    "name": "Penticton Regional Airport"
   },
   "YYG": {
     "country_name": "Canada",
@@ -247154,11 +247374,6 @@
     "municipality": "Zhongwei (Shapotou)",
     "name": "Zhongwei Shapotou Airport"
   },
-  "ZHZH": {
-    "country_name": "Canada",
-    "municipality": "Herschel Island (Yukon Territory)",
-    "name": "Herschel Island Field"
-  },
   "ZIA": {
     "country_name": "Russia",
     "municipality": "Moscow",
@@ -247494,6 +247709,11 @@
     "municipality": "Sandy Lake",
     "name": "Sandy Lake Airport"
   },
+  "ZSLA": {
+    "country_name": "China",
+    "municipality": "",
+    "name": "Lu'an Airbase"
+  },
   "ZSN": {
     "country_name": "Canada",
     "municipality": "South Indian Lake",
@@ -247532,7 +247752,7 @@
   "ZTH": {
     "country_name": "Greece",
     "municipality": "Zakynthos",
-    "name": "Zakynthos International Airport Dionysios Solomos"
+    "name": "Zakynthos International Airport \"Dionysios Solomos\""
   },
   "ZTM": {
     "country_name": "Canada",

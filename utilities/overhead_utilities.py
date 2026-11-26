@@ -12,7 +12,8 @@ Consolidates:
 import json
 import logging
 import math
-from pathlib import Path
+
+from utilities.lookup_data import LOOKUPS_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -255,7 +256,7 @@ def _load_airports():
     if _airports_loaded:
         return
     _airports_loaded = True
-    path = Path(__file__).parent.parent / "assets" / _selected_airports_filename()
+    path = LOOKUPS_DIR / _selected_airports_filename()
     try:
         with open(path, encoding="utf-8") as file:
             _airports_cache = json.load(file)

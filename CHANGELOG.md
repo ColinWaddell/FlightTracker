@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New
 
+- Bundled lookup data is reorganised: all generated tables now load from
+  `assets/lookups/` (airport tables, the aircraft type table, the airline
+  code table as JSON, and airline logos), produced by the new
+  FlightTracker-Scrappers data repository. The airline code table loads
+  from JSON rather than a Python literal, keeping its import surface, and
+  the bundled generator scripts (`assets/airports.py`,
+  `assets/aircraft_types.py`) are removed - attribution and regeneration
+  now live in the data repository.
 - New flight setting "Aircraft Types" - show/hide aircraft by body class
   (wide-body, narrow-body, regional jet, turboprop, business jet,
   light & general aviation, rotorcraft, military, unknown) using a bundled
